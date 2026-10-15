@@ -1,0 +1,17 @@
+<div class="neon-combat-chat ncm-chat tone-{{tone}}">
+  <header>
+    {{#if img}}<img src="{{img}}" alt="">{{/if}}
+    <div>
+      {{#if kicker}}<span class="ncm-kicker">// {{{kicker}}}</span>{{/if}}
+      <h3>{{{title}}}</h3>
+    </div>
+  </header>
+  {{#if body}}<div class="ncm-chat-body">{{{body}}}</div>{{/if}}
+  {{#if buttons.length}}
+  <footer>
+    {{#each buttons}}
+    <button type="button" data-ncm-action="{{action}}" {{{attrs}}}{{#if gm}} data-gm="true"{{/if}}>{{#if icon}}<i class="{{icon}}"></i> {{/if}}{{{label}}}</button>
+    {{/each}}
+  </footer>
+  {{/if}}
+</div>

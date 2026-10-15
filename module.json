@@ -1,0 +1,72 @@
+{
+  "id": "cpr-neon-combat-manager",
+  "title": "Neon Combat Manager: Initiative Carousel, Crew HUD, Conditions, Combat Time, Weather & Visibility for Cyberpunk RED",
+  "description": "An encounter overhaul for Cyberpunk RED - CORE: the Initiative Queue as a neon carousel; a crew status bar with HP, armor, LUCK, Wound States and conditions; Neon Conditions, the full Cyberpunk RED condition set wired into the system's roll modifiers, with a Condition Lab, triggers and a stand-in for Condition Lab & Triggler; Rounds that move world time 3 seconds (SmallTime and Neon Hub's calendar follow); Night City weather from Neon Hub's calendar as conditions; and visibility penalties from darkness, light sources and the gear that cuts through them.",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "Neon Combat Manager contributors"
+    }
+  ],
+  "compatibility": {
+    "minimum": "12",
+    "verified": "12"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "cyberpunk-red-core",
+        "type": "system",
+        "compatibility": {
+          "minimum": "0.92",
+          "verified": "0.92.4"
+        }
+      }
+    ],
+    "recommends": [
+      {
+        "id": "cpr-neon-hub",
+        "type": "module",
+        "reason": "The day's Night City weather comes from Neon Hub's calendar, and its clock shows on the carousel. Combat Rounds move world time, so the calendar changes day at midnight mid-fight."
+      },
+      {
+        "id": "smalltime",
+        "type": "module",
+        "reason": "SmallTime's darkness follows world time, so the light (and the visibility penalties) change as the Rounds go by. Use SmallTime 1.24.0 on Foundry v12.",
+        "compatibility": {
+          "minimum": "1.24.0"
+        }
+      },
+      {
+        "id": "df-active-lights",
+        "type": "module",
+        "reason": "Animated and switchable lights count as light sources for visibility, like token lights (a flashlight on) and ambient lights."
+      },
+      {
+        "id": "cpr-neon-at-home",
+        "type": "module",
+        "reason": "Its encumbrance statuses sit in the token HUD alongside the Cyberpunk RED conditions."
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/neon-combat.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "socket": true,
+  "url": "",
+  "manifest": "",
+  "download": "",
+  "license": "MIT",
+  "readme": "README.md",
+  "changelog": "CHANGELOG.md"
+}

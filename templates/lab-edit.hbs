@@ -1,0 +1,48 @@
+<section class="ncm-edit">
+  <div class="ncm-edit-top">
+    <button type="button" class="ncm-edit-img" data-action="pickImg" data-tooltip="NEONCOMBAT.Lab.PickImg"><img src="{{img}}" alt=""></button>
+    <div class="ncm-edit-fields">
+      <label>{{localize "NEONCOMBAT.Lab.Field.name"}} <input type="text" name="name" value="{{name}}"></label>
+      <label>{{localize "NEONCOMBAT.Lab.Field.img"}} <input type="text" name="img" value="{{img}}"></label>
+      {{#unless builtIn}}
+      <label>{{localize "NEONCOMBAT.Lab.Field.category"}}
+        <select name="category">{{#each categories}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+      </label>
+      {{/unless}}
+    </div>
+  </div>
+  <label class="ncm-block">{{localize "NEONCOMBAT.Lab.Field.hint"}} <textarea name="hint" rows="3">{{hint}}</textarea></label>
+
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Lab.Changes"}}</h4>
+  <p class="ncm-hint">{{localize "NEONCOMBAT.Lab.ChangesHint"}}</p>
+  <datalist id="ncm-keys">{{#each keys}}<option value="{{this}}"></option>{{/each}}</datalist>
+  <ol class="ncm-changes">
+    {{#each changes}}
+    <li data-change="{{index}}">
+      <input type="text" name="key" value="{{key}}" list="ncm-keys" placeholder="bonuses.allActions">
+      <input type="number" name="value" value="{{value}}" step="1">
+      <label class="ncm-check"><input type="checkbox" name="situational" {{#if situational}}checked{{/if}}> {{localize "NEONCOMBAT.Lab.Situational"}}</label>
+      <label class="ncm-check"><input type="checkbox" name="onByDefault" {{#if onByDefault}}checked{{/if}}> {{localize "NEONCOMBAT.Lab.OnByDefault"}}</label>
+      <button type="button" class="is-danger" data-action="removeChange"><i class="fa-solid fa-xmark"></i></button>
+    </li>
+    {{/each}}
+  </ol>
+  <button type="button" data-action="addChange"><i class="fa-solid fa-plus"></i> {{localize "NEONCOMBAT.Lab.AddChange"}}</button>
+
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Lab.Behaviour"}}</h4>
+  <div class="ncm-grid">
+    <label>{{localize "NEONCOMBAT.Lab.Field.sight"}} <input type="number" name="sight" value="{{sight}}" step="1" max="0"></label>
+    <label>{{localize "NEONCOMBAT.Lab.Field.duration"}} <input type="number" name="duration" value="{{duration}}" min="0" step="3"></label>
+    <label>{{localize "NEONCOMBAT.Lab.Field.group"}} <input type="text" name="group" value="{{group}}"></label>
+    <label>{{localize "NEONCOMBAT.Lab.Field.turnStart"}} <input type="text" name="turnStart" value="{{turnStart}}" placeholder="@body"></label>
+    <label>{{localize "NEONCOMBAT.Lab.Field.turnEnd"}} <input type="text" name="turnEnd" value="{{turnEnd}}" placeholder="2"></label>
+  </div>
+  <div class="ncm-checks">
+    <label class="ncm-check"><input type="checkbox" name="hud" {{#if hud}}checked{{/if}}> {{localize "NEONCOMBAT.Lab.Field.hud"}}</label>
+    <label class="ncm-check"><input type="checkbox" name="overlay" {{#if overlay}}checked{{/if}}> {{localize "NEONCOMBAT.Lab.Field.overlay"}}</label>
+    <label class="ncm-check"><input type="checkbox" name="defeated" {{#if defeated}}checked{{/if}}> {{localize "NEONCOMBAT.Lab.Field.defeated"}}</label>
+  </div>
+  <footer class="ncm-foot">
+    <button type="button" class="ncm-cta" data-action="saveCondition"><i class="fa-solid fa-floppy-disk"></i> {{localize "NEONCOMBAT.Common.Save"}}</button>
+  </footer>
+</section>

@@ -1,0 +1,59 @@
+<section class="ncm-env">
+  <div class="ncm-env-now">
+    <span class="ncm-kicker">// {{localize "NEONCOMBAT.Environment.Now"}}{{#if calendarName}} · {{calendarName}}{{/if}}</span>
+    <div class="ncm-env-weather">
+      {{#each now}}<span class="ncm-chip" data-tooltip="{{hint}}"><img src="{{img}}" alt=""> {{name}}</span>{{else}}<span class="ncm-chip"><i class="fa-solid fa-sun"></i> {{localize "NEONCOMBAT.Weather.clear"}}</span>{{/each}}
+      {{#if band}}<span class="ncm-chip"><i class="fa-solid fa-temperature-half"></i> {{band}}{{#if temp}} · {{temp}}{{/if}}</span>{{/if}}
+    </div>
+  </div>
+
+  {{#if gm}}
+  <div class="ncm-grid">
+    <label>{{localize "NEONCOMBAT.Settings.weatherSource.name"}}
+      <select name="source">{{#each sources}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+    </label>
+    {{#if calendars.length}}
+    <label>{{localize "NEONCOMBAT.Environment.Calendar"}}
+      <select name="calendar">{{#each calendars}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+    </label>
+    {{else if hub}}
+    <p class="ncm-hint">{{localize "NEONCOMBAT.Environment.NoCalendar"}}</p>
+    {{else}}
+    <p class="ncm-hint">{{localize "NEONCOMBAT.Environment.NoHub"}}</p>
+    {{/if}}
+    {{#if scene}}
+    <label>{{localize "NEONCOMBAT.SceneWeather.Label"}} ({{scene.name}})
+      <select name="sceneMode">{{#each sceneModes}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+    </label>
+    {{/if}}
+  </div>
+  {{#if manual}}
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Environment.Manual"}}</h4>
+  <div class="ncm-grid">
+    <label>{{localize "NEONCOMBAT.Environment.Sky"}} <select name="cond">{{#each sky}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+    <label>{{localize "NEONCOMBAT.Environment.Strange"}} <select name="strange">{{#each strange}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+    <label>{{localize "NEONCOMBAT.Environment.Temperature"}} <select name="band">{{#each bands}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+  </div>
+  {{/if}}
+  {{/if}}
+
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Environment.Characters"}}
+    {{#if scene}}<span class="ncm-ref">{{localize "NEONCOMBAT.Environment.SceneLight" darkness=scene.darkness}}{{#if scene.global}} · {{localize "NEONCOMBAT.Environment.Global"}}{{/if}}</span>{{/if}}
+    {{#if gm}}<button type="button" class="ncm-mini" data-action="refreshEnv"><i class="fa-solid fa-rotate"></i> {{localize "NEONCOMBAT.Environment.Refresh"}}</button>{{/if}}
+  </h4>
+  <ol class="ncm-env-rows">
+    {{#each rows}}
+    <li class="lvl-{{level}}">
+      <img src="{{img}}" alt="">
+      <b>{{name}}</b>
+      <span class="ncm-tag">{{#if outdoors}}{{localize "NEONCOMBAT.Environment.Outdoors"}}{{else}}{{localize "NEONCOMBAT.Environment.Sheltered"}}{{/if}}</span>
+      <span class="ncm-tag lvl">{{levelLabel}}</span>
+      <span class="ncm-tag sight" data-tooltip="NEONCOMBAT.Environment.SightHint">{{sightLabel}}</span>
+      {{#if vision}}<span class="ncm-tag is-custom" data-tooltip="NEONCOMBAT.Environment.VisionHint"><i class="fa-solid fa-eye"></i> LL/IR/UV</span>{{/if}}
+      <span class="ncm-env-fx">{{#each conditions}}<img src="{{img}}" alt="{{name}}" data-tooltip="{{name}}">{{/each}}</span>
+    </li>
+    {{else}}
+    <li class="ncm-empty">{{localize "NEONCOMBAT.Environment.NoOne"}}</li>
+    {{/each}}
+  </ol>
+</section>

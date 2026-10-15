@@ -1,0 +1,46 @@
+<section class="ncm-lab-wrap">
+  <header class="ncm-lab-head">
+    <div>
+      <span class="ncm-kicker">// {{localize "NEONCOMBAT.Lab.Kicker"}}</span>
+      <h2>{{localize "NEONCOMBAT.Lab.Title"}}</h2>
+      <p class="ncm-hint">{{localize "NEONCOMBAT.Lab.Intro"}}</p>
+    </div>
+    {{#if gm}}
+    <div class="ncm-lab-tools">
+      <button type="button" class="ncm-cta" data-action="create"><i class="fa-solid fa-plus"></i> {{localize "NEONCOMBAT.Lab.New"}}</button>
+      <button type="button" data-action="openTriggers"><i class="fa-solid fa-bolt"></i> {{localize "NEONCOMBAT.Triggers.Title"}}</button>
+      <button type="button" data-action="exportJson"><i class="fa-solid fa-file-export"></i> {{localize "NEONCOMBAT.Lab.Export"}}</button>
+      <button type="button" data-action="importJson"><i class="fa-solid fa-file-import"></i> {{localize "NEONCOMBAT.Lab.Import"}}</button>
+      {{#if cltPending}}<button type="button" data-action="importClt"><i class="fa-solid fa-right-left"></i> {{localize "NEONCOMBAT.Lab.ImportClt"}}</button>{{/if}}
+    </div>
+    {{/if}}
+  </header>
+  {{#if cltActive}}<p class="ncm-warn"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "NEONCOMBAT.Lab.CltActive"}}</p>{{/if}}
+  {{#if shim}}<p class="ncm-hint"><i class="fa-solid fa-plug"></i> {{localize "NEONCOMBAT.Lab.Shim"}}</p>{{/if}}
+  <nav class="ncm-lab-views">
+    {{#each views}}<button type="button" class="{{#if active}}on{{/if}}" data-action="view" data-view="{{id}}">{{label}} <small>{{count}}</small></button>{{/each}}
+    <input type="search" name="search" value="{{search}}" placeholder="{{localize 'NEONCOMBAT.Lab.Search'}}">
+  </nav>
+  <ol class="ncm-lab-list">
+    {{#each list}}
+    <li class="ncm-lab-row{{#if disabled}} is-disabled{{/if}}" data-id="{{id}}">
+      <button type="button" class="ncm-lab-icon" data-action="applyCondition" data-tooltip="NEONCOMBAT.Lab.ApplyHint"><img src="{{img}}" alt=""></button>
+      <div class="ncm-lab-main">
+        <div class="ncm-lab-name"><b>{{name}}</b> <span class="ncm-tag">{{category}}</span>{{#if override}} <span class="ncm-tag is-edit">{{localize "NEONCOMBAT.Lab.Edited"}}</span>{{/if}}{{#if custom}} <span class="ncm-tag is-custom">{{localize "NEONCOMBAT.Lab.Custom"}}</span>{{/if}}{{#if module}} <span class="ncm-tag">{{localize "NEONCOMBAT.Lab.FromModule"}}</span>{{/if}}{{#if page}} <span class="ncm-ref">{{page}}</span>{{/if}}</div>
+        {{#if hint}}<p>{{hint}}</p>{{/if}}
+        {{#if summary}}<p class="ncm-lab-mech">{{summary}}</p>{{/if}}
+      </div>
+      {{#if ../gm}}
+      <div class="ncm-lab-actions">
+        <button type="button" data-action="toggleHud" data-tooltip="{{#if disabled}}NEONCOMBAT.Lab.Enable{{else}}NEONCOMBAT.Lab.Disable{{/if}}"><i class="fa-solid {{#if disabled}}fa-toggle-off{{else}}fa-toggle-on{{/if}}"></i></button>
+        <button type="button" data-action="edit" data-tooltip="NEONCOMBAT.Lab.Edit"><i class="fa-solid fa-pen"></i></button>
+        {{#if override}}<button type="button" data-action="reset" data-tooltip="NEONCOMBAT.Lab.Reset"><i class="fa-solid fa-rotate-left"></i></button>{{/if}}
+        {{#if custom}}<button type="button" class="is-danger" data-action="deleteCustom" data-tooltip="NEONCOMBAT.Lab.Delete"><i class="fa-solid fa-trash"></i></button>{{/if}}
+      </div>
+      {{/if}}
+    </li>
+    {{else}}
+    <li class="ncm-empty">{{localize "NEONCOMBAT.Lab.None"}}</li>
+    {{/each}}
+  </ol>
+</section>

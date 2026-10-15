@@ -1,0 +1,4 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Neon Combat Manager: Grappling. Sized like CPR's status icons. -->
+  <path d="M120 300c0-80 40-140 100-150l40 0c30 0 50 20 50 50v20" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round"/><path d="M392 300c0-80-40-140-100-150" fill="none" stroke="#ff2a6d" stroke-width="30" stroke-linecap="round"/><rect x="150" y="300" width="212" height="70" rx="20" fill="#ff2a6d" stroke="#fff" stroke-width="20"/>
+</svg>

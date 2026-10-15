@@ -1,0 +1,4 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Neon Combat Manager: Hot. Sized like CPR's status icons. -->
+  <path d="M226 90a30 30 0 0 1 60 0v220a80 80 0 1 1-60 0z" fill="none" stroke="#fff" stroke-width="26"/><circle cx="256" cy="380" r="46" fill="#ff8a1f"/><path d="M256 380V170" stroke="#ff8a1f" stroke-width="26" stroke-linecap="round"/>
+</svg>

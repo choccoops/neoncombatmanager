@@ -1,0 +1,15 @@
+{
+  "name": "cpr-neon-combat-manager",
+  "private": true,
+  "type": "module",
+  "description": "Build and test tooling for the Neon Combat Manager Foundry VTT module. Not needed to use the module.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node tools/check.mjs",
+    "preview": "node tools/preview.mjs"
+  },
+  "devDependencies": {
+    "handlebars": "^4.7.8"
+  }
+}

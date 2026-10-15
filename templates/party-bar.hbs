@@ -1,0 +1,37 @@
+<header class="ncm-party-head">
+  <span class="ncm-kicker">// {{localize "NEONCOMBAT.Party.Title"}}</span>
+  <span class="ncm-party-tools">
+    {{#if gm}}<button type="button" data-ncm="configure" data-tooltip="NEONCOMBAT.Party.Configure"><i class="fa-solid fa-users-gear"></i></button>{{/if}}
+    <button type="button" data-ncm="collapse" data-tooltip="NEONCOMBAT.Party.Collapse"><i class="fa-solid {{#if collapsed}}fa-chevron-up{{else}}fa-chevron-down{{/if}}"></i></button>
+  </span>
+</header>
+{{#unless collapsed}}
+<ol class="ncm-party-list">
+  {{#each members}}
+  <li class="ncm-member wound-{{woundTone}}{{#if turn}} is-turn{{/if}}{{#if down}} is-down{{/if}}" data-actor-id="{{id}}">
+    <div class="ncm-member-portrait">
+      <img src="{{img}}" alt="">
+      {{#if banner}}<div class="ncm-banner tone-{{banner.tone}}">{{banner.label}}</div>{{/if}}
+    </div>
+    <div class="ncm-member-body">
+      <div class="ncm-member-name"><b title="{{name}}">{{name}}</b>{{#if role}}<span>{{role}}</span>{{/if}}</div>
+      <div class="ncm-hp ncm-hp-lg" style="--pct: {{hp.pct}}%; --serious: {{seriousPct}}%" data-tooltip="{{woundLabel}}">
+        <span class="ncm-hp-fill"></span><span class="ncm-hp-mark"></span>
+        <span class="ncm-hp-text">HP {{hp.value}}<small>/{{hp.max}}</small></span>
+      </div>
+      <div class="ncm-member-stats">
+        <span data-tooltip="NEONCOMBAT.Party.ArmorHead"><i class="fa-solid fa-helmet-safety"></i> {{armor.head}}</span>
+        <span data-tooltip="NEONCOMBAT.Party.ArmorBody"><i class="fa-solid fa-shield-halved"></i> {{armor.body}}</span>
+        <span data-tooltip="NEONCOMBAT.Party.Luck"><i class="fa-solid fa-clover"></i> {{luck.value}}/{{luck.max}}</span>
+        <span data-tooltip="NEONCOMBAT.Party.Humanity"><i class="fa-solid fa-heart"></i> {{humanity}}</span>
+      </div>
+      {{#if conditions.length}}
+      <ul class="ncm-fx">
+        {{#each conditions}}<li class="cat-{{category}}"><img src="{{img}}" alt="{{name}}" data-tooltip="{{name}}"></li>{{/each}}
+      </ul>
+      {{/if}}
+    </div>
+  </li>
+  {{/each}}
+</ol>
+{{/unless}}

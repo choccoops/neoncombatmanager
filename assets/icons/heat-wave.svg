@@ -1,0 +1,4 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Neon Combat Manager: Heat Wave. Sized like CPR's status icons. -->
+  <circle cx="256" cy="150" r="72" fill="#ff8a1f" stroke="#fff" stroke-width="22"/><path d="M60 300c50-40 90 40 140 0s90 40 140 0 90 40 140 0" fill="none" stroke="#ff2a6d" stroke-width="26" stroke-linecap="round"/><path d="M60 360c50-40 90 40 140 0s90 40 140 0 90 40 140 0" fill="none" stroke="#ff2a6d" stroke-width="26" stroke-linecap="round"/><path d="M60 420c50-40 90 40 140 0s90 40 140 0 90 40 140 0" fill="none" stroke="#ff2a6d" stroke-width="26" stroke-linecap="round"/>
+</svg>

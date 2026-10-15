@@ -1,0 +1,23 @@
+<section class="ncm-settings-wrap">
+  {{#if intro}}<p class="ncm-hint">{{intro}}</p>{{/if}}
+  <ol class="ncm-settings-list">
+    {{#each fields}}
+    <li class="ncm-setting">
+      <div class="ncm-setting-text">
+        <label for="ncm-set-{{key}}">{{name}}</label>
+        {{#if hint}}<p class="ncm-hint">{{hint}}</p>{{/if}}
+      </div>
+      <div class="ncm-setting-input">
+        {{#if (eq type "boolean")}}<input type="checkbox" id="ncm-set-{{key}}" name="{{key}}" {{#if checked}}checked{{/if}}>
+        {{else if (eq type "select")}}<select id="ncm-set-{{key}}" name="{{key}}">{{#each choices}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+        {{else if (eq type "number")}}<input type="number" id="ncm-set-{{key}}" name="{{key}}" value="{{value}}"{{#if range}} min="{{range.min}}" max="{{range.max}}" step="{{range.step}}"{{/if}}>
+        {{else}}<input type="text" id="ncm-set-{{key}}" name="{{key}}" value="{{value}}">
+        {{/if}}
+      </div>
+    </li>
+    {{/each}}
+  </ol>
+  <footer class="ncm-foot">
+    <button type="submit" class="ncm-cta"><i class="fa-solid fa-floppy-disk"></i> {{localize "NEONCOMBAT.Common.Save"}}</button>
+  </footer>
+</section>

@@ -1,0 +1,20 @@
+# Checks every push and pull request: scripts parse, JSON and localization are complete, no
+# v13-moved globals outside compat.js, and the tests pass.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run check
+      - run: npm test

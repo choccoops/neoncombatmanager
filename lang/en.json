@@ -1,0 +1,899 @@
+{
+  "NEONCOMBAT": {
+    "Title": "Neon Combat Manager",
+    "Common": {
+      "Save": "Save",
+      "Cancel": "Cancel"
+    },
+    "Error": {
+      "NoGM": "A GM needs to be connected for that.",
+      "Timeout": "The GM didn't answer in time.",
+      "NoCondition": "No condition called {name}.",
+      "NotOwner": "That isn't your character."
+    },
+    "Notify": {
+      "Immune": "{name} is protected from {condition}.",
+      "Resisted": "{name} resisted.",
+      "CltFound": "Neon Combat Manager found Condition Lab & Triggler's conditions in this world. Open the Condition Lab to bring them over."
+    },
+    "Category": {
+      "wound": "Wound",
+      "critical": "Critical Injury",
+      "combat": "Combat",
+      "hazard": "Hazard",
+      "situation": "Situation",
+      "drug": "Drug",
+      "weather": "Weather",
+      "visibility": "Visibility",
+      "custom": "Custom"
+    },
+    "Condition": {
+      "lightlyWounded": {
+        "name": "Lightly Wounded",
+        "hint": "Below full HP. No penalty yet."
+      },
+      "seriouslyWounded": {
+        "name": "Seriously Wounded",
+        "hint": "Under half HP: -2 to all Actions (Cyberpunk RED applies it)."
+      },
+      "mortallyWounded": {
+        "name": "Mortally Wounded",
+        "hint": "Under 1 HP: -4 to all Actions, -6 MOVE and a Death Save at the start of each Turn (Cyberpunk RED applies the penalties)."
+      },
+      "dead": {
+        "name": "Dead",
+        "hint": "Failed a Death Save. Flatlined and marked defeated."
+      },
+      "unconscious": {
+        "name": "Unconscious",
+        "hint": "Out cold: no Actions and no Move Action until they come round."
+      },
+      "stabilized": {
+        "name": "Stabilized",
+        "hint": "Patched up. A Mortally Wounded character goes to 1 HP and is out for a minute; the Death Save penalty resets to its base."
+      },
+      "dismemberedArm": {
+        "name": "Dismembered Arm",
+        "hint": "The arm is gone and whatever it held drops. Death Save penalty +1."
+      },
+      "dismemberedHand": {
+        "name": "Dismembered Hand",
+        "hint": "The hand is gone and whatever it held drops. Death Save penalty +1."
+      },
+      "collapsedLung": {
+        "name": "Collapsed Lung",
+        "hint": "-2 MOVE (minimum 1). Death Save penalty +1."
+      },
+      "brokenRibs": {
+        "name": "Broken Ribs",
+        "hint": "Moving more than 4 m/yds on foot in a Turn reopens it: 5 damage straight to HP at the end of that Turn."
+      },
+      "brokenArm": {
+        "name": "Broken Arm",
+        "hint": "The arm can't be used and whatever it held drops."
+      },
+      "foreignObject": {
+        "name": "Foreign Object",
+        "hint": "Moving more than 4 m/yds on foot in a Turn: 5 damage straight to HP at the end of that Turn."
+      },
+      "brokenLeg": {
+        "name": "Broken Leg",
+        "hint": "-4 MOVE (minimum 1)."
+      },
+      "tornMuscle": {
+        "name": "Torn Muscle",
+        "hint": "-2 to Melee Attacks."
+      },
+      "spinalInjury": {
+        "name": "Spinal Injury",
+        "hint": "No Action next Turn (the Move Action is still there). Death Save penalty +1."
+      },
+      "crushedFingers": {
+        "name": "Crushed Fingers",
+        "hint": "-4 to Actions that use that hand."
+      },
+      "dismemberedLeg": {
+        "name": "Dismembered Leg",
+        "hint": "-6 MOVE (minimum 1) and no dodging. Death Save penalty +1."
+      },
+      "lostEye": {
+        "name": "Lost Eye",
+        "hint": "-4 to ranged attacks and Perception by sight. Death Save penalty +1."
+      },
+      "brainInjury": {
+        "name": "Brain Injury",
+        "hint": "-2 to all Actions. Death Save penalty +1."
+      },
+      "damagedEye": {
+        "name": "Damaged Eye",
+        "hint": "-2 to ranged attacks and Perception by sight."
+      },
+      "concussion": {
+        "name": "Concussion",
+        "hint": "-2 to all Actions."
+      },
+      "brokenJaw": {
+        "name": "Broken Jaw",
+        "hint": "-4 to Actions that involve talking."
+      },
+      "foreignObjectHead": {
+        "name": "Foreign Object (Head)",
+        "hint": "Moving more than 4 m/yds on foot in a Turn: 5 damage straight to HP at the end of that Turn."
+      },
+      "whiplash": {
+        "name": "Whiplash",
+        "hint": "Death Save penalty +1."
+      },
+      "crackedSkull": {
+        "name": "Cracked Skull",
+        "hint": "Aimed Shots to the head multiply damage through SP by 3 instead of 2. Death Save penalty +1."
+      },
+      "damagedEar": {
+        "name": "Damaged Ear",
+        "hint": "-2 to Perception by hearing. After moving more than 4 m/yds in a Turn, no Move Action next Turn."
+      },
+      "crushedWindpipe": {
+        "name": "Crushed Windpipe",
+        "hint": "Can't speak. Death Save penalty +1."
+      },
+      "lostEar": {
+        "name": "Lost Ear",
+        "hint": "-4 to Perception by hearing. After moving more than 4 m/yds in a Turn, no Move Action next Turn. Death Save penalty +1."
+      },
+      "prone": {
+        "name": "Prone",
+        "hint": "On the ground: no Move Action until an Action is spent to Get Up."
+      },
+      "grappled": {
+        "name": "Grappled",
+        "hint": "Held: -2 to all Actions, no Move Action (dragged along) and no two-handed weapons."
+      },
+      "grappling": {
+        "name": "Grappling",
+        "hint": "Holding someone: -2 to all Actions and no two-handed weapons. Let go any time."
+      },
+      "ironGrip": {
+        "name": "Iron Grip",
+        "hint": "Locked in: escape attempts take a further -2 (in the roll dialog) and no ranged attacks until the Grapple breaks."
+      },
+      "choking1": {
+        "name": "Choked (1 Round)",
+        "hint": "Choked this Round. Three Rounds in a row and they're Unconscious."
+      },
+      "choking2": {
+        "name": "Choked (2 Rounds)",
+        "hint": "Choked two Rounds running. One more and they're Unconscious."
+      },
+      "humanShield": {
+        "name": "Human Shield",
+        "hint": "Being held up as cover: can't dodge ranged attacks and takes the hits meant for the holder."
+      },
+      "cover": {
+        "name": "In Cover",
+        "hint": "Fully behind something that stops bullets, out of the attacker's line of sight."
+      },
+      "hidden": {
+        "name": "Hidden",
+        "hint": "Out of sight; found with Perception against their Stealth."
+      },
+      "readiedAction": {
+        "name": "Holding Action",
+        "hint": "Holding an Action for a named trigger or a set Initiative number."
+      },
+      "suppressed": {
+        "name": "Suppressed",
+        "hint": "Lost against Suppressive Fire: the next Move Action (and Run, if needed) goes to reaching cover."
+      },
+      "netrunning": {
+        "name": "Netrunning",
+        "hint": "Jacked into the NET; their meat body is busy and exposed."
+      },
+      "blind": {
+        "name": "Blinded",
+        "hint": "Can't see: everything that needs sight counts as obscured (-4)."
+      },
+      "deaf": {
+        "name": "Deafened",
+        "hint": "-4 to Perception by hearing."
+      },
+      "flashbanged": {
+        "name": "Flashbanged",
+        "hint": "Damaged Eye and Damaged Ear effects for a minute, with no bonus damage. Anti-Dazzle protects."
+      },
+      "teargassed": {
+        "name": "Teargassed",
+        "hint": "Damaged Eye effects for a minute, with no bonus damage. Only meat eyes are affected."
+      },
+      "sleep": {
+        "name": "Knocked Out (Sleep)",
+        "hint": "Prone and Unconscious for a minute, or until hurt or shaken awake."
+      },
+      "emp": {
+        "name": "EMP'd",
+        "hint": "Two pieces of cyberware or carried electronics, the GM's pick, are dead for a minute."
+      },
+      "onFireMild": {
+        "name": "On Fire (Mild)",
+        "hint": "2 damage straight to HP at the end of each Turn, until an Action is spent putting it out."
+      },
+      "onFireStrong": {
+        "name": "On Fire (Strong)",
+        "hint": "4 damage straight to HP at the end of each Turn, until an Action is spent putting it out."
+      },
+      "onFireDeadly": {
+        "name": "On Fire (Deadly)",
+        "hint": "6 damage straight to HP at the end of each Turn, until an Action is spent putting it out."
+      },
+      "drowning": {
+        "name": "Drowning",
+        "hint": "BODY in damage straight to HP at the start of each Turn."
+      },
+      "asphyxiating": {
+        "name": "Asphyxiating",
+        "hint": "Treated like drowning: BODY in damage straight to HP at the start of each Turn."
+      },
+      "electrocuted": {
+        "name": "Electrocuted",
+        "hint": "6d6 (armor applies) at the end of each Turn while still touching the source."
+      },
+      "radiationLow": {
+        "name": "Radiation (Low)",
+        "hint": "Slow harm over time; the long-term cost is the GM's call."
+      },
+      "radiationHigh": {
+        "name": "Radiation (High)",
+        "hint": "In a hot zone: burns like a Mild fire (2 a Turn) that can't be put out while there."
+      },
+      "falling": {
+        "name": "Falling",
+        "hint": "Drops 40 m/yds at the end of the Turn; 2d6 per 10 m/yds on landing and a DV15 Athletics Check or a Broken Leg."
+      },
+      "exposure": {
+        "name": "Exposure",
+        "hint": "Out in extreme weather without the right gear: 1d6 straight to HP each day and no natural healing."
+      },
+      "acid": {
+        "name": "Acid",
+        "hint": "Corrosive: eats into armor."
+      },
+      "exhausted": {
+        "name": "Exhausted",
+        "hint": "-4 to all Actions."
+      },
+      "badSleep": {
+        "name": "Slept Badly",
+        "hint": "-2 to all Actions."
+      },
+      "extremeStress": {
+        "name": "Extreme Stress",
+        "hint": "-2 to all Actions."
+      },
+      "drunk": {
+        "name": "Drunk or Sedated",
+        "hint": "-4 to all Actions."
+      },
+      "smoke": {
+        "name": "In Smoke",
+        "hint": "Obscured by smoke for a minute: -4 to anything that needs sight."
+      },
+      "antibiotics": {
+        "name": "Antibiotics",
+        "hint": "Heals 2 extra HP a day for a week once natural healing has begun."
+      },
+      "rapidetox": {
+        "name": "Rapidetox",
+        "hint": "Purges drugs, poisons and intoxicants at once. Addictions stay."
+      },
+      "speedheal": {
+        "name": "Speedheal",
+        "hint": "Heals BODY + WILL HP at once, unless Mortally Wounded. Once a day."
+      },
+      "stim": {
+        "name": "Stim",
+        "hint": "Ignores the Seriously Wounded penalty for an hour. Once a day."
+      },
+      "surge": {
+        "name": "Surge",
+        "hint": "No need for sleep for 24 hours. Once a week."
+      },
+      "blackLace": {
+        "name": "Black Lace",
+        "hint": "24 hours ignoring the Seriously Wounded penalty. Costs 2d6 Humanity, given back if they don't get hooked."
+      },
+      "blackLaceAddiction": {
+        "name": "Black Lace Addiction",
+        "hint": "-2 REF, except while on Black Lace."
+      },
+      "blueGlass": {
+        "name": "Blue Glass",
+        "hint": "4 hours of sudden hallucinations: a flash out costs that Turn's Action."
+      },
+      "blueGlassAddiction": {
+        "name": "Blue Glass Addiction",
+        "hint": "Flashes out now and then, except while on Blue Glass."
+      },
+      "boost": {
+        "name": "Boost",
+        "hint": "24 hours of +2 INT (it can go above 8)."
+      },
+      "boostAddiction": {
+        "name": "Boost Addiction",
+        "hint": "-2 INT."
+      },
+      "smash": {
+        "name": "Smash",
+        "hint": "4 hours of +2 to Dance, Contortionist, Conversation, Human Perception, Persuasion and Acting."
+      },
+      "smashAddiction": {
+        "name": "Smash Addiction",
+        "hint": "-2 to Dance, Contortionist, Conversation, Human Perception, Persuasion and Acting; cravings."
+      },
+      "synthcoke": {
+        "name": "Synthcoke",
+        "hint": "4 hours of +1 REF (it can go above 8), and paranoia."
+      },
+      "synthcokeAddiction": {
+        "name": "Synthcoke Addiction",
+        "hint": "-2 REF, except while on Synthcoke; cravings."
+      },
+      "wxLightRain": {
+        "name": "Light Rain",
+        "hint": "Slick underfoot: -1 to climbing, driving and the like when the GM calls for it (in the roll dialog)."
+      },
+      "wxHeavyRain": {
+        "name": "Heavy Rain",
+        "hint": "Hard to see: -2 to sight and ranged attacks at a distance. Slick: -1 to footing and driving when called for."
+      },
+      "wxAcidRain": {
+        "name": "Acid Rain",
+        "hint": "Each full minute out in it without an umbrella or waterproof lining ablates worn armor by 1."
+      },
+      "wxBloodRain": {
+        "name": "Blood Rain",
+        "hint": "-1 to sight. Each minute it acts like acid rain or a dose of Biotoxin; an umbrella or lining gives +2 to resist."
+      },
+      "wxAshStorm": {
+        "name": "Ash Storm",
+        "hint": "-2 to sight. A minute in it without a mask or Nasal Filters: a dose of poison and a Foreign Object."
+      },
+      "wxDustStorm": {
+        "name": "Dust Storm",
+        "hint": "-2 to sight. Five minutes in it without a mask or Nasal Filters: a Foreign Object."
+      },
+      "wxInversionSmog": {
+        "name": "Inversion Smog",
+        "hint": "-4 to sight. A minute in it without a mask or Nasal Filters: a dose of poison."
+      },
+      "wxThunderstorm": {
+        "name": "Deadly Thunderstorm",
+        "hint": "-2 to sight. Every ten minutes lightning may hit the tallest thing around, or whoever holds a two-handed metal weapon."
+      },
+      "wxRadioactiveWind": {
+        "name": "Radioactive Windstorm",
+        "hint": "High radiation for anyone without a Radiation Suit."
+      },
+      "wxColdSnap": {
+        "name": "Cold Snap",
+        "hint": "Below freezing: Exposure without cold-weather gear. Black ice: -2 to footing and driving when called for."
+      },
+      "wxHeatWave": {
+        "name": "Heat Wave",
+        "hint": "Exposure without hot-weather gear. Armor penalties to REF, DEX and MOVE are 2 worse (1 with a hot-weather lining)."
+      },
+      "wxHot": {
+        "name": "Hot",
+        "hint": "Armor penalties to REF, DEX and MOVE are 1 worse (none with a hot-weather lining)."
+      },
+      "wxCold": {
+        "name": "Cold",
+        "hint": "Exposure for anyone out most of the day without cold-weather gear."
+      },
+      "wxFlooding": {
+        "name": "Flooding",
+        "hint": "Wading through deep water costs 2 m/yds of movement per m/yd."
+      },
+      "wxBlackout": {
+        "name": "Blackout",
+        "hint": "No power, no CitiNet and no Agent calls in the area."
+      },
+      "lowLight": {
+        "name": "Low Light",
+        "hint": "Night or poor lighting: -1 to anything that needs sight."
+      },
+      "darkness": {
+        "name": "Darkness",
+        "hint": "Too dark to see: -4 to anything that needs sight."
+      },
+      "obscured": {
+        "name": "Obscured",
+        "hint": "Rain, smog, dust or smoke in the way: a penalty to anything that needs sight."
+      }
+    },
+    "Key": {
+      "allActions": "All Actions",
+      "allActionsHands": "Actions with that hand",
+      "allActionsSpeech": "Actions involving speech",
+      "ranged": "Ranged Attacks",
+      "melee": "Melee Attacks",
+      "universalAttack": "All Attacks",
+      "perceptionSight": "Perception (sight)",
+      "perceptionHearing": "Perception (hearing)",
+      "deathSavePenalty": "Death Save penalty",
+      "hasPainSuppression": "Ignores Seriously Wounded",
+      "initiative": "Initiative",
+      "brawling": "Brawling",
+      "athletics": "Athletics",
+      "driveLandVehicle": "Drive Land Vehicle"
+    },
+    "Weather": {
+      "clear": "Clear",
+      "overcast": "Overcast",
+      "lightRain": "Light Rain",
+      "heavyRain": "Heavy Rain",
+      "acidRain": "Acid Rain",
+      "bloodRain": "Blood Rain",
+      "ashStorm": "Ash Storm",
+      "dustStorm": "Dust Storm",
+      "inversionSmog": "Inversion Smog",
+      "deadlyThunderstorm": "Deadly Thunderstorm",
+      "radioactiveWindstorm": "Radioactive Windstorm",
+      "coldSnap": "Cold Snap",
+      "heatWave": "Heat Wave",
+      "flooding": "Flooding",
+      "blackout": "Blackout",
+      "hot": "Hot"
+    },
+    "Band": {
+      "freezing": "Freezing",
+      "cold": "Cold",
+      "cool": "Cool",
+      "warm": "Warm",
+      "hot": "Hot",
+      "scorching": "Scorching"
+    },
+    "Wound": {
+      "notWounded": "Unhurt",
+      "lightlyWounded": "Lightly Wounded",
+      "seriouslyWounded": "Seriously Wounded",
+      "mortallyWounded": "Mortally Wounded",
+      "invalidState": "Unknown"
+    },
+    "WoundShort": {
+      "notWounded": "OK",
+      "lightlyWounded": "LIGHT",
+      "seriouslyWounded": "SERIOUS",
+      "mortallyWounded": "MORTAL",
+      "invalidState": "?"
+    },
+    "Settings": {
+      "carouselEnabled": {
+        "name": "Show the combat carousel",
+        "hint": "The Initiative Queue as cards across the top of the screen while a combat is on."
+      },
+      "carouselSize": {
+        "name": "Carousel size",
+        "hint": "How big the combatant cards are."
+      },
+      "carouselCollapsed": {
+        "name": "Carousel collapsed",
+        "hint": ""
+      },
+      "partyEnabled": {
+        "name": "Show the crew status bar",
+        "hint": "Every player character's HP, armor, LUCK, Wound State and conditions in one bar."
+      },
+      "partyPosition": {
+        "name": "Crew bar position",
+        "hint": "Where the crew status bar sits."
+      },
+      "partyCollapsed": {
+        "name": "Crew bar collapsed",
+        "hint": ""
+      },
+      "partyMembers": {
+        "name": "Crew",
+        "hint": ""
+      },
+      "roundSeconds": {
+        "name": "Seconds per Round",
+        "hint": "World time each new Round adds. Cyberpunk RED: about 3 seconds (a minute is 20 Rounds). SmallTime and Neon Hub's calendar follow world time."
+      },
+      "turnSeconds": {
+        "name": "Seconds per Turn",
+        "hint": "Extra world time for each Turn skipped when a Round is cut short. 0 keeps a Round at its full length."
+      },
+      "combatSummary": {
+        "name": "Post how long a combat took",
+        "hint": "When a combat ends, post its Rounds, the time that passed and the time of day."
+      },
+      "npcHealth": {
+        "name": "What players see of NPC health",
+        "hint": "In the carousel and tracker: nothing, the Wound State, or the HP bar."
+      },
+      "enhanceTracker": {
+        "name": "Add Wound States to the combat tracker",
+        "hint": "Shows each combatant's Wound State and the combat clock in Foundry's sidebar tracker."
+      },
+      "deathSaves": {
+        "name": "Death Save prompts",
+        "hint": "At the start of a Mortally Wounded character's Turn, post a card to roll the Death Save (a failure flatlines them)."
+      },
+      "hazardDamage": {
+        "name": "Damage from conditions",
+        "hint": "Fire, drowning, radiation and reopened Critical Injuries: post a card the GM applies, apply it at once, or do nothing."
+      },
+      "trackMovement": {
+        "name": "Track movement for Critical Injuries",
+        "hint": "Add up how far the acting token moves each Turn, for Broken Ribs, Foreign Objects and damaged ears (over 4 m/yds)."
+      },
+      "replaceStatuses": {
+        "name": "Replace Foundry's token statuses",
+        "hint": "Use the Cyberpunk RED set in the token HUD instead of Foundry's generic one. Other modules' statuses stay."
+      },
+      "conditionChat": {
+        "name": "Condition notices in chat",
+        "hint": "Post a card when a condition is added: off, to its owners and the GM, or to everyone."
+      },
+      "mirrorWounds": {
+        "name": "Show Wound States on tokens",
+        "hint": "Lightly, Seriously and Mortally Wounded appear as statuses (Cyberpunk RED already applies their penalties)."
+      },
+      "mirrorCriticals": {
+        "name": "Show Critical Injuries on tokens",
+        "hint": "A Critical Injury item on an actor shows as a status on its token."
+      },
+      "critItems": {
+        "name": "Critical Injury conditions add Cyberpunk RED's item",
+        "hint": "Placing a Critical Injury condition gives the actor the system's own Critical Injury item, whose effect carries the penalties."
+      },
+      "cltShim": {
+        "name": "Stand in for Condition Lab & Triggler",
+        "hint": "When Condition Lab & Triggler isn't running, provide game.clt (addCondition, removeCondition, hasCondition...) so macros and modules written for it keep working."
+      },
+      "conditionOverrides": {
+        "name": "Condition edits",
+        "hint": ""
+      },
+      "customConditions": {
+        "name": "Custom conditions",
+        "hint": ""
+      },
+      "triggers": {
+        "name": "Triggers",
+        "hint": ""
+      },
+      "weatherSource": {
+        "name": "Weather comes from",
+        "hint": "Neon Hub's calendar weather, the GM's manual pick in the Environment window, or nowhere."
+      },
+      "weatherCalendar": {
+        "name": "Weather calendar",
+        "hint": ""
+      },
+      "manualWeather": {
+        "name": "Manual weather",
+        "hint": ""
+      },
+      "sceneWeatherDefault": {
+        "name": "Scenes are",
+        "hint": "Whether weather reaches scenes that don't say. Set each scene in its configuration; regions named like a shelter keyword are indoors."
+      },
+      "shelterKeywords": {
+        "name": "Shelter region keywords",
+        "hint": "Tokens inside a scene region whose name contains one of these (comma-separated) are out of the weather."
+      },
+      "weatherOnByDefault": {
+        "name": "Weather sight penalties start ticked",
+        "hint": "Weather's penalty to sight and ranged attacks is ticked in the roll dialog. Off: the player or GM ticks it when it applies."
+      },
+      "weatherHazardCards": {
+        "name": "Weather hazard cards",
+        "hint": "During combat, tell the GM when acid rain, smog, ash, dust or lightning comes due, with buttons to apply it."
+      },
+      "visibilityEnabled": {
+        "name": "Visibility from light",
+        "hint": "Darkness and light sources set a Low Light (-1) or Darkness (-4) condition on the characters in the encounter."
+      },
+      "lowLightAt": {
+        "name": "Low light from darkness",
+        "hint": "Scene darkness (0-1) from which it counts as low light. SmallTime moves the darkness with the clock."
+      },
+      "darkAt": {
+        "name": "Dark from darkness",
+        "hint": "Scene darkness (0-1) from which an unlit spot counts as dark."
+      },
+      "sightKeys": {
+        "name": "Checks that need sight",
+        "hint": "Cyberpunk RED roll keys a sight penalty applies to (comma-separated), shown as situational modifiers in the roll dialog."
+      },
+      "visibilityCap": {
+        "name": "Most a sight penalty can be",
+        "hint": "Darkness and weather add up to at most this (both count as being obscured). 0: no limit."
+      },
+      "visibilityFrom": {
+        "name": "Light that counts",
+        "hint": "The light where the target is (while a target is picked), or where the character stands."
+      },
+      "envOutsideCombat": {
+        "name": "Environment outside combat",
+        "hint": "Also apply weather and visibility to every player token on the scene when there's no combat."
+      },
+      "gearBreathing": {
+        "name": "Breathing protection",
+        "hint": "Items or cyberware (comma-separated names) that protect against smog, ash and dust."
+      },
+      "gearRadiation": {
+        "name": "Radiation protection",
+        "hint": "Items that protect against radioactive wind."
+      },
+      "gearRain": {
+        "name": "Rain protection",
+        "hint": "Items that protect against acid and blood rain."
+      },
+      "gearCold": {
+        "name": "Cold-weather gear",
+        "hint": "Items that protect against Exposure from cold."
+      },
+      "gearHeat": {
+        "name": "Hot-weather gear",
+        "hint": "Items that protect against Exposure from heat and soften the heat's armor penalty."
+      },
+      "gearVision": {
+        "name": "Sight enhancement",
+        "hint": "Cyberware that cancels darkness and obscurement penalties (Low Light/Infrared/UV)."
+      },
+      "migratedClt": {
+        "name": "Condition Lab imported",
+        "hint": ""
+      },
+      "Size": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large"
+      },
+      "Position": {
+        "bottom": "Bottom, above the hotbar",
+        "left": "Left side",
+        "top": "Top, under the carousel"
+      },
+      "NpcHealth": {
+        "hidden": "Nothing",
+        "wound": "Wound State",
+        "bar": "HP bar"
+      },
+      "HazardDamage": {
+        "card": "Card with an Apply button",
+        "auto": "Apply at once",
+        "off": "Off"
+      },
+      "ConditionChat": {
+        "off": "Off",
+        "gm": "Owners and GM",
+        "all": "Everyone"
+      },
+      "WeatherSource": {
+        "neonhub": "Neon Hub calendar",
+        "manual": "Manual",
+        "off": "Off"
+      },
+      "SceneWeather": {
+        "outdoor": "Outdoors",
+        "indoor": "Indoors"
+      },
+      "VisibilityFrom": {
+        "target": "The target's spot",
+        "self": "The character's own spot"
+      },
+      "Menu": {
+        "combat": {
+          "name": "Combat & Time",
+          "label": "Combat & Time",
+          "hint": "Round length, NPC health, Death Saves and condition damage."
+        },
+        "conditions": {
+          "name": "Neon Conditions",
+          "label": "Conditions",
+          "hint": "Token statuses, chat notices, Wound States, Critical Injuries and the Condition Lab & Triggler stand-in."
+        },
+        "environment": {
+          "name": "Weather & Visibility",
+          "label": "Weather & Visibility",
+          "hint": "Night City weather from Neon Hub, light and darkness, shelter and protective gear."
+        }
+      }
+    },
+    "SceneWeather": {
+      "Label": "Weather (Neon Combat Manager)",
+      "Hint": "Does Night City weather reach the characters here? Default follows the module setting.",
+      "default": "Default",
+      "outdoor": "Outdoors",
+      "indoor": "Indoors",
+      "off": "Off"
+    },
+    "Card": {
+      "Gains": "{name}: {condition}",
+      "Loses": "{name} is no longer {condition}",
+      "Page": "Core rulebook p.{page}",
+      "Healed": "{name} heals {amount} HP ({condition}).",
+      "DeathSaveKicker": "Mortally Wounded",
+      "DeathSave": "{name}: Death Save",
+      "DeathSaveBody": "Roll 1d10 + penalty under BODY {body} to hold on (penalty {penalty}; a 10 always fails).",
+      "RollDeathSave": "Roll Death Save",
+      "TookDamage": "{name} takes {amount} damage",
+      "DirectDamage": "Straight to HP; armor isn't touched.",
+      "Damage": "{name}: {amount} damage",
+      "ArmorDamage": "Armor applies: roll it through the character sheet or apply it by hand.",
+      "Apply": "Apply",
+      "WoreOffKicker": "Primary Effect over",
+      "WoreOff": "{name}: {condition} wears off",
+      "WoreOffBody": "Roll WILL + Resist Torture/Drugs against DV{dv}, or gain {addiction}.",
+      "Resist": "Resist (DV{dv})",
+      "AddCondition": "Add {condition}",
+      "CombatOverKicker": "Combat over",
+      "CombatOver": "{rounds} Rounds",
+      "CombatOverBody": "{elapsed} passed in the world. It's now {clock}."
+    },
+    "Reminder": {
+      "spinalInjury": "Spinal Injury: no Action this Turn. The Move Action is still there.",
+      "suppressed": "Suppressed: the Move Action (and Run, if needed) goes to getting into cover.",
+      "noMove": "{name} moved more than 4 m/yds last Turn: no Move Action this Turn.",
+      "reopened": "{condition} reopens (moved {metres} m/yds)"
+    },
+    "Hazard": {
+      "Kicker": "Weather hazard",
+      "Ablate": "Ablate {name}'s armor",
+      "Resist": "{name}: resist (DV{dv})",
+      "ForeignObject": "{name}: Foreign Object",
+      "acidRain": "A full minute in acid rain: worn armor of everyone out in it without protection ablates by 1.",
+      "bloodRainRoll": "Blood rain (1d6: {roll}).",
+      "bloodRainToxic": "It's toxic: Resist Torture/Drugs DV15 or take 3d6 straight to HP (an umbrella or waterproof lining gives +2).",
+      "ashStorm": "A minute in the ash: Resist Torture/Drugs DV13 or take 2d6 straight to HP and a Foreign Object (no bonus damage).",
+      "inversionSmog": "A minute in the smog: Resist Torture/Drugs DV13 or take 2d6 straight to HP.",
+      "dustStorm": "Five minutes in the dust: a Foreign Object (no bonus damage) for everyone without a mask or Nasal Filters.",
+      "deadlyThunderstorm": "Ten minutes of storm.",
+      "lightningFar": "Lightning strikes far away (1d6: {roll}).",
+      "lightningStrikes": "Lightning strikes close (1d6: {roll})! It hits the tallest structure, or the tallest character or the one holding a two-handed metal weapon: 6d6 and a flashbang."
+    },
+    "Carousel": {
+      "Collapse": "Collapse or expand",
+      "Round": "Round",
+      "ClockHint": "Time since the fight began ({seconds} s a Round) and the time of day",
+      "Indoors": "indoors",
+      "Next": "Next",
+      "Start": "Start",
+      "Tracker": "Combat tracker",
+      "EndTurn": "End Turn",
+      "DeathSave": "Mortally Wounded: Death Save penalty",
+      "Empty": "No combatants yet.",
+      "Unknown": "Unknown"
+    },
+    "Tracker": {
+      "Clock": "T+{elapsed} · {seconds} s/Round · {clock}"
+    },
+    "Party": {
+      "Title": "Crew",
+      "Configure": "Choose the crew",
+      "ConfigureHint": "Tick the characters in the crew bar. Leave all unticked for every character a player owns.",
+      "Collapse": "Collapse or expand",
+      "ArmorHead": "Head SP",
+      "ArmorBody": "Body SP",
+      "Luck": "LUCK",
+      "Humanity": "Humanity",
+      "Flatlined": "Flatlined",
+      "Dying": "Dying · DS +{penalty}",
+      "Unconscious": "Unconscious"
+    },
+    "Lab": {
+      "Title": "Condition Lab",
+      "Kicker": "Neon Conditions",
+      "Intro": "Every condition the tokens can carry and what it does in Cyberpunk RED's rolls. Edit them, switch them off, or add your own. Click an icon to toggle it on the selected tokens.",
+      "New": "New condition",
+      "Export": "Export",
+      "Import": "Import",
+      "ImportClt": "Import from Condition Lab & Triggler",
+      "CltActive": "Condition Lab & Triggler is running too. It replaces the token statuses when it loads; turn it off once you've imported its conditions.",
+      "Shim": "Standing in for Condition Lab & Triggler: macros and modules calling game.clt use these conditions.",
+      "Search": "Search",
+      "ApplyHint": "Toggle on the selected tokens",
+      "Edited": "edited",
+      "Custom": "custom",
+      "FromModule": "module",
+      "Enable": "Turn on",
+      "Disable": "Turn off",
+      "Edit": "Edit",
+      "Reset": "Back to the original",
+      "Delete": "Delete",
+      "DeleteConfirm": "Delete {name}?",
+      "None": "No conditions match.",
+      "All": "All",
+      "SelectTokens": "Select one or more tokens first.",
+      "BadFile": "That file isn't valid JSON.",
+      "CltImported": "Condition Lab & Triggler: {matched} matched, {added} added as custom conditions, {effects} effects moved over.",
+      "Imported": "Conditions imported.",
+      "TurnStartDamage": "{damage} at Turn start",
+      "TurnEndDamage": "{damage} at Turn end",
+      "MoveDamage": "{damage} if moved over 4 m/yds",
+      "CriticalItem": "adds CPR's Critical Injury",
+      "WoundMirror": "follows CPR's Wound State",
+      "EditTitle": "Condition: {name}",
+      "NewTitle": "New condition",
+      "PickImg": "Choose an icon",
+      "Field": {
+        "name": "Name",
+        "img": "Icon",
+        "category": "Category",
+        "hint": "What it does",
+        "sight": "Sight penalty",
+        "duration": "Duration (seconds)",
+        "group": "Exclusive group",
+        "turnStart": "Damage at Turn start",
+        "turnEnd": "Damage at Turn end",
+        "hud": "In the token HUD",
+        "overlay": "Large over the token",
+        "defeated": "Marks defeated"
+      },
+      "Changes": "Modifiers",
+      "ChangesHint": "Cyberpunk RED roll keys (bonuses.allActions, bonuses.ranged, system.stats.move.value...). Situational ones show as toggles in the roll dialog.",
+      "Situational": "Situational",
+      "OnByDefault": "Ticked",
+      "AddChange": "Add modifier",
+      "Behaviour": "Behaviour",
+      "NeedName": "Give it a name.",
+      "Exists": "There's already a condition called {name}."
+    },
+    "Triggers": {
+      "Title": "Triggler",
+      "Intro": "Rules that add or remove a condition when an actor's data passes a test, like HP at or below 0. Data paths are Cyberpunk RED's (system.derivedStats.hp.value, system.stats.luck.value...). Undo removes it again when the test stops passing.",
+      "Col": {
+        "enabled": "On",
+        "label": "Name",
+        "path": "Data path",
+        "test": "Test",
+        "then": "Then",
+        "types": "Actor types",
+        "revert": "Undo"
+      },
+      "Op": {
+        "lt": "<",
+        "lte": "≤",
+        "eq": "=",
+        "ne": "≠",
+        "gte": "≥",
+        "gt": ">"
+      },
+      "Action": {
+        "add": "add",
+        "remove": "remove"
+      },
+      "None": "No triggers yet.",
+      "Add": "Add trigger",
+      "Saved": "Triggers saved."
+    },
+    "Environment": {
+      "Title": "Environment",
+      "Now": "Weather now",
+      "Calendar": "Neon Hub calendar",
+      "NoCalendar": "Neon Hub has no calendar this user can see.",
+      "NoHub": "Neon Hub isn't running: pick the weather by hand.",
+      "Manual": "Manual weather",
+      "Sky": "Sky",
+      "Strange": "Strange weather",
+      "Temperature": "Temperature",
+      "NoStrange": "None",
+      "Characters": "In the encounter",
+      "SceneLight": "Darkness {darkness}%",
+      "Global": "global light",
+      "Refresh": "Refresh",
+      "Outdoors": "Outdoors",
+      "Sheltered": "Sheltered",
+      "SightHint": "Sight penalty from light and weather",
+      "VisionHint": "Low Light/Infrared/UV cybereyes cancel it",
+      "NoOne": "No one in an encounter on this scene.",
+      "Level": {
+        "bright": "Lit",
+        "dim": "Low light",
+        "dark": "Dark"
+      }
+    }
+  }
+}

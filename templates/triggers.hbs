@@ -1,0 +1,43 @@
+<section class="ncm-triggers-wrap">
+  <p class="ncm-hint">{{localize "NEONCOMBAT.Triggers.Intro"}}</p>
+  <table class="ncm-table">
+    <thead>
+      <tr>
+        <th>{{localize "NEONCOMBAT.Triggers.Col.enabled"}}</th>
+        <th>{{localize "NEONCOMBAT.Triggers.Col.label"}}</th>
+        <th>{{localize "NEONCOMBAT.Triggers.Col.path"}}</th>
+        <th>{{localize "NEONCOMBAT.Triggers.Col.test"}}</th>
+        <th>{{localize "NEONCOMBAT.Triggers.Col.then"}}</th>
+        <th>{{localize "NEONCOMBAT.Triggers.Col.types"}}</th>
+        <th>{{localize "NEONCOMBAT.Triggers.Col.revert"}}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each rows}}
+      <tr data-trigger data-index="{{index}}" data-id="{{id}}">
+        <td><input type="checkbox" name="enabled" {{#unless disabled}}checked{{/unless}}></td>
+        <td><input type="text" name="label" value="{{label}}"></td>
+        <td><input type="text" name="path" value="{{path}}"></td>
+        <td class="ncm-test">
+          <select name="op">{{#each ops}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+          <input type="text" name="value" value="{{value}}">
+        </td>
+        <td class="ncm-test">
+          <select name="action">{{#each actions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+          <select name="condition">{{#each conditions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+        </td>
+        <td><input type="text" name="types" value="{{types}}" placeholder="character, mook"></td>
+        <td><input type="checkbox" name="revert" {{#if revert}}checked{{/if}}></td>
+        <td><button type="button" class="is-danger" data-action="removeTrigger"><i class="fa-solid fa-xmark"></i></button></td>
+      </tr>
+      {{else}}
+      <tr><td colspan="8" class="ncm-empty">{{localize "NEONCOMBAT.Triggers.None"}}</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+  <footer class="ncm-foot">
+    <button type="button" data-action="addTrigger"><i class="fa-solid fa-plus"></i> {{localize "NEONCOMBAT.Triggers.Add"}}</button>
+    <button type="button" class="ncm-cta" data-action="saveTriggers"><i class="fa-solid fa-floppy-disk"></i> {{localize "NEONCOMBAT.Common.Save"}}</button>
+  </footer>
+</section>
