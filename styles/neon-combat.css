@@ -255,7 +255,7 @@
   font-family: "Signika", sans-serif;
 }
 #ncm-party.pos-bottom { align-self: center; margin: 0 auto 6px; max-width: calc(100vw - 340px); }
-#ncm-party.pos-top { margin: 6px auto 0; width: fit-content; max-width: calc(100% - 16px); }
+#ncm-party.pos-top { position: fixed; top: var(--ncm-top, 4px); left: var(--ncm-center, 50%); transform: translateX(-50%); width: max-content; max-width: var(--ncm-room, calc(100vw - 340px)); }
 #ncm-party.pos-left { position: fixed; left: 64px; top: 50%; transform: translateY(-50%); max-height: 80vh; }
 #ncm-party .ncm-party-head {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -264,6 +264,12 @@
   clip-path: var(--ncm-notch-sm);
 }
 #ncm-party .ncm-party-tools { display: flex; gap: 2px; }
+#ncm-party .ncm-party-empty {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px; max-width: 420px;
+  background: rgba(7, 7, 11, 0.92); border: 1px dashed var(--ncm-line-2); clip-path: var(--ncm-notch-card);
+}
+#ncm-party .ncm-party-empty p { font-size: 12px; color: var(--ncm-dim); }
+#ncm-party .ncm-party-empty button { flex: 0 0 auto; }
 #ncm-party .ncm-party-tools button { padding: 1px 5px; background: transparent; border-color: transparent; color: var(--ncm-dim); clip-path: none; }
 #ncm-party .ncm-party-list { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--ncm-line-2) transparent; }
 #ncm-party.pos-left .ncm-party-list { flex-direction: column; overflow-y: auto; overflow-x: hidden; }

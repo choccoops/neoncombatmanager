@@ -4,6 +4,7 @@ import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
+import { Carousel } from "../combat/carousel.js";
 import { debounce, L, esc } from "../util.js";
 
 const WOUND_TONE = { notWounded: "ok", lightlyWounded: "light", seriouslyWounded: "serious", mortallyWounded: "mortal" };
@@ -24,6 +25,9 @@ export const PartyBar = {
       "updateUser", `${MODULE_ID}.refreshUI`]) {
       Hooks.on(h, () => soon());
     }
+    // In the top position it sits under the carousel, so it moves when the carousel does.
+    Hooks.on(`${MODULE_ID}.carouselPlaced`, () => this.place());
+    window.addEventListener("resize", debounce(() => this.place(), 100));
   },
 
   /** The crew: the GM's list, or every character a player owns. */
@@ -36,7 +40,8 @@ export const PartyBar = {
   async render() {
     if (!Settings.get("partyEnabled")) return this.remove();
     const members = this.members();
-    if (!members.length) return this.remove();
+    // With no crew yet the GM still gets the bar, to pick one; players see nothing.
+    if (!members.length && !game.user.isGM) return this.remove();
     const data = this.context(members);
     const html = await Compat.renderTemplate(`${TEMPLATE_PATH}/party-bar.hbs`, data);
     if (!this.el) {
@@ -46,14 +51,25 @@ export const PartyBar = {
       this.el.addEventListener("dblclick", (ev) => this._onDblClick(ev));
     }
     const pos = Settings.get("partyPosition");
-    const parent = pos === "bottom" ? Compat.uiBottom : pos === "top" ? Compat.uiTop : document.body;
+    // Bottom flows above the hotbar; left and top are fixed to the window.
+    const parent = pos === "bottom" ? Compat.uiBottom : document.body;
     if (this.el.parentElement !== parent) {
       if (pos === "bottom") parent.prepend(this.el);
-      else if (pos === "top") parent.append(this.el);
       else parent.append(this.el);
     }
-    this.el.className = `neon-combat ncm-party pos-${pos}${data.collapsed ? " is-collapsed" : ""}`;
+    this.el.className = `neon-combat ncm-party pos-${pos}${data.collapsed ? " is-collapsed" : ""}${data.empty ? " is-empty" : ""}`;
     this.el.innerHTML = html;
+    this.place();
+  },
+
+  /** Top position: centred over the play area, under the carousel when it's up (else where it would be). */
+  place() {
+    if (!this.el || Settings.get("partyPosition") !== "top") return;
+    const area = Carousel.area();
+    const below = Carousel.bottom;
+    this.el.style.setProperty("--ncm-top", `${below === null ? area.top : below + 6}px`);
+    this.el.style.setProperty("--ncm-center", `${area.center}px`);
+    this.el.style.setProperty("--ncm-room", `${area.room}px`);
   },
 
   remove() {
@@ -67,6 +83,7 @@ export const PartyBar = {
     return {
       gm: game.user.isGM,
       collapsed: !!Settings.get("partyCollapsed"),
+      empty: !members.length,
       members: members.map((actor) => this.member(actor, turnActor))
     };
   },

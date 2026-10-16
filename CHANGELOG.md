@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.3
+
+- **Crew bar for the GM with no crew yet**: when no characters are picked and no player owns a
+  character, the GM now sees the crew bar with a note and a **Choose the crew** button (players
+  still see nothing). Before, the bar stayed hidden, and so did the button to set it up.
+- **Crew bar at the top** now sits just under the combat carousel (or where the carousel would
+  be, out of combat), centred over the play area, and moves with it, instead of overlapping it.
+
 ## 1.0.2
 
 - **Carousel position**: the carousel now sits at the very top of the play area, centred
