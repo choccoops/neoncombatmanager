@@ -1,0 +1,65 @@
+<section class="ncm-biomon-wrap">
+  {{#each links}}
+  <div class="ncm-bm-link" data-link-id="{{id}}">
+    <header class="ncm-bm-head">
+      <span class="ncm-kicker">// {{localize "NEONCOMBAT.Biomon.Link"}}</span>
+      <b>{{name}}</b>
+      <span class="ncm-bm-tools">
+        {{#if canCall}}<button type="button" data-action="callLink" data-tooltip="NEONCOMBAT.Biomon.CallLink"><i class="fa-solid fa-phone-volume"></i></button>{{/if}}
+        {{#if ../gm}}
+        <button type="button" data-action="renameLink" data-tooltip="NEONCOMBAT.Biomon.Rename"><i class="fa-solid fa-pen"></i></button>
+        <button type="button" class="is-danger" data-action="removeLink" data-tooltip="NEONCOMBAT.Biomon.Remove"><i class="fa-solid fa-link-slash"></i></button>
+        {{/if}}
+      </span>
+    </header>
+    <ol class="ncm-bm-list">
+      {{#each members}}
+      <li class="ncm-bm-row st-{{state}}" data-actor-id="{{id}}" style="--beat: {{beat}}">
+        <button type="button" class="ncm-bm-face" data-action="focusMember" data-tooltip="{{name}}"><img src="{{img}}" alt=""></button>
+        <div class="ncm-bm-main">
+          <div class="ncm-bm-top">
+            <b>{{name}}</b>
+            {{#if implant}}<span class="ncm-bm-chip" data-tooltip="{{implantHint}}"><i class="fa-solid fa-microchip"></i></span>{{/if}}
+            <span class="ncm-bm-state"{{#unless signal}} data-tooltip="NEONCOMBAT.Biomon.NoSignalHint"{{/unless}}>{{label}}{{#if deathSave}} · DS +{{deathSave}}{{/if}}</span>
+          </div>
+          <div class="ncm-bm-trace">
+            <svg viewBox="0 0 120 32" preserveAspectRatio="none" aria-hidden="true"><path class="ncm-bm-grid" d="M0 8H120M0 16H120M0 24H120"/><path class="ncm-bm-ecg" d="{{ecg}}"/></svg>
+            <span class="ncm-bm-bpm">{{#if bpm}}{{bpm}}<small>BPM</small>{{else}}---{{/if}}</span>
+          </div>
+          <div class="ncm-bm-hp" style="--pct: {{pct}}%"><span class="ncm-bm-hp-fill"></span><span class="ncm-bm-hp-text">{{#if signal}}HP {{hp}}<small>/{{max}}</small>{{else}}HP --{{/if}}</span></div>
+          {{#if icons.length}}
+          <ul class="ncm-fx">{{#each icons}}<li class="cat-{{category}}"><img src="{{img}}" alt="{{name}}" data-tooltip="{{name}}"></li>{{/each}}</ul>
+          {{/if}}
+        </div>
+        <div class="ncm-bm-side">
+          {{#if fullBiomon}}<button type="button" data-action="fullBiomon" data-tooltip="NEONCOMBAT.Biomon.Full"><i class="fa-solid fa-wave-square"></i></button>{{/if}}
+          {{#if mine}}<button type="button" class="is-danger" data-action="leaveLink" data-tooltip="NEONCOMBAT.Biomon.Leave"><i class="fa-solid fa-link-slash"></i></button>{{/if}}
+        </div>
+      </li>
+      {{/each}}
+    </ol>
+  </div>
+  {{else}}
+  <p class="ncm-empty">{{localize "NEONCOMBAT.Biomon.NoLinks"}}</p>
+  {{/each}}
+
+  {{#if unlinked.length}}
+  <div class="ncm-bm-join" data-join>
+    <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Biomon.JoinTitle"}}</h4>
+    <p class="ncm-hint">{{localize "NEONCOMBAT.Biomon.JoinHint"}}{{#if needsImplant}} {{localize "NEONCOMBAT.Biomon.ImplantNeeded"}}{{/if}}</p>
+    <div class="ncm-bm-join-row">
+      <select name="actor">{{#each unlinked}}<option value="{{id}}" {{#unless ok}}disabled{{/unless}}>{{name}}{{#unless ok}} ({{localize "NEONCOMBAT.Biomon.NoImplant"}}){{/unless}}</option>{{/each}}</select>
+      {{#if canLink}}{{#if joinable.length}}
+      <select name="link">{{#each joinable}}<option value="{{id}}">{{name}}</option>{{/each}}</select>
+      <button type="button" class="ncm-cta" data-action="joinLink"><i class="fa-solid fa-link"></i> {{localize "NEONCOMBAT.Biomon.Join"}}</button>
+      {{/if}}{{/if}}
+    </div>
+    {{#if canLink}}
+    <div class="ncm-bm-join-row">
+      <input type="text" name="name" placeholder="{{localize 'NEONCOMBAT.Biomon.DefaultName'}}">
+      <button type="button" data-action="createLink"><i class="fa-solid fa-plus"></i> {{localize "NEONCOMBAT.Biomon.Create"}}</button>
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+</section>

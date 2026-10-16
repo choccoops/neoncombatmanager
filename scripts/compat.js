@@ -189,6 +189,22 @@ export const Compat = {
     return document.getElementById("ui-bottom") ?? document.body;
   },
 
+  /**
+   * Add buttons to the token controls. v12 hands getSceneControlButtons an array of controls
+   * with tool arrays and onClick; v13 an object of controls ("tokens") with tool objects and onChange.
+   * @param {object[]|object} controls
+   * @param {object[]} tools - { name, title, icon, onClick, visible? }
+   */
+  addSceneTools(controls, tools) {
+    const token = Array.isArray(controls) ? controls.find((c) => c.name === "token") : controls?.tokens ?? controls?.token;
+    if (!token) return;
+    tools.forEach((t, i) => {
+      const tool = { name: t.name, title: t.title, icon: t.icon, button: true, visible: t.visible ?? true, order: 100 + i, onClick: () => t.onClick(), onChange: () => t.onClick() };
+      if (Array.isArray(token.tools)) token.tools.push(tool);
+      else if (token.tools) token.tools[t.name] = tool;
+    });
+  },
+
   /** Open a document's sheet. */
   openSheet(doc) {
     doc?.sheet?.render(true);

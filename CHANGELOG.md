@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.1.0
+
+- **Biomon Link** (replaces the crew status bar): players link their characters' Biomonitors
+  as a group. A small popout shows each linked character's vitals: an animated ECG paced by
+  their state, BPM, HP, STABLE to FLATLINE with the Death Save penalty, Critical Injuries and
+  hazards. Link members get an alarm when someone goes critical, drops or flatlines. Neon At
+  Home's full Biomonitor opens from a readout.
+- **Linking needs an implant**: a Biomonitor (Cyberpunk RED cyberware) or an *Edgerunners Mission
+  Kit* Neuroport (or Neuroport (Free)) installed. A linked character whose implant comes out
+  reads NO SIGNAL. The GM can turn the rule off or change the accepted implants.
+- **Holocalls**: ring the crew, a whole Biomon Link, your Night City Messenger contacts, or (GM)
+  any NPC or messenger directory contact, wherever they are. Incoming-call prompt with Accept /
+  Decline; holo tiles, a call timer, and the conversation in holo blue, in the call window and
+  the chat log, whispered to the people on the call. The GM answers and speaks for NPCs. Add
+  people mid-call, hang up, or (GM) end it.
+- A Neuroport's Holophone counts as something to call with, when holocalls need an Agent.
+- **Night City Messenger integration**: contacts and portraits from its address books and
+  directory; its dead zones have no signal; missed calls land in the messenger inbox.
+- Token-control buttons and (unassigned) keybindings open the Biomon Link and the dialer.
+- **Removed**: the crew status bar and its settings.
+
 ## 1.0.3
 
 - **Crew bar for the GM with no crew yet**: when no characters are picked and no player owns a

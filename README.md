@@ -6,8 +6,11 @@ encounter screen and makes the fight's conditions, clock, weather and lighting c
 Cyberpunk RED's own rolls.
 
 - **Combat carousel**: the Initiative Queue as neon cards across the top of the screen.
-- **Crew status bar**: an RPG-style party HUD with every player character's HP, armor, LUCK,
-  Wound State and conditions, and who's dying, out cold or flatlined.
+- **Biomon Link**: players link their characters' Biomonitors as a group; a small popout shows
+  everyone's vitals (ECG, HP, status, Death Save penalty, injuries) and raises the alarm when
+  someone crashes.
+- **Holocalls**: ring the crew, a Biomon Link or an NPC anywhere in Night City and talk in
+  holo blue, with Night City Messenger contacts, dead zones and missed calls.
 - **Neon Conditions**: the full Cyberpunk RED condition set, wired into the system's roll
   modifiers, with a Condition Lab, a Triggler and a drop-in stand-in for Condition Lab &
   Triggler (which stopped at Foundry v12).
@@ -31,6 +34,7 @@ https://github.com/choccoops/neoncombatmanager/releases/latest/download/module.j
 
 Requires the Cyberpunk RED - CORE system (0.92+). Works best with
 [Neon Hub](https://github.com/choccoops/neonredlanding) (weather and clock),
+Night City Messenger (contacts to holocall),
 [SmallTime](https://github.com/unsoluble/smalltime) (darkness that follows the clock) and
 DF Active Lights. Nothing else is required.
 
@@ -54,15 +58,53 @@ While a combat is on, the Initiative Queue runs across the top of the screen:
 
 Foundry's own sidebar tracker gets each combatant's Wound State and the combat clock too.
 
-## The crew status bar
+## Biomon Link
 
-Every player character (or the crew the GM picks with the gear button) in a bar above the
-hotbar, on the left or at the top (per-user setting):
+Cyberpunk RED's Biomonitor is an implant "showing vitals readouts" that "can be linked to your
+Agent". A Biomon Link is that, for a group: players choose to link their own characters (it's
+their vitals), and everyone on the link sees everyone's readout.
 
-- Portrait, name and top Role, an HP bar with the Seriously Wounded mark, head and body SP,
-  LUCK and Humanity, and their conditions.
-- **Dying · DS +n** when Mortally Wounded, **Unconscious**, or **Flatlined**, over the portrait.
-- The character whose Turn it is glows. Click to select the token, double-click for the sheet.
+- Open it from the **heart-pulse button** in the token controls (or a keybinding you set in
+  Configure Controls). A player whose character isn't linked yet picks a link to join or starts
+  one ("Crew"); a character is on one link at a time, and **Unlink** takes them off.
+- **A character needs a Biomonitor or a Neuroport installed to link**: Cyberpunk RED's
+  Biomonitor cyberware, or the *Edgerunners Mission Kit* Neuroport (either version, "Neuroport"
+  or "Neuroport (Free)"), whose built-in Biomonitor does the broadcasting. Characters without one
+  show in the link-up list but can't be picked. If a linked character's implant comes out, their
+  readout shows **NO SIGNAL** until it's back. The GM can switch the rule off or change which
+  implants count (settings).
+- Each readout: portrait, an animated **ECG trace** whose pace follows the character's state,
+  BPM, HP, the status (STABLE, MINOR / SERIOUS TRAUMA, CRITICAL with the Death Save penalty,
+  UNRESPONSIVE, FLATLINE), a chip naming the implant broadcasting it, and their Critical
+  Injuries and hazards as icons. Click a readout to look at the token; with Neon At Home, the
+  wave button opens that character's full Biomonitor.
+- **Alarms**: when someone on your link goes critical, drops unconscious or flatlines, you get a
+  notice (or the Biomon pops open, or nothing: a per-user setting).
+- The phone button on a link holocalls everyone else on it.
+- The GM sees every link and can rename or break one.
+
+## Holocalls
+
+Talk to the crew, or to someone who isn't in the scene, the way calls look in *Edgerunners* and
+2077: blue holo portraits, and the conversation in blue.
+
+- Open the dialer from the **phone button** in the token controls (or a keybinding). Pick who
+  you're calling as, then who to ring: the crew (with who's online), a whole Biomon Link, your
+  character's **Night City Messenger contacts** (with trust pips; burned contacts can't be
+  reached), and for the GM every NPC and the messenger's directory, as anyone.
+- The people called get an **incoming holocall** with Accept and Decline. Players answer for
+  their own characters; the GM answers for NPCs, messenger contacts, and characters whose
+  players are away (so you can call an NPC anywhere in Night City and the GM picks up as them).
+- On the call: holo tiles for everyone (ringing, on the line, declined, no answer...), a call
+  timer, the conversation, and a line to talk on (Enter sends; the GM picks which NPC is
+  speaking). **Add** rings more people into the call; **Hang up** leaves it; the GM can end it.
+- Messages are chat messages **whispered to the people on the call** (and the GM), shown in holo
+  blue in the call window and in the chat log.
+- **Night City Messenger**: its dead-zone scenes have no signal (you can't call out, and calls
+  there go unanswered); a call that rings out leaves a **missed holocall** in the character's
+  messenger inbox (setting).
+- Settings: ring time; whether characters need something to call with: an Agent (carried), an
+  Internal Agent, or a Neuroport (its Holophone).
 
 ## Neon Conditions
 
@@ -209,7 +251,7 @@ See [docs/API.md](docs/API.md).
 npm ci
 npm test          # rules, conditions engine, CLT import, Turn automation, templates
 npm run check     # scripts parse, JSON and localization complete, icons exist, v13 guard
-npm run preview   # renders the carousel, crew bar, Lab and cards to preview/index.html
+npm run preview   # renders the carousel, Biomon, holocalls, Lab and cards to preview/index.html
 ```
 
 Nothing here reproduces the Cyberpunk RED rulebooks' text: names and summaries are this

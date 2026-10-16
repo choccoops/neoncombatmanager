@@ -135,8 +135,39 @@ SmallTime and Neon Hub all move world time.
 
 Hook: `cpr-neon-combat-manager.environmentChanged` (state), on the GM's client.
 
+### Night City Messenger
+
+Holocalls read the messenger's stable `api` (apiVersion 1.x): `contacts.getContacts(actorId)`,
+`masterContacts.getAll()`, `portraits.resolvePortrait(contact)` and `messenger.sendMessage` for
+missed calls, plus the `deadZone` flag it sets on scenes. Nothing is required of it.
+
 ### Neon Hub
 
 The module reads Neon Hub's public API: `listCalendars()`, `weather(calendarId)` and `time()`,
 and listens to `cpr-neon-hub.weatherChanged` and `cpr-neon-hub.calendarChanged`. Combat moves
 world time, which Neon Hub's Clock already follows. Nothing has to change in Neon Hub.
+
+## Biomon Link: `ncm.biomon`
+
+| | |
+| --- | --- |
+| `open()` | the Biomon Link window |
+| `links()` | every link: `{ id, name, members: [actorId] }` |
+| `linkOf(actor)` | the link a character is in, or null |
+| `vitals(actor)` | `{ state, bpm, pct, hp, max, deathSave, alerts, criticals, implant, signal }`; state is stable, light, serious, down, critical, flatline, or nosignal (no Biomonitor or Neuroport installed while the rule is on: no readings) |
+| `create(name, actor)` / `join(linkId, actor)` / `leave(actor)` | link a character you own (through the GM) |
+
+Hook: `cpr-neon-combat-manager.linksChanged` when links change.
+
+## Holocalls: `ncm.holocall`
+
+| | |
+| --- | --- |
+| `open()` | the dialer |
+| `calls()` | live calls: `{ id, status, callerId, participants: [{ id, name, img, actorId, contactId, state }] }` |
+| `place(from, targets)` | ring people. `from`: `{ actorId }` (a character you own; the GM can use any actor, or a Night City Messenger directory contact `{ contactId, source: "directory", name, img }`). `targets`: `{ actorId }` or contacts. Resolves to the call id |
+| `say(callId, participantId, text)` | talk on a call as one of its participants |
+| `hangUp(callId)` / `end(callId)` | leave a call / (GM) end it for everyone |
+
+Hook: `cpr-neon-combat-manager.callsChanged` when any call changes. Holocall chat messages carry
+`flags["cpr-neon-combat-manager"].holocall` (the call id).

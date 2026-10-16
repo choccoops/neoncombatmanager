@@ -1,0 +1,11 @@
+<section class="ncm-ring">
+  <div class="ncm-ring-face"><img src="{{caller.img}}" alt=""></div>
+  <span class="ncm-kicker">// {{localize "NEONCOMBAT.Holocall.Incoming"}}</span>
+  <b class="ncm-ring-name">{{caller.name}}</b>
+  {{#if forName}}<p class="ncm-hint">{{localize "NEONCOMBAT.Holocall.For" name=forName}}</p>{{/if}}
+  {{#if others}}<p class="ncm-hint">{{localize "NEONCOMBAT.Holocall.With" names=others}}</p>{{/if}}
+  <footer class="ncm-ring-buttons">
+    <button type="button" class="ncm-ring-accept" data-action="acceptCall"><i class="fa-solid fa-phone"></i> {{localize "NEONCOMBAT.Holocall.Accept"}}</button>
+    <button type="button" class="is-danger" data-action="declineCall"><i class="fa-solid fa-phone-slash"></i> {{localize "NEONCOMBAT.Holocall.Decline"}}</button>
+  </footer>
+</section>
