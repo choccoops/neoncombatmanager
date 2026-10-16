@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.2
+
+- **Carousel position**: the carousel now sits at the very top of the play area, centred
+  between the scene controls and the sidebar, instead of below whatever else is in the top bar
+  (scene tabs, a hub scene's hidden navigation). A new per-user setting puts it just under the
+  scene tabs instead.
+- **Clock format**: the time of day on the carousel, in the combat tracker and on the
+  end-of-combat card follows SmallTime's 12/24-hour setting, the same as Neon Hub's calendar
+  ("7:00 PM" or "19:00"). Without SmallTime it's a 12-hour clock, as in Neon Hub.
+
 ## 1.0.1
 
 - **Condition Lab**: saving a condition whose modifier isn't a plain number no longer turns it

@@ -474,6 +474,10 @@
         "name": "Carousel size",
         "hint": "How big the combatant cards are."
       },
+      "carouselPlacement": {
+        "name": "Carousel position",
+        "hint": "At the very top of the play area (over the scene tabs), or just under the scene tabs."
+      },
       "carouselCollapsed": {
         "name": "Carousel collapsed",
         "hint": ""
@@ -700,6 +704,10 @@
           "label": "Weather & Visibility",
           "hint": "Night City weather from Neon Hub, light and darkness, shelter and protective gear."
         }
+      },
+      "Placement": {
+        "top": "Top of the screen",
+        "belowNav": "Under the scene tabs"
       }
     },
     "SceneWeather": {

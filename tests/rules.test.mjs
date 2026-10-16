@@ -129,6 +129,10 @@ test("time formatting", () => {
   assert.equal(formatElapsed(3725), "1:02:05");
   assert.equal(clockTime(0), "00:00");
   assert.equal(clockTime(86400 + 3600 * 22 + 60 * 14), "22:14");
+  assert.equal(clockTime(3600 * 19, true), "7:00 PM", "Neon Hub's 12-hour clock");
+  assert.equal(clockTime(0, true), "12:00 AM");
+  assert.equal(clockTime(3600 * 12 + 300, true), "12:05 PM");
+  assert.equal(clockTime(3600 * 9 + 60 * 7, true), "9:07 AM");
   assert.equal(shortDuration(60), "1 min");
   assert.equal(shortDuration(14400), "4 h");
   assert.equal(shortDuration(86400 * 7), "7 d");
