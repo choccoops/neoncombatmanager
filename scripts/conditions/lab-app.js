@@ -6,6 +6,7 @@ import { Conditions } from "./engine.js";
 import { CATEGORIES } from "./data.js";
 import { CLT, fromClt } from "./clt.js";
 import { OPS } from "./triggers.js";
+import { ADD } from "./cpr-flags.js";
 import { L, esc, shortDuration, slug } from "../util.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -24,10 +25,39 @@ export function keyLabel(key) {
   return bonus.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
 }
 
+/** Foundry's name for a change mode other than ADD ("Custom", "Override"...), or "" for ADD. */
+export function modeLabel(mode) {
+  const m = mode ?? ADD;
+  if (m === ADD) return "";
+  const name = Object.entries(CONST.ACTIVE_EFFECT_MODES ?? {}).find(([, v]) => v === m)?.[0] ?? String(m);
+  return name.charAt(0) + name.slice(1).toLowerCase();
+}
+
+/**
+ * A change as the editor's row holds it. Changes from other modules can be CUSTOM (resolved by
+ * their own hook, like Neon At Home's encumbrance) with a text value and a priority: those come
+ * back exactly as they were, not as a number.
+ * @param {Function} field - name => the row's input element
+ */
+export function changeFromRow(field) {
+  const text = (n) => String(field(n)?.value ?? "").trim();
+  const modeText = text("mode");
+  const mode = modeText === "" || !Number.isFinite(Number(modeText)) ? ADD : Number(modeText);
+  const raw = text("value");
+  const number = Number(raw);
+  let value = raw !== "" && Number.isFinite(number) ? number : raw;
+  if (value === "" && mode === ADD) value = 0;
+  const priorityText = text("priority");
+  const change = { key: text("key"), value, mode, situational: !!field("situational")?.checked, onByDefault: !!field("onByDefault")?.checked };
+  if (priorityText !== "" && Number.isFinite(Number(priorityText))) change.priority = Number(priorityText);
+  return change;
+}
+
 /** A condition's mechanics in a line: "-2 All Actions · -4 MOVE · 1 min". */
 export function summary(c) {
   const parts = (c.rawChanges ?? []).map((ch) => {
     const v = Number(ch.value);
+    if ((ch.mode ?? ADD) !== ADD || !Number.isFinite(v)) return `${keyLabel(ch.key)}: ${ch.value}${(ch.mode ?? ADD) !== ADD ? ` (${modeLabel(ch.mode)})` : ""}`;
     return `${v > 0 ? "+" : ""}${v} ${keyLabel(ch.key)}${ch.situational ? "*" : ""}`;
   });
   if (c.duration) parts.push(shortDuration(c.duration));
@@ -313,7 +343,7 @@ export class ConditionEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       ...this._draft,
       builtIn: !custom,
       categories: [...CATEGORIES, "custom"].map((cat) => ({ value: cat, label: L(`${LANG}.Category.${cat}`), selected: cat === this._draft.category })),
-      changes: this._draft.changes.map((ch, i) => ({ ...ch, index: i, label: keyLabel(ch.key) })),
+      changes: this._draft.changes.map((ch, i) => ({ ...ch, index: i, label: keyLabel(ch.key), priority: ch.priority ?? "", modeLabel: modeLabel(ch.mode) })),
       keys: [...new Set([...keys, ...fallbackKeys])].sort()
     };
   }
@@ -335,12 +365,7 @@ export class ConditionEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     d.group = val("group")?.value?.trim() ?? "";
     d.turnStart = val("turnStart")?.value?.trim() ?? "";
     d.turnEnd = val("turnEnd")?.value?.trim() ?? "";
-    d.changes = [...f.querySelectorAll("[data-change]")].map((row) => ({
-      key: row.querySelector("[name=key]").value.trim(),
-      value: Number(row.querySelector("[name=value]").value) || 0,
-      situational: row.querySelector("[name=situational]").checked,
-      onByDefault: row.querySelector("[name=onByDefault]").checked
-    })).filter((ch) => ch.key);
+    d.changes = [...f.querySelectorAll("[data-change]")].map((row) => changeFromRow((n) => row.querySelector(`[name=${n}]`))).filter((ch) => ch.key);
   }
 
   static #onAddChange() {
