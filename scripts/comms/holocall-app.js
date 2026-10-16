@@ -2,6 +2,7 @@ import { MODULE_ID, TEMPLATE_PATH, LANG } from "../constants.js";
 import { Calls } from "./calls.js";
 import { Links } from "./links.js";
 import { Messenger } from "./messenger.js";
+import { Comms } from "./comms.js";
 import { L } from "../util.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -33,7 +34,8 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
       sendHolo: HolocallApp.#onSend,
       hangUp: HolocallApp.#onHangUp,
       endCall: HolocallApp.#onEnd,
-      inviteMore: HolocallApp.#onInvite
+      inviteMore: HolocallApp.#onInvite,
+      routeChat: HolocallApp.#onRoute
     }
   };
 
@@ -244,6 +246,11 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
     });
     const feed = el.querySelector(".ncm-holo-feed");
     if (feed) feed.scrollTop = feed.scrollHeight;
+    // The speaker picked here is who /holo and talking from chat speak as.
+    el.querySelector("[name=as]")?.addEventListener("change", (ev) => {
+      this._as = ev.target.value;
+      Calls.remember(this.callId, this._as);
+    });
     clearInterval(this._tick);
     const timer = el.querySelector(".ncm-holo-timer");
     const call = Calls.get(this.callId);
@@ -297,7 +304,7 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const voices = call.participants.filter((p) => p.state === "joined" && Calls.speaksFor(p));
     // The GM speaks for NPCs first.
     voices.sort((a, b) => Number(Calls._gmOnly(b)) - Number(Calls._gmOnly(a)));
-    if (!this._as || !voices.some((p) => p.id === this._as)) this._as = voices[0]?.id ?? null;
+    if (!this._as || !voices.some((p) => p.id === this._as)) this._as = Calls.voice(call)?.id ?? voices[0]?.id ?? null;
     return {
       dialer: false,
       gm: game.user.isGM,
@@ -317,6 +324,7 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
         time: new Date(m.timestamp ?? Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       })),
       voices: voices.map((p) => ({ value: p.id, label: p.name, selected: p.id === this._as })),
+      routing: Comms.routing === call.id,
       canTalk: voices.length > 0 && call.status !== "ended"
     };
   }
@@ -326,6 +334,8 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const as = this.element.querySelector("[name=as]")?.value ?? this._as;
     if (!text?.value.trim()) return;
     this._as = as;
+    // /holo and talking from chat speak as whoever spoke here last.
+    Calls.remember(this.callId, as);
     const value = text.value;
     text.value = "";
     try {
@@ -342,6 +352,11 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   static async #onEnd() {
     await Calls.end(this.callId).catch((err) => ui.notifications.warn(err.message));
+  }
+
+  /** Talk on this call from the regular chat box (or stop). */
+  static #onRoute() {
+    Comms.setRouting(Comms.routing === this.callId ? null : this.callId, { announce: true });
   }
 
   static #onInvite() {

@@ -183,6 +183,34 @@ export const Calls = {
     });
   },
 
+  /** Who each call was last spoken as on this client: callId -> participant id. */
+  _voice: new Map(),
+
+  /**
+   * Live calls this user talks on, most recent first: for a player, calls with one of their
+   * characters on the line; for the GM, calls with an NPC or contact they voice on the line, or
+   * that they placed.
+   */
+  mine(user = game.user) {
+    const voices = (call) => call.participants.some((p) => p.state === "joined" && (user.isGM ? this._gmOnly(p) : this.speaksFor(p, user)));
+    return this.live()
+      .filter((c) => voices(c) || (user.isGM && c.startedBy === user.id))
+      .sort((a, b) => (b.connectedAt ?? b.createdAt ?? 0) - (a.connectedAt ?? a.createdAt ?? 0));
+  },
+
+  /** Who this user speaks as on a call: who they last spoke as there, else their character (the GM: the NPC). */
+  voice(call, user = game.user) {
+    const joined = (call?.participants ?? []).filter((p) => p.state === "joined" && this.speaksFor(p, user));
+    const last = joined.find((p) => p.id === this._voice.get(call?.id));
+    if (last) return last;
+    if (user.isGM) return joined.find((p) => this._gmOnly(p)) ?? joined[0] ?? null;
+    return joined[0] ?? null;
+  },
+
+  remember(callId, pid) {
+    if (callId && pid) this._voice.set(callId, pid);
+  },
+
   /** Messages on a call this user can see, oldest first. */
   messages(callId) {
     return (game.messages?.contents ?? [])

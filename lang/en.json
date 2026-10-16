@@ -1002,7 +1002,14 @@
       "For": "For {name}",
       "With": "Also on: {names}",
       "Accept": "Accept",
-      "Decline": "Decline"
+      "Decline": "Decline",
+      "NotOnCall": "You're not on a holocall.",
+      "RoutingOn": "Talking on the holocall from chat. Type /holo again (or click the blue banner) to stop.",
+      "RoutingOff": "Back to regular chat.",
+      "Routing": "Holocall: talking to {names}",
+      "RoutingStop": "Click to go back to regular chat",
+      "Route": "Talk from chat",
+      "RouteHint": "Your regular chat box talks on this call (other /commands and rolls still work). /holo in chat does the same."
     }
   }
 }

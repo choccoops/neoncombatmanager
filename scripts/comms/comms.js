@@ -5,7 +5,7 @@ import { Links } from "./links.js";
 import { Calls } from "./calls.js";
 import { Messenger } from "./messenger.js";
 import { alarm } from "./vitals.js";
-import { L } from "../util.js";
+import { L, esc } from "../util.js";
 
 /**
  * Comms: the Biomon Link and Holocalls wired into Foundry. Token-control buttons and
@@ -19,6 +19,8 @@ export const Comms = {
   _opened: new Set(),
   /** Last vitals per linked character, for the alarms. */
   _vitals: new Map(),
+  /** The call this user's regular chat goes to while "talk from chat" is on, or null. */
+  routing: null,
 
   init() {
     game.keybindings.register(MODULE_ID, "openBiomon", {
@@ -58,6 +60,9 @@ export const Comms = {
       if (callId) this.refreshCall(callId);
     });
     Hooks.on(Compat.chatRenderHook, (message, html) => this.dressMessage(message, html));
+    // /holo, and plain chat while talking from chat, go to the call.
+    Hooks.on("chatMessage", (log, message) => this.onChatMessage(message));
+    Hooks.on("renderChatLog", () => this.showRouting());
   },
 
   async ready() {
@@ -107,6 +112,8 @@ export const Comms = {
           IncomingCallApp.dismiss(call.id, p.id);
         }
       }
+      // Talking from chat stops with the call (or when this user is no longer on it).
+      if (this.routing === call.id && !Calls.mine().some((c) => c.id === call.id)) this.setRouting(null);
       // A call this player is on (after a reload, say) opens its window once.
       const onIt = call.status !== "ended" && call.participants.some((p) => p.state === "joined" && (game.user.isGM ? call.startedBy === game.user.id : Calls.speaksFor(p)));
       if (onIt && !this._opened.has(call.id)) {
@@ -115,6 +122,81 @@ export const Comms = {
       }
     }
     HolocallApp.refresh();
+  },
+
+  /* ---------------------------------------- */
+  /*  Talking from the chat box               */
+  /* ---------------------------------------- */
+
+  /**
+   * The chat box: "/holo text" says it on your call; "/holo" alone turns talking from chat on or
+   * off; while it's on, plain chat goes to the call (other /commands, like rolls, still work).
+   * @returns {boolean} false when the message was taken for a call (Foundry then posts nothing)
+   */
+  onChatMessage(message) {
+    const text = String(message ?? "");
+    const holo = text.match(/^\/holo(?:\s+([\s\S]*))?$/i);
+    if (holo) {
+      const body = (holo[1] ?? "").trim();
+      if (body) this.sayFromChat(body);
+      else this.setRouting(this.routing ? null : Calls.mine()[0]?.id ?? null, { announce: true });
+      return false;
+    }
+    if (this.routing && text.trim() && !text.trim().startsWith("/")) {
+      this.sayFromChat(text.trim(), this.routing);
+      return false;
+    }
+    return true;
+  },
+
+  /** Say something on a call (the one being talked on from chat, else the latest) from the chat box. */
+  sayFromChat(text, callId = null) {
+    const call = (callId ? Calls.get(callId) : null) ?? Calls.mine()[0] ?? null;
+    if (!call || call.status === "ended") {
+      ui.notifications.warn(L(`${LANG}.Holocall.NotOnCall`));
+      return null;
+    }
+    const voice = Calls.voice(call);
+    if (!voice) {
+      ui.notifications.warn(L(`${LANG}.Holocall.NotOnCall`));
+      return null;
+    }
+    return Calls.say(call.id, voice.id, text).catch((err) => ui.notifications.warn(err.message));
+  },
+
+  /** Turn talking from chat on (for a call) or off (null). */
+  setRouting(callId, { announce = false } = {}) {
+    if (callId && !Calls.mine().some((c) => c.id === callId)) callId = null;
+    if (announce && !callId && !this.routing) ui.notifications.warn(L(`${LANG}.Holocall.NotOnCall`));
+    const was = this.routing;
+    this.routing = callId;
+    if (announce && was !== callId) ui.notifications.info(L(`${LANG}.Holocall.${callId ? "RoutingOn" : "RoutingOff"}`));
+    this.showRouting();
+    this.refreshCall(callId ?? was);
+  },
+
+  /** The holo banner over the chat box (and the box tinted blue) while talking from chat. */
+  showRouting() {
+    if (typeof document === "undefined") return;
+    const call = this.routing ? Calls.get(this.routing) : null;
+    for (const box of document.querySelectorAll("textarea#chat-message")) {
+      box.classList.toggle("ncm-holo-route", !!call);
+      let banner = box.parentElement?.querySelector(":scope > .ncm-holo-banner");
+      if (!call) {
+        banner?.remove();
+        continue;
+      }
+      if (!banner) {
+        banner = document.createElement("button");
+        banner.type = "button";
+        banner.className = "ncm-holo-banner";
+        banner.addEventListener("click", () => this.setRouting(null, { announce: true }));
+        box.before(banner);
+      }
+      const names = call.participants.filter((p) => p.state === "joined" && !Calls.speaksFor(p)).map((p) => p.name).join(", ");
+      banner.dataset.tooltip = L(`${LANG}.Holocall.RoutingStop`);
+      banner.innerHTML = `<i class="fa-solid fa-phone-volume"></i> ${esc(L(`${LANG}.Holocall.Routing`, { names: names || "…" }))}`;
+    }
   },
 
   /** Holocall messages look like holocalls in the chat log too. */
