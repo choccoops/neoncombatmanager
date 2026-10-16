@@ -839,7 +839,8 @@
       "AddChange": "Add modifier",
       "Behaviour": "Behaviour",
       "NeedName": "Give it a name.",
-      "Exists": "There's already a condition called {name}."
+      "Exists": "There's already a condition called {name}.",
+      "ModeHint": "Another module's change, worked out by its own code. Its value is kept as it is."
     },
     "Triggers": {
       "Title": "Triggler",

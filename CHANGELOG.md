@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+- **Condition Lab**: saving a condition whose modifier isn't a plain number no longer turns it
+  into +0. Other modules' CUSTOM changes (Neon At Home's Encumbered and Overloaded MOVE) keep
+  their mode, value and priority, and the Lab lists them as they are instead of "NaN".
+
 ## 1.0.0
 
 First release: an encounter overhaul for Cyberpunk RED - CORE 0.92 on Foundry v12.

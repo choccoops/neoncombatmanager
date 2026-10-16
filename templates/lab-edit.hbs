@@ -20,7 +20,10 @@
     {{#each changes}}
     <li data-change="{{index}}">
       <input type="text" name="key" value="{{key}}" list="ncm-keys" placeholder="bonuses.allActions">
-      <input type="number" name="value" value="{{value}}" step="1">
+      <input type="text" name="value" value="{{value}}" inputmode="decimal">
+      <input type="hidden" name="mode" value="{{mode}}">
+      <input type="hidden" name="priority" value="{{priority}}">
+      {{#if modeLabel}}<span class="ncm-tag" data-tooltip="NEONCOMBAT.Lab.ModeHint">{{modeLabel}}</span>{{/if}}
       <label class="ncm-check"><input type="checkbox" name="situational" {{#if situational}}checked{{/if}}> {{localize "NEONCOMBAT.Lab.Situational"}}</label>
       <label class="ncm-check"><input type="checkbox" name="onByDefault" {{#if onByDefault}}checked{{/if}}> {{localize "NEONCOMBAT.Lab.OnByDefault"}}</label>
       <button type="button" class="is-danger" data-action="removeChange"><i class="fa-solid fa-xmark"></i></button>
