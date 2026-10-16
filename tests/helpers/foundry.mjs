@@ -158,7 +158,7 @@ globalThis.fromUuid = async (uuid) => registry.get(uuid) ?? null;
 export const chat = [];
 globalThis.ChatMessage = {
   create: async (data) => {
-    const msg = { ...data, flags: data.flags ?? {} };
+    const msg = { ...data, id: randomID(), flags: data.flags ?? {}, timestamp: Date.now(), visible: true };
     msg.getFlag = (scope, key) => msg.flags?.[scope]?.[key];
     chat.push(msg);
     return msg;
@@ -238,6 +238,9 @@ globalThis.game = {
   combats: new Collection(),
   actors: new Collection(),
   scenes: new Collection(),
+  messages: { get contents() {
+    return chat;
+  } },
   packs: new Map(),
   socket: { on() {}, emit() {} },
   combat: null
@@ -249,6 +252,9 @@ export const worldSettings = new Collection();
 export function asGM(on = true) {
   game.user = on ? gm : player;
 }
+
+/** The test users: the GM and one player. */
+export const testUsers = { gm, player };
 
 /* ---------------------------------------- */
 /*  Documents                               */

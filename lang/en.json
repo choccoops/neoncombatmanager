@@ -9,7 +9,8 @@
       "NoGM": "A GM needs to be connected for that.",
       "Timeout": "The GM didn't answer in time.",
       "NoCondition": "No condition called {name}.",
-      "NotOwner": "That isn't your character."
+      "NotOwner": "That isn't your character.",
+      "GMOnly": "Only the GM can do that."
     },
     "Notify": {
       "Immune": "{name} is protected from {condition}.",
@@ -482,22 +483,6 @@
         "name": "Carousel collapsed",
         "hint": ""
       },
-      "partyEnabled": {
-        "name": "Show the crew status bar",
-        "hint": "Every player character's HP, armor, LUCK, Wound State and conditions in one bar."
-      },
-      "partyPosition": {
-        "name": "Crew bar position",
-        "hint": "Where the crew status bar sits."
-      },
-      "partyCollapsed": {
-        "name": "Crew bar collapsed",
-        "hint": ""
-      },
-      "partyMembers": {
-        "name": "Crew",
-        "hint": ""
-      },
       "roundSeconds": {
         "name": "Seconds per Round",
         "hint": "World time each new Round adds. Cyberpunk RED: about 3 seconds (a minute is 20 Rounds). SmallTime and Neon Hub's calendar follow world time."
@@ -655,11 +640,6 @@
         "medium": "Medium",
         "large": "Large"
       },
-      "Position": {
-        "bottom": "Bottom, above the hotbar",
-        "left": "Left side",
-        "top": "Top, under the carousel"
-      },
       "NpcHealth": {
         "hidden": "Nothing",
         "wound": "Wound State",
@@ -703,11 +683,49 @@
           "name": "Weather & Visibility",
           "label": "Weather & Visibility",
           "hint": "Night City weather from Neon Hub, light and darkness, shelter and protective gear."
+        },
+        "comms": {
+          "name": "Biomon Link & Holocalls",
+          "label": "Biomon & Holocalls",
+          "hint": "What linking and calling need, ring time, and missed calls in Night City Messenger."
         }
       },
       "Placement": {
         "top": "Top of the screen",
         "belowNav": "Under the scene tabs"
+      },
+      "biomonAlerts": {
+        "name": "Biomon Link alarms",
+        "hint": "When someone on your link goes critical, drops or flatlines: a notice, the Biomon window pops open, or nothing."
+      },
+      "BiomonAlerts": {
+        "toast": "Notice",
+        "open": "Notice and open the Biomon",
+        "off": "Off"
+      },
+      "linkNeedsImplant": {
+        "name": "Biomon Link needs a Biomonitor",
+        "hint": "Only characters with Biomonitor cyberware installed can join a link (it's the implant that broadcasts the vitals)."
+      },
+      "callNeedsAgent": {
+        "name": "Holocalls need an Agent",
+        "hint": "Characters need an Agent (carried) or an Internal Agent to place or take a holocall."
+      },
+      "ringSeconds": {
+        "name": "Ring time (seconds)",
+        "hint": "How long a holocall rings before it's a missed call."
+      },
+      "missedCallMessages": {
+        "name": "Missed calls to Night City Messenger",
+        "hint": "A missed holocall leaves a message in the character's Night City Messenger inbox, when that module is running."
+      },
+      "vitalLinks": {
+        "name": "Biomon Links",
+        "hint": ""
+      },
+      "holocalls": {
+        "name": "Holocalls",
+        "hint": ""
       }
     },
     "SceneWeather": {
@@ -773,24 +791,11 @@
       "EndTurn": "End Turn",
       "DeathSave": "Mortally Wounded: Death Save penalty",
       "Empty": "No combatants yet.",
-      "Unknown": "Unknown"
+      "Unknown": "Unknown",
+      "Flatlined": "Flatlined"
     },
     "Tracker": {
       "Clock": "T+{elapsed} · {seconds} s/Round · {clock}"
-    },
-    "Party": {
-      "Title": "Crew",
-      "Configure": "Choose the crew",
-      "ConfigureHint": "Tick the characters in the crew bar. Leave all unticked for every character a player owns.",
-      "Collapse": "Collapse or expand",
-      "ArmorHead": "Head SP",
-      "ArmorBody": "Body SP",
-      "Luck": "LUCK",
-      "Humanity": "Humanity",
-      "Flatlined": "Flatlined",
-      "Dying": "Dying · DS +{penalty}",
-      "Unconscious": "Unconscious",
-      "Empty": "No crew yet. Pick the characters to show, or give your players Owner of their characters (only you see this)."
     },
     "Lab": {
       "Title": "Condition Lab",
@@ -904,6 +909,93 @@
         "dim": "Low light",
         "dark": "Dark"
       }
+    },
+    "Biomon": {
+      "Title": "Biomon Link",
+      "KeyHint": "Open the Biomon Link readouts.",
+      "Link": "Biomon Link",
+      "CallLink": "Holocall the link",
+      "Rename": "Rename link",
+      "Remove": "Unlink everyone",
+      "RemoveConfirm": "Break the {name} link? Everyone on it stops sharing vitals.",
+      "ImplantHint": "Biomonitor installed: live vitals",
+      "Full": "Open the full Biomonitor (Neon At Home)",
+      "Leave": "Unlink",
+      "NoLinks": "No Biomon Links yet.",
+      "JoinTitle": "Link up",
+      "JoinHint": "Share your character's vitals with a group. Everyone on the link sees each other's HP, condition and injuries.",
+      "ImplantNeeded": "Your character needs a Biomonitor installed.",
+      "Join": "Link",
+      "DefaultName": "Crew",
+      "Create": "New link",
+      "NeedsImplant": "{name} has no Biomonitor installed to link.",
+      "NoLink": "That link is gone.",
+      "Alarm": "BIOMON // {name}: {state}",
+      "State": {
+        "stable": "STABLE",
+        "light": "MINOR TRAUMA",
+        "serious": "SERIOUS TRAUMA",
+        "critical": "CRITICAL",
+        "down": "UNRESPONSIVE",
+        "flatline": "FLATLINE"
+      }
+    },
+    "Holocall": {
+      "Title": "Holocall",
+      "KeyHint": "Open the holocall dialer.",
+      "CallTitle": "Holocall",
+      "InviteTitle": "Add to the call",
+      "Tag": "◈ HOLO",
+      "NoSignalHere": "No signal here: this is a dead zone.",
+      "NoAgent": "{name} has no Agent to call with.",
+      "NoOne": "Pick someone to call.",
+      "NoCaller": "Pick who's calling.",
+      "MissedSubject": "Missed holocall: {name}",
+      "MissedBody": "{name} tried to holocall you and couldn't get through.",
+      "Status": {
+        "ringing": "ringing",
+        "active": "live",
+        "ended": "ended"
+      },
+      "State": {
+        "ringing": "Ringing…",
+        "joined": "On the line",
+        "declined": "Declined",
+        "missed": "No answer",
+        "nosignal": "No signal",
+        "nodevice": "No Agent",
+        "left": "Hung up",
+        "cancelled": "Cancelled"
+      },
+      "OnCall": "Calls",
+      "CallAs": "Calling as",
+      "Search": "Search",
+      "Crew": "Crew",
+      "Online": "Player online",
+      "Offline": "Player away (the GM can pick up)",
+      "Contacts": "Contacts",
+      "NoMessenger": "(Night City Messenger not running)",
+      "Burned": "burned",
+      "NoContacts": "No contacts in this character's address book.",
+      "Directory": "Directory",
+      "Npcs": "NPCs",
+      "Add": "Add",
+      "Call": "Call",
+      "Gone": "This call is over.",
+      "Ended": "Call ended",
+      "Ringing": "Ringing",
+      "Live": "Live",
+      "Quiet": "Line open. Nobody's said anything yet.",
+      "SpeakAs": "Speak as",
+      "Say": "Say something… (Enter sends)",
+      "Send": "Send",
+      "HangUp": "Hang up",
+      "EndAll": "End for everyone",
+      "Incoming": "Incoming holocall",
+      "For": "For {name}",
+      "With": "Also on: {names}",
+      "Accept": "Accept",
+      "Decline": "Decline"
     }
   }
 }

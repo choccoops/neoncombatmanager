@@ -1,8 +1,8 @@
 {
   "id": "cpr-neon-combat-manager",
-  "title": "Neon Combat Manager: Initiative Carousel, Crew HUD, Conditions, Combat Time, Weather & Visibility for Cyberpunk RED",
-  "description": "An encounter overhaul for Cyberpunk RED - CORE: the Initiative Queue as a neon carousel; a crew status bar with HP, armor, LUCK, Wound States and conditions; Neon Conditions, the full Cyberpunk RED condition set wired into the system's roll modifiers, with a Condition Lab, triggers and a stand-in for Condition Lab & Triggler; Rounds that move world time 3 seconds (SmallTime and Neon Hub's calendar follow); Night City weather from Neon Hub's calendar as conditions; and visibility penalties from darkness, light sources and the gear that cuts through them.",
-  "version": "1.0.3",
+  "title": "Neon Combat Manager: Initiative Carousel, Conditions, Biomon Link, Holocalls, Combat Time, Weather & Visibility for Cyberpunk RED",
+  "description": "An encounter overhaul for Cyberpunk RED - CORE: the Initiative Queue as a neon carousel; Neon Conditions, the full Cyberpunk RED condition set wired into the system's roll modifiers, with a Condition Lab, triggers and a stand-in for Condition Lab & Triggler; a Biomon Link popout of linked characters' vitals; holocalls in Edgerunners blue with the crew or NPCs anywhere, through Night City Messenger contacts; Rounds that move world time 3 seconds (SmallTime and Neon Hub's calendar follow); Night City weather from Neon Hub's calendar as conditions; and visibility penalties from darkness, light sources and the gear that cuts through them.",
+  "version": "1.1.0",
   "authors": [
     {
       "name": "Neon Combat Manager contributors"
@@ -28,6 +28,11 @@
         "id": "cpr-neon-hub",
         "type": "module",
         "reason": "The day's Night City weather comes from Neon Hub's calendar, and its clock shows on the carousel. Combat Rounds move world time, so the calendar changes day at midnight mid-fight."
+      },
+      {
+        "id": "night-city-messenger",
+        "type": "module",
+        "reason": "Holocall your character's Night City Messenger contacts and its directory; its dead zones have no signal; missed calls arrive in its inbox."
       },
       {
         "id": "smalltime",

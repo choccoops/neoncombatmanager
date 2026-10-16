@@ -58,7 +58,7 @@ export const Triggers = {
 
   /**
    * Show CPR's Wound State on the token: Lightly, Seriously or Mortally Wounded. These carry no
-   * changes (CPR applies -2/-4 itself); they're for the eye, the carousel and the party bar.
+   * changes (CPR applies -2/-4 itself); they're for the eye, the carousel and the Biomon Link.
    */
   async syncWound(actor) {
     if (!Settings.get("mirrorWounds") || !CPR.isMeat(actor) || !actor.isOwner) return;

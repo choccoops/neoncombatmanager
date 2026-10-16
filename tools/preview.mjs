@@ -10,7 +10,6 @@ const Settings = await registerSettings();
 const { Registry } = await import("../scripts/conditions/registry.js");
 const { Conditions } = await import("../scripts/conditions/engine.js");
 const { Carousel } = await import("../scripts/combat/carousel.js");
-const { PartyBar } = await import("../scripts/party/party-bar.js");
 const { Compat } = await import("../scripts/compat.js");
 const { summary } = await import("../scripts/conditions/lab-app.js");
 Hooks.on("preCreateActiveEffect", (e, d, o, u) => Conditions.onPreCreate(e, d, o, u));
@@ -49,8 +48,6 @@ await combat.setFlag("cpr-neon-combat-manager", "started", game.time.worldTime -
 
 const T = (name, data) => Compat.renderTemplate(`modules/cpr-neon-combat-manager/templates/${name}.hbs`, data);
 const carousel = await T("carousel", Carousel.context(combat));
-const party = await T("party-bar", PartyBar.context([vee, hazel, sage]));
-const emptyParty = await T("party-bar", PartyBar.context([]));
 const labList = ["brokenLeg", "onFireStrong", "darkness", "wxAcidRain", "blackLace", "flashbanged"].map((id) => {
   const c = Registry.get(id);
   return { id, name: c.name, img: c.img, hint: c.hint, category: game.i18n.localize(`NEONCOMBAT.Category.${c.category}`), summary: summary(c), page: typeof c.page === "number" ? `Core rulebook p.${c.page}` : c.page, override: id === "darkness" };
@@ -61,6 +58,31 @@ const card2 = await T("chat-card", { title: "Velvet: 2 damage", kicker: "On Fire
 const env = await T("environment", { gm: true, manual: true, hub: false, sources: [{ value: "manual", label: "Manual", selected: true }], calendars: [], sky: [{ value: "heavyRain", label: "Heavy Rain", selected: true }], strange: [{ value: "", label: "None", selected: true }], bands: [{ value: "hot", label: "Hot", selected: true }],
   now: ["wxHeavyRain", "wxHot"].map((id) => ({ img: Registry.get(id).img, name: Registry.get(id).name, hint: Registry.get(id).hint })), band: "Hot", temp: "85°F / 29°C", scene: { name: "Watson Alley", darkness: 80 }, sceneModes: [{ value: "default", label: "Default", selected: true }],
   rows: [{ name: "Velvet", img: vee.img, outdoors: true, level: "dim", levelLabel: "Low light", sightLabel: "-3", conditions: ["wxHeavyRain", "obscured"].map((id) => Registry.get(id)) }, { name: "Hazel Monroe", img: hazel.img, outdoors: true, level: "dark", levelLabel: "Dark", sightLabel: "—", vision: true, conditions: [] }] });
+
+// Comms: Biomon Link, a live holocall, the dialer, an incoming call, a holo message in chat.
+const { readout, ecgPath } = await import("../scripts/comms/vitals.js");
+const row = (actor, wound, extra = {}) => {
+  const hp = actor.system.derivedStats.hp;
+  const v = readout({ hp: hp.value, max: hp.max, wound, ...extra });
+  const label = { stable: "STABLE", light: "MINOR TRAUMA", serious: "SERIOUS TRAUMA", critical: "CRITICAL", down: "UNRESPONSIVE", flatline: "FLATLINE" }[v.state];
+  return { id: actor.id, name: actor.name, img: actor.img, ...v, label, ecg: ecgPath(v.state), beat: v.bpm ? `${(60 / v.bpm) * 3}s` : "0s", icons: [], mine: actor === vee, fullBiomon: true };
+};
+const biomon = await T("biomon", { gm: false, links: [{ id: "l1", name: "Crew", canCall: true, members: [
+  row(vee, "lightlyWounded", { implant: true }), row(hazel, "seriouslyWounded"), row(sage, "mortallyWounded", { deathSave: 2 })
+] }], unlinked: [], joinable: [] });
+const rogue = { name: "Rogue", img: portrait(280) };
+const holo = await T("holocall", { dialer: false, gm: true, timer: "01:12", participants: [
+  { id: "p0", name: "Velvet", img: vee.img, stateLabel: "On the line", state: "joined", live: true },
+  { id: "p1", name: "Rogue", img: rogue.img, stateLabel: "On the line", state: "joined", live: true },
+  { id: "p2", name: "Hazel Monroe", img: hazel.img, stateLabel: "Ringing…", state: "ringing" }
+], messages: [
+  { name: "Rogue", img: rogue.img, time: "21:04", content: '<div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>Got a job for you, choom. Arasaka convoy, Watson, midnight.</p></div>' },
+  { name: "Velvet", img: vee.img, time: "21:05", mine: true, content: '<div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>How much?</p></div>' }
+], voices: [{ value: "p1", label: "Rogue", selected: true }], canTalk: true });
+const dialer = await T("holocall", { dialer: true, gm: false, callers: [{ value: "a", label: "Velvet", selected: true }], crew: [{ key: "k1", name: "Hazel Monroe", img: hazel.img, online: true }, { key: "k2", name: "Professor Sage", img: sage.img, online: false }],
+  links: [{ id: "l1", name: "Crew", count: 3 }], contacts: [{ key: "c1", name: "Rogue", img: rogue.img, trustPips: [true, true, true, true, false] }, { key: "c2", name: "Snitch", img: portrait(60), burned: true, trustPips: [true, false, false, false, false] }], live: [], count: 1, messenger: true });
+const ring = await T("incoming-call", { caller: rogue, others: "Velvet" });
+const holoChat = `<li class="chat-message message ncm-holo"><header class="message-header"><h4 class="message-sender">Rogue</h4><span class="whisper-to">To: Velvet, GM</span></header><div class="message-content"><div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>Got a job for you, choom.</p></div></div></li>`;
 
 const icons = Registry.all().map((c) => `<figure><img src="${c.img}" alt=""><figcaption>${c.name}</figcaption></figure>`).join("");
 const html = `<!doctype html><html><head><meta charset="utf-8"><title>Neon Combat Manager preview</title>
@@ -76,6 +98,7 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
 .row{display:flex;gap:16px;align-items:flex-start;padding:16px;flex-wrap:wrap}
 .win{width:760px;border:1px solid #36364f}
 .win .window-content{max-height:520px;overflow:auto}
+.chat-message{padding:6px;margin:4px 0;border:1px solid #666;background:#e8e3d4;color:#222}.message-header{display:flex;justify-content:space-between}.message-sender{margin:0}
 .chat{width:300px;display:grid;gap:10px}
 .icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;padding:16px;background:#111}
 .icons figure{margin:0;text-align:center;font-size:11px}.icons img{width:48px;height:48px;display:block;margin:0 auto 4px}
@@ -83,23 +106,26 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
 </style></head><body>
 <div id="ui-left"></div><div id="ui-middle"><div id="ui-top"><nav id="navigation">Scene tabs</nav></div></div><div id="ui-right"></div>
 <section id="ncm-carousel" class="neon-combat ncm-carousel size-medium">${carousel}</section>
-<section id="ncm-party" data-top class="neon-combat ncm-party pos-top is-empty">${emptyParty}</section>
 <script>
   // What Carousel.place() does: centre over #ui-middle, at the top.
   const r = document.getElementById("ui-middle").getBoundingClientRect();
   const el = document.getElementById("ncm-carousel");
   el.style.setProperty("--ncm-center", Math.round(r.left + r.width / 2) + "px");
   el.style.setProperty("--ncm-room", Math.round(r.width - 16) + "px");
-  // What PartyBar.place() does in the top position: under the carousel.
-  const party = document.querySelector("[data-top]");
-  party.style.setProperty("--ncm-top", Math.round(el.getBoundingClientRect().bottom) + 6 + "px");
-  party.style.setProperty("--ncm-center", Math.round(r.left + r.width / 2) + "px");
 </script>
-<div id="ui-bottom"><section id="ncm-party" class="neon-combat ncm-party pos-bottom">${party}</section></div>
 <div class="row">
   <div class="neon-combat ncm-window ncm-lab application win"><header class="window-header">Condition Lab</header><section class="window-content">${lab}</section></div>
   <div class="chat">${card1}${card2}</div>
   <div class="neon-combat ncm-window ncm-environment application win" style="width:620px"><header class="window-header">Environment</header><section class="window-content">${env}</section></div>
+</div>
+<div class="row">
+  <div class="neon-combat ncm-window ncm-biomon application win" style="width:340px"><header class="window-header">Biomon Link</header><section class="window-content">${biomon}</section></div>
+  <div class="neon-combat ncm-window ncm-holocall application win" style="width:460px;height:560px;display:flex;flex-direction:column"><header class="window-header">Holocall</header><section class="window-content" style="flex:1">${holo}</section></div>
+  <div class="neon-combat ncm-window ncm-holocall application win" style="width:400px;height:560px;display:flex;flex-direction:column"><header class="window-header">Holocall</header><section class="window-content" style="flex:1">${dialer}</section></div>
+  <div style="display:grid;gap:12px;align-content:start">
+    <div class="neon-combat ncm-window ncm-incoming application win" style="width:300px"><header class="window-header">Incoming holocall</header><section class="window-content">${ring}</section></div>
+    <ol style="list-style:none;padding:0;width:300px;font-size:13px">${holoChat}</ol>
+  </div>
 </div>
 <div class="icons">${icons}</div>
 </body></html>`;

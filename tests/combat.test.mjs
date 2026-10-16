@@ -9,7 +9,6 @@ const { Conditions } = await import("../scripts/conditions/engine.js");
 const { CombatTime } = await import("../scripts/combat/time.js");
 const { Turns } = await import("../scripts/combat/turns.js");
 const { Carousel } = await import("../scripts/combat/carousel.js");
-const { PartyBar } = await import("../scripts/party/party-bar.js");
 const { Environment } = await import("../scripts/environment/environment.js");
 const { Compat } = await import("../scripts/compat.js");
 Hooks.on("preCreateActiveEffect", (e, d, o, u) => Conditions.onPreCreate(e, d, o, u));
@@ -123,38 +122,6 @@ test("the carousel shows each combatant as much as this user may see", async () 
   assert.deepEqual(b.conditions.map((c) => c.name), ["Prone"]);
   const html = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/carousel.hbs", ctx);
   assert.ok(html.includes("Vee") && html.includes("Ganger") && html.includes('data-ncm="nextTurn"'));
-});
-
-test("the crew bar: banners for the dying and the flatlined", async () => {
-  const fine = makeActor({ name: "Fine" });
-  const dying = makeActor({ name: "Dying", system: { derivedStats: { hp: { value: 0, max: 40 }, deathSave: { penalty: 2 } } } });
-  const dead = makeActor({ name: "Gone" });
-  await Conditions.add("dead", dead);
-  const ctx = PartyBar.context([fine, dying, dead]);
-  assert.equal(ctx.members[0].banner, null);
-  assert.equal(ctx.members[1].banner.label, "Dying · DS +2");
-  assert.equal(ctx.members[2].banner.tone, "dead");
-  const html = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/party-bar.hbs", ctx);
-  assert.ok(html.includes("Flatlined"));
-});
-
-test("with no crew yet, the GM still gets the bar with a way to pick one; players get nothing", async () => {
-  const { asGM } = await import("./helpers/foundry.mjs");
-  const ctx = PartyBar.context([]);
-  assert.equal(ctx.empty, true);
-  const html = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/party-bar.hbs", ctx);
-  assert.ok(html.includes("No crew yet") && html.includes('data-ncm="configure"'));
-  const full = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/party-bar.hbs", PartyBar.context([makeActor({ name: "Crew" })]));
-  assert.ok(!full.includes("No crew yet"));
-  // A player with no crew to show: the bar stays away (and never touches the page).
-  const saved = game.actors;
-  game.actors = { filter: () => [], get: () => null };
-  asGM(false);
-  PartyBar.el = null;
-  await PartyBar.render();
-  assert.equal(PartyBar.el, null);
-  asGM(true);
-  game.actors = saved;
 });
 
 test("the environment per character: weather, gear and the sight condition", async () => {

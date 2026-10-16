@@ -44,7 +44,7 @@
       <div class="ncm-card-init">
         {{#if hasInit}}{{initiative}}{{else if canRoll}}<button type="button" data-ncm="roll" data-tooltip="COMBAT.InitiativeRoll"><i class="fa-solid fa-dice-d10"></i></button>{{else}}—{{/if}}
       </div>
-      {{#if defeated}}<div class="ncm-card-flatline">{{localize "NEONCOMBAT.Party.Flatlined"}}</div>{{/if}}
+      {{#if defeated}}<div class="ncm-card-flatline">{{localize "NEONCOMBAT.Carousel.Flatlined"}}</div>{{/if}}
       {{#if deathSave}}<div class="ncm-card-ds" data-tooltip="NEONCOMBAT.Carousel.DeathSave"><i class="fa-solid fa-heart-crack"></i> +{{deathSave}}</div>{{/if}}
       {{#if ../gm}}
       <div class="ncm-card-gm">

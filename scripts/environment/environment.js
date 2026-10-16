@@ -17,7 +17,7 @@ const ENV = "env";
  * (with each character's gear taken into account) and a visibility condition from the light
  * where they are, or where their target is, and the weather's obscurement. Low Light/Infrared/UV
  * cybereyes cancel both. Run by the active GM; everyone sees the conditions on the tokens, the
- * carousel and the party bar, and CPR's roll dialog shows each penalty as a situational modifier.
+ * carousel and the Biomon Link, and CPR's roll dialog shows each penalty as a situational modifier.
  */
 export const Environment = {
   /** Actors carrying environment effects (uuid), to clean up when they leave the encounter. */

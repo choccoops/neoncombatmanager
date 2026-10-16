@@ -1,0 +1,93 @@
+{{#if dialer}}
+<section class="ncm-dial">
+  {{#if deadZone}}<p class="ncm-warn"><i class="fa-solid fa-signal"></i> {{localize "NEONCOMBAT.Holocall.NoSignalHere"}}</p>{{/if}}
+  {{#if live.length}}
+  <div class="ncm-dial-live">
+    <span class="ncm-kicker">// {{localize "NEONCOMBAT.Holocall.OnCall"}}</span>
+    {{#each live}}<button type="button" data-action="openCall" data-call-id="{{id}}"><i class="fa-solid fa-phone-volume"></i> {{names}} <small>{{status}}</small></button>{{/each}}
+  </div>
+  {{/if}}
+  {{#unless invite}}
+  <label class="ncm-dial-from">{{localize "NEONCOMBAT.Holocall.CallAs"}}
+    <select name="from">{{#each callers}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+  </label>
+  {{/unless}}
+  <input type="search" name="search" value="{{search}}" placeholder="{{localize 'NEONCOMBAT.Holocall.Search'}}">
+  <div class="ncm-dial-lists">
+    {{#if links.length}}
+    <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Biomon.Link"}}</h4>
+    <div class="ncm-dial-links">{{#each links}}<button type="button" data-action="pickLink" data-link-id="{{id}}"><i class="fa-solid fa-heart-pulse"></i> {{name}} <small>{{count}}</small></button>{{/each}}</div>
+    {{/if}}
+    {{#if crew.length}}
+    <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Holocall.Crew"}}</h4>
+    <ul class="ncm-dial-list">
+      {{#each crew}}
+      <li><label><input type="checkbox" data-pick="{{key}}" {{#if picked}}checked{{/if}}><img src="{{img}}" alt=""><b>{{name}}</b><span class="ncm-dot {{#if online}}on{{/if}}" data-tooltip="{{#if online}}NEONCOMBAT.Holocall.Online{{else}}NEONCOMBAT.Holocall.Offline{{/if}}"></span></label></li>
+      {{/each}}
+    </ul>
+    {{/if}}
+    <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Holocall.Contacts"}}{{#unless messenger}} <span class="ncm-ref">{{localize "NEONCOMBAT.Holocall.NoMessenger"}}</span>{{/unless}}</h4>
+    {{#if contacts.length}}
+    <ul class="ncm-dial-list">
+      {{#each contacts}}
+      <li class="{{#if burned}}is-burned{{/if}}"><label><input type="checkbox" data-pick="{{key}}" {{#if picked}}checked{{/if}} {{#if burned}}disabled{{/if}}><img src="{{img}}" alt=""><b>{{name}}</b>
+        <span class="ncm-trust">{{#each trustPips}}<i class="{{#if this}}on{{/if}}"></i>{{/each}}</span>{{#if burned}}<span class="ncm-tag">{{localize "NEONCOMBAT.Holocall.Burned"}}</span>{{/if}}</label></li>
+      {{/each}}
+    </ul>
+    {{else if messenger}}<p class="ncm-hint">{{localize "NEONCOMBAT.Holocall.NoContacts"}}</p>{{/if}}
+    {{#if gm}}
+    {{#if directory.length}}
+    <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Holocall.Directory"}}</h4>
+    <ul class="ncm-dial-list">{{#each directory}}<li><label><input type="checkbox" data-pick="{{key}}" {{#if picked}}checked{{/if}}><img src="{{img}}" alt=""><b>{{name}}</b></label></li>{{/each}}</ul>
+    {{/if}}
+    <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Holocall.Npcs"}}</h4>
+    <ul class="ncm-dial-list">{{#each npcs}}<li><label><input type="checkbox" data-pick="{{key}}" {{#if picked}}checked{{/if}}><img src="{{img}}" alt=""><b>{{name}}</b></label></li>{{/each}}</ul>
+    {{/if}}
+  </div>
+  <footer class="ncm-foot">
+    <button type="button" class="ncm-cta" data-action="placeCall"><i class="fa-solid fa-phone"></i> {{#if invite}}{{localize "NEONCOMBAT.Holocall.Add"}}{{else}}{{localize "NEONCOMBAT.Holocall.Call"}}{{/if}} (<span class="ncm-dial-count">{{count}}</span>)</button>
+  </footer>
+</section>
+{{else if gone}}
+<p class="ncm-empty">{{localize "NEONCOMBAT.Holocall.Gone"}}</p>
+{{else}}
+<section class="ncm-holo{{#if ended}} is-ended{{/if}}{{#if ringing}} is-ringing{{/if}}">
+  <header class="ncm-holo-bar">
+    <span class="ncm-kicker">// {{#if ended}}{{localize "NEONCOMBAT.Holocall.Ended"}}{{else if ringing}}{{localize "NEONCOMBAT.Holocall.Ringing"}}{{else}}{{localize "NEONCOMBAT.Holocall.Live"}}{{/if}}</span>
+    <span class="ncm-holo-timer">{{timer}}</span>
+  </header>
+  <ol class="ncm-holo-tiles">
+    {{#each participants}}
+    <li class="st-{{state}}{{#if live}} is-live{{/if}}">
+      <div class="ncm-holo-face"><img src="{{img}}" alt=""></div>
+      <b>{{name}}</b>
+      <small>{{stateLabel}}</small>
+    </li>
+    {{/each}}
+  </ol>
+  <ol class="ncm-holo-feed">
+    {{#each messages}}
+    <li class="{{#if mine}}is-mine{{/if}}">
+      {{#if img}}<img src="{{img}}" alt="">{{/if}}
+      <div><b>{{name}}</b> <small>{{time}}</small>{{{content}}}</div>
+    </li>
+    {{else}}
+    <li class="ncm-holo-quiet">{{localize "NEONCOMBAT.Holocall.Quiet"}}</li>
+    {{/each}}
+  </ol>
+  {{#if canTalk}}
+  <div class="ncm-holo-say">
+    {{#if voices.length}}<select name="as" data-tooltip="NEONCOMBAT.Holocall.SpeakAs">{{#each voices}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>{{/if}}
+    <textarea name="text" rows="2" placeholder="{{localize 'NEONCOMBAT.Holocall.Say'}}"></textarea>
+    <button type="button" class="ncm-cta" data-action="sendHolo" data-tooltip="NEONCOMBAT.Holocall.Send"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+  {{/if}}
+  <footer class="ncm-foot">
+    {{#unless ended}}
+    <button type="button" data-action="inviteMore"><i class="fa-solid fa-user-plus"></i> {{localize "NEONCOMBAT.Holocall.Add"}}</button>
+    <button type="button" class="is-danger" data-action="hangUp"><i class="fa-solid fa-phone-slash"></i> {{localize "NEONCOMBAT.Holocall.HangUp"}}</button>
+    {{#if gm}}<button type="button" class="is-danger" data-action="endCall"><i class="fa-solid fa-power-off"></i> {{localize "NEONCOMBAT.Holocall.EndAll"}}</button>{{/if}}
+    {{/unless}}
+  </footer>
+</section>
+{{/if}}

@@ -13,7 +13,9 @@ import { CombatTime } from "./combat/time.js";
 import { Turns } from "./combat/turns.js";
 import { Carousel } from "./combat/carousel.js";
 import { TrackerHooks } from "./combat/tracker.js";
-import { PartyBar } from "./party/party-bar.js";
+import { Comms } from "./comms/comms.js";
+import { Links } from "./comms/links.js";
+import { Calls } from "./comms/calls.js";
 import { Environment } from "./environment/environment.js";
 import { Sources } from "./environment/sources.js";
 import { debounce, L } from "./util.js";
@@ -57,8 +59,27 @@ const api = {
     open: async () => (await import("./environment/environment-app.js")).EnvironmentApp.open()
   },
   ui: {
-    renderCarousel: () => Carousel.render(),
-    renderParty: () => PartyBar.render()
+    renderCarousel: () => Carousel.render()
+  },
+  /** Biomon Link: linked characters' vitals. */
+  biomon: {
+    open: () => Comms.openBiomon(),
+    links: () => Links.all(),
+    linkOf: (actor) => Links.of(actor),
+    vitals: (actor) => Links.vitals(actor),
+    create: (name, actor) => Links.create(name, actor),
+    join: (linkId, actor) => Links.join(linkId, actor),
+    leave: (actor) => Links.leave(actor)
+  },
+  /** Holocalls. */
+  holocall: {
+    open: () => Comms.openHolocall(),
+    calls: () => Calls.live(),
+    /** Ring people: from { actorId } (or GM: a messenger directory contact); targets { actorId } or contacts. */
+    place: (from, targets) => Calls.place(from, targets),
+    say: (callId, participantId, text) => Calls.say(callId, participantId, text),
+    hangUp: (callId) => Calls.hangUp(callId),
+    end: (callId) => Calls.end(callId)
   },
   cpr: CPR,
   hooks: HOOKS
@@ -68,7 +89,9 @@ Hooks.once("init", () => {
   Settings.register(SettingsMenu);
   Compat.loadTemplates([
     `${TEMPLATE_PATH}/carousel.hbs`,
-    `${TEMPLATE_PATH}/party-bar.hbs`,
+    `${TEMPLATE_PATH}/biomon.hbs`,
+    `${TEMPLATE_PATH}/holocall.hbs`,
+    `${TEMPLATE_PATH}/incoming-call.hbs`,
     `${TEMPLATE_PATH}/chat-card.hbs`,
     `${TEMPLATE_PATH}/lab.hbs`,
     `${TEMPLATE_PATH}/lab-edit.hbs`,
@@ -113,7 +136,7 @@ Hooks.once("init", () => {
   Turns.init();
   Environment.init();
   Carousel.init();
-  PartyBar.init();
+  Comms.init();
   TrackerHooks.init();
 
   game.modules.get(MODULE_ID).api = api;
@@ -127,16 +150,18 @@ Hooks.once("setup", () => {
   game.neonConditions = api.conditions;
   Socket.init();
   Conditions.registerSocket();
+  Links.registerSocket();
+  Calls.registerSocket();
 });
 
 Hooks.once("ready", async () => {
   CombatTime.apply();
   Carousel.render();
-  PartyBar.render();
   if (Compat.isActiveGM) {
     try {
       // Wound States for everyone who might be on screen.
-      const actors = new Set([...PartyBar.members(), ...(game.combat?.combatants ?? []).map((c) => c.actor).filter(Boolean)]);
+      const players = game.actors.filter((a) => a.type === "character" && a.hasPlayerOwner);
+      const actors = new Set([...players, ...(game.combat?.combatants ?? []).map((c) => c.actor).filter(Boolean)]);
       for (const actor of actors) await Triggers.syncWound(actor);
       for (const combat of game.combats ?? []) await CombatTime.stampStart(combat);
       await Conditions.expire();
@@ -145,6 +170,7 @@ Hooks.once("ready", async () => {
       console.error(`${MODULE_ID} | ready`, err);
     }
   }
+  await Comms.ready().catch((err) => console.error(`${MODULE_ID} | comms`, err));
   Hooks.callAll(HOOKS.ready, api);
 });
 
