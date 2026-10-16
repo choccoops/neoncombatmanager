@@ -1,7 +1,7 @@
-import { MODULE_ID, FLAGS, HOOKS, NEON_HUB_ID, LANG } from "../constants.js";
+import { MODULE_ID, FLAGS, HOOKS, NEON_HUB_ID, SMALLTIME_ID, LANG } from "../constants.js";
 import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
-import { clockTime, formatElapsed, L, esc } from "../util.js";
+import { clockTime, formatMinutes, formatElapsed, L, esc } from "../util.js";
 
 /**
  * Combat time: a Cyberpunk RED Round is about 3 seconds (core p.126, p.168), so each new Round
@@ -60,15 +60,29 @@ export const CombatTime = {
     return Math.max(0, (combat.round - 1) * this.roundSeconds);
   },
 
-  /** The time of day: Neon Hub's (SmallTime's) clock when installed, else world time. */
+  /**
+   * 12-hour clock? Neon Hub's calendar follows SmallTime's "time-format" setting (12 or 24) and
+   * shows a 12-hour clock without SmallTime; this does the same so the two always match.
+   */
+  get hour12() {
+    try {
+      if (game.modules.get(SMALLTIME_ID)?.active) return Number(game.settings.get(SMALLTIME_ID, "time-format")) !== 24;
+    } catch {
+      /* SmallTime without that setting: its default */
+    }
+    return true;
+  },
+
+  /** The time of day as Neon Hub's calendar shows it ("7:00 PM" or "19:00"). */
   clock() {
+    let minutes = null;
     const hub = game.modules.get(NEON_HUB_ID);
     try {
-      if (hub?.active && typeof hub.api?.time === "function") return hub.api.time().time;
+      if (hub?.active && typeof hub.api?.time === "function") minutes = Number(hub.api.time().minutes);
     } catch {
-      /* fall back */
+      /* fall back to world time */
     }
-    return clockTime(game.time.worldTime);
+    return Number.isFinite(minutes) ? formatMinutes(minutes, this.hour12) : clockTime(game.time.worldTime, this.hour12);
   },
 
   /** The combat's start, stamped by the active GM when it begins. */

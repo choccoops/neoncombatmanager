@@ -31,11 +31,23 @@ export function formatElapsed(seconds) {
   return h ? `${h}:${pad(m)}:${pad(s % 60)}` : `${pad(m)}:${pad(s % 60)}`;
 }
 
-/** Time of day "HH:MM" from world time in seconds (Foundry's world time starts at midnight). */
-export function clockTime(worldTime) {
+/**
+ * Time of day from world time in seconds (Foundry's world time starts at midnight), the way Neon
+ * Hub's calendar shows it: "19:05", or "7:05 PM" on a 12-hour clock.
+ */
+export function clockTime(worldTime, hour12 = false) {
   const day = 86400;
   const t = ((Math.floor(Number(worldTime) || 0) % day) + day) % day;
-  return `${pad(t / 3600)}:${pad((t % 3600) / 60)}`;
+  return formatMinutes(Math.floor(t / 60), hour12);
+}
+
+/** Minutes after midnight as "19:05" or "7:05 PM". */
+export function formatMinutes(minutes, hour12 = false) {
+  const total = ((Math.floor(Number(minutes) || 0) % 1440) + 1440) % 1440;
+  const h = Math.floor(total / 60);
+  const m = pad(total % 60);
+  if (!hour12) return `${pad(h)}:${m}`;
+  return `${h % 12 || 12}:${m} ${h < 12 ? "AM" : "PM"}`;
 }
 
 /** A duration in seconds in plain words: "1 min", "4 h", "24 h", "7 d", "20 s". */

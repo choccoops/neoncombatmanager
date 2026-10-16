@@ -18,6 +18,7 @@ const DEFS = [
   // Interface (client)
   ["carouselEnabled", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["carouselSize", "client", String, "medium", { config: true, choices: { small: K("Size.small"), medium: K("Size.medium"), large: K("Size.large") }, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
+  ["carouselPlacement", "client", String, "top", { config: true, choices: { top: K("Placement.top"), belowNav: K("Placement.belowNav") }, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["carouselCollapsed", "client", Boolean, false, { config: false }],
   ["partyEnabled", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["partyPosition", "client", String, "bottom", { config: true, choices: { bottom: K("Position.bottom"), left: K("Position.left"), top: K("Position.top") }, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],

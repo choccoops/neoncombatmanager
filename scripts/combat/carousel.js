@@ -29,7 +29,16 @@ export const Carousel = {
       Hooks.on(h, () => soon());
     }
     // Keep the queue reachable when the sidebar is toggled.
-    Hooks.on("collapseSidebar", () => soon());
+    Hooks.on("collapseSidebar", () => setTimeout(() => this.place(), 250));
+    Hooks.on("renderSceneNavigation", () => this.place());
+    window.addEventListener("resize", debounce(() => this.place(), 100));
+    // The clock's 12/24-hour format follows SmallTime's setting, as Neon Hub's calendar does.
+    Hooks.on("updateSetting", (setting) => {
+      if (String(setting?.key ?? "").startsWith("smalltime.")) soon();
+    });
+    Hooks.on("clientSettingChanged", (key) => {
+      if (String(key).startsWith("smalltime.")) soon();
+    });
   },
 
   get enabled() {
@@ -54,13 +63,13 @@ export const Carousel = {
       this.el.addEventListener("contextmenu", (ev) => this._onContext(ev));
       this.el.addEventListener("pointerover", (ev) => this._onHover(ev, true));
       this.el.addEventListener("pointerout", (ev) => this._onHover(ev, false));
-      const top = Compat.uiTop;
-      const nav = top.querySelector("#navigation, #scene-navigation");
-      if (nav) nav.after(this.el);
-      else top.prepend(this.el);
+      // Fixed to the window, not slotted into #ui-top's flow: whatever else sits there (scene
+      // tabs, notifications, a hub scene's hidden navigation) can't push it down.
+      document.body.append(this.el);
     }
     const scroll = this.el.querySelector(".ncm-car-track")?.scrollLeft ?? 0;
     this.el.className = `neon-combat ncm-carousel size-${Settings.get("carouselSize")}${data.collapsed ? " is-collapsed" : ""}`;
+    this.place();
     this.el.innerHTML = html;
     const track = this.el.querySelector(".ncm-car-track");
     if (track) {
@@ -71,6 +80,27 @@ export const Carousel = {
         track.scrollTo({ left: active.offsetLeft - track.clientWidth / 2 + active.clientWidth / 2, behavior: "smooth" });
       }
     }
+  },
+
+  /**
+   * Centre the carousel over the play area (between the scene controls and the sidebar) at the
+   * top of the screen, or just under the scene tabs (setting).
+   */
+  place() {
+    if (!this.el) return;
+    const middle = document.getElementById("ui-middle");
+    const area = middle?.getBoundingClientRect();
+    const left = area?.width ? area.left : 0;
+    const width = area?.width ? area.width : window.innerWidth;
+    let top = 4;
+    if (Settings.get("carouselPlacement") === "belowNav") {
+      const nav = document.querySelector("#navigation, #scene-navigation");
+      const r = nav?.getBoundingClientRect();
+      if (r && r.height > 0 && getComputedStyle(nav).visibility !== "hidden") top = Math.round(r.bottom) + 4;
+    }
+    this.el.style.setProperty("--ncm-top", `${top}px`);
+    this.el.style.setProperty("--ncm-center", `${Math.round(left + width / 2)}px`);
+    this.el.style.setProperty("--ncm-room", `${Math.max(240, Math.round(width - 16))}px`);
   },
 
   remove() {

@@ -129,11 +129,14 @@
 #ncm-carousel {
   --card-w: 92px;
   pointer-events: all;
-  position: relative;
-  z-index: 30;
-  margin: 4px auto 0;
-  width: fit-content;
-  max-width: calc(100% - 16px);
+  position: fixed;
+  top: var(--ncm-top, 4px);
+  left: var(--ncm-center, 50%);
+  transform: translateX(-50%);
+  z-index: 60;
+  margin: 0;
+  width: max-content;
+  max-width: var(--ncm-room, calc(100vw - 340px));
   color: var(--ncm-text);
   font-family: "Signika", sans-serif;
 }
@@ -171,7 +174,7 @@
 #ncm-carousel .ncm-car-track {
   display: flex; gap: 6px; justify-content: safe center;
   margin-top: 4px; padding: 6px 8px 8px;
-  max-width: calc(100vw - 340px);
+  max-width: var(--ncm-room, calc(100vw - 340px));
   overflow-x: auto; overflow-y: hidden;
   scrollbar-width: thin; scrollbar-color: var(--ncm-line-2) transparent;
 }

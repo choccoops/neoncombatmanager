@@ -29,6 +29,22 @@ test("a Round is 3 seconds of world time, set on Foundry's combat clock", async 
   CombatTime.apply();
 });
 
+test("the time of day reads like Neon Hub's calendar: SmallTime's 12/24-hour setting, 12-hour without it", async () => {
+  game.time.worldTime = 3600 * 19;
+  assert.equal(CombatTime.clock(), "7:00 PM", "no SmallTime: a 12-hour clock, as Neon Hub shows");
+  game.settings.register("smalltime", "time-format", { scope: "world", type: Number, default: 12 });
+  game.modules.set("smalltime", { id: "smalltime", active: true });
+  assert.equal(CombatTime.clock(), "7:00 PM");
+  await game.settings.set("smalltime", "time-format", 24);
+  assert.equal(CombatTime.clock(), "19:00");
+  // Neon Hub's clock gives the minutes when it's running.
+  game.modules.set("cpr-neon-hub", { id: "cpr-neon-hub", active: true, api: { time: () => ({ minutes: 7 * 60 + 5, time: "07:05" }) } });
+  await game.settings.set("smalltime", "time-format", 12);
+  assert.equal(CombatTime.clock(), "7:05 AM");
+  game.modules.delete("cpr-neon-hub");
+  game.modules.delete("smalltime");
+});
+
 test("combat elapsed time runs from the world time it started", async () => {
   const combat = makeCombat([makeActor({ name: "A" })]);
   game.time.worldTime = 500;

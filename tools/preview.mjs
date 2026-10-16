@@ -67,7 +67,11 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><title>Neon Comba
 <link rel="stylesheet" href="../styles/neon-combat.css">
 <style>
 body{margin:0;background:#2b2d35 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M0 0h40v40' fill='none' stroke='%23383a44'/%3E%3C/svg%3E");font-family:Signika,sans-serif;color:#ddd}
-#ui-top{display:flex;flex-direction:column;align-items:center;padding-top:6px}
+#ui-left{position:fixed;left:0;top:0;bottom:0;width:110px;background:rgba(255,255,255,.04);border-right:1px dashed #555}
+#ui-right{position:fixed;right:0;top:0;bottom:0;width:300px;background:rgba(255,255,255,.04);border-left:1px dashed #555}
+#ui-middle{position:fixed;left:110px;right:300px;top:0;height:200px;pointer-events:none}
+#navigation{margin:60px 8px 0;padding:6px;border:1px dashed #666;color:#888;font-size:12px}
+body>.row,body>.icons,#ui-bottom{margin-top:240px}
 .row{display:flex;gap:16px;align-items:flex-start;padding:16px;flex-wrap:wrap}
 .win{width:760px;border:1px solid #36364f}
 .win .window-content{max-height:520px;overflow:auto}
@@ -76,7 +80,15 @@ body{margin:0;background:#2b2d35 url("data:image/svg+xml,%3Csvg xmlns='http://ww
 .icons figure{margin:0;text-align:center;font-size:11px}.icons img{width:48px;height:48px;display:block;margin:0 auto 4px}
 #ui-bottom{display:flex;justify-content:center;padding:16px}
 </style></head><body>
-<div id="ui-top"><section id="ncm-carousel" class="neon-combat ncm-carousel size-medium">${carousel}</section></div>
+<div id="ui-left"></div><div id="ui-middle"><div id="ui-top"><nav id="navigation">Scene tabs</nav></div></div><div id="ui-right"></div>
+<section id="ncm-carousel" class="neon-combat ncm-carousel size-medium">${carousel}</section>
+<script>
+  // What Carousel.place() does: centre over #ui-middle, at the top.
+  const r = document.getElementById("ui-middle").getBoundingClientRect();
+  const el = document.getElementById("ncm-carousel");
+  el.style.setProperty("--ncm-center", Math.round(r.left + r.width / 2) + "px");
+  el.style.setProperty("--ncm-room", Math.round(r.width - 16) + "px");
+</script>
 <div id="ui-bottom"><section id="ncm-party" class="neon-combat ncm-party pos-bottom">${party}</section></div>
 <div class="row">
   <div class="neon-combat ncm-window ncm-lab application win"><header class="window-header">Condition Lab</header><section class="window-content">${lab}</section></div>
