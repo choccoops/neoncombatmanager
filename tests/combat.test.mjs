@@ -138,6 +138,25 @@ test("the crew bar: banners for the dying and the flatlined", async () => {
   assert.ok(html.includes("Flatlined"));
 });
 
+test("with no crew yet, the GM still gets the bar with a way to pick one; players get nothing", async () => {
+  const { asGM } = await import("./helpers/foundry.mjs");
+  const ctx = PartyBar.context([]);
+  assert.equal(ctx.empty, true);
+  const html = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/party-bar.hbs", ctx);
+  assert.ok(html.includes("No crew yet") && html.includes('data-ncm="configure"'));
+  const full = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/party-bar.hbs", PartyBar.context([makeActor({ name: "Crew" })]));
+  assert.ok(!full.includes("No crew yet"));
+  // A player with no crew to show: the bar stays away (and never touches the page).
+  const saved = game.actors;
+  game.actors = { filter: () => [], get: () => null };
+  asGM(false);
+  PartyBar.el = null;
+  await PartyBar.render();
+  assert.equal(PartyBar.el, null);
+  asGM(true);
+  game.actors = saved;
+});
+
 test("the environment per character: weather, gear and the sight condition", async () => {
   await Settings.set("weatherSource", "manual");
   await Settings.set("manualWeather", { cond: "heavyRain", band: "hot", strange: "radioactiveWindstorm" });

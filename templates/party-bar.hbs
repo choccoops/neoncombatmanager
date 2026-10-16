@@ -6,6 +6,12 @@
   </span>
 </header>
 {{#unless collapsed}}
+{{#if empty}}
+<div class="ncm-party-empty">
+  <p>{{localize "NEONCOMBAT.Party.Empty"}}</p>
+  <button type="button" class="ncm-cta" data-ncm="configure"><i class="fa-solid fa-users-gear"></i> {{localize "NEONCOMBAT.Party.Configure"}}</button>
+</div>
+{{/if}}
 <ol class="ncm-party-list">
   {{#each members}}
   <li class="ncm-member wound-{{woundTone}}{{#if turn}} is-turn{{/if}}{{#if down}} is-down{{/if}}" data-actor-id="{{id}}">

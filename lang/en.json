@@ -789,7 +789,8 @@
       "Humanity": "Humanity",
       "Flatlined": "Flatlined",
       "Dying": "Dying · DS +{penalty}",
-      "Unconscious": "Unconscious"
+      "Unconscious": "Unconscious",
+      "Empty": "No crew yet. Pick the characters to show, or give your players Owner of their characters (only you see this)."
     },
     "Lab": {
       "Title": "Condition Lab",

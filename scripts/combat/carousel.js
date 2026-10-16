@@ -83,29 +83,45 @@ export const Carousel = {
   },
 
   /**
-   * Centre the carousel over the play area (between the scene controls and the sidebar) at the
-   * top of the screen, or just under the scene tabs (setting).
+   * The play area's top strip: { top, center, room } in pixels. Centred between the scene
+   * controls and the sidebar (#ui-middle); top is the very top of the screen, or just under the
+   * scene tabs with the "under the scene tabs" setting. The crew bar's top position uses it too.
    */
-  place() {
-    if (!this.el) return;
-    const middle = document.getElementById("ui-middle");
-    const area = middle?.getBoundingClientRect();
-    const left = area?.width ? area.left : 0;
-    const width = area?.width ? area.width : window.innerWidth;
+  area() {
+    const middle = document.getElementById("ui-middle")?.getBoundingClientRect();
+    const left = middle?.width ? middle.left : 0;
+    const width = middle?.width ? middle.width : window.innerWidth;
     let top = 4;
     if (Settings.get("carouselPlacement") === "belowNav") {
       const nav = document.querySelector("#navigation, #scene-navigation");
       const r = nav?.getBoundingClientRect();
       if (r && r.height > 0 && getComputedStyle(nav).visibility !== "hidden") top = Math.round(r.bottom) + 4;
     }
-    this.el.style.setProperty("--ncm-top", `${top}px`);
-    this.el.style.setProperty("--ncm-center", `${Math.round(left + width / 2)}px`);
-    this.el.style.setProperty("--ncm-room", `${Math.max(240, Math.round(width - 16))}px`);
+    return { top, center: Math.round(left + width / 2), room: Math.max(240, Math.round(width - 16)) };
+  },
+
+  /** Put the carousel in the top strip. Hook cpr-neon-combat-manager.carouselPlaced follows. */
+  place() {
+    if (this.el) {
+      const { top, center, room } = this.area();
+      this.el.style.setProperty("--ncm-top", `${top}px`);
+      this.el.style.setProperty("--ncm-center", `${center}px`);
+      this.el.style.setProperty("--ncm-room", `${room}px`);
+    }
+    Hooks.callAll(`${MODULE_ID}.carouselPlaced`, this.el);
+  },
+
+  /** Where the carousel ends on screen (the pixel row below it), or null when it isn't showing. */
+  get bottom() {
+    const r = this.el?.getBoundingClientRect();
+    return r && r.height ? Math.round(r.bottom) : null;
   },
 
   remove() {
+    const was = !!this.el;
     this.el?.remove();
     this.el = null;
+    if (was) Hooks.callAll(`${MODULE_ID}.carouselPlaced`, null);
   },
 
   context(combat) {

@@ -50,6 +50,7 @@ await combat.setFlag("cpr-neon-combat-manager", "started", game.time.worldTime -
 const T = (name, data) => Compat.renderTemplate(`modules/cpr-neon-combat-manager/templates/${name}.hbs`, data);
 const carousel = await T("carousel", Carousel.context(combat));
 const party = await T("party-bar", PartyBar.context([vee, hazel, sage]));
+const emptyParty = await T("party-bar", PartyBar.context([]));
 const labList = ["brokenLeg", "onFireStrong", "darkness", "wxAcidRain", "blackLace", "flashbanged"].map((id) => {
   const c = Registry.get(id);
   return { id, name: c.name, img: c.img, hint: c.hint, category: game.i18n.localize(`NEONCOMBAT.Category.${c.category}`), summary: summary(c), page: typeof c.page === "number" ? `Core rulebook p.${c.page}` : c.page, override: id === "darkness" };
@@ -82,12 +83,17 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
 </style></head><body>
 <div id="ui-left"></div><div id="ui-middle"><div id="ui-top"><nav id="navigation">Scene tabs</nav></div></div><div id="ui-right"></div>
 <section id="ncm-carousel" class="neon-combat ncm-carousel size-medium">${carousel}</section>
+<section id="ncm-party" data-top class="neon-combat ncm-party pos-top is-empty">${emptyParty}</section>
 <script>
   // What Carousel.place() does: centre over #ui-middle, at the top.
   const r = document.getElementById("ui-middle").getBoundingClientRect();
   const el = document.getElementById("ncm-carousel");
   el.style.setProperty("--ncm-center", Math.round(r.left + r.width / 2) + "px");
   el.style.setProperty("--ncm-room", Math.round(r.width - 16) + "px");
+  // What PartyBar.place() does in the top position: under the carousel.
+  const party = document.querySelector("[data-top]");
+  party.style.setProperty("--ncm-top", Math.round(el.getBoundingClientRect().bottom) + 6 + "px");
+  party.style.setProperty("--ncm-center", Math.round(r.left + r.width / 2) + "px");
 </script>
 <div id="ui-bottom"><section id="ncm-party" class="neon-combat ncm-party pos-bottom">${party}</section></div>
 <div class="row">
