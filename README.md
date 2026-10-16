@@ -99,7 +99,13 @@ Talk to the crew, or to someone who isn't in the scene, the way calls look in *E
   timer, the conversation, and a line to talk on (Enter sends; the GM picks which NPC is
   speaking). **Add** rings more people into the call; **Hang up** leaves it; the GM can end it.
 - Messages are chat messages **whispered to the people on the call** (and the GM), shown in holo
-  blue in the call window and in the chat log.
+  blue in the call window and in the chat log. Closing or minimizing the call window doesn't
+  hang up.
+- **Talking from the regular chat box**: `/holo On my way` says it on your call (the latest, if
+  you're on several), as whoever you last spoke as there (the GM: the NPC). `/holo` alone, or the
+  **Talk from chat** button in the call window, switches your regular chat to the call: plain
+  messages go to it, while other commands and rolls work as usual. A blue banner over the chat box
+  shows it's on; click it (or `/holo` again) to go back. It switches off when the call ends.
 - **Night City Messenger**: its dead-zone scenes have no signal (you can't call out, and calls
   there go unanswered); a call that rings out leaves a **missed holocall** in the character's
   messenger inbox (setting).

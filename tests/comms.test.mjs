@@ -242,6 +242,60 @@ test("Night City Messenger contacts become people to call, with portraits; burne
   assert.deepEqual(await Messenger.contacts(vee), [], "nothing without the module");
 });
 
+test("/holo talks on your call from the chat box; /holo alone turns talking from chat on and off", async () => {
+  const { Comms } = await import("../scripts/comms/comms.js");
+  asGM(true);
+  chat.length = 0;
+  const vee = pc("Velvet");
+  const rogue = makeActor({ name: "Rogue", hasPlayerOwner: false });
+  const callId = await Calls.place({ actorId: rogue.id }, [{ actorId: vee.id }]);
+  await Calls.answer(callId, "p1");
+
+  // Velvet's player, in the regular chat box.
+  asGM(false);
+  assert.equal(Calls.mine()[0]?.id, callId);
+  assert.equal(Comms.onChatMessage("/holo On my way."), false, "taken for the call; Foundry posts nothing");
+  let msg = chat.at(-1);
+  assert.equal(msg.flags["cpr-neon-combat-manager"].holocall, callId);
+  assert.equal(msg.speaker.alias, "Velvet");
+  assert.ok(msg.content.includes("On my way."));
+  assert.deepEqual(msg.whisper.sort(), [gm.id, player.id].sort(), "whispered, as from the call window");
+
+  // Talking from chat: plain text goes to the call; commands and rolls don't.
+  assert.equal(Comms.onChatMessage("/holo"), false);
+  assert.equal(Comms.routing, callId);
+  const before = chat.length;
+  assert.equal(Comms.onChatMessage("Bring the van."), false);
+  assert.equal(chat.length, before + 1);
+  assert.ok(chat.at(-1).content.includes("Bring the van."));
+  assert.equal(Comms.onChatMessage("/r 1d10"), true, "a roll still rolls");
+  assert.equal(Comms.onChatMessage("/holo"), false);
+  assert.equal(Comms.routing, null);
+  assert.equal(Comms.onChatMessage("Just chatting."), true, "back to regular chat");
+
+  // The GM's /holo speaks as the NPC.
+  asGM(true);
+  Comms.onChatMessage("/holo Midnight. Don't be late.");
+  msg = chat.at(-1);
+  assert.equal(msg.speaker.alias, "Rogue");
+
+  // The call ends: talking from chat stops with it.
+  asGM(false);
+  Comms.onChatMessage("/holo");
+  assert.equal(Comms.routing, callId);
+  asGM(true);
+  await Calls.end(callId);
+  asGM(false);
+  await Comms.onCalls();
+  assert.equal(Comms.routing, null);
+
+  // Not on a call: /holo says so and posts nothing.
+  const count = chat.length;
+  assert.equal(Comms.onChatMessage("/holo anyone?"), false);
+  assert.equal(chat.length, count);
+  asGM(true);
+});
+
 test("the Biomon, Holocall and incoming-call templates render", async () => {
   const base = "modules/cpr-neon-combat-manager/templates";
   const html = await Compat.renderTemplate(`${base}/biomon.hbs`, {

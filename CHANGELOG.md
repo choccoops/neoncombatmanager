@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0
+
+- **Holocalls from the regular chat box**: `/holo <text>` says it on your call, whispered to the
+  people on it like any holocall message, as whoever you last spoke as there (the GM: the NPC).
+- **Talk from chat**: `/holo` alone, or the new button in the call window, sends your plain chat
+  to the call until you switch it off (other commands and rolls still work). A blue banner over
+  the chat box shows it's on and turns it off when clicked; it also stops when the call ends.
+
 ## 1.1.0
 
 - **Biomon Link** (replaces the crew status bar): players link their characters' Biomonitors

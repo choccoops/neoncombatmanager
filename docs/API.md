@@ -169,5 +169,8 @@ Hook: `cpr-neon-combat-manager.linksChanged` when links change.
 | `say(callId, participantId, text)` | talk on a call as one of its participants |
 | `hangUp(callId)` / `end(callId)` | leave a call / (GM) end it for everyone |
 
+In chat, `/holo <text>` says something on the user's latest call, and `/holo` alone toggles
+routing plain chat to it (handled in the `chatMessage` hook, which returns false for them).
+
 Hook: `cpr-neon-combat-manager.callsChanged` when any call changes. Holocall chat messages carry
 `flags["cpr-neon-combat-manager"].holocall` (the call id).

@@ -84,6 +84,7 @@
   {{/if}}
   <footer class="ncm-foot">
     {{#unless ended}}
+    {{#if canTalk}}<button type="button" class="{{#if routing}}on{{/if}}" data-action="routeChat" data-tooltip="NEONCOMBAT.Holocall.RouteHint"><i class="fa-solid fa-comments"></i> {{localize "NEONCOMBAT.Holocall.Route"}}</button>{{/if}}
     <button type="button" data-action="inviteMore"><i class="fa-solid fa-user-plus"></i> {{localize "NEONCOMBAT.Holocall.Add"}}</button>
     <button type="button" class="is-danger" data-action="hangUp"><i class="fa-solid fa-phone-slash"></i> {{localize "NEONCOMBAT.Holocall.HangUp"}}</button>
     {{#if gm}}<button type="button" class="is-danger" data-action="endCall"><i class="fa-solid fa-power-off"></i> {{localize "NEONCOMBAT.Holocall.EndAll"}}</button>{{/if}}

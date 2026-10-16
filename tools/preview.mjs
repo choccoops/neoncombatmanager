@@ -79,7 +79,7 @@ const holo = await T("holocall", { dialer: false, gm: true, timer: "01:12", part
 ], messages: [
   { name: "Rogue", img: rogue.img, time: "21:04", content: '<div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>Got a job for you, choom. Arasaka convoy, Watson, midnight.</p></div>' },
   { name: "Velvet", img: vee.img, time: "21:05", mine: true, content: '<div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>How much?</p></div>' }
-], voices: [{ value: "p1", label: "Rogue", selected: true }], canTalk: true });
+], voices: [{ value: "p1", label: "Rogue", selected: true }], canTalk: true, routing: true });
 const dialer = await T("holocall", { dialer: true, gm: false, callers: [{ value: "a", label: "Velvet", selected: true }], crew: [{ key: "k1", name: "Hazel Monroe", img: hazel.img, online: true }, { key: "k2", name: "Professor Sage", img: sage.img, online: false }],
   links: [{ id: "l1", name: "Crew", count: 3 }], contacts: [{ key: "c1", name: "Rogue", img: rogue.img, trustPips: [true, true, true, true, false] }, { key: "c2", name: "Snitch", img: portrait(60), burned: true, trustPips: [true, false, false, false, false] }], live: [], count: 1, messenger: true });
 const ring = await T("incoming-call", { caller: rogue, others: "Velvet" });
@@ -126,6 +126,7 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
   <div style="display:grid;gap:12px;align-content:start">
     <div class="neon-combat ncm-window ncm-incoming application win" style="width:300px"><header class="window-header">Incoming holocall</header><section class="window-content">${ring}</section></div>
     <ol style="list-style:none;padding:0;width:300px;font-size:13px">${holoChat}</ol>
+    <form id="chat-form" style="width:300px"><button type="button" class="ncm-holo-banner"><i class="fa-solid fa-phone-volume"></i> Holocall: talking to Rogue</button><textarea id="chat-message" class="ncm-holo-route" rows="3" style="width:100%">Bring the van.</textarea></form>
   </div>
 </div>
 <div class="icons">${icons}</div>

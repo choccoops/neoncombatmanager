@@ -479,6 +479,7 @@
 }
 .ncm-holocall .ncm-kicker, .ncm-incoming .ncm-kicker { color: var(--ncm-holo); }
 .ncm-holocall button.ncm-cta, .ncm-incoming button.ncm-cta { background: var(--ncm-holo); border-color: var(--ncm-holo); color: #021018; }
+.ncm-holocall button.on { background: rgba(73, 216, 255, 0.22); border-color: var(--ncm-holo); color: #fff; box-shadow: 0 0 8px rgba(73, 216, 255, 0.5); }
 
 /* holo portraits: blue, scanned, flickering */
 .ncm-holo-face, .ncm-ring-face { position: relative; overflow: hidden; border: 1px solid var(--ncm-holo); background: #021422; clip-path: var(--ncm-notch); }
@@ -565,3 +566,18 @@
 .chat-message.ncm-holo .ncm-holo-line { position: relative; }
 .chat-message.ncm-holo .ncm-holo-tag { font-family: var(--ncm-display); font-size: 9px; letter-spacing: 0.2em; color: var(--ncm-holo-2); }
 .chat-message.ncm-holo .ncm-holo-line p { margin: 2px 0 0; color: var(--ncm-holo-text); text-shadow: 0 0 6px rgba(73, 216, 255, 0.6); }
+
+/* talking on a call from the regular chat box */
+textarea#chat-message.ncm-holo-route {
+  background: rgba(3, 24, 44, 0.92) !important;
+  border-color: #49d8ff !important;
+  color: #c9f4ff !important;
+  box-shadow: inset 0 0 10px rgba(73, 216, 255, 0.25), 0 0 8px rgba(73, 216, 255, 0.35) !important;
+}
+.ncm-holo-banner {
+  display: flex; align-items: center; gap: 6px; width: 100%; margin: 0 0 3px; padding: 3px 8px;
+  border: 1px solid #1d8fd1; border-radius: 0; background: linear-gradient(90deg, rgba(4, 34, 60, 0.95), rgba(2, 14, 28, 0.95));
+  color: #49d8ff; font-family: "Neon Combat Tektur", "Signika", sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  text-align: left; line-height: 1.4; cursor: pointer; animation: ncm-blink 2.4s ease-in-out infinite;
+}
+.ncm-holo-banner:hover { background: #49d8ff; color: #021018; animation: none; }
