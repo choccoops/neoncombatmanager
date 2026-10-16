@@ -67,16 +67,21 @@ their vitals), and everyone on the link sees everyone's readout.
 - Open it from the **heart-pulse button** in the token controls (or a keybinding you set in
   Configure Controls). A player whose character isn't linked yet picks a link to join or starts
   one ("Crew"); a character is on one link at a time, and **Unlink** takes them off.
+- **A character needs a Biomonitor or a Neuroport installed to link**: Cyberpunk RED's
+  Biomonitor cyberware, or the *Edgerunners Mission Kit* Neuroport (either version, "Neuroport"
+  or "Neuroport (Free)"), whose built-in Biomonitor does the broadcasting. Characters without one
+  show in the link-up list but can't be picked. If a linked character's implant comes out, their
+  readout shows **NO SIGNAL** until it's back. The GM can switch the rule off or change which
+  implants count (settings).
 - Each readout: portrait, an animated **ECG trace** whose pace follows the character's state,
   BPM, HP, the status (STABLE, MINOR / SERIOUS TRAUMA, CRITICAL with the Death Save penalty,
-  UNRESPONSIVE, FLATLINE), a BIOMON chip when they have the implant, and their Critical
+  UNRESPONSIVE, FLATLINE), a chip naming the implant broadcasting it, and their Critical
   Injuries and hazards as icons. Click a readout to look at the token; with Neon At Home, the
   wave button opens that character's full Biomonitor.
 - **Alarms**: when someone on your link goes critical, drops unconscious or flatlines, you get a
   notice (or the Biomon pops open, or nothing: a per-user setting).
 - The phone button on a link holocalls everyone else on it.
-- The GM sees every link and can rename or break one. A setting can require the Biomonitor
-  cyberware to join.
+- The GM sees every link and can rename or break one.
 
 ## Holocalls
 
@@ -98,7 +103,8 @@ Talk to the crew, or to someone who isn't in the scene, the way calls look in *E
 - **Night City Messenger**: its dead-zone scenes have no signal (you can't call out, and calls
   there go unanswered); a call that rings out leaves a **missed holocall** in the character's
   messenger inbox (setting).
-- Settings: ring time; whether characters need an Agent (carried) or Internal Agent to call.
+- Settings: ring time; whether characters need something to call with: an Agent (carried), an
+  Internal Agent, or a Neuroport (its Holophone).
 
 ## Neon Conditions
 

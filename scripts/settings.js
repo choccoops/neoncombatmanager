@@ -6,7 +6,7 @@ const K = (key) => `${LANG}.Settings.${key}`;
 export const MENUS = {
   combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCriticals", "critItems", "cltShim"],
-  comms: ["linkNeedsImplant", "callNeedsAgent", "ringSeconds", "missedCallMessages"],
+  comms: ["linkNeedsImplant", "linkImplants", "callNeedsAgent", "ringSeconds", "missedCallMessages"],
   environment: [
     "weatherSource", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
     "lowLightAt", "darkAt", "sightKeys", "visibilityCap", "visibilityFrom", "envOutsideCombat",
@@ -25,7 +25,8 @@ const DEFS = [
   ["biomonAlerts", "client", String, "toast", { config: true, choices: { toast: K("BiomonAlerts.toast"), open: K("BiomonAlerts.open"), off: K("BiomonAlerts.off") } }],
 
   // Biomon Link and Holocalls
-  ["linkNeedsImplant", "world", Boolean, false, {}],
+  ["linkNeedsImplant", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.linksChanged`) }],
+  ["linkImplants", "world", String, "Neuroport, Biomonitor", { onChange: () => Hooks.callAll(`${MODULE_ID}.linksChanged`) }],
   ["callNeedsAgent", "world", Boolean, false, {}],
   ["ringSeconds", "world", Number, 30, { range: { min: 10, max: 120, step: 5 } }],
   ["missedCallMessages", "world", Boolean, true, {}],

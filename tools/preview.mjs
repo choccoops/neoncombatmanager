@@ -65,11 +65,12 @@ const row = (actor, wound, extra = {}) => {
   const hp = actor.system.derivedStats.hp;
   const v = readout({ hp: hp.value, max: hp.max, wound, ...extra });
   const label = { stable: "STABLE", light: "MINOR TRAUMA", serious: "SERIOUS TRAUMA", critical: "CRITICAL", down: "UNRESPONSIVE", flatline: "FLATLINE" }[v.state];
-  return { id: actor.id, name: actor.name, img: actor.img, ...v, label, ecg: ecgPath(v.state), beat: v.bpm ? `${(60 / v.bpm) * 3}s` : "0s", icons: [], mine: actor === vee, fullBiomon: true };
+  return { id: actor.id, name: actor.name, img: actor.img, ...v, label: v.signal ? label : "NO SIGNAL", implantHint: v.implant ? `Vitals broadcast through: ${v.implant}` : "", ecg: ecgPath(v.state), beat: v.bpm ? `${(60 / v.bpm) * 3}s` : "0s", icons: [], mine: actor === vee, fullBiomon: true };
 };
 const biomon = await T("biomon", { gm: false, links: [{ id: "l1", name: "Crew", canCall: true, members: [
-  row(vee, "lightlyWounded", { implant: true }), row(hazel, "seriouslyWounded"), row(sage, "mortallyWounded", { deathSave: 2 })
-] }], unlinked: [], joinable: [] });
+  row(vee, "lightlyWounded", { implant: "Neuroport" }), row(hazel, "seriouslyWounded", { implant: "Biomonitor" }), row(sage, "mortallyWounded", { deathSave: 2, implant: "Neuroport" }),
+  row(ganger, "notWounded", { signal: false })
+] }], unlinked: [{ id: "x", name: "New Recruit", ok: true }, { id: "y", name: "Unchromed", ok: false }], canLink: true, needsImplant: true, joinable: [{ id: "l1", name: "Crew" }] });
 const rogue = { name: "Rogue", img: portrait(280) };
 const holo = await T("holocall", { dialer: false, gm: true, timer: "01:12", participants: [
   { id: "p0", name: "Velvet", img: vee.img, stateLabel: "On the line", state: "joined", live: true },

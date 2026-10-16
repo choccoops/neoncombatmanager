@@ -2,7 +2,6 @@ import { MODULE_ID, TEMPLATE_PATH, LANG, NEON_HOME_ID } from "../constants.js";
 import { Compat } from "../compat.js";
 import { Links } from "./links.js";
 import { ecgPath } from "./vitals.js";
-import { Settings } from "../settings.js";
 import { debounce, L, esc } from "../util.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -68,9 +67,11 @@ export class BiomonApp extends HandlebarsApplicationMixin(ApplicationV2) {
           mine: myIds.has(actor.id),
           ...v,
           label: L(`${LANG}.Biomon.State.${v.state}`),
+          implantHint: v.implant ? L(`${LANG}.Biomon.ImplantHint`, { implant: v.implant }) : "",
           ecg: ecgPath(v.state),
           beat: v.bpm ? `${(60 / v.bpm) * (v.state === "critical" ? 4 : v.state === "serious" ? 3 : 2)}s` : "0s",
-          icons: Links.icons(actor),
+          // No implant, no readings: not even the injuries.
+          icons: v.signal ? Links.icons(actor) : [],
           fullBiomon: !!hub?.active && typeof hub.api?.biomonitor === "function" && actor.testUserPermission(game.user, "OBSERVER")
         };
       }),
@@ -81,9 +82,11 @@ export class BiomonApp extends HandlebarsApplicationMixin(ApplicationV2) {
     return {
       gm: game.user.isGM,
       links,
-      unlinked: unlinked.map((a) => ({ id: a.id, name: a.name })),
+      // Characters without the implant are listed but can't be picked.
+      unlinked: unlinked.map((a) => ({ id: a.id, name: a.name, ok: !Links.needsImplant || Links.hasImplant(a) })),
+      canLink: unlinked.some((a) => !Links.needsImplant || Links.hasImplant(a)),
       joinable: Links.all().map((l) => ({ id: l.id, name: l.name })),
-      needsImplant: !!Settings.get("linkNeedsImplant")
+      needsImplant: Links.needsImplant
     };
   }
 

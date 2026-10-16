@@ -154,7 +154,7 @@ world time, which Neon Hub's Clock already follows. Nothing has to change in Neo
 | `open()` | the Biomon Link window |
 | `links()` | every link: `{ id, name, members: [actorId] }` |
 | `linkOf(actor)` | the link a character is in, or null |
-| `vitals(actor)` | `{ state, bpm, pct, hp, max, deathSave, alerts, criticals, implant }`; state is stable, light, serious, down, critical or flatline |
+| `vitals(actor)` | `{ state, bpm, pct, hp, max, deathSave, alerts, criticals, implant, signal }`; state is stable, light, serious, down, critical, flatline, or nosignal (no Biomonitor or Neuroport installed while the rule is on: no readings) |
 | `create(name, actor)` / `join(linkId, actor)` / `leave(actor)` | link a character you own (through the GM) |
 
 Hook: `cpr-neon-combat-manager.linksChanged` when links change.

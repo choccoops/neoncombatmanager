@@ -76,9 +76,15 @@ export const Messenger = {
     return !!scene?.flags?.[NCM_ID]?.deadZone;
   },
 
-  /** Has this character something to call with (an Agent, or Internal Agent cyberware)? */
+  /**
+   * Has this character something to call with? An Agent (carried), or installed cyberware that
+   * is one: an Internal Agent, or a CEMK Neuroport (its built-in Holophone).
+   */
   hasAgent(actor) {
-    return (actor?.items ?? []).some((i) => /\bagent\b/i.test(i.name) && (i.type === "cyberware" ? CPR.inUse(i) : i.type === "gear" && i.system?.equipped !== "owned"));
+    return (actor?.items ?? []).some((i) => {
+      if (i.type === "cyberware") return /\bagent\b|neuroport|holophone/i.test(i.name) && CPR.inUse(i);
+      return i.type === "gear" && /\bagent\b/i.test(i.name) && i.system?.equipped !== "owned";
+    });
   },
 
   /**

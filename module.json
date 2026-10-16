@@ -51,6 +51,11 @@
         "id": "cpr-neon-at-home",
         "type": "module",
         "reason": "Its encumbrance statuses sit in the token HUD alongside the Cyberpunk RED conditions."
+      },
+      {
+        "id": "edgerunners-mission-kit-v11",
+        "type": "module",
+        "reason": "Its Neuroport cyberware links a character to a Biomon Link (built-in Biomonitor) and takes holocalls (built-in Holophone)."
       }
     ]
   },

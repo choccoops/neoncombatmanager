@@ -24,10 +24,14 @@ const CALL_OUTS = ["dead", "unconscious", "sleep", "onFireDeadly", "onFireStrong
  * @param {number} [v.deathSave] - Death Save penalty
  * @param {string[]} [v.conditions] - condition ids on the character
  * @param {string[]} [v.criticals] - names of their Critical Injuries
- * @param {boolean} [v.implant] - has a Biomonitor installed
- * @returns {{ state, bpm, pct, hp, max, deathSave, alerts: string[], criticals: string[], implant: boolean, rank: number }}
+ * @param {string|null} [v.implant] - the implant broadcasting the vitals ("Neuroport", "Biomonitor"), if any
+ * @param {boolean} [v.signal] - false when there's no implant to broadcast them: no readings at all
+ * @returns {{ state, bpm, pct, hp, max, deathSave, alerts: string[], criticals: string[], implant, signal, rank: number }}
  */
-export function readout({ hp = 0, max = 0, wound = "notWounded", deathSave = 0, conditions = [], criticals = [], implant = false }) {
+export function readout({ hp = 0, max = 0, wound = "notWounded", deathSave = 0, conditions = [], criticals = [], implant = null, signal = true }) {
+  if (!signal) {
+    return { state: "nosignal", bpm: 0, pct: 0, hp: null, max: null, deathSave: null, alerts: [], criticals: [], implant: null, signal: false, rank: -1 };
+  }
   const has = new Set(conditions);
   let state = { lightlyWounded: "light", seriouslyWounded: "serious", mortallyWounded: "critical" }[wound] ?? "stable";
   if (has.has("unconscious") || has.has("sleep")) state = state === "critical" ? "critical" : "down";
@@ -42,7 +46,8 @@ export function readout({ hp = 0, max = 0, wound = "notWounded", deathSave = 0, 
     deathSave: state === "critical" ? Number(deathSave) || 0 : null,
     alerts: CALL_OUTS.filter((id) => has.has(id) && id !== "dead"),
     criticals: [...criticals],
-    implant: !!implant,
+    implant: implant || null,
+    signal: true,
     rank: STATES.indexOf(state)
   };
 }
@@ -52,7 +57,7 @@ export function readout({ hp = 0, max = 0, wound = "notWounded", deathSave = 0, 
  * @returns {string|null} the new state when it's critical, down or flatline and wasn't before
  */
 export function alarm(before, after) {
-  if (!after) return null;
+  if (!after?.signal || before?.signal === false) return null;
   const loud = ["critical", "down", "flatline"];
   if (!loud.includes(after.state)) return null;
   if (before && before.state === after.state) return null;
@@ -62,7 +67,7 @@ export function alarm(before, after) {
 
 /** SVG path of one ECG trace across a 120x32 box for a state (flat for a flatline). */
 export function ecgPath(state) {
-  if (state === "flatline") return "M0 16 H120";
+  if (state === "flatline" || state === "nosignal") return "M0 16 H120";
   const beats = state === "critical" ? 4 : state === "serious" ? 3 : 2;
   const amp = state === "down" ? 6 : state === "critical" ? 9 : 12;
   const seg = 120 / beats;

@@ -52,12 +52,26 @@ export const Links = {
     return game.users.filter((u) => u.isGM || members.some((a) => a.testUserPermission(u, "OWNER")));
   },
 
-  /** Has this character a Biomonitor installed? */
-  hasImplant(actor) {
-    return CPR.hasGear(actor, ["Biomonitor"]);
+  /**
+   * The implant a character's vitals go out through: the first of the accepted implants they have
+   * installed (setting; by default a CEMK Neuroport, whose built-in Biomonitor and Holophone do
+   * it, or Biomonitor cyberware), or null.
+   */
+  implant(actor) {
+    for (const name of Settings.list("linkImplants")) if (CPR.hasGear(actor, [name])) return name;
+    return null;
   },
 
-  /** The vitals readout for a character. */
+  hasImplant(actor) {
+    return !!this.implant(actor);
+  },
+
+  /** Does linking need an implant (setting, on by default)? */
+  get needsImplant() {
+    return !!Settings.get("linkNeedsImplant");
+  },
+
+  /** The vitals readout for a character. Without an implant (when one's needed) there's no signal. */
   vitals(actor) {
     const conditions = Conditions.active(actor).map((c) => c.id);
     const criticals = [
@@ -65,7 +79,17 @@ export const Links = {
       ...Conditions.active(actor).filter((c) => c.category === "critical" && !(actor.items ?? []).some((i) => i.type === "criticalInjury" && i.name === c.critical?.name)).map((c) => c.name)
     ];
     const { value, max } = CPR.hp(actor);
-    return readout({ hp: value, max, wound: CPR.woundState(actor), deathSave: CPR.deathSave(actor).penalty, conditions, criticals: [...new Set(criticals)], implant: this.hasImplant(actor) });
+    const implant = this.implant(actor);
+    return readout({
+      hp: value,
+      max,
+      wound: CPR.woundState(actor),
+      deathSave: CPR.deathSave(actor).penalty,
+      conditions,
+      criticals: [...new Set(criticals)],
+      implant,
+      signal: !this.needsImplant || !!implant
+    });
   },
 
   /** Icons for the conditions on a readout (critical injuries and call-outs). */
@@ -110,7 +134,7 @@ export const Links = {
   },
 
   _check(actorId) {
-    if (Settings.get("linkNeedsImplant") && !this.hasImplant(game.actors.get(actorId))) {
+    if (this.needsImplant && !this.hasImplant(game.actors.get(actorId))) {
       throw new Error(L(`${LANG}.Biomon.NeedsImplant`, { name: game.actors.get(actorId)?.name ?? "" }));
     }
   },

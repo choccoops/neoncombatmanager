@@ -704,12 +704,12 @@
         "off": "Off"
       },
       "linkNeedsImplant": {
-        "name": "Biomon Link needs a Biomonitor",
-        "hint": "Only characters with Biomonitor cyberware installed can join a link (it's the implant that broadcasts the vitals)."
+        "name": "Biomon Link needs a Biomonitor or Neuroport",
+        "hint": "Only characters with one of the implants below installed can link (it's the implant that broadcasts their vitals). A linked character whose implant comes out shows NO SIGNAL."
       },
       "callNeedsAgent": {
         "name": "Holocalls need an Agent",
-        "hint": "Characters need an Agent (carried) or an Internal Agent to place or take a holocall."
+        "hint": "Characters need an Agent (carried), an Internal Agent, or a CEMK Neuroport (its Holophone) to place or take a holocall."
       },
       "ringSeconds": {
         "name": "Ring time (seconds)",
@@ -726,6 +726,10 @@
       "holocalls": {
         "name": "Holocalls",
         "hint": ""
+      },
+      "linkImplants": {
+        "name": "Implants that link",
+        "hint": "Installed cyberware (comma-separated names) that broadcasts vitals: the CEMK Neuroport (and Neuroport (Free)) and Biomonitor cyberware by default."
       }
     },
     "SceneWeather": {
@@ -918,17 +922,17 @@
       "Rename": "Rename link",
       "Remove": "Unlink everyone",
       "RemoveConfirm": "Break the {name} link? Everyone on it stops sharing vitals.",
-      "ImplantHint": "Biomonitor installed: live vitals",
+      "ImplantHint": "Vitals broadcast through: {implant}",
       "Full": "Open the full Biomonitor (Neon At Home)",
       "Leave": "Unlink",
       "NoLinks": "No Biomon Links yet.",
       "JoinTitle": "Link up",
       "JoinHint": "Share your character's vitals with a group. Everyone on the link sees each other's HP, condition and injuries.",
-      "ImplantNeeded": "Your character needs a Biomonitor installed.",
+      "ImplantNeeded": "Linking needs a Biomonitor or Neuroport installed.",
       "Join": "Link",
       "DefaultName": "Crew",
       "Create": "New link",
-      "NeedsImplant": "{name} has no Biomonitor installed to link.",
+      "NeedsImplant": "{name} has no Biomonitor or Neuroport installed to link.",
       "NoLink": "That link is gone.",
       "Alarm": "BIOMON // {name}: {state}",
       "State": {
@@ -937,8 +941,11 @@
         "serious": "SERIOUS TRAUMA",
         "critical": "CRITICAL",
         "down": "UNRESPONSIVE",
-        "flatline": "FLATLINE"
-      }
+        "flatline": "FLATLINE",
+        "nosignal": "NO SIGNAL"
+      },
+      "NoImplant": "no Biomonitor or Neuroport",
+      "NoSignalHint": "No Biomonitor or Neuroport installed: nothing to read."
     },
     "Holocall": {
       "Title": "Holocall",
@@ -947,7 +954,7 @@
       "InviteTitle": "Add to the call",
       "Tag": "◈ HOLO",
       "NoSignalHere": "No signal here: this is a dead zone.",
-      "NoAgent": "{name} has no Agent to call with.",
+      "NoAgent": "{name} has nothing to call with (an Agent, Internal Agent or Neuroport).",
       "NoOne": "Pick someone to call.",
       "NoCaller": "Pick who's calling.",
       "MissedSubject": "Missed holocall: {name}",

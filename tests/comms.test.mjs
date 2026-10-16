@@ -18,7 +18,9 @@ Links.registerSocket();
 Calls.registerSocket();
 
 const { gm, player } = testUsers;
-const pc = (name, extra = {}) => makeActor({ name, owners: [player.id], hasPlayerOwner: true, ...extra });
+/** A player character; with a CEMK Neuroport installed unless implant is null (or another implant's name). */
+const pc = (name, extra = {}, implant = "Neuroport") => makeActor({ name, owners: [player.id], hasPlayerOwner: true, ...extra },
+  implant ? [{ name: implant, type: "cyberware", system: { isInstalled: true } }] : []);
 
 test("vitals follow the Wound State, out cold and flatlined", () => {
   assert.equal(readout({ hp: 40, max: 40, wound: "notWounded" }).state, "stable");
@@ -29,6 +31,7 @@ test("vitals follow the Wound State, out cold and flatlined", () => {
   assert.equal(crit.pct, 0);
   assert.equal(readout({ hp: 12, max: 40, wound: "seriouslyWounded", conditions: ["unconscious"] }).state, "down");
   assert.equal(readout({ hp: -2, max: 40, wound: "mortallyWounded", conditions: ["unconscious"] }).state, "critical", "dying beats unconscious");
+  assert.deepEqual(readout({ hp: 20, max: 40, wound: "seriouslyWounded", signal: false }).state, "nosignal", "no implant, no readings");
   const dead = readout({ hp: -5, max: 40, wound: "mortallyWounded", conditions: ["dead"] });
   assert.equal(dead.state, "flatline");
   assert.equal(dead.bpm, 0);
@@ -36,7 +39,7 @@ test("vitals follow the Wound State, out cold and flatlined", () => {
 });
 
 test("the link's alarm sounds when someone crashes, not when they recover", () => {
-  const r = (state) => ({ state });
+  const r = (state) => ({ state, signal: true });
   assert.equal(alarm(r("serious"), r("critical")), "critical");
   assert.equal(alarm(r("critical"), r("flatline")), "flatline");
   assert.equal(alarm(r("stable"), r("down")), "down");
@@ -52,6 +55,7 @@ test("the ECG trace returns to its baseline after every beat, and lies flat on a
     assert.ok(Math.abs(ys) < 1e-9, state);
   }
   assert.equal(ecgPath("flatline"), "M0 16 H120");
+  assert.equal(ecgPath("nosignal"), "M0 16 H120");
 });
 
 test("players link their own characters; the GM writes it; a character is in one link at a time", async () => {
@@ -74,16 +78,35 @@ test("players link their own characters; the GM writes it; a character is in one
   await assert.rejects(Socket.handlers.get("linkJoin")({ linkId: crew, actorId: npc.id }, player.id), /isn't your character/);
 });
 
-test("a link can require the Biomonitor implant, and vitals say who has one", async () => {
-  await Settings.set("linkNeedsImplant", true);
-  const bare = pc("Bare");
-  const chromed = pc("Chromed", {}, []);
-  chromed.items.set("bm", { id: "bm", name: "Biomonitor", type: "cyberware", system: { isInstalled: true } });
-  await assert.rejects(Links.create("Needs chrome", bare), /no Biomonitor/);
-  const id = await Links.create("Chromed", chromed);
-  assert.ok(id);
-  assert.equal(Links.vitals(chromed).implant, true);
+test("linking needs a Biomonitor or a Neuroport (CEMK), and a linked character without one shows no signal", async () => {
+  asGM(true);
+  assert.equal(Settings.get("linkNeedsImplant"), true, "on by default");
+  const bare = pc("Bare", {}, null);
+  const freeport = pc("Freeport", {}, "Neuroport (Free)");
+  const chromed = pc("Chromed", {}, "Biomonitor");
+  const optioned = pc("Optioned", {}, "Neuroport Biomonitor");
+  await assert.rejects(Links.create("Needs chrome", bare), /no Biomonitor or Neuroport/);
+  const id = await Links.create("Chromed", freeport);
+  await Links.join(id, chromed);
+  await Links.join(id, optioned);
+  assert.deepEqual(Links.get(id).members.length, 3);
+  assert.equal(Links.vitals(freeport).implant, "Neuroport", "the Free variant is a Neuroport");
+  assert.equal(Links.vitals(chromed).implant, "Biomonitor");
+  assert.equal(Links.vitals(optioned).implant, "Neuroport", "the Neuroport's Biomonitor option counts (as the Neuroport)");
+
+  // The implant comes out: still linked, but nothing to read.
+  freeport.items.clear();
+  const v = Links.vitals(freeport);
+  assert.equal(v.signal, false);
+  assert.equal(v.state, "nosignal");
+  assert.equal(v.hp, null);
+  assert.equal(alarm({ state: "stable", signal: true }, v), null, "losing the signal isn't a crash");
+
+  // The GM can switch the rule off: then anyone links, and everyone reads.
   await Settings.set("linkNeedsImplant", false);
+  await Links.join(id, bare);
+  assert.equal(Links.vitals(freeport).signal, true);
+  await Settings.set("linkNeedsImplant", true);
   await Links.remove(id);
 });
 
@@ -175,7 +198,8 @@ test("no answer: a missed call, and a message in the Night City Messenger inbox"
 
 test("dead zones and Agents: no signal, no call", async () => {
   asGM(false);
-  const vee = pc("Velvet");
+  // A Biomonitor but nothing to call with.
+  const vee = pc("Velvet", {}, "Biomonitor");
   const scene = { id: "s1", flags: { "night-city-messenger": { deadZone: true } } };
   game.scenes.set("s1", scene);
   player.viewedScene = "s1";
@@ -183,9 +207,12 @@ test("dead zones and Agents: no signal, no call", async () => {
   await assert.rejects(Calls.place({ actorId: vee.id }, [{ actorId: vee.id }]), /dead zone/);
   player.viewedScene = null;
   await Settings.set("callNeedsAgent", true);
-  await assert.rejects(Calls.place({ actorId: vee.id }, [{ actorId: "x" }]), /no Agent/);
+  await assert.rejects(Calls.place({ actorId: vee.id }, [{ actorId: "x" }]), /nothing to call with/);
   vee.items.set("ag", { id: "ag", name: "Agent", type: "gear", system: { equipped: "carried" } });
   assert.equal(Messenger.hasAgent(vee), true);
+  const ported = pc("Ported");
+  assert.equal(Messenger.hasAgent(ported), true, "a Neuroport's Holophone calls");
+  assert.equal(Messenger.hasAgent(pc("Unplugged", {}, "Biomonitor")), false);
   await Settings.set("callNeedsAgent", false);
   asGM(true);
 });
@@ -220,10 +247,13 @@ test("the Biomon, Holocall and incoming-call templates render", async () => {
   const html = await Compat.renderTemplate(`${base}/biomon.hbs`, {
     gm: true,
     links: [{ id: "l1", name: "Crew", canCall: true, members: [{ id: "a", name: "Velvet", img: "v", ...readout({ hp: 10, max: 40, wound: "seriouslyWounded" }), label: "SERIOUS TRAUMA", ecg: ecgPath("serious"), beat: "1.6s", icons: [], mine: true, fullBiomon: true }] }],
-    unlinked: [{ id: "b", name: "Hazel" }],
+    unlinked: [{ id: "b", name: "Hazel", ok: true }, { id: "c", name: "Bare", ok: false }],
+    canLink: true,
+    needsImplant: true,
     joinable: [{ id: "l1", name: "Crew" }]
   });
   assert.ok(html.includes("SERIOUS TRAUMA") && html.includes('data-action="joinLink"') && html.includes("st-serious"));
+  assert.ok(html.includes('<option value="c" disabled>Bare (no Biomonitor or Neuroport)</option>'), "a character without the implant can't be picked");
   const dial = await Compat.renderTemplate(`${base}/holocall.hbs`, { dialer: true, gm: true, callers: [{ value: "actor:a", label: "Rogue", selected: true }], crew: [{ key: "actor:b", name: "Hazel", img: "h", online: true }], links: [{ id: "l1", name: "Crew", count: 2 }], contacts: [{ key: "contacts:c1", name: "Rogue", img: "r", trustPips: [true, false] }], npcs: [], directory: [], live: [], count: 0, messenger: true });
   assert.ok(dial.includes('data-pick="actor:b"') && dial.includes('data-action="placeCall"'));
   const call = await Compat.renderTemplate(`${base}/holocall.hbs`, { dialer: false, gm: true, timer: "00:42", participants: [{ id: "p0", name: "Rogue", img: "r", stateLabel: "On the line", state: "joined", live: true }], messages: [{ name: "Rogue", img: "r", content: "<p>hi</p>", time: "21:04" }], voices: [{ value: "p0", label: "Rogue", selected: true }], canTalk: true });
