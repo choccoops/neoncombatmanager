@@ -1,0 +1,4 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Neon Combat Manager: Into the Wall. Sized like CPR's status icons. -->
+  <path d="M330 80v352M330 140h100M330 230h100M330 320h100M380 140v90M380 320v90M430 230v90" fill="none" stroke="#8a8fae" stroke-width="20"/><circle cx="170" cy="170" r="34" fill="#fff"/><path d="M200 210l90 60M170 220l-30 110 60 60M150 270l-70 20" fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="M300 200l-30-40M300 330l-30 40M312 265h-40" fill="none" stroke="#ff3864" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -18,6 +18,8 @@ import { Links } from "./comms/links.js";
 import { Calls } from "./comms/calls.js";
 import { Environment } from "./environment/environment.js";
 import { Sources } from "./environment/sources.js";
+import { Stakes } from "./stakes/stakes.js";
+import { Awareness } from "./awareness/awareness.js";
 import { debounce, L } from "./util.js";
 
 /** Neon Combat Manager's public API: game.modules.get("cpr-neon-combat-manager").api */
@@ -81,6 +83,28 @@ const api = {
     hangUp: (callId) => Calls.hangUp(callId),
     end: (callId) => Calls.end(callId)
   },
+  /** Raising the Stakes: the Plot Die (2070 Core Rules). */
+  stakes: {
+    open: (actor) => Stakes.open(actor),
+    /** GM: Raise the Stakes on a character's Check (posts the card their player rolls from). */
+    raise: (actor, options) => Stakes.raise(actor, options),
+    /** Roll the Plot Die for a character now and post the result. */
+    roll: (actor, options) => Stakes.roll(actor, options),
+    ask: (actor, reason) => Stakes.ask(actor, reason),
+    luck: (actor) => Stakes.luck(actor),
+    options: (actor) => Stakes.options(actor),
+    newSession: () => Stakes.newSession()
+  },
+  /** Combat Awareness: a Solo's points. */
+  awareness: {
+    open: (actor) => Awareness.open(actor),
+    isSolo: (actor) => Awareness.isSolo(actor),
+    rank: (actor) => Awareness.rank(actor),
+    current: (actor) => Awareness.current(actor),
+    /** Assign points ({ precisionAttack: 3, ... }); in a started combat it's the Solo's Action on their Turn. */
+    assign: (actor, alloc) => Awareness.assign(actor, alloc),
+    mode: (actor) => Awareness.mode(actor)
+  },
   cpr: CPR,
   hooks: HOOKS
 };
@@ -97,7 +121,9 @@ Hooks.once("init", () => {
     `${TEMPLATE_PATH}/lab-edit.hbs`,
     `${TEMPLATE_PATH}/triggers.hbs`,
     `${TEMPLATE_PATH}/environment.hbs`,
-    `${TEMPLATE_PATH}/settings-menu.hbs`
+    `${TEMPLATE_PATH}/settings-menu.hbs`,
+    `${TEMPLATE_PATH}/stakes.hbs`,
+    `${TEMPLATE_PATH}/awareness.hbs`
   ]);
 
   // Conditions: the same handling whether placed through the API, the token HUD or a macro.
@@ -137,6 +163,8 @@ Hooks.once("init", () => {
   Environment.init();
   Carousel.init();
   Comms.init();
+  Stakes.init();
+  Awareness.init();
   TrackerHooks.init();
 
   game.modules.get(MODULE_ID).api = api;
@@ -152,6 +180,7 @@ Hooks.once("setup", () => {
   Conditions.registerSocket();
   Links.registerSocket();
   Calls.registerSocket();
+  Stakes.registerSocket();
 });
 
 Hooks.once("ready", async () => {

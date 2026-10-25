@@ -29,7 +29,9 @@ try {
 }
 
 const portrait = (hue) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="hsl(${hue},40%,14%)"/><circle cx="32" cy="24" r="12" fill="hsl(${hue},80%,60%)"/><path d="M10 64c2-16 12-22 22-22s20 6 22 22z" fill="hsl(${hue},80%,45%)"/></svg>`)}`;
-const vee = makeActor({ name: "Velvet", img: portrait(320), system: { derivedStats: { hp: { value: 31, max: 45 }, seriouslyWounded: 23 } } }, [{ name: "Solo", type: "role", system: { rank: 4 } }]);
+const vee = makeActor({ name: "Velvet", img: portrait(320), system: { derivedStats: { hp: { value: 31, max: 45 }, seriouslyWounded: 23 } } }, [{ name: "Solo", type: "role", system: { rank: 4, mainRoleAbility: "Combat Awareness",
+  abilities: ["Damage Deflection", "Fumble Recovery", "Initiative Reaction", "Precision Attack", "Spot Weakness", "Threat Detection"].map((name) => ({ name, rank: name === "Precision Attack" ? 3 : 0 })) } }]);
+vee.system.stats.luck = { value: 6, max: 8 };
 const hazel = makeActor({ name: "Hazel Monroe", img: portrait(190), system: { derivedStats: { hp: { value: 14, max: 40 } } } }, [{ name: "Netrunner", type: "role", system: { rank: 6 } }]);
 const sage = makeActor({ name: "Professor Sage", img: portrait(50), system: { derivedStats: { hp: { value: -2, max: 35 }, deathSave: { penalty: 2 } } } }, [{ name: "Medtech", type: "role", system: { rank: 5 } }]);
 const ganger = makeActor({ name: "Maelstrom Ganger", type: "mook", hasPlayerOwner: false, img: portrait(0), system: { derivedStats: { hp: { value: 9, max: 30 } } } });
@@ -85,6 +87,24 @@ const dialer = await T("holocall", { dialer: true, gm: false, callers: [{ value:
 const ring = await T("incoming-call", { caller: rogue, others: "Velvet" });
 const holoChat = `<li class="chat-message message ncm-holo"><header class="message-header"><h4 class="message-sender">Rogue</h4><span class="whisper-to">To: Velvet, GM</span></header><div class="message-content"><div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>Got a job for you, choom.</p></div></div></li>`;
 
+// The Plot Die and Combat Awareness.
+const { StakesApp } = await import("../scripts/stakes/stakes-app.js");
+const { AwarenessApp } = await import("../scripts/awareness/awareness-app.js");
+const { Awareness } = await import("../scripts/awareness/awareness.js");
+const sApp = new StakesApp();
+sApp._actorId = vee.id;
+const stakesWin = await T("stakes", await sApp._prepareContext());
+const aApp = new AwarenessApp();
+aApp._actorId = vee.id;
+aApp._draft = { precisionAttack: 3, spotWeakness: 1 };
+const awareWin = await T("awareness", await aApp._prepareContext());
+const plotCard = (kind, face, title, body, btns, tone) => T("chat-card", { kicker: `Plot Die: ${face}`, title, img: "icons/dice/d6black.svg", tone,
+  body: `<div class="ncm-plot-face kind-${kind}">${face}</div><p>${body}</p>`, buttons: btns.map((label) => ({ action: "x", label, attrs: "" })) });
+const plot1 = await plotCard("complication", 2, "+4 for Velvet, and a Complication", "+4 is on this Check (ticked in the roll dialog). The GM picks 1 Complication(s).", ["Hinder an Ally", "Feeling Unlucky", "Influence the Narrative", "Double Down"], "red");
+const plot2 = await plotCard("opportunity", 6, "Opportunity for Velvet", "Pick one Opportunity below.", ["Aid an Ally", "Feeling Lucky", "Critically Hit", "Influence the Narrative"], "cyan");
+const caCard = await T("chat-card", { kicker: "Action", title: "Velvet reassigns Combat Awareness", img: vee.img, tone: "pink",
+  body: `<ul class="ncm-ca-list">${Awareness.lines({ precisionAttack: 3, spotWeakness: 1 }).map((l) => `<li><b>${l.name}</b> <span>${l.points}</span> <em>${l.effect}</em></li>`).join("")}</ul>` });
+
 const icons = Registry.all().map((c) => `<figure><img src="${c.img}" alt=""><figcaption>${c.name}</figcaption></figure>`).join("");
 const html = `<!doctype html><html><head><meta charset="utf-8"><title>Neon Combat Manager preview</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -128,6 +148,11 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
     <ol style="list-style:none;padding:0;width:300px;font-size:13px">${holoChat}</ol>
     <form id="chat-form" style="width:300px"><button type="button" class="ncm-holo-banner"><i class="fa-solid fa-phone-volume"></i> Holocall: talking to Rogue</button><textarea id="chat-message" class="ncm-holo-route" rows="3" style="width:100%">Bring the van.</textarea></form>
   </div>
+</div>
+<div class="row">
+  <div class="neon-combat ncm-window ncm-stakes application win" style="width:520px"><header class="window-header">Plot Die</header><section class="window-content">${stakesWin}</section></div>
+  <div class="neon-combat ncm-window ncm-awareness application win" style="width:440px"><header class="window-header">Combat Awareness</header><section class="window-content">${awareWin}</section></div>
+  <div class="chat">${plot1}${plot2}${caCard}</div>
 </div>
 <div class="icons">${icons}</div>
 </body></html>`;

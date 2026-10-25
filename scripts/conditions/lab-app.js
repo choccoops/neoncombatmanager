@@ -7,7 +7,7 @@ import { CATEGORIES } from "./data.js";
 import { CLT, fromClt } from "./clt.js";
 import { OPS } from "./triggers.js";
 import { ADD } from "./cpr-flags.js";
-import { L, esc, shortDuration, slug } from "../util.js";
+import { L, esc, shortDuration, slug, pageLabel } from "../util.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { deepClone } = foundry.utils;
@@ -131,7 +131,7 @@ export class ConditionLab extends HandlebarsApplicationMixin(ApplicationV2) {
         hint: c.hint,
         category: L(`${LANG}.Category.${c.category}`),
         summary: summary(c),
-        page: typeof c.page === "number" ? L(`${LANG}.Card.Page`, { page: c.page }) : c.page ?? "",
+        page: pageLabel(c.page),
         disabled: c.disabled,
         hud: c.hud !== false,
         override: c.override,

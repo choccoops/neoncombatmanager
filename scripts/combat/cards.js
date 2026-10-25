@@ -4,7 +4,7 @@ import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { Conditions } from "../conditions/engine.js";
 import { Registry } from "../conditions/registry.js";
-import { L, esc } from "../util.js";
+import { L, esc, pageLabel } from "../util.js";
 
 /**
  * Chat cards: condition notices, Death Save prompts, hazard damage (fire, drowning, Critical
@@ -60,7 +60,7 @@ export const Cards = {
   },
 
   page(page) {
-    return typeof page === "number" ? L(`${LANG}.Card.Page`, { page }) : String(page);
+    return pageLabel(page);
   },
 
   async note(actor, html, { whisper = null, tone = "cyan", title = null } = {}) {
@@ -148,6 +148,8 @@ export const Cards = {
     if (!root || !message.getFlag?.(MODULE_ID, "card")) return;
     for (const btn of root.querySelectorAll("[data-ncm-action]")) {
       if (btn.dataset.gm === "true" && !game.user.isGM) btn.hidden = true;
+      // The character's player (and the GM) spend what's theirs.
+      if (btn.dataset.owner === "true" && !game.user.isGM && !fromUuidSync(btn.dataset.actor ?? "")?.isOwner) btn.hidden = true;
       if (message.getFlag(MODULE_ID, "done")) btn.disabled = true;
       btn.addEventListener("click", (event) => {
         event.preventDefault();
@@ -163,6 +165,10 @@ export const Cards = {
     const d = btn.dataset;
     const actor = d.actor ? await fromUuid(d.actor) : null;
     if (!actor) return;
+    if (String(d.ncmAction).startsWith("stakes-")) {
+      const { Stakes } = await import("../stakes/stakes.js");
+      return Stakes.click(message, btn, event, actor);
+    }
     switch (d.ncmAction) {
       case "deathSave": {
         if (!actor.isOwner) return ui.notifications?.warn(L(`${LANG}.Error.NotOwner`));

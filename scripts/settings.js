@@ -77,7 +77,9 @@ const DEFS = [
   ["gearVision", "world", String, "Low Light / Infrared / UV, Low Light/Infrared/UV", { onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
 
   // Bookkeeping
-  ["migratedClt", "world", Boolean, false, { config: false }]
+  ["migratedClt", "world", Boolean, false, { config: false }],
+  // The Plot Die: bumped by "New session" so Double Down and Force Fate come back.
+  ["stakesSession", "world", Number, 0, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.stakesChanged`) }]
 ];
 
 const IN_MENU = new Set(Object.values(MENUS).flat());

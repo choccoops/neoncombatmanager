@@ -109,9 +109,25 @@ export const Conditions = {
       return existing[0];
     }
     const flags = options.managed ? { [MODULE_ID]: { [FLAGS.managed]: options.managed } } : {};
-    const data = Registry.effectData(c, { changes: options.changes, duration: options.duration, name: options.name, flags: { ...flags, ...(options.flags ?? {}) } });
+    const rolled = options.changes ? null : this._rolled(c, actor);
+    const name = options.name ?? (rolled ? `${c.name} (${rolled.shown})` : null);
+    const data = Registry.effectData(c, { changes: options.changes ?? rolled?.changes, duration: options.duration, name, flags: { ...flags, ...(options.flags ?? {}) } });
     const [effect] = await actor.createEmbeddedDocuments("ActiveEffect", [data], { [MODULE_ID]: { source: options.managed ?? "api" } });
     return effect ?? null;
+  },
+
+  /** A condition whose changes carry dice ("-1d6", Slow): rolled now, once. Null without dice. */
+  _rolled(c, actor) {
+    const raw = c.rawChanges ?? [];
+    if (!raw.some((ch) => typeof ch.value === "string" && /d/i.test(ch.value))) return null;
+    const shown = [];
+    const changes = raw.map((ch) => {
+      if (typeof ch.value !== "string" || !/d/i.test(ch.value)) return ch;
+      const { total } = this.formula(ch.value, actor);
+      shown.push(total > 0 ? `+${total}` : String(total));
+      return { ...ch, value: total };
+    });
+    return { changes, shown: shown.join(", ") };
   },
 
   /** Update an automated condition's numbers (weather, visibility) when they changed. */
@@ -209,7 +225,8 @@ export const Conditions = {
       if (others.length) await actor.deleteEmbeddedDocuments("ActiveEffect", others.map((e) => e.id), QUIET);
     }
     if (c.critical && !effect.getFlag(MODULE_ID, FLAGS.item)) await this._linkCritical(actor, c, effect, options);
-    for (const id of c.also ?? []) if (!this.has(id, actor)) await this.add(id, actor, { duration: c.duration });
+    // Brought along for as long as this lasts, unless they have a clock of their own.
+    for (const id of c.also ?? []) if (!this.has(id, actor)) await this.add(id, actor, { duration: Registry.get(id)?.duration ?? c.duration });
     if (c.purges?.length) {
       const purge = this.active(actor).filter((x) => x.id !== c.id && c.purges.includes(x.category) && !x.addiction).map((x) => x.id);
       if (purge.length) await this.remove(purge, actor);
@@ -263,8 +280,9 @@ export const Conditions = {
   /**
    * A Critical Injury condition placed on an actor: give them Cyberpunk RED's own Critical
    * Injury item (the system's effect then applies the penalties and the Death Save increase),
-   * and turn the condition into a marker that shows it on the token. Without the item (no
-   * compendium, setting off) the condition keeps its own changes.
+   * and turn the condition into a marker that shows it on the token. The marker keeps the
+   * changes the item doesn't have (newer rulings, `extra`). Without the item (no compendium,
+   * setting off) the condition keeps its own changes.
    */
   async _linkCritical(actor, c, effect, options) {
     let item = CPR.critItem(actor, c.critical.name);
@@ -273,10 +291,11 @@ export const Conditions = {
       if (data) [item] = await actor.createEmbeddedDocuments("Item", [data], { [MODULE_ID]: { fromCondition: true } });
     }
     if (!item) return;
+    const marker = Registry.effectData(c, { changes: c.extraChanges ?? [] });
     await effect.update({
-      changes: [],
+      changes: marker.changes,
       [`flags.${MODULE_ID}.${FLAGS.item}`]: item.id,
-      [`flags.${SYSTEM_ID}.changes`]: { cats: {}, situational: {} }
+      [`flags.${SYSTEM_ID}.changes`]: marker.flags[SYSTEM_ID].changes
     }, QUIET);
   },
 
@@ -288,7 +307,7 @@ export const Conditions = {
     const c = Registry.all().find((x) => x.critical && x.critical.name.toLowerCase() === item.name.toLowerCase());
     if (!actor || !c || c.disabled) return;
     if (actor.effects.some((e) => e.getFlag(MODULE_ID, FLAGS.item) === item.id)) return;
-    await this.add(c.id, actor, { allowDuplicates: true, changes: [], managed: "critical", flags: { [MODULE_ID]: { [FLAGS.item]: item.id } } });
+    await this.add(c.id, actor, { allowDuplicates: true, changes: c.extraChanges ?? [], managed: "critical", flags: { [MODULE_ID]: { [FLAGS.item]: item.id } } });
   },
 
   async onDeleteItem(item, options, userId) {

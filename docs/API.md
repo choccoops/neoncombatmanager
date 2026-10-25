@@ -57,7 +57,7 @@ Hooks.on("cpr-neon-combat-manager.registerConditions", (conditions) => {
     name: "MYMODULE.Overloaded",          // a localization key or plain text
     hint: "MYMODULE.OverloadedHint",
     img: "modules/my-module/overloaded.svg",
-    category: "situation",                 // wound | critical | combat | hazard | situation | drug | weather | visibility | custom
+    category: "situation",                 // wound | critical | combat | hazard | situation | drug | quickhack | weather | visibility | custom
     changes: [{ key: "system.stats.move.value", value: -2 }],
     duration: null,                        // seconds
     group: null,                           // only one condition of a group at a time
@@ -77,7 +77,10 @@ Changes use Cyberpunk RED's roll keys, all added (ADD mode):
 | `system.stats.<stat>.value` | the STAT itself |
 
 Add `situational: true` (and `onByDefault: false` to leave it unticked) to show a modifier as
-a toggle in CPR's roll dialog. The module writes Cyberpunk RED's bookkeeping flags
+a toggle in CPR's roll dialog. A value can be a dice formula (`"-1d6"`): it's rolled when the
+condition lands and shown in its name. `consume: "check"` takes the condition off once the
+bearer's next Cyberpunk RED roll card is posted. On a Critical Injury condition, `extra` lists
+changes CPR's own item doesn't carry; the token marker keeps them while the item applies the rest. The module writes Cyberpunk RED's bookkeeping flags
 (`flags["cyberpunk-red-core"].changes.cats` and `.situational`) for you; any ActiveEffect with
 changes created without them gets them too.
 
@@ -158,6 +161,34 @@ world time, which Neon Hub's Clock already follows. Nothing has to change in Neo
 | `create(name, actor)` / `join(linkId, actor)` / `leave(actor)` | link a character you own (through the GM) |
 
 Hook: `cpr-neon-combat-manager.linksChanged` when links change.
+
+## The Plot Die: `ncm.stakes`
+
+| | |
+| --- | --- |
+| `open(actor?)` | the Plot Die window |
+| `raise(actor, { reason })` | (GM) Raise the Stakes on a character's Check: posts the card their player rolls from |
+| `roll(actor, { doubleDown })` | roll the Plot Die now and post the result |
+| `ask(actor, reason)` | a player asks the GM (LUCK STAT 5+) |
+| `luck(actor)` / `options(actor)` | `{ value, max }` / `{ ask, doubleDown, forceFate }` |
+| `newSession()` | (GM) Double Down and Force Fate come back for everyone |
+
+A Complication's bonus is the `stakesBonus` condition (Aid / Hinder: `stakesAided`,
+`stakesHindered`); all three carry `consume: "check"`. `/stakes` opens the window; `/stakes
+<text>` raises (GM) or asks (player) for the speaker. Hook: `cpr-neon-combat-manager.stakesChanged`
+when the session counter moves.
+
+## Combat Awareness: `ncm.awareness`
+
+| | |
+| --- | --- |
+| `open(actor?)` | the Combat Awareness window |
+| `isSolo(actor)` / `rank(actor)` | has the Solo role / its Rank |
+| `current(actor)` | points by ability: `{ initiativeReaction, precisionAttack, spotWeakness, damageDeflection, threatDetection, fumbleRecovery }` |
+| `mode(actor)` | what assigning costs now: `free`, `action` (their Turn), `wait` (not their Turn) or `gm` |
+| `assign(actor, points)` | write the split to the role item and post a card. Rejects past the Rank or off-Turn (players). Resolves to the mode, or null if nothing changed |
+
+Hook: `cpr-neon-combat-manager.awarenessAssigned` `(actor, points, mode)`.
 
 ## Holocalls: `ncm.holocall`
 

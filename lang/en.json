@@ -24,6 +24,7 @@
       "hazard": "Hazard",
       "situation": "Situation",
       "drug": "Drug",
+      "quickhack": "Quickhack",
       "weather": "Weather",
       "visibility": "Visibility",
       "custom": "Custom"
@@ -79,7 +80,7 @@
       },
       "brokenLeg": {
         "name": "Broken Leg",
-        "hint": "-4 MOVE (minimum 1)."
+        "hint": "-4 MOVE (minimum 1) and -2 to Evasion. Each broken leg is its own injury: both broken is -4 Evasion."
       },
       "tornMuscle": {
         "name": "Torn Muscle",
@@ -95,7 +96,7 @@
       },
       "dismemberedLeg": {
         "name": "Dismembered Leg",
-        "hint": "-6 MOVE (minimum 1) and no dodging. Death Save penalty +1."
+        "hint": "-6 MOVE (minimum 1) and no dodging. Death Save penalty +1. Martial Arts Recovery can't stand you up for free."
       },
       "lostEye": {
         "name": "Lost Eye",
@@ -143,7 +144,7 @@
       },
       "prone": {
         "name": "Prone",
-        "hint": "On the ground: no Move Action until an Action is spent to Get Up."
+        "hint": "On the ground: no Move Action until an Action is spent to Get Up. -4 Evasion against melee and to resist or break a Grapple (toggles in the roll dialog). Within 2 m/yds of cover, attacks from that side are at -4 (-6 Heavy Weapons)."
       },
       "grappled": {
         "name": "Grappled",
@@ -175,7 +176,7 @@
       },
       "hidden": {
         "name": "Hidden",
-        "hint": "Out of sight; found with Perception against their Stealth."
+        "hint": "Out of sight: enemies attack you and dodge your attacks at -4. Attacking gives you away."
       },
       "readiedAction": {
         "name": "Holding Action",
@@ -262,7 +263,7 @@
         "hint": "-4 to all Actions."
       },
       "badSleep": {
-        "name": "Slept Badly",
+        "name": "Fatigued / Slept Badly",
         "hint": "-2 to all Actions."
       },
       "extremeStress": {
@@ -408,6 +409,94 @@
       "obscured": {
         "name": "Obscured",
         "hint": "Rain, smog, dust or smoke in the way: a penalty to anything that needs sight."
+      },
+      "intoTheWall": {
+        "name": "Into the Wall",
+        "hint": "Thrown, Lariated or blown back into cover: Spinal Injury for one Round (no Bonus Damage)."
+      },
+      "stakesBonus": {
+        "name": "Plot Die Bonus",
+        "hint": "The Plot Die's +2/+4 on this Check. Gone once the Check is rolled."
+      },
+      "stakesAided": {
+        "name": "Aided (+2)",
+        "hint": "An ally's Opportunity: +2 to the next Check. Gone once it's rolled."
+      },
+      "stakesHindered": {
+        "name": "Hindered",
+        "hint": "A Complication: a penalty on the next Check. Gone once it's rolled."
+      },
+      "qhCommsJam": {
+        "name": "Comms Jam",
+        "hint": "No calls, texts or messages in or out for 20 Rounds (holocalls are blocked)."
+      },
+      "qhVitalsSpoof": {
+        "name": "Vitals Spoof",
+        "hint": "For an hour their Biomonitor shows calm, normal vitals: no alarm, no Trauma Team call."
+      },
+      "qhPopupGeddon": {
+        "name": "PopUp-geddon",
+        "hint": "Ads all over the HUD: -2 to Checks that need sight for 3 Rounds."
+      },
+      "qhImpairMovement": {
+        "name": "Impair Movement",
+        "hint": "MOVE -1 for 20 Rounds. At MOVE 0, no Move Actions."
+      },
+      "qhSlow": {
+        "name": "Slow",
+        "hint": "MOVE -1d6 for 20 Rounds (rolled when added)."
+      },
+      "qhShortCircuit": {
+        "name": "Short Circuit",
+        "hint": "Three pieces of chrome (the GM picks; not limbs, eyes, audio, Neuroport or Cybersuite) are off for 20 Rounds."
+      },
+      "qhCyberwareMalfunction": {
+        "name": "Cyberware Malfunction",
+        "hint": "One piece of chrome and its options are off for 20 Rounds. A limb acts as Broken."
+      },
+      "qhRebootOptics": {
+        "name": "Reboot Optics",
+        "hint": "Cybereyes down for 3 Rounds: all-chrome eyes are blind (-4 to sight, no dodging ranged attacks). Action + DV13 Cybertech restarts them."
+      },
+      "qhCrippleMovement": {
+        "name": "Cripple Movement",
+        "hint": "Cyberlegs lock: no Move Actions for 2 Rounds, then MOVE -2 until 20 Rounds are up."
+      },
+      "qhWeaponGlitch": {
+        "name": "Weapon Glitch",
+        "hint": "The smart-linked weapon jams (an Action to clear) and is -2 to hit for 3 Rounds."
+      },
+      "qhLimbSeize": {
+        "name": "Limb Seize",
+        "hint": "One cyberarm goes limp for 3 Rounds: drops what it holds, popups retract, options off."
+      },
+      "qhSpeedwareCrash": {
+        "name": "Speedware Crash",
+        "hint": "Speedware off for 20 Rounds. If it was running: its bonus is gone and 1d6 to HP."
+      },
+      "qhSonicShock": {
+        "name": "Sonic Shock",
+        "hint": "Damaged Ear (no Bonus Damage) for 20 Rounds."
+      },
+      "qhFrameLock": {
+        "name": "Frame Lock",
+        "hint": "The frame seizes for 3 Rounds: no Move Actions and -4 to physical Actions (untick it for others)."
+      },
+      "qhQKrash": {
+        "name": "Q-KRASH",
+        "hint": "Their deck can't run quickhacks for 20 Rounds, or until cleared with an Action and DV13 Electronics/Security Tech."
+      },
+      "qhSystemReset": {
+        "name": "System Reset",
+        "hint": "Unconscious and Prone for 20 Rounds, or until damaged."
+      },
+      "qhPuppet": {
+        "name": "Puppet",
+        "hint": "The Netrunner controls their Action and Move Action next Turn."
+      },
+      "qhCyberpsychosis": {
+        "name": "Cyberpsychosis (hack)",
+        "hint": "For 3 Rounds they attack the nearest person. Then 2d6 Humanity Loss."
       }
     },
     "Key": {
@@ -761,13 +850,17 @@
       "AddCondition": "Add {condition}",
       "CombatOverKicker": "Combat over",
       "CombatOver": "{rounds} Rounds",
-      "CombatOverBody": "{elapsed} passed in the world. It's now {clock}."
+      "CombatOverBody": "{elapsed} passed in the world. It's now {clock}.",
+      "Page2070": "2070 Core Rules"
     },
     "Reminder": {
       "spinalInjury": "Spinal Injury: no Action this Turn. The Move Action is still there.",
       "suppressed": "Suppressed: the Move Action (and Run, if needed) goes to getting into cover.",
       "noMove": "{name} moved more than 4 m/yds last Turn: no Move Action this Turn.",
-      "reopened": "{condition} reopens (moved {metres} m/yds)"
+      "reopened": "{condition} reopens (moved {metres} m/yds)",
+      "qhCrippleMovement": "Cripple Movement: cyberlegs locked, no Move Action this Turn or next (one cyberleg: MOVE halved instead).",
+      "qhPuppet": "Puppet: the Netrunner takes this Turn's Action and Move Action, with this character's STATs and Skills.",
+      "qhCyberpsychosis": "Cyberpsychosis (quickhack): attack the nearest person with whatever's in hand. After 3 Rounds, 2d6 Humanity Loss."
     },
     "Hazard": {
       "Kicker": "Weather hazard",
@@ -945,7 +1038,9 @@
         "nosignal": "NO SIGNAL"
       },
       "NoImplant": "no Biomonitor or Neuroport",
-      "NoSignalHint": "No Biomonitor or Neuroport installed: nothing to read."
+      "NoSignalHint": "No Biomonitor or Neuroport installed: nothing to read.",
+      "Spoofed": "SPOOFED",
+      "SpoofedHint": "Vitals Spoof: this readout is fake. Only you (the GM) see this tag."
     },
     "Holocall": {
       "Title": "Holocall",
@@ -1009,7 +1104,181 @@
       "Routing": "Holocall: talking to {names}",
       "RoutingStop": "Click to go back to regular chat",
       "Route": "Talk from chat",
-      "RouteHint": "Your regular chat box talks on this call (other /commands and rolls still work). /holo in chat does the same."
+      "RouteHint": "Your regular chat box talks on this call (other /commands and rolls still work). /holo in chat does the same.",
+      "Jammed": "{name}'s comms are jammed: no calls in or out."
+    },
+    "Stakes": {
+      "Title": "Plot Die",
+      "Kicker": "Raising the Stakes",
+      "KeyHint": "Open the Plot Die window.",
+      "Whose": "Whose Check",
+      "LuckHint": "LUCK pool / LUCK STAT. LUCK 5+ can ask for the Stakes; 7+ can Double Down and Force Fate.",
+      "Perk": {
+        "ask": "LUCK {luck}+: ask the GM to Raise the Stakes",
+        "doubleDown": "LUCK {luck}+: Double Down, reroll the Plot Die (once a session)",
+        "forceFate": "LUCK {luck}+: Force Fate, {cost} LUCK for an Opportunity (once a session)"
+      },
+      "UsedThisSession": "used this session",
+      "ReasonGM": "What's riding on it (optional, shown on the card)",
+      "ReasonPlayer": "Make your case: why does this Check matter?",
+      "Raise": "Raise the Stakes",
+      "GrantOpp": "Crit: Opportunity",
+      "GrantComp": "Crit: Complication",
+      "GrantHint": "At your call, an exploding 10 brings an Opportunity and an imploding 1 a Complication, without the Plot Die.",
+      "NewSession": "New session",
+      "NewSessionHint": "Double Down and Force Fate are once a session: start a new session to give them back to everyone.",
+      "NewSessionDone": "New session: Double Down and Force Fate are back for everyone.",
+      "AskButton": "Ask the GM",
+      "Asked": "Asked the GM to Raise the Stakes.",
+      "NoOne": "No character to roll for. Select a token or pick a character.",
+      "TableTitle": "The Plot Die (1d6)",
+      "Face": {
+        "complication": "+{bonus}, and the GM picks a Complication",
+        "nothing": "Nothing: roll as normal",
+        "opportunity": "Pick an Opportunity"
+      },
+      "Opportunities": "Opportunities (the player picks)",
+      "Complications": "Complications (the GM picks)",
+      "Opp": {
+        "aidAlly": "Aid an Ally",
+        "feelingLucky": "Feeling Lucky",
+        "criticallyHit": "Critically Hit",
+        "narrative": "Influence the Narrative"
+      },
+      "OppText": {
+        "aidAlly": "An ally's next Check gets +2.",
+        "feelingLucky": "Get 2 LUCK back.",
+        "criticallyHit": "Attacks that hit: a fitting Critical Injury of your choice, without its Bonus Damage.",
+        "narrative": "Describe something good that happens, success or fail."
+      },
+      "Comp": {
+        "hinderAlly": "Hinder an Ally",
+        "feelingUnlucky": "Feeling Unlucky",
+        "narrative": "Influence the Narrative"
+      },
+      "CompText": {
+        "hinderAlly": "A PC's next Action takes a penalty that fits the scene.",
+        "feelingUnlucky": "Lose 1 LUCK. Out of LUCK: fall Prone, a weapon jams, or gear malfunctions.",
+        "narrative": "The GM describes something bad that happens, success or fail."
+      },
+      "Raised": "The Stakes are Raised on {name}'s Check",
+      "RaisedBody": "Roll the Plot Die before the d10. A Complication adds its bonus to this Check.",
+      "Roll": "Roll the Plot Die",
+      "ForceFate": "Force Fate ({cost} LUCK)",
+      "NeedLuck": "Asking for the Stakes takes a LUCK STAT of {luck}+.",
+      "Asks": "{name} asks the GM to Raise the Stakes",
+      "Approve": "Raise the Stakes",
+      "Deny": "Not this time",
+      "Denied": "Not this time, {name}: the Stakes stay where they are.",
+      "How": {
+        "rolled": "Plot Die: {face}",
+        "doubleDown": "Double Down: {face}",
+        "forced": "Force Fate",
+        "granted": "A crit's twist"
+      },
+      "Result": {
+        "opportunity": "Opportunity for {name}",
+        "nothing": "Nothing changes for {name}",
+        "complication": "+{bonus} for {name}, and a Complication",
+        "complicationNoBonus": "A Complication for {name}"
+      },
+      "ResultBody": {
+        "opportunity": "Pick one Opportunity below.",
+        "nothing": "Roll the Check as normal.",
+        "complication": "+{bonus} is on this Check (ticked in the roll dialog). The GM picks {count} Complication(s).",
+        "complicationNoBonus": "The GM picks {count} Complication(s)."
+      },
+      "DoubleDown": "Double Down",
+      "DoubleDownCost": "Doubled Down into a Complication: -{luck} LUCK, {count} Complication(s).",
+      "CantForce": "Force Fate takes LUCK 7+, 3 LUCK to spend, and once a session.",
+      "CantDouble": "Double Down takes LUCK 7+, LUCK left, and once a session.",
+      "BonusName": "Plot Die +{bonus}",
+      "HinderedName": "Hindered (-{penalty})",
+      "Who": "Who",
+      "Penalty": "Penalty",
+      "Target": "Target",
+      "Injury": "Critical Injury",
+      "Body": "Body",
+      "Head": "Head",
+      "CritHint": "Pick a Critical Injury that fits the attack. No Bonus Damage; a rolled crit still applies too.",
+      "NarrativeOpp": "What good thing happens?",
+      "NarrativeComp": "What goes wrong?",
+      "OutOfLuck": "{name} is out of LUCK. Pick what goes wrong:",
+      "Unlucky": {
+        "prone": "{name} slips and falls Prone.",
+        "jam": "{name}'s weapon jams: an Action to clear it.",
+        "malfunction": "A piece of {name}'s gear or chrome malfunctions.",
+        "proneLabel": "Fall Prone",
+        "jamLabel": "Weapon jams",
+        "malfunctionLabel": "Gear malfunctions"
+      },
+      "Done": {
+        "aidAlly": "{name} sets up {ally}: +2 on their next Check.",
+        "feelingLucky": "{name} gets {luck} LUCK back.",
+        "criticallyHit": "{name} gives {target} a {injury}.",
+        "hinderAlly": "{ally} is hindered: -{penalty} on their next Check.",
+        "feelingUnlucky": "{name} loses 1 LUCK."
+      }
+    },
+    "Awareness": {
+      "Title": "Combat Awareness",
+      "Kicker": "Solo Role Ability",
+      "KeyHint": "Open the Combat Awareness window.",
+      "Who": "Solo",
+      "Left": "left",
+      "LeftHint": "Points left to assign / your Solo Rank.",
+      "NoSolo": "No Solo here. Combat Awareness needs a character with the Solo role.",
+      "NotSolo": "{name} isn't a Solo.",
+      "TooMany": "That's {total} points; the Rank is {rank}.",
+      "NotYourTurn": "{name} reassigns Combat Awareness as their Action: wait for their Turn.",
+      "Unassigned": "No points assigned",
+      "Wasted": "points that buy nothing",
+      "StepHint": "Steps of {step}",
+      "SpentThisRound": "Action spent this Round",
+      "Revert": "As it was",
+      "Clear": "Clear",
+      "Assigned": "{name} reassigns Combat Awareness",
+      "Mode": {
+        "free": "Before Initiative",
+        "action": "Action",
+        "gm": "GM adjustment"
+      },
+      "ModeHint": {
+        "free": "Free now: outside combat or before Initiative.",
+        "action": "In combat this takes your Action for the Turn.",
+        "wait": "In combat it's an Action on your own Turn. Wait for it.",
+        "gm": "Not their Turn: you can still adjust it as GM (no Action spent)."
+      },
+      "AssignAs": {
+        "free": "Assign",
+        "action": "Assign (uses Action)",
+        "wait": "Wait for your Turn",
+        "gm": "Assign as GM"
+      },
+      "Done": {
+        "free": "{name}'s Combat Awareness is set.",
+        "action": "{name} spends their Action on Combat Awareness.",
+        "gm": "{name}'s Combat Awareness adjusted."
+      },
+      "Effect": {
+        "initiativeReaction": "+{n} Initiative",
+        "precisionAttack": "+{n} to attacks",
+        "spotWeakness": "+{n} damage, first hit each Round",
+        "damageDeflection": "-{n} to the first damage each Round",
+        "threatDetection": "+{n} Perception",
+        "fumbleRecoveryOn": "Implodes on attacks ignored",
+        "fumbleRecoveryOff": "Needs 4 points",
+        "none": "No points",
+        "notYet": "Not enough for a step yet"
+      },
+      "Hint": {
+        "initiativeReaction": "1 point each: +1 Initiative.",
+        "precisionAttack": "Every 3 points: +1 to all attacks (up to +3).",
+        "spotWeakness": "1 point each: +1 damage before armor on your first successful attack each Round.",
+        "damageDeflection": "Every 2 points: the first damage you take each Round is 1 less (up to 5).",
+        "threatDetection": "1 point each: +1 Perception.",
+        "fumbleRecovery": "4 points: ignore implodes (1s) on attack rolls. The 1 still counts as 1."
+      }
     }
   }
 }

@@ -26,13 +26,17 @@ const CALL_OUTS = ["dead", "unconscious", "sleep", "onFireDeadly", "onFireStrong
  * @param {string[]} [v.criticals] - names of their Critical Injuries
  * @param {string|null} [v.implant] - the implant broadcasting the vitals ("Neuroport", "Biomonitor"), if any
  * @param {boolean} [v.signal] - false when there's no implant to broadcast them: no readings at all
- * @returns {{ state, bpm, pct, hp, max, deathSave, alerts: string[], criticals: string[], implant, signal, rank: number }}
+ * @returns {{ state, bpm, pct, hp, max, deathSave, alerts: string[], criticals: string[], implant, signal, rank: number, spoofed? }}
  */
 export function readout({ hp = 0, max = 0, wound = "notWounded", deathSave = 0, conditions = [], criticals = [], implant = null, signal = true }) {
   if (!signal) {
     return { state: "nosignal", bpm: 0, pct: 0, hp: null, max: null, deathSave: null, alerts: [], criticals: [], implant: null, signal: false, rank: -1 };
   }
   const has = new Set(conditions);
+  // Vitals Spoof (a quickhack): calm, normal vitals, whatever is really happening.
+  if (has.has("qhVitalsSpoof")) {
+    return { state: "stable", bpm: BPM.stable, pct: 100, hp: max, max, deathSave: null, alerts: [], criticals: [], implant: implant || null, signal: true, rank: 0, spoofed: true };
+  }
   let state = { lightlyWounded: "light", seriouslyWounded: "serious", mortallyWounded: "critical" }[wound] ?? "stable";
   if (has.has("unconscious") || has.has("sleep")) state = state === "critical" ? "critical" : "down";
   if (has.has("dead")) state = "flatline";

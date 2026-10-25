@@ -2,7 +2,7 @@
   "id": "cpr-neon-combat-manager",
   "title": "Neon Combat Manager: Initiative Carousel, Conditions, Biomon Link, Holocalls, Combat Time, Weather & Visibility for Cyberpunk RED",
   "description": "An encounter overhaul for Cyberpunk RED - CORE: the Initiative Queue as a neon carousel; Neon Conditions, the full Cyberpunk RED condition set wired into the system's roll modifiers, with a Condition Lab, triggers and a stand-in for Condition Lab & Triggler; a Biomon Link popout of linked characters' vitals; holocalls in Edgerunners blue with the crew or NPCs anywhere, through Night City Messenger contacts; Rounds that move world time 3 seconds (SmallTime and Neon Hub's calendar follow); Night City weather from Neon Hub's calendar as conditions; and visibility penalties from darkness, light sources and the gear that cuts through them.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "authors": [
     {
       "name": "Neon Combat Manager contributors"

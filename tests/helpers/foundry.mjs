@@ -303,6 +303,7 @@ function makeItem(actor, data) {
   const item = { documentName: "Item", id: data._id ?? randomID(), name: data.name, type: data.type, system: clone(data.system ?? {}), flags: clone(data.flags ?? {}), parent: actor };
   item._id = item.id;
   flagApi(item);
+  item.toObject = () => clone({ _id: item.id, name: item.name, type: item.type, system: item.system, flags: item.flags });
   item.update = async (u) => {
     for (const [k, v] of Object.entries(u)) setProperty(item, k, clone(v));
     return item;
@@ -418,9 +419,14 @@ export function makeCombat(actors, { round = 1, turn = 0 } = {}) {
   const id = randomID();
   const combatants = new Collection();
   const turns = actors.map((actor, i) => {
-    const cb = { id: `cb${i}${id}`, actor, actorId: actor.id, name: actor.name, img: actor.img, initiative: 20 - i, hidden: false, defeated: false, token: null, tokenId: null, isOwner: true,
+    const cb = { id: `cb${i}${id}`, actor, actorId: actor.id, name: actor.name, img: actor.img, initiative: 20 - i, hidden: false, defeated: false, token: null, tokenId: null, isOwner: true, flags: {},
       async update(u) {
         Object.assign(cb, u);
+        return cb;
+      },
+      async setFlag(s, k, v) {
+        cb.flags[s] ??= {};
+        cb.flags[s][k] = v;
         return cb;
       } };
     combatants.set(cb.id, cb);

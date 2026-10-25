@@ -10,7 +10,7 @@
   {{#if buttons.length}}
   <footer>
     {{#each buttons}}
-    <button type="button" data-ncm-action="{{action}}" {{{attrs}}}{{#if gm}} data-gm="true"{{/if}}>{{#if icon}}<i class="{{icon}}"></i> {{/if}}{{{label}}}</button>
+    <button type="button" data-ncm-action="{{action}}" {{{attrs}}}{{#if gm}} data-gm="true"{{/if}}{{#if owner}} data-owner="true"{{/if}}>{{#if icon}}<i class="{{icon}}"></i> {{/if}}{{{label}}}</button>
     {{/each}}
   </footer>
   {{/if}}

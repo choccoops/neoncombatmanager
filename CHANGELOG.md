@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.3.0
+
+From the 2070 Core Rules (Cyberpunk: The Unification Era):
+
+- **The Plot Die**: the GM Raises the Stakes on a character's Check from a new window (carousel,
+  token controls, `/stakes`). The player rolls the d6 from the chat card: a Complication's +2/+4
+  rides their next Check as a ticked roll-dialog modifier and clears itself after it; the GM
+  picks the Complication (Hinder an Ally, Feeling Unlucky, Influence the Narrative) and the
+  player the Opportunity (Aid an Ally, Feeling Lucky, Critically Hit, Influence the Narrative),
+  each with its effect applied. LUCK 5+ asks for the Stakes; LUCK 7+ Doubles Down and Forces
+  Fate, once a session each. Crit buttons give an Opportunity or Complication without the die.
+- **Combat Awareness**: Solos split their Rank across the six abilities in a stepper window; it
+  goes on the Cyberpunk RED role item, so the system applies it. Free before Initiative or out of
+  combat; in combat it's their Action on their Turn, with a chat card and a marker on their
+  carousel card. The GM can adjust it any time.
+- **New rulings as conditions**: Broken Leg also costs -2 Evasion per leg (-4 with both); Prone
+  is -4 Evasion against melee and to resist Grapples (roll-dialog toggles); **Into the Wall**
+  (Spinal Injury for one Round); Fatigued / Slept Badly; Hidden's -4 to enemies in its text.
+- **Quickhack conditions**: 18 of them, each on its own clock (3 or 20 Rounds, Vitals Spoof an
+  hour). Comms Jam blocks holocalls; Vitals Spoof makes the Biomon Link show calm vitals (the GM
+  sees a SPOOFED tag); Slow rolls its MOVE -1d6; Sonic Shock and System Reset bring Damaged Ear,
+  or Unconscious and Prone, for as long.
+- Condition references now name the 2070 Core Rules where a ruling comes from it.
+
 ## 1.2.0
 
 - **Holocalls from the regular chat box**: `/holo <text>` says it on your call, whispered to the

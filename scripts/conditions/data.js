@@ -8,7 +8,7 @@
  *
  * A condition:
  *   id          status id (Foundry's own id where the meaning matches: dead, unconscious, prone, blind, deaf, sleep)
- *   category    wound | critical | combat | hazard | situation | drug | weather | visibility
+ *   category    wound | critical | combat | hazard | situation | drug | quickhack | weather | visibility
  *   img         icon (Cyberpunk RED's own status icons where it has one)
  *   page        rulebook reference shown in the Condition Lab
  *   changes     [{ key, value, situational?, onByDefault? }] in CPR roll keys (see cpr-flags.js)
@@ -20,6 +20,8 @@
  *   group       only one condition of a group at a time (adding one removes the others)
  *   also        other conditions added with this one
  *   critical    { location, name }: the Critical Injury item in CPR's compendium it stands for
+ *   extra       changes CPR's Critical Injury item doesn't carry (newer rulings): the marker keeps
+ *               them while the item applies the rest. Also part of `changes` for when there's no item
  *   turnStart / turnEnd  { damage, armor?, note? } automation when the bearer's Turn starts or ends
  *   moveDamage  bonus damage when the bearer moves more than 4 m/yds on foot in a Turn
  *   moveLock    no Move Action next Turn after moving more than 4 m/yds
@@ -33,6 +35,10 @@
  *   secondary   { dv, adds }: when the drug wears off, a Resist Torture/Drugs Check against dv or gain `adds`
  *   hud         false to keep it out of the token HUD (added automatically instead)
  *   mirror      "wound": follows CPR's Wound State, which already applies its own penalties
+ *   consume     "check": gone once the bearer's next Cyberpunk RED roll card is posted (the Plot Die)
+ *
+ * A change's value may be a dice formula ("-1d6"): it is rolled when the condition is added.
+ * Pages marked "2070" are the Unification Era Core Rules (the 2070 update to the core book).
  */
 
 const S = "systems/cyberpunk-red-core/icons/compendium/status";
@@ -42,7 +48,10 @@ const HOUR = 3600;
 
 const ds = (n = 1) => ({ key: "bonuses.deathSavePenalty", value: n });
 
-export const CATEGORIES = ["wound", "critical", "combat", "hazard", "situation", "drug", "weather", "visibility"];
+export const CATEGORIES = ["wound", "critical", "combat", "hazard", "situation", "drug", "quickhack", "weather", "visibility"];
+
+const R3 = 9; // 3 Rounds
+const R20 = 60; // 20 Rounds
 
 export const CONDITIONS = [
   /* ------------------------------------------------------------------ */
@@ -64,7 +73,9 @@ export const CONDITIONS = [
   { id: "brokenRibs", category: "critical", img: `${S}/broken_ribs.svg`, page: 187, critical: { location: "body", name: "Broken Ribs" }, moveDamage: 5 },
   { id: "brokenArm", category: "critical", img: `${S}/broken_arm.svg`, page: 187, critical: { location: "body", name: "Broken Arm" } },
   { id: "foreignObject", category: "critical", img: `${S}/foreign_object_body.svg`, page: 187, critical: { location: "body", name: "Foreign Object" }, moveDamage: 5 },
-  { id: "brokenLeg", category: "critical", img: `${S}/broken_leg.svg`, page: 187, critical: { location: "body", name: "Broken Leg" }, changes: [{ key: "system.stats.move.value", value: -4 }] },
+  // 2070: a Broken Leg also costs -2 Evasion; each leg is its own injury, so two make -4.
+  { id: "brokenLeg", category: "critical", img: `${S}/broken_leg.svg`, page: "187 · 2070", critical: { location: "body", name: "Broken Leg" },
+    changes: [{ key: "system.stats.move.value", value: -4 }, { key: "bonuses.evasion", value: -2 }], extra: [{ key: "bonuses.evasion", value: -2 }] },
   { id: "tornMuscle", category: "critical", img: `${S}/torn_muscle.svg`, page: 187, critical: { location: "body", name: "Torn Muscle" }, changes: [{ key: "bonuses.melee", value: -2 }] },
   { id: "spinalInjury", category: "critical", img: `${S}/spinal_injury.svg`, page: 187, critical: { location: "body", name: "Spinal Injury" }, changes: [ds()], remindOnce: true },
   { id: "crushedFingers", category: "critical", img: `${S}/crushed_fingers.svg`, page: 187, critical: { location: "body", name: "Crushed Fingers" }, changes: [{ key: "bonuses.allActionsHands", value: -4 }] },
@@ -84,7 +95,9 @@ export const CONDITIONS = [
   /* ------------------------------------------------------------------ */
   /*  Combat (p.168-185)                                                */
   /* ------------------------------------------------------------------ */
-  { id: "prone", category: "combat", img: `${S}/prone.svg`, page: 169 },
+  // 2070: -4 Evasion against melee attacks and to resist or break Grapples (each a toggle in the roll dialog).
+  { id: "prone", category: "combat", img: `${S}/prone.svg`, page: "169 · 2070",
+    changes: [{ key: "bonuses.evasion", value: -4, situational: true, onByDefault: true }, { key: "bonuses.brawling", value: -4, situational: true, onByDefault: false }] },
   { id: "grappled", category: "combat", img: `${S}/grappled.svg`, page: 177, changes: [{ key: "bonuses.allActions", value: -2 }] },
   { id: "grappling", category: "combat", img: `${A}/grappling.svg`, page: 177, changes: [{ key: "bonuses.allActions", value: -2 }] },
   { id: "ironGrip", category: "combat", img: `${S}/iron_grip.svg`, page: 179, changes: [{ key: "bonuses.brawling", value: -2, situational: true }] },
@@ -92,7 +105,9 @@ export const CONDITIONS = [
   { id: "choking2", category: "combat", img: `${S}/choking2.svg`, page: 177, group: "choke" },
   { id: "humanShield", category: "combat", img: `${S}/human_shield.svg`, page: 184 },
   { id: "cover", category: "combat", img: `${S}/cover.svg`, page: 182 },
-  { id: "hidden", category: "combat", img: `${S}/hidden.svg`, page: 130 },
+  { id: "hidden", category: "combat", img: `${S}/hidden.svg`, page: "130 · 2070" },
+  // 2070: thrown, Lariated or blown back into cover: Spinal Injury for one Round, no Bonus Damage.
+  { id: "intoTheWall", category: "combat", img: `${A}/into-the-wall.svg`, page: "2070", duration: 3, also: ["spinalInjury"] },
   { id: "readiedAction", category: "combat", img: `${S}/readied_action.svg`, page: 169 },
   { id: "suppressed", category: "combat", img: `${S}/suppressed.svg`, page: 174 },
   { id: "netrunning", category: "combat", img: `${S}/netrunning.svg`, page: 197 },
@@ -123,10 +138,45 @@ export const CONDITIONS = [
   /*  Situational Modifiers (p.129)                                     */
   /* ------------------------------------------------------------------ */
   { id: "exhausted", category: "situation", img: `${A}/exhausted.svg`, page: 129, group: "rest", changes: [{ key: "bonuses.allActions", value: -4 }] },
-  { id: "badSleep", category: "situation", img: `${A}/bad-sleep.svg`, page: 129, group: "rest", changes: [{ key: "bonuses.allActions", value: -2 }] },
+  { id: "badSleep", category: "situation", img: `${A}/bad-sleep.svg`, page: "129 · 2070", group: "rest", changes: [{ key: "bonuses.allActions", value: -2 }] },
   { id: "extremeStress", category: "situation", img: `${A}/stress.svg`, page: 129, changes: [{ key: "bonuses.allActions", value: -2 }] },
   { id: "drunk", category: "situation", img: `${S}/drugged.svg`, page: 129, changes: [{ key: "bonuses.allActions", value: -4 }] },
   { id: "smoke", category: "situation", img: `${A}/smoke.svg`, page: 347, duration: 60, sight: -4 },
+
+  /* ------------------------------------------------------------------ */
+  /*  Raising the Stakes (2070): the Plot Die. Each rides one Check.    */
+  /*  The numbers are set when added (Stakes).                          */
+  /* ------------------------------------------------------------------ */
+  { id: "stakesBonus", category: "situation", img: `${A}/plot-bonus.svg`, page: "2070", consume: "check", hud: false },
+  { id: "stakesAided", category: "situation", img: `${A}/plot-aided.svg`, page: "2070", consume: "check", hud: false,
+    changes: [{ key: "bonuses.allActions", value: 2, situational: true, onByDefault: true }] },
+  { id: "stakesHindered", category: "situation", img: `${A}/plot-hindered.svg`, page: "2070", consume: "check", hud: false,
+    changes: [{ key: "bonuses.allActions", value: -2, situational: true, onByDefault: true }] },
+
+  /* ------------------------------------------------------------------ */
+  /*  Quickhacks (2070 ch.10): what a Netrunner's hack leaves behind    */
+  /*  (Overheat is On Fire (Strong); damage hacks leave nothing.)       */
+  /* ------------------------------------------------------------------ */
+  { id: "qhCommsJam", category: "quickhack", img: `${A}/qh-comms-jam.svg`, page: "2070", duration: R20 },
+  { id: "qhVitalsSpoof", category: "quickhack", img: `${A}/qh-vitals-spoof.svg`, page: "2070", duration: HOUR },
+  { id: "qhPopupGeddon", category: "quickhack", img: `${A}/qh-popup.svg`, page: "2070", duration: R3, sight: -2 },
+  { id: "qhImpairMovement", category: "quickhack", img: `${A}/qh-impair.svg`, page: "2070", duration: R20, changes: [{ key: "system.stats.move.value", value: -1 }] },
+  { id: "qhSlow", category: "quickhack", img: `${A}/qh-slow.svg`, page: "2070", duration: R20, changes: [{ key: "system.stats.move.value", value: "-1d6" }] },
+  { id: "qhShortCircuit", category: "quickhack", img: `${A}/qh-short-circuit.svg`, page: "2070", duration: R20 },
+  { id: "qhCyberwareMalfunction", category: "quickhack", img: `${A}/qh-malfunction.svg`, page: "2070", duration: R20 },
+  { id: "qhRebootOptics", category: "quickhack", img: `${A}/qh-reboot-optics.svg`, page: "2070", duration: R3, sight: -4 },
+  { id: "qhCrippleMovement", category: "quickhack", img: `${A}/qh-cripple.svg`, page: "2070", duration: R20, changes: [{ key: "system.stats.move.value", value: -2 }], remindOnce: true },
+  { id: "qhWeaponGlitch", category: "quickhack", img: `${A}/qh-weapon-glitch.svg`, page: "2070", duration: R3,
+    changes: [{ key: "bonuses.ranged", value: -2, situational: true, onByDefault: true }] },
+  { id: "qhLimbSeize", category: "quickhack", img: `${A}/qh-limb-seize.svg`, page: "2070", duration: R3 },
+  { id: "qhSpeedwareCrash", category: "quickhack", img: `${A}/qh-speedware.svg`, page: "2070", duration: R20 },
+  { id: "qhSonicShock", category: "quickhack", img: `${A}/qh-sonic.svg`, page: "2070", duration: R20, also: ["damagedEar"] },
+  { id: "qhFrameLock", category: "quickhack", img: `${A}/qh-frame-lock.svg`, page: "2070", duration: R3,
+    changes: [{ key: "bonuses.allActions", value: -4, situational: true, onByDefault: true }] },
+  { id: "qhQKrash", category: "quickhack", img: `${A}/qh-qkrash.svg`, page: "2070", duration: R20 },
+  { id: "qhSystemReset", category: "quickhack", img: `${A}/qh-system-reset.svg`, page: "2070", duration: R20, also: ["unconscious", "prone"] },
+  { id: "qhPuppet", category: "quickhack", img: `${A}/qh-puppet.svg`, page: "2070", duration: 3, remindOnce: true },
+  { id: "qhCyberpsychosis", category: "quickhack", img: `${A}/qh-cyberpsychosis.svg`, page: "2070", duration: R3, remindOnce: true },
 
   /* ------------------------------------------------------------------ */
   /*  Pharmaceuticals (p.150) and Street Drugs (p.227-228)              */

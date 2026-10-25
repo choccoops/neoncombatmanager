@@ -163,7 +163,7 @@ test("Critical Injury conditions add CPR's own item; the item and the marker go 
   const item = actor.items.find((i) => i.type === "criticalInjury");
   assert.equal(item?.name, "Broken Leg");
   const marker = Conditions.effects(actor, "brokenLeg")[0];
-  assert.deepEqual(marker.changes, [], "CPR's item carries the -4 MOVE; the marker carries nothing");
+  assert.deepEqual(marker.changes.map((c) => [c.key, c.value]), [["bonuses.evasion", "-2"]], "CPR's item carries the -4 MOVE; the marker only the 2070 Evasion penalty");
   assert.equal(marker.getFlag(M, "item"), item.id);
   await Conditions.remove("brokenLeg", actor);
   await settle();
@@ -173,6 +173,15 @@ test("Critical Injury conditions add CPR's own item; the item and the marker go 
   const [rolled] = await actor.createEmbeddedDocuments("Item", [structuredClone(brokenLeg)]);
   await settle();
   assert.equal(Conditions.effects(actor, "brokenLeg")[0]?.getFlag(M, "item"), rolled.id);
+  assert.deepEqual(Conditions.effects(actor, "brokenLeg")[0].changes.map((c) => c.value), ["-2"], "a rolled Broken Leg gets the Evasion penalty too");
+  // The other leg: its own item, its own marker, -4 Evasion in all.
+  const { _id, ...otherLeg } = structuredClone(brokenLeg);
+  const [second] = await actor.createEmbeddedDocuments("Item", [otherLeg]);
+  await settle();
+  assert.equal(Conditions.effects(actor, "brokenLeg").length, 2);
+  assert.equal(Conditions.effects(actor, "brokenLeg").flatMap((e) => e.changes).reduce((s, c) => s + Number(c.value), 0), -4);
+  await actor.deleteEmbeddedDocuments("Item", [second.id]);
+  await settle();
   await actor.deleteEmbeddedDocuments("Item", [rolled.id]);
   await settle();
   assert.equal(Conditions.has("brokenLeg", actor), false);
