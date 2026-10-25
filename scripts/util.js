@@ -65,3 +65,16 @@ export const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 
 /** Normalize a name for loose matching: lower case, letters and digits only. */
 export const slug = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/**
+ * A condition's book reference as shown: 187 → "Core rulebook p.187"; "2070" → the 2070 Core
+ * Rules; "187 · 2070" → both; anything else as written ("NCW 5").
+ */
+export function pageLabel(page, localize = L) {
+  if (page === null || page === undefined || page === "") return "";
+  if (typeof page === "number") return localize("NEONCOMBAT.Card.Page", { page });
+  const m = /^(\d+)\s*·\s*2070$/.exec(String(page));
+  if (m) return `${localize("NEONCOMBAT.Card.Page", { page: Number(m[1]) })} · ${localize("NEONCOMBAT.Card.Page2070")}`;
+  if (String(page) === "2070") return localize("NEONCOMBAT.Card.Page2070");
+  return String(page);
+}

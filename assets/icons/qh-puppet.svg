@@ -1,0 +1,4 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Neon Combat Manager: Puppet. Sized like CPR's status icons. -->
+  <path d="M256 28 454 142v228L256 484 58 370V142z" fill="#101a24" stroke="#2de2e6" stroke-width="22" stroke-linejoin="round"/><path d="M170 110h172M200 110v70M312 110v70M256 110v60" fill="none" stroke="#f9c80e" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><circle cx="256" cy="200" r="30" fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="M256 230v90l-40 70M256 320l40 70M200 260h112" fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -68,7 +68,10 @@ test("saving an ordinary condition unchanged keeps its numbers, situational flag
   assert.deepEqual(Registry.effectData(Registry.get("ironGrip")).changes, [{ key: "bonuses.brawling", mode: 2, value: "-2", priority: null }]);
   assert.deepEqual(Registry.get("ironGrip").rawChanges[0].situational, true);
   await saveUnchanged("brokenLeg");
-  assert.deepEqual(Registry.effectData(Registry.get("brokenLeg")).changes, [{ key: "system.stats.move.value", mode: 2, value: "-4", priority: null }]);
+  assert.deepEqual(Registry.effectData(Registry.get("brokenLeg")).changes, [
+    { key: "system.stats.move.value", mode: 2, value: "-4", priority: null },
+    { key: "bonuses.evasion", mode: 2, value: "-2", priority: null }
+  ]);
 });
 
 test("the Lab's summary shows a CUSTOM change as what it is, not NaN", () => {

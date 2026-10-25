@@ -1,0 +1,53 @@
+<section class="ncm-stakes-wrap">
+  <header class="ncm-stakes-head">
+    {{#if actor}}<img src="{{actor.img}}" alt="">{{/if}}
+    <div>
+      <span class="ncm-kicker">// {{localize "NEONCOMBAT.Stakes.Kicker"}}</span>
+      <label class="ncm-stakes-who">{{localize "NEONCOMBAT.Stakes.Whose"}}
+        <select name="actor">{{#each actors}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select>
+      </label>
+    </div>
+    {{#if actor}}
+    <div class="ncm-stakes-luck" data-tooltip="NEONCOMBAT.Stakes.LuckHint">
+      <b>{{luck.value}}</b><small>/{{luck.max}}</small>
+      <span>LUCK</span>
+    </div>
+    {{/if}}
+  </header>
+
+  {{#if actor}}
+  <ul class="ncm-stakes-perks">
+    <li class="{{#if opts.ask}}on{{/if}}"><i class="fa-solid fa-hand"></i> {{localize "NEONCOMBAT.Stakes.Perk.ask" luck=needs.ask}}</li>
+    <li class="{{#if opts.doubleDown}}on{{/if}}"><i class="fa-solid fa-rotate"></i> {{localize "NEONCOMBAT.Stakes.Perk.doubleDown" luck=needs.doubleDown}}{{#if used.doubleDown}} · {{localize "NEONCOMBAT.Stakes.UsedThisSession"}}{{/if}}</li>
+    <li class="{{#if opts.forceFate}}on{{/if}}"><i class="fa-solid fa-star"></i> {{localize "NEONCOMBAT.Stakes.Perk.forceFate" luck=needs.forceFate cost=forceCost}}{{#if used.forceFate}} · {{localize "NEONCOMBAT.Stakes.UsedThisSession"}}{{/if}}</li>
+  </ul>
+  <textarea name="reason" rows="2" placeholder="{{#if gm}}{{localize 'NEONCOMBAT.Stakes.ReasonGM'}}{{else}}{{localize 'NEONCOMBAT.Stakes.ReasonPlayer'}}{{/if}}"></textarea>
+  <div class="ncm-stakes-actions">
+    {{#if gm}}
+    <button type="button" class="ncm-cta" data-action="raiseStakes"><i class="fa-solid fa-dice-six"></i> {{localize "NEONCOMBAT.Stakes.Raise"}}</button>
+    <button type="button" data-action="grantOpp" data-tooltip="NEONCOMBAT.Stakes.GrantHint"><i class="fa-solid fa-plus"></i> {{localize "NEONCOMBAT.Stakes.GrantOpp"}}</button>
+    <button type="button" data-action="grantComp" data-tooltip="NEONCOMBAT.Stakes.GrantHint"><i class="fa-solid fa-minus"></i> {{localize "NEONCOMBAT.Stakes.GrantComp"}}</button>
+    <button type="button" data-action="newSession" data-tooltip="NEONCOMBAT.Stakes.NewSessionHint"><i class="fa-solid fa-clock-rotate-left"></i> {{localize "NEONCOMBAT.Stakes.NewSession"}}</button>
+    {{else}}
+    <button type="button" class="ncm-cta" data-action="askStakes" {{#unless opts.ask}}disabled{{/unless}}><i class="fa-solid fa-hand"></i> {{localize "NEONCOMBAT.Stakes.AskButton"}}</button>
+    {{/if}}
+  </div>
+  {{else}}
+  <p class="ncm-empty">{{localize "NEONCOMBAT.Stakes.NoOne"}}</p>
+  {{/if}}
+
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Stakes.TableTitle"}}</h4>
+  <ol class="ncm-stakes-faces">
+    {{#each faces}}<li class="kind-{{kind}}"><b>{{face}}</b><span>{{label}}</span></li>{{/each}}
+  </ol>
+  <div class="ncm-stakes-tables">
+    <div>
+      <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Stakes.Opportunities"}}</h4>
+      <dl>{{#each opportunities}}<dt>{{name}}</dt><dd>{{text}}</dd>{{/each}}</dl>
+    </div>
+    <div>
+      <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Stakes.Complications"}}</h4>
+      <dl>{{#each complications}}<dt>{{name}}</dt><dd>{{text}}</dd>{{/each}}</dl>
+    </div>
+  </div>
+</section>

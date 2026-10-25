@@ -11,6 +11,10 @@ Cyberpunk RED's own rolls.
   someone crashes.
 - **Holocalls**: ring the crew, a Biomon Link or an NPC anywhere in Night City and talk in
   holo blue, with Night City Messenger contacts, dead zones and missed calls.
+- **The Plot Die**: the GM Raises the Stakes on a Check; the player rolls the d6 and the card
+  hands out the bonus, the Opportunity or the Complication (2070 Core Rules).
+- **Combat Awareness**: Solos split their Rank across the six abilities in a small window,
+  free before Initiative and as their Action once the fight is on.
 - **Neon Conditions**: the full Cyberpunk RED condition set, wired into the system's roll
   modifiers, with a Condition Lab, a Triggler and a drop-in stand-in for Condition Lab &
   Triggler (which stopped at Foundry v12).
@@ -112,6 +116,47 @@ Talk to the crew, or to someone who isn't in the scene, the way calls look in *E
 - Settings: ring time; whether characters need something to call with: an Agent (carried), an
   Internal Agent, or a Neuroport (its Holophone).
 
+## The Plot Die
+
+Raising the Stakes from the 2070 Core Rules (Chapter 02, LUCK). **Carousel → die button**, the
+token controls, `/stakes`, or a keybinding (unassigned) opens the Plot Die window.
+
+- **The GM** picks whose Check it is (the combatant whose Turn it is, a controlled token, or any
+  crew member), adds what's riding on it if they like, and clicks **Raise the Stakes**. A card
+  goes to chat with **Roll the Plot Die** for that character's player (and **Force Fate** when
+  they qualify). `/stakes <what's riding on it>` does the same for the current combatant.
+- **The roll** (Dice So Nice shows it) posts the result:
+  - **1 or 2: Complication.** +2 or +4 goes straight onto the character's next Check as a ticked
+    situational modifier in Cyberpunk RED's roll dialog, and comes off once that Check's roll
+    card is posted. The GM picks the Complication from the card: **Hinder an Ally** (pick who
+    and the penalty; it rides their next Check), **Feeling Unlucky** (-1 LUCK; out of LUCK, pick
+    Prone, a jam or a malfunction) or **Influence the Narrative** (type what goes wrong).
+  - **3-4: nothing.**
+  - **5-6: Opportunity.** The player picks: **Aid an Ally** (+2 on an ally's next Check),
+    **Feeling Lucky** (+2 LUCK, up to the STAT), **Critically Hit** (a Critical Injury of their
+    choice on their target, from CPR's own compendium) or **Influence the Narrative**.
+- **LUCK perks**: LUCK 5+ can **ask** the GM to Raise the Stakes (the GM gets a whispered card to
+  approve or turn down). LUCK 7+ can **Double Down** (reroll; a Complication then costs 2 LUCK,
+  or brings two Complications without it) and **Force Fate** (3 LUCK for an Opportunity), each
+  once a session. **New session** in the window gives them back.
+- **Crits**: the GM's **Crit: Opportunity** and **Crit: Complication** buttons hand out a twist
+  for an exploding 10 or an imploding 1, without the Plot Die.
+
+## Combat Awareness
+
+A Solo's Role Ability, from the Solo's carousel card (the crosshair; yellow, or pink once this
+Round's Action is spent on it), the token controls, `/awareness` (or `/ca`), or a keybinding.
+
+- The window shows the Rank as points, one stepper per ability (Precision Attack steps by 3,
+  Damage Deflection by 2, Fumble Recovery takes 4), what each split does right now, and points
+  that buy nothing.
+- **Assign** writes the split onto the Solo's Cyberpunk RED role item, so the system applies
+  Initiative, attack, damage, deflection and Perception itself, and posts a card.
+- When it costs: free outside combat and before Initiative. Once the combat has started and the
+  Solo has an Initiative, it's **their Action, on their Turn** (the card says so and their
+  carousel card marks the Action spent for the Round); off their Turn a player has to wait. The
+  GM can adjust it any time without spending the Action.
+
 ## Neon Conditions
 
 The token HUD gets the Cyberpunk RED set in place of Foundry's generic one (statuses other
@@ -122,10 +167,11 @@ with their source, situational ones as toggles.
 | Group | Conditions |
 | --- | --- |
 | Wound States (p.186) | Lightly / Seriously / Mortally Wounded (shown automatically; CPR applies their penalties itself), Dead, Unconscious, Stabilized |
-| Critical Injuries (p.187-188) | All 22. Placing one gives the actor **CPR's own Critical Injury item** from the system compendium (its effect carries the penalty and the Death Save increase); a Critical Injury rolled or dropped onto a sheet shows on the token |
-| Combat (p.168-185, p.345-347) | Prone, Grappled, Grappling, Iron Grip, Choked, Human Shield, In Cover, Hidden, Holding Action, Suppressed, Netrunning, Blinded, Deafened, Flashbanged, Teargassed, Knocked Out (Sleep), EMP'd |
+| Critical Injuries (p.187-188) | All 22. Placing one gives the actor **CPR's own Critical Injury item** from the system compendium (its effect carries the penalty and the Death Save increase); a Critical Injury rolled or dropped onto a sheet shows on the token. **2070**: Broken Leg also costs -2 Evasion, per leg (both: -4) |
+| Combat (p.168-185, p.345-347) | Prone (**2070**: -4 Evasion vs melee and Grapples, as roll-dialog toggles), Grappled, Grappling, Iron Grip, Choked, Human Shield, In Cover, Hidden, **Into the Wall** (2070: Spinal Injury for one Round), Holding Action, Suppressed, Netrunning, Blinded, Deafened, Flashbanged, Teargassed, Knocked Out (Sleep), EMP'd |
 | Hazards (p.180-181) | On Fire (Mild/Strong/Deadly), Drowning, Asphyxiating, Electrocuted, Radiation (Low/High), Falling, Exposure, Acid |
-| Situational (p.129) | Exhausted, Slept Badly, Extreme Stress, Drunk or Sedated, In Smoke |
+| Situational (p.129) | Exhausted, Fatigued / Slept Badly, Extreme Stress, Drunk or Sedated, In Smoke; the Plot Die's one-Check Bonus, Aided and Hindered |
+| Quickhacks (2070 ch.10) | Comms Jam (no holocalls), Vitals Spoof (the Biomon Link shows calm vitals; the GM sees SPOOFED), PopUp-geddon, Impair Movement, Slow (MOVE -1d6, rolled), Short Circuit, Cyberware Malfunction, Reboot Optics, Cripple Movement, Weapon Glitch, Limb Seize, Speedware Crash, Sonic Shock (Damaged Ear), Frame Lock, Q-KRASH, System Reset (Unconscious and Prone), Puppet, Cyberpsychosis. Each runs its 3 or 20 Rounds. Overheat is On Fire (Strong) |
 | Drugs (p.150, p.227-229) | Antibiotics, Rapidetox, Speedheal, Stim, Surge, Black Lace, Blue Glass, Boost, Smash, Synthcoke and their addictions |
 | Weather (Night City Weather) | Light/Heavy Rain, Acid Rain, Blood Rain, Ash Storm, Dust Storm, Inversion Smog, Deadly Thunderstorm, Radioactive Windstorm, Cold Snap, Heat Wave, Hot, Cold, Flooding, Blackout |
 | Visibility (p.129) | Low Light (-1), Darkness (-4), Obscured |

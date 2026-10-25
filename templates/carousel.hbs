@@ -27,11 +27,13 @@
       <button type="button" data-ncm="rollNPC" data-tooltip="COMBAT.RollNPC"><i class="fa-solid fa-dice-d10"></i> NPC</button>
       <button type="button" class="ncm-cta" data-ncm="start"><i class="fa-solid fa-bolt"></i> {{localize "NEONCOMBAT.Carousel.Start"}}</button>
       {{/if}}
+      <button type="button" data-ncm="stakes" data-tooltip="NEONCOMBAT.Stakes.Title"><i class="fa-solid fa-dice-six"></i></button>
       <button type="button" data-ncm="lab" data-tooltip="NEONCOMBAT.Lab.Title"><i class="fa-solid fa-flask"></i></button>
       <button type="button" data-ncm="tracker" data-tooltip="NEONCOMBAT.Carousel.Tracker"><i class="fa-solid fa-list-ol"></i></button>
       <button type="button" class="is-danger" data-ncm="end" data-tooltip="COMBAT.End"><i class="fa-solid fa-power-off"></i></button>
-    {{else if myTurn}}
-      <button type="button" class="ncm-cta" data-ncm="endTurn"><i class="fa-solid fa-check"></i> {{localize "NEONCOMBAT.Carousel.EndTurn"}}</button>
+    {{else}}
+      <button type="button" data-ncm="stakes" data-tooltip="NEONCOMBAT.Stakes.Title"><i class="fa-solid fa-dice-six"></i></button>
+      {{#if myTurn}}<button type="button" class="ncm-cta" data-ncm="endTurn"><i class="fa-solid fa-check"></i> {{localize "NEONCOMBAT.Carousel.EndTurn"}}</button>{{/if}}
     {{/if}}
   </div>
 </header>
@@ -45,6 +47,7 @@
         {{#if hasInit}}{{initiative}}{{else if canRoll}}<button type="button" data-ncm="roll" data-tooltip="COMBAT.InitiativeRoll"><i class="fa-solid fa-dice-d10"></i></button>{{else}}—{{/if}}
       </div>
       {{#if defeated}}<div class="ncm-card-flatline">{{localize "NEONCOMBAT.Carousel.Flatlined"}}</div>{{/if}}
+      {{#if solo}}<button type="button" class="ncm-card-ca{{#if awarenessSpent}} is-spent{{/if}}" data-ncm="awareness" data-tooltip="{{localize 'NEONCOMBAT.Awareness.Title'}}: {{awareness}}{{#if awarenessSpent}} ({{localize 'NEONCOMBAT.Awareness.SpentThisRound'}}){{/if}}"><i class="fa-solid fa-crosshairs"></i></button>{{/if}}
       {{#if deathSave}}<div class="ncm-card-ds" data-tooltip="NEONCOMBAT.Carousel.DeathSave"><i class="fa-solid fa-heart-crack"></i> +{{deathSave}}</div>{{/if}}
       {{#if ../gm}}
       <div class="ncm-card-gm">

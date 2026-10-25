@@ -21,6 +21,7 @@
             <b>{{name}}</b>
             {{#if implant}}<span class="ncm-bm-chip" data-tooltip="{{implantHint}}"><i class="fa-solid fa-microchip"></i></span>{{/if}}
             <span class="ncm-bm-state"{{#unless signal}} data-tooltip="NEONCOMBAT.Biomon.NoSignalHint"{{/unless}}>{{label}}{{#if deathSave}} · DS +{{deathSave}}{{/if}}</span>
+            {{#if spoofed}}<span class="ncm-bm-spoof" data-tooltip="NEONCOMBAT.Biomon.SpoofedHint">{{localize "NEONCOMBAT.Biomon.Spoofed"}}</span>{{/if}}
           </div>
           <div class="ncm-bm-trace">
             <svg viewBox="0 0 120 32" preserveAspectRatio="none" aria-hidden="true"><path class="ncm-bm-grid" d="M0 8H120M0 16H120M0 24H120"/><path class="ncm-bm-ecg" d="{{ecg}}"/></svg>

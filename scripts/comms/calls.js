@@ -10,6 +10,9 @@ const { deepClone } = foundry.utils;
 /** How long an ended call is kept (for windows to show "call ended"), in ms. */
 const KEEP_ENDED = 10 * 60 * 1000;
 
+/** Comms Jam (a quickhack): no calls in or out. */
+const jammed = (actor) => !!actor?.statuses?.has?.("qhCommsJam");
+
 /* -------------------------------------------- */
 /*  Pure call rules (tested)                    */
 /* -------------------------------------------- */
@@ -131,6 +134,7 @@ export const Calls = {
     if (!game.user.isGM && Messenger.deadZone(this.here)) throw new Error(L(`${LANG}.Holocall.NoSignalHere`));
     const caller = from?.actorId ? game.actors.get(from.actorId) : null;
     if (Settings.get("callNeedsAgent") && caller && !Messenger.hasAgent(caller)) throw new Error(L(`${LANG}.Holocall.NoAgent`, { name: caller.name }));
+    if (jammed(caller)) throw new Error(L(`${LANG}.Holocall.Jammed`, { name: caller.name }));
     if (!targets?.length) throw new Error(L(`${LANG}.Holocall.NoOne`));
     return Socket.request("callPlace", { from, targets });
   },
@@ -140,6 +144,11 @@ export const Calls = {
     if (!game.user.isGM && Messenger.deadZone(this.here)) {
       await this.decline(callId, pid, "nosignal");
       throw new Error(L(`${LANG}.Holocall.NoSignalHere`));
+    }
+    const p = this.get(callId)?.participants.find((x) => x.id === pid);
+    if (jammed(p?.actorId ? game.actors.get(p.actorId) : null)) {
+      await this.decline(callId, pid, "nosignal");
+      throw new Error(L(`${LANG}.Holocall.Jammed`, { name: p.name }));
     }
     return Socket.request("callAnswer", { callId, pid });
   },
@@ -174,6 +183,10 @@ export const Calls = {
     const body = String(text ?? "").trim();
     if (!call || call.status === "ended" || !p || p.state !== "joined" || !body || !this.speaksFor(p)) return null;
     const actor = p.actorId ? game.actors.get(p.actorId) : null;
+    if (jammed(actor)) {
+      ui.notifications?.warn(L(`${LANG}.Holocall.Jammed`, { name: actor.name }));
+      return null;
+    }
     const content = `<div class="ncm-holo-line"><span class="ncm-holo-tag">${esc(L(`${LANG}.Holocall.Tag`))}</span><p>${esc(body).replace(/\n/g, "<br>")}</p></div>`;
     return ChatMessage.create({
       content,

@@ -57,6 +57,8 @@ export const Registry = {
     const sight = Number(o.sight ?? def.sight) || 0;
     const own = o.changes ?? def.changes ?? [];
     c.rawChanges = [...own.map((ch) => ({ ...ch })), ...sightChanges(sight)];
+    // What a Critical Injury marker keeps beside CPR's item (rulings newer than the item).
+    c.extraChanges = (o.extra ?? def.extra ?? []).map((ch) => ({ ...ch }));
     c.disabled = !!o.disabled;
     c.hud = o.hud ?? def.hud ?? true;
     return c;

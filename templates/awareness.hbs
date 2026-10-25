@@ -1,0 +1,47 @@
+<section class="ncm-ca-wrap">
+  <header class="ncm-stakes-head">
+    {{#if actor}}<img src="{{actor.img}}" alt="">{{/if}}
+    <div>
+      <span class="ncm-kicker">// {{localize "NEONCOMBAT.Awareness.Kicker"}}</span>
+      <label class="ncm-stakes-who">{{localize "NEONCOMBAT.Awareness.Who"}}
+        <select name="actor">{{#each choices}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select>
+      </label>
+    </div>
+    {{#if actor}}
+    <div class="ncm-stakes-luck{{#if over}} is-over{{/if}}" data-tooltip="NEONCOMBAT.Awareness.LeftHint">
+      <b>{{left}}</b><small>/{{rank}}</small>
+      <span>{{localize "NEONCOMBAT.Awareness.Left"}}</span>
+    </div>
+    {{/if}}
+  </header>
+
+  {{#if actor}}
+  <div class="ncm-ca-pips" aria-hidden="true">{{#each pips}}<span class="{{#if on}}on{{/if}}"></span>{{/each}}</div>
+  <p class="ncm-ca-mode mode-{{mode}}"><i class="fa-solid {{#if (eq mode 'action')}}fa-hand-fist{{else if (eq mode 'wait')}}fa-hourglass-half{{else if (eq mode 'gm')}}fa-user-shield{{else}}fa-circle-check{{/if}}"></i> {{modeText}}{{#if spent}} <em>· {{localize "NEONCOMBAT.Awareness.SpentThisRound"}}</em>{{/if}}</p>
+
+  <ol class="ncm-ca-rows">
+    {{#each rows}}
+    <li class="ncm-ca-row{{#if changed}} is-changed{{/if}}{{#if wasted}} is-wasted{{/if}}" data-key="{{key}}">
+      <i class="{{icon}}"></i>
+      <div class="ncm-ca-name">
+        <b>{{name}}</b>
+        <small data-tooltip="{{hint}}">{{effect}}{{#if wasted}} · {{localize "NEONCOMBAT.Awareness.Wasted"}}{{/if}}</small>
+      </div>
+      <div class="ncm-ca-step">
+        <button type="button" data-action="stepDown" {{#unless canDown}}disabled{{/unless}} aria-label="−"><i class="fa-solid fa-minus"></i></button>
+        <output>{{points}}</output>
+        <button type="button" data-action="stepUp" {{#unless canUp}}disabled{{/unless}} aria-label="+" data-tooltip="{{localize 'NEONCOMBAT.Awareness.StepHint' step=step}}"><i class="fa-solid fa-plus"></i></button>
+      </div>
+    </li>
+    {{/each}}
+  </ol>
+
+  <div class="ncm-stakes-actions">
+    <button type="button" class="ncm-cta" data-action="assign" {{#unless canAssign}}disabled{{/unless}}><i class="fa-solid fa-check"></i> {{assignLabel}}</button>
+    <button type="button" data-action="revert" {{#unless changed}}disabled{{/unless}}><i class="fa-solid fa-rotate-left"></i> {{localize "NEONCOMBAT.Awareness.Revert"}}</button>
+    <button type="button" data-action="clearAll"><i class="fa-solid fa-eraser"></i> {{localize "NEONCOMBAT.Awareness.Clear"}}</button>
+  </div>
+  {{else}}
+  <p class="ncm-empty">{{localize "NEONCOMBAT.Awareness.NoSolo"}}</p>
+  {{/if}}
+</section>

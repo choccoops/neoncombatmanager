@@ -71,7 +71,9 @@ export class BiomonApp extends HandlebarsApplicationMixin(ApplicationV2) {
           ecg: ecgPath(v.state),
           beat: v.bpm ? `${(60 / v.bpm) * (v.state === "critical" ? 4 : v.state === "serious" ? 3 : 2)}s` : "0s",
           // No implant, no readings: not even the injuries.
-          icons: v.signal ? Links.icons(actor) : [],
+          icons: v.signal && !v.spoofed ? Links.icons(actor) : [],
+          // Only the GM knows the readout is a lie.
+          spoofed: !!v.spoofed && game.user.isGM,
           fullBiomon: !!hub?.active && typeof hub.api?.biomonitor === "function" && actor.testUserPermission(game.user, "OBSERVER")
         };
       }),

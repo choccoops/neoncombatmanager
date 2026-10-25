@@ -7,6 +7,7 @@ import { Conditions } from "../conditions/engine.js";
 import { CombatTime } from "./time.js";
 import { Sources } from "../environment/sources.js";
 import { WEATHER_CONDITION } from "../environment/weather-data.js";
+import { Awareness } from "../awareness/awareness.js";
 import { debounce, formatElapsed, L } from "../util.js";
 
 const WOUND_TONE = { notWounded: "ok", lightlyWounded: "light", seriouslyWounded: "serious", mortallyWounded: "mortal" };
@@ -25,7 +26,7 @@ export const Carousel = {
     this.soon = soon;
     for (const h of ["createCombat", "updateCombat", "deleteCombat", "createCombatant", "updateCombatant", "deleteCombatant",
       "updateActor", "createActiveEffect", "updateActiveEffect", "deleteActiveEffect", "updateToken", "canvasReady",
-      "updateWorldTime", `${MODULE_ID}.refreshUI`, `${MODULE_ID}.environmentChanged`]) {
+      "updateWorldTime", "updateItem", `${MODULE_ID}.refreshUI`, `${MODULE_ID}.environmentChanged`]) {
       Hooks.on(h, () => soon());
     }
     // Keep the queue reachable when the sidebar is toggled.
@@ -141,6 +142,7 @@ export const Carousel = {
       const health = owner || gm || friendly ? "bar" : npcHealth;
       const dead = cb.defeated || (actor && Conditions.has("dead", actor));
       const conditions = actor ? this.effects(actor) : [];
+      const solo = !!actor && (owner || gm) && Awareness.isSolo(actor);
       cards.push({
         id: cb.id,
         name: showName ? cb.name : L(`${LANG}.Carousel.Unknown`),
@@ -163,7 +165,10 @@ export const Carousel = {
         deathSave: wound === "mortallyWounded" && !dead ? CPR.deathSave(actor).penalty : null,
         conditions: conditions.slice(0, 6),
         more: Math.max(0, conditions.length - 6),
-        moved: null
+        moved: null,
+        solo,
+        awareness: solo ? Awareness.summary(actor) : "",
+        awarenessSpent: solo && Awareness.spent(actor, combat)
       });
     }
     const current = combat.combatant;
@@ -306,6 +311,13 @@ export const Carousel = {
       case "lab": {
         const { ConditionLab } = await import("../conditions/lab-app.js");
         return ConditionLab.open();
+      }
+      case "stakes": {
+        const { Stakes } = await import("../stakes/stakes.js");
+        return Stakes.open(cb?.actor ?? null);
+      }
+      case "awareness": {
+        return Awareness.open(cb?.actor ?? null);
       }
       case "tracker":
         return ui.combat?.renderPopout?.() ?? ui.sidebar?.activateTab?.("combat");
