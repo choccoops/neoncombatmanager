@@ -13,7 +13,10 @@ const { deepClone } = foundry.utils;
 /**
  * The City & NCART hub's shared state (world setting "cityHub", written by the GM):
  *   crew   { x, y, label } - where the crew is ("We are here")
- *   pins   { [actorId]: { x, y } } - where each character is (players pin their own)
+ *   pins   { [actorId]: { x, y } } - before 1.5.1, where each character was pinned (moved onto the
+ *          actors by the GM on load; read until then)
+ * Where a character is lives on the character: flags[MODULE].hubPin = { x, y }. Players own their
+ * characters, so they pin themselves without a GM online.
  *   notes  { [placeKey]: { note, scene, tile, tag, open } } - the GM's notes on places, and
  *          their doorways (a scene to walk into, where to land, and whether players may)
  *   shown  { view, x, y, key, at } - what the GM last showed the players
@@ -36,7 +39,7 @@ export const Hub = {
   get state() {
     const s = Settings.get("cityHub") ?? {};
     return {
-      crew: s.crew ?? null, pins: s.pins ?? {}, notes: s.notes ?? {}, shown: s.shown ?? null,
+      crew: s.crew ?? null, pins: this._pins(s.pins), notes: s.notes ?? {}, shown: s.shown ?? null,
       seen: s.seen ?? {}, custom: s.custom ?? {}, edits: s.edits ?? {}
     };
   },
@@ -190,10 +193,22 @@ export const Hub = {
     });
   },
 
+  /** Every pinned character: { [actorId]: { x, y } }, from the actors (and any pin not yet moved onto one). */
+  _pins(legacy = {}) {
+    const out = { ...(legacy ?? {}) };
+    for (const a of game.actors ?? []) {
+      const pin = a.flags?.[MODULE_ID]?.hubPin;
+      if (pin && Number.isFinite(pin.x) && Number.isFinite(pin.y)) out[a.id] = { x: pin.x, y: pin.y };
+    }
+    return out;
+  },
+
   /** Where a character is pinned (or null). */
   pinOf(actor) {
-    const id = actor?.id ?? actor;
-    return this.state.pins[id] ?? null;
+    const a = typeof actor === "string" ? game.actors?.get(actor) : actor;
+    const pin = a?.flags?.[MODULE_ID]?.hubPin;
+    if (pin && Number.isFinite(pin.x)) return { x: pin.x, y: pin.y };
+    return (Settings.get("cityHub") ?? {}).pins?.[a?.id ?? actor] ?? null;
   },
 
   /* ---------------------------------------- */
@@ -216,18 +231,35 @@ export const Hub = {
     });
   },
 
-  /** Pin a character on the map (null unpins). Players pin their own characters through the GM. */
+  /**
+   * Pin a character on the map (null unpins). It's kept on the character, so a player pins their
+   * own with no GM online.
+   */
   async setPin(actor, point) {
-    const actorId = actor?.id ?? actor;
-    const data = { actorId, point: point ? { x: Math.round(point.x), y: Math.round(point.y) } : null };
-    if (game.user.isGM) return this._pin(data);
-    return Socket.request("hubPin", data);
+    const a = typeof actor === "string" ? game.actors?.get(actor) : actor;
+    if (!a || !a.testUserPermission(game.user, "OWNER")) throw new Error(L(`${LANG}.Error.NotOwner`));
+    if (point) await a.setFlag(MODULE_ID, "hubPin", { x: Math.round(point.x), y: Math.round(point.y) });
+    else if (a.flags?.[MODULE_ID]?.hubPin) await a.unsetFlag(MODULE_ID, "hubPin");
+    // A pin from before 1.5.1 goes now, or it would still show.
+    if (game.user.isGM && (Settings.get("cityHub") ?? {}).pins?.[a.id]) {
+      await this._write((s) => {
+        delete s.pins[a.id];
+      });
+    }
   },
 
-  async _pin({ actorId, point }) {
+  /** GM, on load: pins kept in the world setting (1.4.0-1.5.0) move onto their characters. */
+  async migratePins() {
+    if (!Compat.isActiveGM) return;
+    const legacy = (Settings.get("cityHub") ?? {}).pins ?? {};
+    const ids = Object.keys(legacy);
+    if (!ids.length) return;
+    for (const id of ids) {
+      const a = game.actors?.get(id);
+      if (a && !a.flags?.[MODULE_ID]?.hubPin) await a.setFlag(MODULE_ID, "hubPin", legacy[id]);
+    }
     await this._write((s) => {
-      if (point) s.pins[actorId] = point;
-      else delete s.pins[actorId];
+      s.pins = {};
     });
   },
 
@@ -258,11 +290,19 @@ export const Hub = {
     return { scene: n.scene ?? "", tile: n.tile ?? "", tag: n.tag ?? "", open: !!n.open, name: this.place(key)?.name ?? "" };
   },
 
-  /** Walk into a place's scene (as a character you own). Players need it revealed and open. */
+  /**
+   * Walk into a place's scene (as a character you own). Players need it revealed and open. The
+   * character's pin moves to the place.
+   */
   async go(key, actorId = null) {
     const p = this.place(key);
     if (!p || (p.hidden && !game.user.isGM)) throw new Error(L(`${LANG}.Hub.Door.Blocked.closed`));
-    return Doorway.go(key, this.doorOf(key), actorId);
+    const result = await Doorway.go(key, this.doorOf(key), actorId);
+    const actor = result?.actorId ? game.actors?.get(result.actorId) : null;
+    if (actor?.testUserPermission(game.user, "OWNER")) {
+      await this.setPin(actor, p).catch((err) => console.warn(`${MODULE_ID} | pin after ${p.name}`, err));
+    }
+    return result;
   },
 
   /** GM: open the hub on everyone's screen at a view and spot. */
@@ -372,6 +412,11 @@ export const Hub = {
     });
     Hooks.on(`${MODULE_ID}.hubChanged`, (state, before) => this.onChange(state, before));
     Hooks.on("updateWorldTime", () => this.app?.refreshClock?.());
+    // Someone moved on the map.
+    Hooks.on("updateActor", (actor, changes) => {
+      const f = changes?.flags?.[MODULE_ID];
+      if (f && ("hubPin" in f || "-=hubPin" in f)) this.app?.refresh?.();
+    });
   },
 
   registerSocket() {
@@ -380,13 +425,6 @@ export const Hub = {
       const p = this.place(key);
       if (!p || (p.hidden && !user?.isGM)) throw new Error(L(`${LANG}.Hub.Door.Blocked.closed`));
       return Doorway._goAsGM({ key, door: this.doorOf(key), actorId }, userId);
-    });
-    Socket.on("hubPin", async ({ actorId, point }, userId) => {
-      const user = game.users.get(userId);
-      const actor = game.actors.get(actorId);
-      if (!actor || (!user?.isGM && !actor.testUserPermission(user, "OWNER"))) throw new Error(L(`${LANG}.Error.NotOwner`));
-      await this._pin({ actorId, point });
-      return true;
     });
   },
 
