@@ -200,6 +200,8 @@ Hook: `cpr-neon-combat-manager.awarenessAssigned` `(actor, points, mode)`.
 | `reveal(keys, { quiet })` / `hide(keys)` | (GM) discovery: reveal places to the players (a "Location discovered" card unless `quiet`), or hide them |
 | `addPlace({ name, cat, x, y, text, sc, guard, img }, { visible })` | (GM) a place of your own, hidden until revealed unless `visible`. Resolves to its key (`c-<id>`) |
 | `updatePlace(key, fields)` / `resetPlace(key)` / `removePlace(key)` | (GM) change a place (built-in ones keep only what differs), undo a built-in's changes, delete one of your own |
+| `doorOf(key)` / `setDoor(key, { scene, tile, tag, open })` | a place's doorway: the scene it leads into, the tile (id) or Tagger tag to land on, and whether players may walk in |
+| `go(key, actorId?)` | walk through a place's doorway as a character you own: with a GM online the token lands on the tile, the player is pulled into the scene and a Monk's Active Tiles tile is triggered (`tile.trigger({ tokens, userId, method: "trigger" })`); without one, the scene is viewed |
 | `setCrew(point, label)` | (GM) the crew marker (`null` clears it) |
 | `setPin(actor, point)` | pin a character you own (`null` unpins) |
 | `travel(from, to, mode, { storm })` | (GM) the crew travels: time passes, the marker moves, a card posts. `mode`: walk, skates, bike, ncart, moto, car, av. Resolves to `{ minutes, jam, trip }` |
@@ -210,7 +212,8 @@ NCZTA-70 entries, places, stations, lines) is `scripts/hub/data.js`; the pure ru
 a point, travel times, NCART routes, dead zones) are in `scripts/hub/geo.js`.
 
 Hooks: `cpr-neon-combat-manager.hubChanged` (the shared state), `cpr-neon-combat-manager.hubTravel`
-`({ from, to, mode, minutes, jam })`.
+`({ from, to, mode, minutes, jam })`, `cpr-neon-combat-manager.hubDoorway` `({ key, actor, scene, tile, token, userId })`
+(GM side, after someone walks through a doorway).
 
 ## Holocalls: `ncm.holocall`
 

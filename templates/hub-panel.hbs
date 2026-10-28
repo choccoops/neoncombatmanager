@@ -19,6 +19,11 @@
     {{#unless signal}}<span class="ncm-hub-chip is-dead"><i class="fa-solid fa-signal"></i> {{localize "NEONCOMBAT.Hub.NoSignal"}}</span>{{/unless}}</p>
   {{#if sc}}<p class="ncm-hub-sc"><b>SC {{sc}}</b>{{#if guard}} · {{guard}}{{/if}}</p>{{/if}}
   {{#if text}}<p class="ncm-hub-text">{{text}}</p>{{/if}}
+  <div class="ncm-hub-btns"><button type="button" class="ncm-hub-dossier-btn" data-hub="dossier" data-key="{{key}}"><i class="fa-solid fa-folder-open"></i> {{localize "NEONCOMBAT.Hub.OpenDossier"}}</button>
+    {{#if door.canGo}}{{#if door.travelers.length}}<select name="goActor">{{#each door.travelers}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select>{{/if}}
+    <button type="button" class="ncm-hub-go" data-hub="goThere" data-key="{{key}}" data-tooltip="{{localize 'NEONCOMBAT.Hub.Door.GoHint' scene=door.sceneName}}"><i class="fa-solid fa-door-open"></i> {{localize "NEONCOMBAT.Hub.Door.Go"}}</button>{{/if}}
+    {{#if door.why}}<button type="button" class="ncm-hub-go" disabled data-tooltip="{{door.why}}"><i class="fa-solid fa-door-closed"></i> {{localize "NEONCOMBAT.Hub.Door.Go"}}</button>{{/if}}
+  </div>
   {{#if stations.length}}
   <h4 class="ncm-sub">// NCART</h4>
   <ul class="ncm-hub-list">{{#each stations}}<li><button type="button" data-hub="select" data-key="s:{{id}}"><i class="fa-solid fa-train-subway"></i> {{name}} <small>{{localize "NEONCOMBAT.Hub.WalkFor" time=walk}}</small> {{#each lines}}<span class="ncm-hub-dot" style="--c:{{color}}" data-tooltip="{{name}}"></span>{{/each}}</button></li>{{/each}}</ul>
@@ -40,8 +45,17 @@
   </div>
   <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Hub.GMNotes"}}</h4>
   <textarea name="placeNote" data-key="{{key}}" rows="3" placeholder="{{localize 'NEONCOMBAT.Hub.NotePlaceholder'}}">{{note}}</textarea>
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Hub.Door.Title"}}</h4>
+  <p class="ncm-hint">{{localize "NEONCOMBAT.Hub.Door.Hint"}}</p>
   <label class="ncm-hub-scene">{{localize "NEONCOMBAT.Hub.Scene"}}
     <select name="placeScene" data-key="{{key}}">{{#each scenes}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>
+  {{#if door}}
+  <label class="ncm-hub-scene">{{localize "NEONCOMBAT.Hub.Door.Landing"}}
+    <select name="placeTile" data-key="{{key}}">{{#each door.tiles}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{#if active}}◆ {{/if}}{{label}}</option>{{/each}}</select></label>
+  {{#if door.tagger}}<label class="ncm-hub-scene">{{localize "NEONCOMBAT.Hub.Door.Tag"}} <input type="text" name="placeTag" data-key="{{key}}" value="{{door.tag}}" placeholder="{{localize 'NEONCOMBAT.Hub.Door.TagHint'}}"></label>{{/if}}
+  {{#unless door.matt}}<p class="ncm-hint">{{localize "NEONCOMBAT.Hub.Door.NoMatt"}}</p>{{/unless}}
+  <label class="ncm-hub-scene ncm-check"><input type="checkbox" name="placeOpen" data-key="{{key}}" {{#if door.open}}checked{{/if}}> {{localize "NEONCOMBAT.Hub.Door.Open"}}</label>
+  {{/if}}
   {{#if scene}}<div class="ncm-hub-btns">
     <button type="button" data-hub="viewScene" data-scene="{{scene}}"><i class="fa-solid fa-eye"></i> {{localize "NEONCOMBAT.Hub.ViewScene"}}</button>
     <button type="button" data-hub="activateScene" data-scene="{{scene}}"><i class="fa-solid fa-bullseye"></i> {{localize "NEONCOMBAT.Hub.ActivateScene"}}</button></div>{{/if}}

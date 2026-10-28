@@ -4,6 +4,7 @@ import { Links } from "./links.js";
 import { Messenger } from "./messenger.js";
 import { Comms } from "./comms.js";
 import { Settings } from "../settings.js";
+import { FX } from "../fx.js";
 import { L } from "../util.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -254,6 +255,7 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
     });
     const feed = el.querySelector(".ncm-holo-feed");
     if (feed) feed.scrollTop = feed.scrollHeight;
+    this._animateLine(el, feed);
     // The speaker picked here is who /holo and talking from chat speak as.
     el.querySelector("[name=as]")?.addEventListener("change", (ev) => {
       this._as = ev.target.value;
@@ -269,6 +271,26 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (text && this._focus) text.focus();
     this._draft = "";
     this._focus = false;
+  }
+
+  /**
+   * A new line on the call: the equalizer runs while it's "spoken", and someone else's words
+   * type out. Lines already on screen when the window opened stay as they are.
+   */
+  _animateLine(el, feed) {
+    const last = feed?.querySelector("li[data-message-id]:last-of-type");
+    const id = last?.dataset.messageId ?? null;
+    const first = this._lastLine === undefined;
+    const fresh = !first && id && id !== this._lastLine;
+    this._lastLine = id;
+    if (!fresh) return;
+    const section = el.querySelector(".ncm-holo");
+    section?.classList.add("is-talking");
+    clearTimeout(this._talk);
+    this._talk = setTimeout(() => this.element?.querySelector(".ncm-holo")?.classList.remove("is-talking"), 2600);
+    if (last.classList.contains("is-mine")) return;
+    const p = last.querySelector(".ncm-holo-line p");
+    if (p && !p.querySelector("br")) FX.typeOut(p, p.textContent, { speed: 22 });
   }
 
   static async #onPlace() {
@@ -325,6 +347,7 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
         live: p.state === "joined"
       })),
       messages: Calls.messages(call.id).slice(-80).map((m) => ({
+        id: m.id,
         name: m.flags[MODULE_ID].name ?? m.speaker?.alias ?? "",
         img: m.flags[MODULE_ID].img,
         content: m.content,

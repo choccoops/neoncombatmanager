@@ -5,6 +5,7 @@ import { Socket } from "../socket.js";
 import { Cards } from "../combat/cards.js";
 import { NC2070 } from "./data.js";
 import { districtAt, deadAt, plan, formatMinutes, travelMinutes, WINDING, km } from "./geo.js";
+import { Doorway } from "./doorway.js";
 import { L, esc } from "../util.js";
 
 const { deepClone } = foundry.utils;
@@ -13,7 +14,8 @@ const { deepClone } = foundry.utils;
  * The City & NCART hub's shared state (world setting "cityHub", written by the GM):
  *   crew   { x, y, label } - where the crew is ("We are here")
  *   pins   { [actorId]: { x, y } } - where each character is (players pin their own)
- *   notes  { [placeKey]: { note, scene } } - the GM's notes and battle-map scenes on places
+ *   notes  { [placeKey]: { note, scene, tile, tag, open } } - the GM's notes on places, and
+ *          their doorways (a scene to walk into, where to land, and whether players may)
  *   shown  { view, x, y, key, at } - what the GM last showed the players
  *   seen   { [placeKey]: true | false } - places the GM revealed (true) or hid (false)
  *   custom { [id]: { id, name, cat, x, y, text, sc, guard, img } } - the GM's own places
@@ -93,12 +95,19 @@ export const Hub = {
   async setSeen(keys, seen, { quiet = false } = {}) {
     const list = [keys].flat().filter(Boolean);
     const before = new Map(this.places().map((p) => [p.key, p.hidden]));
+    const newly = seen && !quiet ? list.filter((k) => before.get(k)) : [];
     await this._write((s) => {
       s.seen ??= {};
       for (const k of list) s.seen[k] = !!seen;
+      // One place found: its dossier opens on the players' screens (setting).
+      const one = newly.length === 1 ? NC2070.places.find((p) => this.placeKey(p) === newly[0]) ?? s.custom?.[newly[0].slice(2)] : null;
+      if (one && Settings.get("hubRevealDossier")) {
+        const p = { ...one, ...(s.edits?.[newly[0]] ?? {}) };
+        s.shown = { view: "city", key: `p:${newly[0]}`, x: p.x, y: p.y, s: 1.6, dossier: newly[0], at: Date.now() };
+      }
     });
-    if (!seen || quiet) return;
-    const found = list.map((k) => this.place(k)).filter((p) => p && before.get(p.key));
+    if (!newly.length) return;
+    const found = newly.map((k) => this.place(k)).filter(Boolean);
     if (!found.length) return;
     const where = (p) => districtAt(p.x, p.y).name;
     await Cards.post({
@@ -222,14 +231,38 @@ export const Hub = {
     });
   },
 
-  /** GM: a note and a battle-map scene for a place. */
-  async setNote(key, { note, scene } = {}) {
+  /**
+   * GM: a place's note and doorway: the scene it leads into, the tile (or Tagger tag) to land on,
+   * and whether players may walk in from the map. Picking another scene clears the tile.
+   */
+  async setNote(key, { note, scene, tile, tag, open } = {}) {
     await this._write((s) => {
       const cur = s.notes[key] ?? {};
-      const next = { note: note ?? cur.note ?? "", scene: scene ?? cur.scene ?? "" };
+      const sceneChanged = scene !== undefined && scene !== (cur.scene ?? "");
+      const next = {
+        note: note ?? cur.note ?? "",
+        scene: scene ?? cur.scene ?? "",
+        tile: tile ?? (sceneChanged ? "" : cur.tile ?? ""),
+        tag: tag ?? cur.tag ?? "",
+        open: open ?? cur.open ?? false
+      };
+      if (!next.scene) Object.assign(next, { tile: "", tag: "", open: false });
       if (!next.note && !next.scene) delete s.notes[key];
       else s.notes[key] = next;
     });
+  },
+
+  /** A place's doorway: { scene, tile, tag, open, name } (scene "" when it has none). */
+  doorOf(key) {
+    const n = this.state.notes[key] ?? {};
+    return { scene: n.scene ?? "", tile: n.tile ?? "", tag: n.tag ?? "", open: !!n.open, name: this.place(key)?.name ?? "" };
+  },
+
+  /** Walk into a place's scene (as a character you own). Players need it revealed and open. */
+  async go(key, actorId = null) {
+    const p = this.place(key);
+    if (!p || (p.hidden && !game.user.isGM)) throw new Error(L(`${LANG}.Hub.Door.Blocked.closed`));
+    return Doorway.go(key, this.doorOf(key), actorId);
   },
 
   /** GM: open the hub on everyone's screen at a view and spot. */
@@ -342,6 +375,12 @@ export const Hub = {
   },
 
   registerSocket() {
+    Socket.on("hubGo", async ({ key, actorId }, userId) => {
+      const user = game.users.get(userId);
+      const p = this.place(key);
+      if (!p || (p.hidden && !user?.isGM)) throw new Error(L(`${LANG}.Hub.Door.Blocked.closed`));
+      return Doorway._goAsGM({ key, door: this.doorOf(key), actorId }, userId);
+    });
     Socket.on("hubPin", async ({ actorId, point }, userId) => {
       const user = game.users.get(userId);
       const actor = game.actors.get(actorId);
@@ -358,7 +397,7 @@ export const Hub = {
     if (!shown?.at || game.user.isGM || shown.at === this._lastShown) return;
     this._lastShown = shown.at;
     if (Date.now() - shown.at > 60_000 || !this.playersMayOpen()) return;
-    this.open({ view: shown.view, focus: shown });
+    this.open({ view: shown.view, focus: shown, dossier: shown.dossier ?? null });
   },
 
   playersMayOpen() {

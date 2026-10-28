@@ -861,6 +861,19 @@
       "hubDiscovery": {
         "name": "Places are discovered",
         "hint": "Players only see the places you reveal (the 85 on the 2070 map and your own). Off: they see every place you haven't hidden."
+      },
+      "hubRevealDossier": {
+        "name": "Reveal opens the dossier",
+        "hint": "When you reveal one place, its dossier opens full screen on the players' screens. Off: they get the chat card and the place on their map."
+      },
+      "hubTravel": {
+        "name": "Players visit places from the map",
+        "hint": "Places with a doorway the GM opened lead into their scenes. While a GM is online, the character's token lands on the doorway's tile and its Monk's Active Tiles actions run. Any time: players can go between sessions too (no GM: they view the scene and move their own token if allowed)."
+      },
+      "HubTravel": {
+        "off": "Off",
+        "session": "While a GM is online",
+        "always": "Any time (downtime too)"
       }
     },
     "SceneWeather": {
@@ -1382,7 +1395,7 @@
       "WalkFor": "{time} on foot",
       "GMNotes": "GM notes",
       "NotePlaceholder": "Only you see this. Who's here tonight, what's going on…",
-      "Scene": "Battle map",
+      "Scene": "Scene",
       "ViewScene": "View",
       "ActivateScene": "Move everyone there",
       "RouteFrom": "Route from here",
@@ -1467,6 +1480,36 @@
         "imgHint": "optional",
         "visible": "Players see it right away",
         "save": "Save"
+      },
+      "Booting": "Resolving the grid…",
+      "Dossier": "Location file",
+      "DossierLive": "Live",
+      "OnTheMap": "Show on the map",
+      "OpenDossier": "Dossier",
+      "Door": {
+        "Title": "Doorway",
+        "Hint": "The scene this place leads into, so players can walk in from the map (between sessions too): a shop, a bar, someone to talk to.",
+        "Landing": "Land on",
+        "SceneStart": "The scene's starting view",
+        "TileAt": "Tile at {x}, {y}",
+        "Actions": "{count} action(s)",
+        "Tag": "Tagger tag",
+        "TagHint": "lands on the first tile with this tag",
+        "NoMatt": "With Monk's Active Tiles, landing on one of its tiles runs that tile's actions.",
+        "Open": "Players can walk in from the map",
+        "Go": "Go there",
+        "GoHint": "Walk into {scene}.",
+        "Kicker": "Through the doorway",
+        "Went": "{name} goes to {place}",
+        "Fired": "the tile's actions ran",
+        "NoCharacter": "You need a character to go there.",
+        "LookOnly": "You can look around. Your token comes along when a GM is online (or with permission to place tokens).",
+        "NoActions": "Its tile's actions run when a GM is online.",
+        "Blocked": {
+          "noScene": "This place doesn't lead anywhere yet.",
+          "closed": "The GM hasn't opened this place to visits.",
+          "noGM": "Visits need a GM online right now."
+        }
       }
     }
   }

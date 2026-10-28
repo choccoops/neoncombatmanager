@@ -2,9 +2,11 @@ import { MODULE_ID, TEMPLATE_PATH, LANG } from "../constants.js";
 import { Compat } from "../compat.js";
 import { CombatTime } from "../combat/time.js";
 import { Hub } from "./hub.js";
+import { Doorway } from "./doorway.js";
 import { NC2070 } from "./data.js";
 import { districtAt, districtByCode, deadAt, nearestStations, plan, rushHour, formatMinutes, km, DANGER } from "./geo.js";
 import { Settings } from "../settings.js";
+import { FX } from "../fx.js";
 import { L, esc } from "../util.js";
 
 const ASSETS = `modules/${MODULE_ID}/assets/maps`;
@@ -53,12 +55,13 @@ export class HubApp {
   /*  Frame                                   */
   /* ---------------------------------------- */
 
-  async show({ view = null, focus = null } = {}) {
+  async show({ view = null, focus = null, dossier = null } = {}) {
     if (view && VIEWS[view]) this.view = view;
     if (!this.el) await this.build();
     else this.setView(this.view);
     if (focus?.key) this.select(focus.key);
     if (focus && Number.isFinite(focus.x)) this.focus(focus.x, focus.y, focus.s ?? 1.4);
+    if (dossier) await this.openDossier(dossier);
   }
 
   async build() {
@@ -78,6 +81,11 @@ export class HubApp {
     this._wire();
     this.setView(this.view);
     this.refreshClock();
+    // The uplink boots: a sweep and a glitch while the map resolves.
+    if (!FX.reduced()) {
+      this.el.classList.add("is-booting");
+      setTimeout(() => this.el?.classList.remove("is-booting"), 1150);
+    }
     requestAnimationFrame(() => this.el?.classList.add("is-in"));
   }
 
@@ -86,8 +94,10 @@ export class HubApp {
     if (!el) return;
     this.el = null;
     el.classList.remove("is-in");
+    // Off like an old screen: down to a line, then gone.
+    el.classList.add("is-out");
     window.removeEventListener("keydown", this._onKey, true);
-    setTimeout(() => el.remove(), 220);
+    setTimeout(() => el.remove(), FX.reduced() ? 0 : 320);
     if (Hub.app === this) Hub.app = null;
     HubApp.instance = null;
   }
@@ -95,7 +105,8 @@ export class HubApp {
   setView(view) {
     this.view = view;
     const v = VIEWS[view];
-    this.el.className = `neon-combat ncm-hub view-${view}${this.el.classList.contains("is-in") ? " is-in" : ""}`;
+    const keep = ["is-in", "is-booting", "is-night"].filter((c) => this.el.classList.contains(c)).map((c) => ` ${c}`).join("");
+    this.el.className = `neon-combat ncm-hub view-${view}${keep}`;
     for (const b of this.el.querySelectorAll("[data-hub-view]")) b.classList.toggle("on", b.dataset.hubView === view);
     this.world.style.width = `${v.w}px`;
     this.world.style.height = `${v.h}px`;
@@ -117,6 +128,9 @@ export class HubApp {
     const el = this.el?.querySelector(".ncm-hub-clock");
     if (!el) return;
     const rush = rushHour(hourNow());
+    // Night in the city (21:00 to 06:00 by the world clock): the map goes dark.
+    const h = hourNow();
+    this.el.classList.toggle("is-night", h >= 21 || h < 6);
     el.innerHTML = `<i class="fa-regular fa-clock"></i> ${esc(CombatTime.clock())}${rush ? ` <span class="ncm-hub-rush">${esc(L(`${LANG}.Hub.RushHour`))}</span>` : ""}`;
   }
 
@@ -226,7 +240,8 @@ export class HubApp {
     this._onKey = (ev) => {
       if (ev.key === "Escape" && this.el && !ev.target.closest?.("input, textarea, select")) {
         ev.stopPropagation();
-        if (this.moving) this.setMoving(null);
+        if (this.dossier) this.closeDossier();
+        else if (this.moving) this.setMoving(null);
         else if (this.sel) this.select(null);
         else this.close();
       }
@@ -274,6 +289,11 @@ export class HubApp {
   /** Select "p:<placeKey>", "d:<code>", "o:<outside name>", "s:<station>", "pin:<actorId>", "crew". */
   select(key) {
     this.sel = key;
+    // Opening a place is how a player stops it pinging.
+    if (key?.startsWith("p:") && !game.user.isGM && FX.markOpened(key.slice(2))) {
+      this.svg.querySelector(`[data-sel="${CSS.escape(key)}"]`)?.classList.remove("is-new");
+      this.svg.querySelector(`[data-sel="${CSS.escape(key)}"] .ncm-hub-ping`)?.remove();
+    }
     for (const n of this.svg.querySelectorAll(".is-sel")) n.classList.remove("is-sel");
     if (key) for (const n of this.svg.querySelectorAll(`[data-sel="${CSS.escape(key)}"]`)) n.classList.add("is-sel");
     this.renderPanel();
@@ -341,6 +361,7 @@ export class HubApp {
     if (this.layers.places) {
       const cats = Hub.cats;
       const notes = Hub.state.notes;
+      const opened = game.user.isGM ? null : FX.opened();
       out.push(`<g class="ncm-hub-places">${Hub.visiblePlaces().filter((p) => this.cats.has(p.cat)).map((p) => {
         const key = `p:${p.key}`;
         const c = cats[p.cat]?.color ?? "#fff";
@@ -349,8 +370,12 @@ export class HubApp {
           : p.badge
             ? `<path d="M0 -9 L8 0 L0 9 L-8 0 Z"/><text y="3.2">${p.badge === "ncu" ? "U" : "+"}</text>`
             : `<circle r="7.5"/><text y="3">${p.n}</text>`;
-        const cls = `${sel === key ? " is-sel" : ""}${notes[p.key] && game.user.isGM ? " has-note" : ""}${p.hidden ? " is-hidden" : ""}`;
-        return `<g class="ncm-m ncm-hub-place${cls}" transform="translate(${p.x} ${p.y})" style="--c:${c}" data-sel="${key}" data-tip="${esc(p.name)}${p.hidden ? ` (${esc(L(`${LANG}.Hub.HiddenTag`))})` : ""}"><g class="ncm-mi">${mark}<text class="ncm-hub-label" x="11" y="3.5">${esc(p.name)}</text></g></g>`;
+        // A place this player hasn't opened yet pings.
+        const isNew = opened && !opened.has(p.key);
+        // A place players can walk into gets a little door light.
+        const door = notes[p.key]?.scene && (notes[p.key]?.open || game.user.isGM) ? `<circle class="ncm-hub-doorlight${notes[p.key]?.open ? " is-open" : ""}" cx="6.5" cy="-6.5" r="2.8"/>` : "";
+        const cls = `${sel === key ? " is-sel" : ""}${notes[p.key] && game.user.isGM ? " has-note" : ""}${p.hidden ? " is-hidden" : ""}${isNew ? " is-new" : ""}`;
+        return `<g class="ncm-m ncm-hub-place${cls}" transform="translate(${p.x} ${p.y})" style="--c:${c}" data-sel="${key}" data-tip="${esc(p.name)}${p.hidden ? ` (${esc(L(`${LANG}.Hub.HiddenTag`))})` : ""}"><g class="ncm-mi">${isNew ? `<circle class="ncm-hub-ping" r="10"/>` : ""}<g class="ncm-hub-bob">${mark}${door}</g><text class="ncm-hub-label" x="11" y="3.5">${esc(p.name)}</text></g></g>`;
       }).join("")}</g>`);
     }
     out.push(this._svgRoute());
@@ -423,6 +448,9 @@ export class HubApp {
     if (!box) return;
     const ctx = this.panelContext();
     box.innerHTML = await Compat.renderTemplate(`${TEMPLATE_PATH}/hub-panel.hbs`, ctx);
+    // A new selection glitches in; a refresh of the same one doesn't.
+    if (this._panelFor !== this.sel) FX.replay(box.firstElementChild, "fx-in");
+    this._panelFor = this.sel;
   }
 
   /** Threat rating chips for a district or area. */
@@ -506,8 +534,29 @@ export class HubApp {
       stations: this._stationsNear(p),
       note: note.note ?? "", scene: note.scene ?? "", sceneName: game.scenes?.get(note.scene)?.name ?? "",
       scenes: gm() ? [{ id: "", name: "—" }, ...(game.scenes?.contents ?? []).map((s) => ({ id: s.id, name: s.name, selected: s.id === note.scene }))] : [],
+      ...this._doorContext(key, p),
       pinActors: this._myActors().map((a) => ({ id: a.id, name: a.name })),
       signal: !deadAt(p.x, p.y, { extra: Settings.list("hubDeadZones") })
+    };
+  }
+
+  /** A place's doorway: the GM's settings for it, and whether this user can walk in now. */
+  _doorContext(key, p) {
+    const door = Hub.doorOf(key);
+    if (!door.scene) return { door: null };
+    const scene = game.scenes?.get(door.scene);
+    const why = Doorway.blocked(door);
+    const travelers = game.user.isGM ? [] : this._myActors();
+    return {
+      door: {
+        open: door.open, tag: door.tag, sceneName: scene?.name ?? "",
+        tiles: game.user.isGM && scene ? [{ id: "", label: L(`${LANG}.Hub.Door.SceneStart`) }, ...Doorway.tilesOf(scene).map((t) => ({ ...t, selected: t.id === door.tile }))] : [],
+        tagger: Doorway.tagger, matt: Doorway.matt,
+        // Players: walk in as one of their characters.
+        canGo: !game.user.isGM && !why && !p.hidden && travelers.length > 0,
+        why: !game.user.isGM && door.open && why ? L(`${LANG}.Hub.Door.Blocked.${why}`) : "",
+        travelers: travelers.length > 1 ? travelers.map((a) => ({ id: a.id, name: a.name, selected: a.id === game.user.character?.id })) : []
+      }
     };
   }
 
@@ -693,8 +742,12 @@ export class HubApp {
         const s = this.selSpot();
         // Showing a place the players haven't found yet is how they find it.
         const p = this.sel?.startsWith("p:") ? Hub.place(this.sel.slice(2)) : null;
-        if (p?.hidden) await Hub.setSeen(p.key, true);
-        return Hub.show({ view: this.view, key: this.sel, x: s?.x, y: s?.y, s: this.t.s });
+        if (p?.hidden) {
+          await Hub.setSeen(p.key, true);
+          // The reveal already put its dossier on their screens.
+          if (Settings.get("hubRevealDossier")) return null;
+        }
+        return Hub.show({ view: this.view, key: this.sel, x: s?.x, y: s?.y, s: this.t.s, dossier: p?.key ?? null });
       }
       case "reveal":
       case "revealQuiet":
@@ -721,6 +774,19 @@ export class HubApp {
         if (data) await Hub.updatePlace(d.key, data);
         return null;
       }
+      case "dossier":
+        return this.openDossier(d.key);
+      case "dossierClose":
+        return this.closeDossier();
+      case "dossierMap": {
+        const key = this.dossier?.dataset.key;
+        this.closeDossier();
+        const p = key && Hub.place(key);
+        if (!p) return null;
+        if (this.view === "ncart") this.setView("city");
+        this.select(`p:${key}`);
+        return this.focus(p.x, p.y, Math.max(this.t.s, 1.6));
+      }
       case "movePlace":
         return this.setMoving(d.key);
       case "resetPlace":
@@ -735,6 +801,12 @@ export class HubApp {
         await Hub.removePlace(d.key);
         return this.select(null);
       }
+      case "goThere": {
+        const actorId = this.el.querySelector("[name=goActor]")?.value ?? null;
+        await Hub.go(d.key, actorId);
+        // The scene takes over: the map steps aside.
+        return this.close();
+      }
       case "viewScene":
         return game.scenes.get(d.scene)?.view();
       case "activateScene":
@@ -742,6 +814,47 @@ export class HubApp {
       default:
         return null;
     }
+  }
+
+  /* ---------------------------------------- */
+  /*  Dossier                                 */
+  /* ---------------------------------------- */
+
+  /** A place's dossier, full screen: the art, the file, the write-up typed out. */
+  async openDossier(key) {
+    const p = Hub.place(key);
+    if (!this.el || !p || (p.hidden && !game.user.isGM)) return;
+    this.closeDossier(true);
+    const d = districtAt(p.x, p.y);
+    const cat = Hub.cats[p.cat];
+    const html = await Compat.renderTemplate(`${TEMPLATE_PATH}/hub-dossier.hbs`, {
+      name: p.name, n: p.n, img: p.img, text: p.text, sc: p.sc, guard: p.guard,
+      cat: cat?.label, color: cat?.color ?? "#f3e600", mark: p.custom ? "★" : p.n ?? "◆",
+      district: d.name, chips: this._chips(d), stations: this._stationsNear(p), key,
+      canGo: this._doorContext(key, p).door?.canGo ?? false
+    });
+    const wrap = document.createElement("div");
+    wrap.innerHTML = html.trim();
+    const el = wrap.firstElementChild;
+    el.dataset.key = key;
+    el.addEventListener("click", (ev) => {
+      if (ev.target === el) this.closeDossier();
+    });
+    this.el.appendChild(el);
+    this.dossier = el;
+    if (!game.user.isGM) FX.markOpened(key);
+    requestAnimationFrame(() => el.classList.add("on"));
+    this._stopTyping = FX.typeOut(el.querySelector(".nd-text"), p.text, { speed: 16 });
+  }
+
+  closeDossier(now = false) {
+    const el = this.dossier;
+    if (!el) return;
+    this.dossier = null;
+    this._stopTyping?.();
+    el.classList.remove("on");
+    setTimeout(() => el.remove(), now || FX.reduced() ? 0 : 200);
+    this.refresh();
   }
 
   /** Move a place: the next click on the map puts it there (Esc cancels). */
@@ -806,6 +919,9 @@ export class HubApp {
     const t = ev.target;
     if (t.name === "placeNote" && game.user.isGM) return Hub.setNote(t.dataset.key, { note: t.value });
     if (t.name === "placeScene" && game.user.isGM) return Hub.setNote(t.dataset.key, { scene: t.value });
+    if (t.name === "placeTile" && game.user.isGM) return Hub.setNote(t.dataset.key, { tile: t.value });
+    if (t.name === "placeTag" && game.user.isGM) return Hub.setNote(t.dataset.key, { tag: t.value.trim() });
+    if (t.name === "placeOpen" && game.user.isGM) return Hub.setNote(t.dataset.key, { open: t.checked });
     return null;
   }
 }

@@ -1,0 +1,22 @@
+<div class="ncm-dossier" style="--c:{{color}}" role="dialog" aria-label="{{name}}">
+  <div class="nd-frame">
+    <div class="nd-art">
+      {{#if img}}<img src="{{img}}" alt="">{{else}}<div class="nd-sigil"><b>{{mark}}</b><span>{{cat}}</span></div>{{/if}}
+      <span class="nd-scan" aria-hidden="true"></span>
+      <span class="nd-tag">{{#if n}}NC-70 · #{{n}}{{else}}NC-70 · {{localize "NEONCOMBAT.Hub.YourPlace"}}{{/if}}</span>
+    </div>
+    <div class="nd-body">
+      <span class="nd-kicker">// {{localize "NEONCOMBAT.Hub.Dossier"}} · <span class="nd-blink">{{localize "NEONCOMBAT.Hub.DossierLive"}}</span></span>
+      <h1 data-text="{{name}}">{{name}}</h1>
+      <p class="nd-where"><span class="ncm-hub-chip" style="--c:{{color}}">{{cat}}</span> <span>{{district}}</span>{{#each chips}} <span class="ncm-hub-chip" style="--c:{{color}}">{{label}}</span>{{/each}}</p>
+      {{#if sc}}<p class="nd-sc"><b>SC {{sc}}</b>{{#if guard}} · {{guard}}{{/if}}</p>{{/if}}
+      <p class="nd-text" data-text="{{text}}"></p>
+      {{#if stations.length}}<p class="nd-ncart"><i class="fa-solid fa-train-subway"></i> {{#each stations}}{{name}} <small>({{walk}})</small>{{#unless @last}} · {{/unless}}{{/each}}</p>{{/if}}
+      <footer>
+        {{#if canGo}}<button type="button" class="nd-go" data-hub="goThere" data-key="{{key}}"><i class="fa-solid fa-door-open"></i> {{localize "NEONCOMBAT.Hub.Door.Go"}}</button>{{/if}}
+        <button type="button" data-hub="dossierMap"><i class="fa-solid fa-location-crosshairs"></i> {{localize "NEONCOMBAT.Hub.OnTheMap"}}</button>
+        <button type="button" data-hub="dossierClose"><i class="fa-solid fa-xmark"></i> {{localize "NEONCOMBAT.Hub.Close"}}</button>
+      </footer>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.5.0
+
+- **Doorways**: visit places between sessions. Link a place on the Night City Map to a scene and
+  a landing spot (a Monk's Active Tiles tile, a Tagger tag, or the scene's start), open it to the
+  players, and they get **Go there**: their token lands on the tile, they're pulled into the
+  scene, and the tile's Monk's actions run. Allowed any time (downtime too), only while a GM is
+  online, or off. Without a GM, players can still view the scene.
+- **Dossiers**: a full-screen file for every place, with its picture or a neon sigil, ratings, and
+  the write-up typing out. Revealing a place opens it on the players' screens (setting), as does
+  Show the players. New places ping until a player opens them.
+- **Motion**: the map boots like a CitiNet uplink, switches off like an old screen, has a sweeping
+  scan line, darkens at night by the world clock, and its panels glitch in. Holocalls get a
+  talking equalizer, typed-out lines, and shaking, glitching portraits while ringing. Reduced
+  motion turns it all off.
+- The sourcebook's "See Chapter N" pointers are gone from place write-ups.
+
 ## 1.4.0
 
 - **Night City Map** (the City & NCART hub): Night City 2070 full screen, from Shift+M, the token
