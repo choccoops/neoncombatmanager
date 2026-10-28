@@ -230,6 +230,7 @@ Hooks.once("ready", async () => {
       for (const actor of actors) await Triggers.syncWound(actor);
       for (const combat of game.combats ?? []) await CombatTime.stampStart(combat);
       await Conditions.expire();
+      await Hub.migratePins();
       if (CLT.pending && !CLT.active) ui.notifications.info(L(`${LANG}.Notify.CltFound`), { permanent: true });
     } catch (err) {
       console.error(`${MODULE_ID} | ready`, err);

@@ -400,6 +400,7 @@ export function makeActor(data = {}, items = []) {
     }
   };
   actor._setWoundState();
+  flagApi(actor);
   for (const i of items) actor.items.set(i._id ?? randomID(), makeItem(actor, i));
   registry.set(actor.uuid, actor);
   game.actors.set(actor.id, actor);

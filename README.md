@@ -157,7 +157,8 @@ scroll to zoom, Esc to close.
 - **Travel** (GM): the crew makes the trip. The clock moves by the trip's time, a car rolls for a
   jam (gridlock in rush hour), the crew marker moves, and a card tells the table.
 - **Where everyone is**: the GM sets **We are here** for the crew, and players pin their own
-  characters (**I'm here**). Click a character to holocall them (unless they're out of signal).
+  characters (**I'm here**, no GM needed: the pin is kept on the character). Going through a
+  doorway moves the pin there. Click a character to holocall them (unless they're out of signal).
 - **Discovery**: the players start with an empty map and find Night City as the campaign goes.
   The GM sees every place (the undiscovered ones faded) and **Reveals** them one at a time, or a
   whole district at once. A reveal posts a "Location discovered" card (or **Reveal quietly**).

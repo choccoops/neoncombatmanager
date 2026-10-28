@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.1
+
+- **Players pin themselves without a GM**: a character's "I'm here" pin is now kept on the
+  character (which its player owns) instead of in a world setting only a GM can write, so it works
+  during downtime. Pins from 1.4.0-1.5.0 move onto their characters the next time a GM logs in.
+- **Go there moves the pin**: walking through a place's doorway pins the character at that place.
+
 ## 1.5.0
 
 - **Doorways**: visit places between sessions. Link a place on the Night City Map to a scene and

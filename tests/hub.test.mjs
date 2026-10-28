@@ -100,16 +100,29 @@ test("signal: Utility Code 9 and worse is a dead zone, and so is what the GM lis
 /*  The hub's state                         */
 /* ---------------------------------------- */
 
-test("the crew marker, pins (players pin their own through the GM) and place notes", async () => {
+test("the crew marker, pins (players pin their own, no GM needed) and place notes", async () => {
   asGM(true);
   await Hub.setCrew(place("The Afterlife"), "The Afterlife");
   assert.deepEqual(Hub.state.crew, { x: 562, y: 726, label: "The Afterlife" });
   const vee = pc("Velvet");
   const npc = makeActor({ name: "Goon", hasPlayerOwner: false });
-  await Socket.handlers.get("hubPin")({ actorId: vee.id, point: { x: 390, y: 1386 } }, player.id);
-  assert.deepEqual(Hub.pinOf(vee), { x: 390, y: 1386 });
-  assert.equal(Hub.whereIs(vee), "West Wind Estate");
-  await assert.rejects(Socket.handlers.get("hubPin")({ actorId: npc.id, point: { x: 1, y: 1 } }, player.id), /character/i);
+  // A player pins their own character with no GM online: it's kept on the character.
+  asGM(false);
+  testUsers.gm.active = false;
+  try {
+    await Hub.setPin(vee, { x: 390.4, y: 1386 });
+    assert.deepEqual(vee.flags["cpr-neon-combat-manager"].hubPin, { x: 390, y: 1386 });
+    assert.deepEqual(Hub.pinOf(vee), { x: 390, y: 1386 });
+    assert.deepEqual(Hub.state.pins[vee.id], { x: 390, y: 1386 });
+    assert.equal(Hub.whereIs(vee), "West Wind Estate");
+    await assert.rejects(Hub.setPin(npc, { x: 1, y: 1 }), /character/i, "never someone else's");
+    await Hub.setPin(vee, null);
+    assert.equal(Hub.pinOf(vee), null);
+    await Hub.setPin(vee, { x: 390, y: 1386 });
+  } finally {
+    testUsers.gm.active = true;
+    asGM(true);
+  }
   await Hub.setNote("p1", { note: "Rogue's in tonight." });
   await Hub.setNote("p1", { scene: "sc1" });
   assert.deepEqual(Hub.state.notes.p1, { note: "Rogue's in tonight.", scene: "sc1", tile: "", tag: "", open: false });
@@ -119,6 +132,23 @@ test("the crew marker, pins (players pin their own through the GM) and place not
   await assert.rejects(Hub.setCrew(null), /GM/);
   asGM(true);
 });
+
+test("pins kept in the world setting (1.4.0-1.5.0) move onto their characters", async () => {
+  asGM(true);
+  const vee = pc("Velvet");
+  const hazel = pc("Hazel");
+  await pinOnActor(hazel);
+  await Settings.set("cityHub", { pins: { [vee.id]: { x: 562, y: 726 }, [hazel.id]: { x: 1, y: 1 } } });
+  assert.deepEqual(Hub.pinOf(vee), { x: 562, y: 726 }, "read before it moves");
+  await Hub.migratePins();
+  assert.deepEqual(vee.flags["cpr-neon-combat-manager"].hubPin, { x: 562, y: 726 });
+  assert.deepEqual(Hub.pinOf(hazel), { x: 772, y: 948 }, "a newer pin on the character wins");
+  assert.deepEqual(Settings.get("cityHub").pins, {});
+});
+
+async function pinOnActor(a) {
+  await a.setFlag("cpr-neon-combat-manager", "hubPin", { x: 772, y: 948 });
+}
 
 test("travel moves the clock and the crew, and a car rolls for a jam", async () => {
   asGM(true);
@@ -404,6 +434,9 @@ test("going through a doorway: the token lands on the tile, the player is pulled
     await Socket.handlers.get("hubGo")({ key: "p2", actorId: vee.id }, player.id);
     assert.equal(noodles.tokens.size, 1);
     assert.equal(tok.x, 850);
+    // Going through moves the character's pin to the place (the GM's own Go there, through Hub.go).
+    await Hub.go("p2", vee.id);
+    assert.deepEqual(Hub.pinOf(vee), { x: 560, y: 655 }, "pinned at Tom's Diner");
     // Someone else's character: theirs is used instead (they don't own Velvet).
     const npc = makeActor({ name: "Goon", hasPlayerOwner: false });
     await Socket.handlers.get("hubGo")({ key: "p2", actorId: npc.id }, player.id);

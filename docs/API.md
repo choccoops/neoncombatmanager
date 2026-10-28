@@ -203,7 +203,7 @@ Hook: `cpr-neon-combat-manager.awarenessAssigned` `(actor, points, mode)`.
 | `doorOf(key)` / `setDoor(key, { scene, tile, tag, open })` | a place's doorway: the scene it leads into, the tile (id) or Tagger tag to land on, and whether players may walk in |
 | `go(key, actorId?)` | walk through a place's doorway as a character you own: with a GM online the token lands on the tile, the player is pulled into the scene and a Monk's Active Tiles tile is triggered (`tile.trigger({ tokens, userId, method: "trigger" })`); without one, the scene is viewed |
 | `setCrew(point, label)` | (GM) the crew marker (`null` clears it) |
-| `setPin(actor, point)` | pin a character you own (`null` unpins) |
+| `setPin(actor, point)` | pin a character you own (`null` unpins); kept on the actor as `flags["cpr-neon-combat-manager"].hubPin`, so players can do it with no GM online |
 | `travel(from, to, mode, { storm })` | (GM) the crew travels: time passes, the marker moves, a card posts. `mode`: walk, skates, bike, ncart, moto, car, av. Resolves to `{ minutes, jam, trip }` |
 | `noSignal(actor)` / `whereIs(actor)` | no signal where the character is pinned / the district's name |
 

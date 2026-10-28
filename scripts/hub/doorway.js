@@ -144,7 +144,7 @@ export const Doorway = {
       whisper: Cards.gms()
     });
     Hooks.callAll(`${MODULE_ID}.hubDoorway`, { key, actor, scene: at.scene, tile: at.tile, token, userId });
-    return { scene: at.scene.id, token: token?.id ?? null, fired };
+    return { scene: at.scene.id, token: token?.id ?? null, fired, actorId: actor.id };
   },
 
   /**
@@ -176,7 +176,7 @@ export const Doorway = {
     if (!at) throw new Error(L(`${LANG}.Hub.Door.Blocked.noScene`));
     const actor = this.traveler(game.user, actorId);
     await at.scene.view();
-    if (!actor) return { scene: at.scene.id, token: null, fired: false };
+    if (!actor) return { scene: at.scene.id, token: null, fired: false, actorId: null };
     const mine = [...(at.scene.tokens ?? [])].find((t) => t.actorId === actor.id && t.isOwner);
     let token = null;
     try {
@@ -186,6 +186,6 @@ export const Doorway = {
     }
     if (!token) ui.notifications?.info(L(`${LANG}.Hub.Door.LookOnly`));
     else if (at.tile && this.isActiveTile(at.tile)) ui.notifications?.info(L(`${LANG}.Hub.Door.NoActions`));
-    return { scene: at.scene.id, token: token?.id ?? null, fired: false };
+    return { scene: at.scene.id, token: token?.id ?? null, fired: false, actorId: actor.id };
   }
 };
