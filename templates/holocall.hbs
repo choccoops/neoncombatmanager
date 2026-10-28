@@ -54,12 +54,13 @@
 <section class="ncm-holo{{#if ended}} is-ended{{/if}}{{#if ringing}} is-ringing{{/if}}">
   <header class="ncm-holo-bar">
     <span class="ncm-kicker">// {{#if ended}}{{localize "NEONCOMBAT.Holocall.Ended"}}{{else if ringing}}{{localize "NEONCOMBAT.Holocall.Ringing"}}{{else}}{{localize "NEONCOMBAT.Holocall.Live"}}{{/if}}</span>
+    <span class="ncm-holo-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
     <span class="ncm-holo-timer">{{timer}}</span>
   </header>
   <ol class="ncm-holo-tiles">
     {{#each participants}}
     <li class="st-{{state}}{{#if live}} is-live{{/if}}">
-      <div class="ncm-holo-face"><img src="{{img}}" alt=""></div>
+      <div class="ncm-holo-face"><img src="{{img}}" alt=""><span class="ncm-holo-band" aria-hidden="true"></span></div>
       <b>{{name}}</b>
       <small>{{stateLabel}}</small>
     </li>
@@ -67,7 +68,7 @@
   </ol>
   <ol class="ncm-holo-feed">
     {{#each messages}}
-    <li class="{{#if mine}}is-mine{{/if}}">
+    <li class="{{#if mine}}is-mine{{/if}}" data-message-id="{{id}}">
       {{#if img}}<img src="{{img}}" alt="">{{/if}}
       <div><b>{{name}}</b> <small>{{time}}</small>{{{content}}}</div>
     </li>

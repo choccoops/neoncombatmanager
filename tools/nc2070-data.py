@@ -18,9 +18,12 @@ MD = re.compile(r"\*\*(.+?)\*\*|\*(.+?)\*")
 
 
 def plain(s):
-    """Book markup to plain text: **bold** and *italic* lose their stars, {{Skill}} its braces."""
+    """Book markup to plain text: **bold** and *italic* lose their stars, {{Skill}} its braces, and
+    pointers to other chapters ("See Chapter 04 for getting in.") go: players read these in-game."""
     s = MD.sub(lambda m: m.group(1) or m.group(2), s)
-    return re.sub(r"\{\{(.+?)\}\}", r"\1", s).strip()
+    s = re.sub(r"\{\{(.+?)\}\}", r"\1", s)
+    s = re.sub(r"\s*\(?See Chapter \d+[^.)]*[.)]?", "", s)
+    return s.strip()
 
 
 def read_book():

@@ -9,6 +9,7 @@ const G = await import("../scripts/hub/geo.js");
 const { Hub } = await import("../scripts/hub/hub.js");
 const { Calls, logPairs, lineText } = await import("../scripts/comms/calls.js");
 const { Socket } = await import("../scripts/socket.js");
+const { Doorway } = await import("../scripts/hub/doorway.js");
 const { Compat } = await import("../scripts/compat.js");
 Hub.registerSocket();
 Calls.registerSocket();
@@ -111,7 +112,7 @@ test("the crew marker, pins (players pin their own through the GM) and place not
   await assert.rejects(Socket.handlers.get("hubPin")({ actorId: npc.id, point: { x: 1, y: 1 } }, player.id), /character/i);
   await Hub.setNote("p1", { note: "Rogue's in tonight." });
   await Hub.setNote("p1", { scene: "sc1" });
-  assert.deepEqual(Hub.state.notes.p1, { note: "Rogue's in tonight.", scene: "sc1" });
+  assert.deepEqual(Hub.state.notes.p1, { note: "Rogue's in tonight.", scene: "sc1", tile: "", tag: "", open: false });
   await Hub.setNote("p1", { note: "", scene: "" });
   assert.equal(Hub.state.notes.p1, undefined);
   asGM(false);
@@ -311,6 +312,107 @@ test("players' map: only what they've discovered, in every list", async () => {
   assert.ok(gmApp.svgMarkup().includes('ncm-hub-place is-hidden'), "the GM sees hidden places, faded");
   gmApp.sel = "d:C";
   assert.equal(gmApp.panelContext().hiddenCount, 4, "Tom's Diner, Riot, Precinct 3, Trauma Team Tower");
+});
+
+/* ---------------------------------------- */
+/*  Doorways                                */
+/* ---------------------------------------- */
+
+/** A scene with tiles and tokens, enough for a doorway. */
+function makeScene(id, name, tiles = []) {
+  const tokens = new Map();
+  const scene = {
+    id, name, width: 4000, height: 3000, grid: { size: 100 }, initial: { x: 2000, y: 1500 },
+    tiles: Object.assign(new Map(tiles.map((t) => [t.id, t])), { get(k) { return Map.prototype.get.call(this, k); } }),
+    tokens,
+    viewed: 0,
+    async view() { scene.viewed++; },
+    async createEmbeddedDocuments(type, list) {
+      return list.map((d) => {
+        const t = { ...d, id: `tok${tokens.size + 1}`, parent: scene, isOwner: true, async update(u) { Object.assign(t, u); return t; } };
+        tokens.set(t.id, t);
+        return t;
+      });
+    }
+  };
+  // Foundry's collections iterate their documents, not [id, document] pairs.
+  for (const c of [scene.tokens, scene.tiles]) c[Symbol.iterator] = function* () { yield* Map.prototype.values.call(this); };
+  return scene;
+}
+
+test("doorways: GM settings, who may go, and where they land", async () => {
+  asGM(true);
+  await Settings.set("cityHub", {});
+  const triggered = [];
+  const counter = { id: "t1", x: 800, y: 400, width: 200, height: 100, flags: { "monks-active-tiles": { name: "Noodle counter", active: true, actions: [{}, {}] } },
+    trigger: async (args) => triggered.push(args) };
+  const plain = { id: "t2", x: 0, y: 0, width: 100, height: 100, flags: {} };
+  const noodles = makeScene("sc-noodles", "Mama Chen's", [plain, counter]);
+  game.scenes.set(noodles.id, noodles);
+  assert.deepEqual(Doorway.tilesOf(noodles).map((t) => [t.id, t.active]), [["t1", true], ["t2", false]], "Monk's tiles first");
+  assert.match(Doorway.tileLabel(counter), /Noodle counter · 2 action/);
+
+  await Hub.setNote("p2", { scene: noodles.id, tile: "t1" });
+  assert.equal(Hub.doorOf("p2").open, false);
+  assert.equal(Doorway.blocked(Hub.doorOf("p2"), player), "closed", "players need it opened");
+  await Hub.setNote("p2", { open: true });
+  assert.equal(Doorway.blocked(Hub.doorOf("p2"), player), null);
+  await Settings.set("hubTravel", "off");
+  assert.equal(Doorway.blocked(Hub.doorOf("p2"), player), "closed");
+  await Settings.set("hubTravel", "always");
+  const at = Doorway.resolve(Hub.doorOf("p2"));
+  assert.deepEqual(at.point, { x: 900, y: 450 }, "the tile's middle");
+  await Hub.setNote("p2", { tile: "" });
+  assert.deepEqual(Doorway.resolve(Hub.doorOf("p2")).point, { x: 2000, y: 1500 }, "no tile: the scene's starting view");
+  await Hub.setNote("p2", { scene: "" });
+  assert.deepEqual(Hub.state.notes.p2, undefined, "no scene, no doorway (and no note): gone");
+  game.scenes.delete(noodles.id);
+});
+
+test("going through a doorway: the token lands on the tile, the player is pulled there, the tile fires", async () => {
+  asGM(true);
+  await Settings.set("cityHub", {});
+  const triggered = [];
+  const counter = { id: "t1", x: 800, y: 400, width: 200, height: 100, flags: { "monks-active-tiles": { active: true, actions: [{}] } },
+    trigger: async (args) => triggered.push(args) };
+  const noodles = makeScene("sc-noodles", "Mama Chen's", [counter]);
+  game.scenes.set(noodles.id, noodles);
+  game.modules.set("monks-active-tiles", { id: "monks-active-tiles", active: true });
+  const pulls = [];
+  const emit = game.socket.emit;
+  game.socket.emit = (...args) => pulls.push(args);
+  const vee = pc("Velvet");
+  vee.getTokenDocument = async () => ({ toObject: () => ({ name: "Velvet", actorId: vee.id, actorLink: true, width: 1, height: 1 }) });
+  await Hub.setNote("p2", { scene: noodles.id, tile: "t1", open: true });
+  await Hub.setSeen("p2", true, { quiet: true });
+  try {
+    // Not revealed or not open: no.
+    await assert.rejects(Socket.handlers.get("hubGo")({ key: "p3", actorId: vee.id }, player.id), /hasn't opened/);
+    const before = chat.length;
+    const r = await Socket.handlers.get("hubGo")({ key: "p2", actorId: vee.id }, player.id);
+    assert.equal(r.fired, true);
+    const tok = noodles.tokens.get(r.token);
+    assert.deepEqual([tok.x, tok.y], [850, 400], "centred on the tile");
+    assert.deepEqual(pulls, [["pullToScene", noodles.id, player.id]]);
+    assert.equal(triggered.length, 1);
+    assert.equal(triggered[0].tokens[0], tok);
+    assert.equal(triggered[0].userId, player.id);
+    assert.ok(chat.length > before, "the GM hears about it");
+    assert.deepEqual(chat.at(-1).whisper, ["gm1"]);
+    // Again: the same token moves, no second one.
+    tok.x = 0;
+    await Socket.handlers.get("hubGo")({ key: "p2", actorId: vee.id }, player.id);
+    assert.equal(noodles.tokens.size, 1);
+    assert.equal(tok.x, 850);
+    // Someone else's character: theirs is used instead (they don't own Velvet).
+    const npc = makeActor({ name: "Goon", hasPlayerOwner: false });
+    await Socket.handlers.get("hubGo")({ key: "p2", actorId: npc.id }, player.id);
+    assert.ok(![...noodles.tokens.values()].some((t) => t.actorId === npc.id), "never another's");
+  } finally {
+    game.socket.emit = emit;
+    game.modules.delete("monks-active-tiles");
+    game.scenes.delete(noodles.id);
+  }
 });
 
 test("the hub's templates render with every string", async () => {

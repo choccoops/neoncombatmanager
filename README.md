@@ -169,11 +169,28 @@ scroll to zoom, Esc to close.
   **Edit**, **Move** (then click the new spot) and **Delete** them.
 - **The map's own places**: edit their name, category, description or picture, and move them.
   **Back to the map's** undoes your changes. They can be hidden, not deleted.
-- **For the GM**: notes on any place (only you see them), a battle-map scene linked to a place
-  (view it, or move everyone there), and **Show the players** to open the map on their screens
-  at what you're looking at (showing a hidden place reveals it).
-- Settings: whether players can open the map, whether places are discovered, whether map
-  positions decide holocall signal, and extra dead zones.
+- **Dossiers**: every place has a full-screen file (its picture, or its number on a neon sigil,
+  with its ratings and the write-up typing out). **Reveal** opens it on the players' screens
+  (setting), and so does **Show the players**. Places a player hasn't opened yet ping on their map.
+- **Doorways: visiting places between sessions**: link a place to a scene you've already built
+  (the bar, the shop, the fixer's booth) and pick where to land: one of **Monk's Active Tiles**'
+  tiles, a **Tagger** tag, or the scene's starting view. Tick "Players can walk in from the map",
+  and they get **Go there** on the place (and its dossier; a green light on its marker). Their
+  character's token lands on the tile, they're pulled into the scene, and the tile's Monk's
+  actions run (open a shop, start a conversation, teleport on). The GM gets a whispered note.
+  With the setting on "Any time", players can go during downtime too: with no GM online they view
+  the scene and move their own token there if Foundry lets them, and the tile's actions wait for
+  a GM.
+- **For the GM**: notes on any place (only you see them), **View** a place's scene or **Move
+  everyone there**, and **Show the players** to open the map on their screens at what you're
+  looking at (showing a hidden place reveals it).
+- **Motion**: the map boots up like a CitiNet uplink and switches off like an old screen, a scan
+  line sweeps it, it goes dark at night (21:00 to 06:00 by the world clock), and panels glitch in.
+  On holocalls an equalizer runs while someone talks, their lines type out, and ringing portraits
+  shake under a glitch band. All of it stops for anyone whose system asks for reduced motion.
+- Settings: whether players can open the map, whether places are discovered, whether a reveal
+  opens the dossier, when players can visit places, whether map positions decide holocall signal,
+  and extra dead zones.
 
 The maps, places and district data are the Night City 2070 maps and the NCZTA-70 threat zones
 made for this campaign (`tools/nc2070-data.py` rebuilds the data from their source). The hub's

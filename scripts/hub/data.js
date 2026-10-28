@@ -1492,7 +1492,7 @@ export const NC2070 = {
    "district": "C",
    "sc": 8,
    "guard": "Afterlife security (very hard, very private)",
-   "text": "A merc bar in an old morgue. Drinks named after dead legends. Rogue holds court in the back. See Chapter 04 for getting in."
+   "text": "A merc bar in an old morgue. Drinks named after dead legends. Rogue holds court in the back."
   },
   {
    "n": 2,
@@ -1789,7 +1789,7 @@ export const NC2070 = {
    "district": "B",
    "sc": 10,
    "guard": "Danger Gal Security, Hardened Heavy",
-   "text": "Eighteen floors of ex-Whitewater concrete at the foot of the Coronado Bay Bridge, with a neon cat's eye glaring across the bay at the Waterfront. Cat café in the lobby. See Chapter 05."
+   "text": "Eighteen floors of ex-Whitewater concrete at the foot of the Coronado Bay Bridge, with a neon cat's eye glaring across the bay at the Waterfront. Cat café in the lobby."
   },
   {
    "n": 29,
@@ -1888,7 +1888,7 @@ export const NC2070 = {
    "district": "J",
    "sc": 10,
    "guard": "Biotechnica Security, Hardened Heavy",
-   "text": "Research labs. One of them files patents on 2010s research nobody can find. See Chapter 02."
+   "text": "Research labs. One of them files patents on 2010s research nobody can find."
   },
   {
    "n": 38,

@@ -105,6 +105,10 @@ const api = {
     updatePlace: (key, data) => Hub.updatePlace(key, data),
     resetPlace: (key) => Hub.resetPlace(key),
     removePlace: (key) => Hub.removePlace(key),
+    /** A place's doorway ({ scene, tile, tag, open }), and walking through it as a character you own. */
+    doorOf: (key) => Hub.doorOf(key),
+    setDoor: (key, door) => Hub.setNote(key, door),
+    go: (key, actorId) => Hub.go(key, actorId),
     travel: (from, to, mode, options) => Hub.travel(from, to, mode, options),
     noSignal: (actor) => Hub.noSignal(actor),
     whereIs: (actor) => Hub.whereIs(actor)
@@ -152,7 +156,8 @@ Hooks.once("init", () => {
     `${TEMPLATE_PATH}/awareness.hbs`,
     `${TEMPLATE_PATH}/hub.hbs`,
     `${TEMPLATE_PATH}/hub-panel.hbs`,
-    `${TEMPLATE_PATH}/hub-route.hbs`
+    `${TEMPLATE_PATH}/hub-route.hbs`,
+    `${TEMPLATE_PATH}/hub-dossier.hbs`
   ]);
 
   // Conditions: the same handling whether placed through the API, the token HUD or a macro.
