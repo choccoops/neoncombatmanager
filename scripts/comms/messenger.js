@@ -88,6 +88,30 @@ export const Messenger = {
   },
 
   /**
+   * Keep a holocall's log in a character's messenger inbox, as mail from the person they spoke
+   * with (GM side). Threaded by `threadId`, so every call between the two reads as one
+   * conversation. Best effort: false on any failure.
+   * @param {Actor} to - the player character
+   * @param {object} from - the other participant: { actorId?, contactId?, source?, name }
+   */
+  async callLog(to, from, { subject, body, threadId }) {
+    const send = this.api?.messenger?.sendMessage;
+    if (!send || !to) return false;
+    const data = { toActorId: to.id, subject, body, threadId, priority: "low" };
+    if (from.actorId && game.actors.get(from.actorId)) data.fromActorId = from.actorId;
+    else if (from.contactId && from.source === "directory") data.fromContactId = from.contactId;
+    else data.from = from.name;
+    try {
+      const result = await send(data);
+      if (!result?.success) console.warn(`${MODULE_ID} | holocall log for ${to.name} wasn't delivered`, result?.error);
+      return !!result?.success;
+    } catch (err) {
+      console.warn(`${MODULE_ID} | couldn't keep a holocall log for ${to.name}`, err);
+      return false;
+    }
+  },
+
+  /**
    * Leave a "missed holocall" in a character's messenger inbox (GM side, where the messenger
    * delivers). Best effort: a failure is logged, never thrown.
    * @param {Actor} to - the character who missed it

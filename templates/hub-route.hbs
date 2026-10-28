@@ -1,0 +1,23 @@
+<div class="ncm-hub-rt-head">
+  <span class="ncm-kicker">// {{localize "NEONCOMBAT.Hub.Route"}}</span>
+  <b class="ncm-hub-rt-ends"><span class="ncm-hub-end-tag">A</span> {{#if a}}{{a}}{{else}}<em>{{localize "NEONCOMBAT.Hub.PickStart"}}</em>{{/if}}
+    <button type="button" data-hub="routeSwap" data-tooltip="{{localize 'NEONCOMBAT.Hub.Swap'}}"><i class="fa-solid fa-right-left"></i></button>
+    <span class="ncm-hub-end-tag">B</span> {{#if b}}{{b}}{{else}}<em>{{localize "NEONCOMBAT.Hub.PickEnd"}}</em>{{/if}}</b>
+  {{#if ready}}<span class="ncm-hub-km">{{km}} km</span>{{/if}}
+  {{#if rush}}<span class="ncm-hub-rush">{{localize "NEONCOMBAT.Hub.RushHour"}}</span>{{/if}}
+  <button type="button" class="ncm-hub-toggle{{#if storm}} on{{/if}}" data-hub="storm" data-tooltip="{{localize 'NEONCOMBAT.Hub.StormHint'}}"><i class="fa-solid fa-cloud-bolt"></i></button>
+  <button type="button" data-hub="routeClear" data-tooltip="{{localize 'NEONCOMBAT.Hub.ClearRoute'}}"><i class="fa-solid fa-xmark"></i></button>
+</div>
+{{#if ready}}
+<ol class="ncm-hub-modes">
+  {{#each modes}}<li><button type="button" class="{{#if on}}on{{/if}}{{#if none}} is-none{{/if}}" data-hub="mode" data-mode="{{id}}"><span>{{label}}</span><b>{{time}}</b></button></li>{{/each}}
+</ol>
+{{#if ncart}}
+<p class="ncm-hub-ride-text"><i class="fa-solid fa-train-subway"></i> {{localize "NEONCOMBAT.Hub.WalkIn" min=ncart.walkIn}}
+  {{#each ncart.legs}}<span class="ncm-hub-chip" style="--c:{{color}}">{{name}}</span> {{from}} → {{to}} <small>({{stops}})</small> {{/each}}
+  {{localize "NEONCOMBAT.Hub.WalkOut" min=ncart.walkOut}}</p>
+{{/if}}
+{{#if danger.length}}<p class="ncm-hub-danger"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "NEONCOMBAT.Hub.DangerOnRoute"}} {{#each danger}}<span class="ncm-hub-chip" style="--c:{{color}}">{{name}} · {{label}}</span> {{/each}}</p>{{/if}}
+{{#if through}}<p class="ncm-hub-through">{{through}}</p>{{/if}}
+{{#if gm}}<div class="ncm-hub-rt-gm"><button type="button" class="ncm-cta" data-hub="travel"><i class="fa-solid fa-route"></i> {{localize "NEONCOMBAT.Hub.Travel"}}</button><small>{{localize "NEONCOMBAT.Hub.TravelHint"}}</small></div>{{/if}}
+{{/if}}

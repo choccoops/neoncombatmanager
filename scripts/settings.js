@@ -6,7 +6,8 @@ const K = (key) => `${LANG}.Settings.${key}`;
 export const MENUS = {
   combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCriticals", "critItems", "cltShim"],
-  comms: ["linkNeedsImplant", "linkImplants", "callNeedsAgent", "ringSeconds", "missedCallMessages"],
+  comms: ["linkNeedsImplant", "linkImplants", "callNeedsAgent", "ringSeconds", "missedCallMessages", "callLogs", "busySignal"],
+  hub: ["hubPlayers", "hubSignal", "hubDeadZones"],
   environment: [
     "weatherSource", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
     "lowLightAt", "darkAt", "sightKeys", "visibilityCap", "visibilityFrom", "envOutsideCombat",
@@ -32,6 +33,16 @@ const DEFS = [
   ["missedCallMessages", "world", Boolean, true, {}],
   ["vitalLinks", "world", Object, {}, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.linksChanged`) }],
   ["holocalls", "world", Object, {}, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.callsChanged`) }],
+  ["callLogs", "world", String, "button", { choices: { off: K("CallLogs.off"), button: K("CallLogs.button"), auto: K("CallLogs.auto") } }],
+  ["busySignal", "world", Boolean, true, {}],
+  ["callSounds", "client", Boolean, true, {}],
+  ["callRingtone", "client", String, "", { filePicker: "audio" }],
+
+  // City & NCART hub
+  ["hubPlayers", "world", Boolean, true, {}],
+  ["hubSignal", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.callsChanged`) }],
+  ["hubDeadZones", "world", String, "", {}],
+  ["cityHub", "world", Object, {}, { config: false, onChange: (v) => Hooks.callAll(`${MODULE_ID}.hubChanged`, v) }],
 
   // Combat & time
   ["roundSeconds", "world", Number, ROUND_SECONDS, { range: { min: 0, max: 12, step: 1 }, onChange: () => Hooks.callAll(`${MODULE_ID}.timeConfig`) }],
@@ -98,7 +109,7 @@ export const Settings = {
           name: K(`Menu.${id}.name`),
           label: K(`Menu.${id}.label`),
           hint: K(`Menu.${id}.hint`),
-          icon: { combat: "fa-solid fa-hourglass-half", conditions: "fa-solid fa-heart-pulse", comms: "fa-solid fa-phone-volume", environment: "fa-solid fa-cloud-moon-rain" }[id],
+          icon: { combat: "fa-solid fa-hourglass-half", conditions: "fa-solid fa-heart-pulse", comms: "fa-solid fa-phone-volume", hub: "fa-solid fa-map-location-dot", environment: "fa-solid fa-cloud-moon-rain" }[id],
           type: menuClass.for(id, keys),
           restricted: true
         });

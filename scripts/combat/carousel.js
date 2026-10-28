@@ -316,6 +316,10 @@ export const Carousel = {
         const { Stakes } = await import("../stakes/stakes.js");
         return Stakes.open(cb?.actor ?? null);
       }
+      case "hub": {
+        const { Hub } = await import("../hub/hub.js");
+        return Hub.open();
+      }
       case "awareness": {
         return Awareness.open(cb?.actor ?? null);
       }

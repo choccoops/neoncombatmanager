@@ -1,0 +1,241 @@
+/** The City & NCART hub (Night City 2070) and what it does to holocalls; holocall logs to Night City Messenger. */
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { makeActor, registerSettings, settle, chat, dice, asGM, testUsers, missingKeys } from "./helpers/foundry.mjs";
+
+const Settings = await registerSettings();
+const { NC2070 } = await import("../scripts/hub/data.js");
+const G = await import("../scripts/hub/geo.js");
+const { Hub } = await import("../scripts/hub/hub.js");
+const { Calls, logPairs, lineText } = await import("../scripts/comms/calls.js");
+const { Socket } = await import("../scripts/socket.js");
+const { Compat } = await import("../scripts/compat.js");
+Hub.registerSocket();
+Calls.registerSocket();
+
+const { player } = testUsers;
+const place = (name) => NC2070.places.find((p) => p.name === name);
+const pc = (name) => makeActor({ name, owners: [player.id], hasPlayerOwner: true }, [{ name: "Neuroport", type: "cyberware", system: { isInstalled: true } }]);
+
+/* ---------------------------------------- */
+/*  The 2070 data                           */
+/* ---------------------------------------- */
+
+test("the 2070 data: 18 districts with NCZTA-70 ratings, 85 places with their write-ups, NCART lines on real stations", () => {
+  assert.equal(NC2070.districts.length, 18);
+  for (const d of NC2070.districts) {
+    assert.ok(NC2070.threat[d.rating], `${d.name} has a rating`);
+    assert.ok(d.poly.length >= 3 && d.dossier, d.name);
+  }
+  assert.equal(NC2070.places.length, 85);
+  assert.ok(NC2070.places.every((p) => p.text), "every place has its sourcebook text");
+  for (const line of Object.values(NC2070.lines)) {
+    for (const run of ["segs", "uc", "closed", "planned", "suspended"]) for (const seg of line[run]) for (const s of seg) assert.ok(NC2070.stations[s], `${line.name}: ${s}`);
+  }
+  // Where the places are drawn is where the data says they are.
+  const off = NC2070.places.filter((p) => p.district && G.districtAt(p.x, p.y).code !== p.district).map((p) => p.name);
+  assert.deepEqual(off, [], "places sit inside their district");
+});
+
+test("where a point is: districts, Laguna Bend and the Badlands", () => {
+  assert.equal(G.districtAt(562, 726).name, "Little China");
+  assert.equal(G.districtAt(622, 905).name, "Corporate Plaza");
+  assert.equal(G.districtAt(1100, 1340).name, "Laguna Bend");
+  assert.equal(G.districtAt(1250, 300).name, "The Badlands");
+  assert.equal(G.districtAt(1250, 300).rating, "outskirts");
+});
+
+/* ---------------------------------------- */
+/*  Travel times                            */
+/* ---------------------------------------- */
+
+test("travel times follow the 2070 table, rush hour doubles cars, a storm doubles the ground", () => {
+  assert.equal(G.travelMinutes("walk", 4), 60);
+  assert.equal(G.travelMinutes("car", 8), 25);
+  assert.equal(G.travelMinutes("av", 20), 15);
+  assert.equal(G.travelMinutes("bike", 20), 75);
+  assert.equal(G.travelMinutes("car", 8, { rush: true }), 50);
+  assert.equal(G.travelMinutes("car", 8, { rush: true, moto: true }), 38);
+  assert.equal(G.travelMinutes("car", 8, { jam: "gridlock" }), 75);
+  assert.equal(G.travelMinutes("walk", 4, { storm: true }), 120);
+  assert.equal(G.travelMinutes("av", 8, { storm: true }), 10, "AVs don't care (they're grounded instead)");
+  assert.ok(G.travelMinutes("walk", 0.2) >= 6, "a short hop still takes a few minutes");
+  assert.equal(G.rushHour(8), true);
+  assert.equal(G.rushHour(12), false);
+  assert.equal(G.rushHour(14, { arroyo: true }), true, "Arroyo's shift change");
+  assert.equal(G.formatMinutes(80), "1 h 20 min");
+});
+
+test("NCART: the quickest ride with its changes, and no service on closed track", () => {
+  const r = G.ncartRoute("lchina", "ash");
+  assert.deepEqual(r.legs.map((l) => l.line), ["1", "3", "2"]);
+  assert.equal(r.transfers, 2);
+  assert.equal(r.minutes, 5 + 8 * 3 + 2 * 5);
+  assert.equal(G.ncartRoute("cplaza", "jtown").legs.length, 1, "one line, no change");
+  assert.equal(G.ncartRoute("eis", "ngate"), null, "NorCal Gate is closed");
+  assert.equal(G.ncartRoute("glens", "coast"), null, "the Pacifica Line is suspended");
+});
+
+test("a trip: distance, every mode, NCART door to door, and the dangerous ground on the way", () => {
+  const trip = G.plan(place("The Afterlife"), place("Red Dirt"), { hour: 8 });
+  assert.ok(trip.km > 8 && trip.km < 13);
+  assert.equal(trip.rush, true);
+  assert.ok(trip.times.av < trip.times.car && trip.times.car < trip.times.walk);
+  assert.equal(trip.ncart.board, "lchina");
+  assert.ok(trip.danger.some((d) => d.name === "Vista del Rey"), "through Valentino ground");
+  const hop = G.plan(place("The Afterlife"), place("Tom's Diner"));
+  assert.equal(hop.ncart, null, "next door: walk");
+});
+
+test("signal: Utility Code 9 and worse is a dead zone, and so is what the GM lists", () => {
+  assert.equal(G.deadAt(390, 1386), true, "West Wind (UC 9)");
+  assert.equal(G.deadAt(1100, 1340), true, "Laguna Bend (UC 10)");
+  assert.equal(G.deadAt(562, 726), false, "Little China");
+  assert.equal(G.deadAt(562, 726, { extra: ["C"] }), true);
+  assert.equal(G.deadAt(1250, 300, { extra: ["The Badlands"] }), true);
+});
+
+/* ---------------------------------------- */
+/*  The hub's state                         */
+/* ---------------------------------------- */
+
+test("the crew marker, pins (players pin their own through the GM) and place notes", async () => {
+  asGM(true);
+  await Hub.setCrew(place("The Afterlife"), "The Afterlife");
+  assert.deepEqual(Hub.state.crew, { x: 562, y: 726, label: "The Afterlife" });
+  const vee = pc("Velvet");
+  const npc = makeActor({ name: "Goon", hasPlayerOwner: false });
+  await Socket.handlers.get("hubPin")({ actorId: vee.id, point: { x: 390, y: 1386 } }, player.id);
+  assert.deepEqual(Hub.pinOf(vee), { x: 390, y: 1386 });
+  assert.equal(Hub.whereIs(vee), "West Wind Estate");
+  await assert.rejects(Socket.handlers.get("hubPin")({ actorId: npc.id, point: { x: 1, y: 1 } }, player.id), /character/i);
+  await Hub.setNote("p1", { note: "Rogue's in tonight." });
+  await Hub.setNote("p1", { scene: "sc1" });
+  assert.deepEqual(Hub.state.notes.p1, { note: "Rogue's in tonight.", scene: "sc1" });
+  await Hub.setNote("p1", { note: "", scene: "" });
+  assert.equal(Hub.state.notes.p1, undefined);
+  asGM(false);
+  await assert.rejects(Hub.setCrew(null), /GM/);
+  asGM(true);
+});
+
+test("travel moves the clock and the crew, and a car rolls for a jam", async () => {
+  asGM(true);
+  game.time.worldTime = 12 * 3600;
+  const a = { ...place("Totentanz"), name: "Totentanz" };
+  const b = { ...place("NCPD Precinct 2"), name: "NCPD Precinct 2" };
+  dice.push(1);
+  const { minutes, jam } = await Hub.travel(a, b, "car");
+  assert.equal(jam, "jam");
+  assert.equal(minutes, G.travelMinutes("car", G.plan(a, b).km, { jam: "jam" }));
+  assert.equal(game.time.worldTime, 12 * 3600 + minutes * 60);
+  assert.deepEqual(Hub.state.crew, { x: b.x, y: b.y, label: "NCPD Precinct 2" });
+  assert.match(chat.at(-1).content, /Traffic jam/);
+  const before = game.time.worldTime;
+  await Hub.travel(b, a, "ncart");
+  assert.ok(game.time.worldTime > before);
+  assert.match(chat.at(-1).content, /Crosstown: Ash St → Industrial North/);
+});
+
+/* ---------------------------------------- */
+/*  Holocalls                               */
+/* ---------------------------------------- */
+
+test("no signal where a character is pinned: they can't call, and they don't ring", async () => {
+  asGM(true);
+  Settings.set("hubSignal", true);
+  const vee = pc("Velvet");
+  const hazel = pc("Hazel");
+  await Hub.setPin(vee, { x: 390, y: 1386 });
+  await assert.rejects(Calls.place({ actorId: vee.id }, [{ actorId: hazel.id }]), /no signal in West Wind Estate/);
+  const id = await Calls.place({ actorId: hazel.id }, [{ actorId: vee.id }]);
+  assert.equal(Calls.get(id).participants[1].state, "nosignal");
+  Settings.set("hubSignal", false);
+  assert.equal(Hub.noSignal(vee), false, "the rule off");
+  Settings.set("hubSignal", true);
+  await Hub.setPin(vee, null);
+});
+
+test("busy: someone already on a call shows Busy instead of ringing", async () => {
+  asGM(true);
+  const vee = pc("Velvet");
+  const hazel = pc("Hazel");
+  const rogue = makeActor({ name: "Rogue", hasPlayerOwner: false });
+  const first = await Calls.place({ actorId: rogue.id }, [{ actorId: vee.id }]);
+  await Calls.answer(first, "p1");
+  const second = await Calls.place({ actorId: hazel.id }, [{ actorId: vee.id }]);
+  assert.equal(Calls.get(second).participants[1].state, "busy");
+  assert.equal(Calls.get(second).status, "ended", "nobody to ring");
+  await Calls.end(first);
+});
+
+test("a log line reads back as text; each character keeps the log with the person they spoke to", () => {
+  assert.equal(lineText('<div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>Meet me &amp; bring the van.<br>Now.</p></div>'), "Meet me & bring the van.\nNow.");
+  const call = { callerId: "p0", participants: [
+    { id: "p0", name: "Rogue", joinedAt: 1 }, { id: "p1", name: "Vee", pc: true, joinedAt: 2 },
+    { id: "p2", name: "Hazel", pc: true, joinedAt: 3 }, { id: "p3", name: "Sage", pc: true, joinedAt: null }
+  ] };
+  assert.deepEqual(logPairs(call, (p) => p.pc).map(({ pc, other }) => [pc.name, other.name]), [["Vee", "Rogue"], ["Hazel", "Rogue"]]);
+  const pcCall = { callerId: "p0", participants: [{ id: "p0", name: "Vee", pc: true, joinedAt: 1 }, { id: "p1", name: "Hazel", pc: true, joinedAt: 2 }] };
+  assert.deepEqual(logPairs(pcCall, (p) => p.pc).map(({ pc, other }) => [pc.name, other.name]), [["Vee", "Hazel"]], "two characters: once (the messenger files the sender's copy)");
+});
+
+test("holocall logs go to Night City Messenger, threaded per contact, once", async () => {
+  asGM(true);
+  const sent = [];
+  game.modules.set("night-city-messenger", { id: "night-city-messenger", active: true, api: { messenger: { sendMessage: async (data) => (sent.push(data), { success: true }) } } });
+  const vee = pc("Velvet");
+  const rogue = makeActor({ name: "Rogue", hasPlayerOwner: false });
+  const id = await Calls.place({ actorId: rogue.id }, [{ actorId: vee.id }]);
+  await Calls.answer(id, "p1");
+  await Calls.say(id, "p0", "Got a job, choom.");
+  await Calls.say(id, "p1", "How much?");
+  await Calls.end(id);
+  assert.equal(sent.length, 0, "the button by default");
+  assert.deepEqual(await Calls.saveLog(id), [vee.id]);
+  assert.equal(sent.length, 1);
+  const mail = sent[0];
+  assert.equal(mail.toActorId, vee.id);
+  assert.equal(mail.fromActorId, rogue.id);
+  assert.equal(mail.threadId, `holocall-${[vee.id, rogue.id].sort().join("-")}`);
+  assert.match(mail.subject, /Holocall log · Rogue, Velvet/);
+  assert.match(mail.body, /<b>Rogue:<\/b> Got a job, choom\./);
+  assert.match(mail.body, /<b>Velvet:<\/b> How much\?/);
+  assert.equal(Calls.logged(Calls.get(id), vee.id), true);
+  assert.deepEqual(await Calls.saveLog(id), [], "kept once");
+
+  // Automatic: when the call ends.
+  Settings.set("callLogs", "auto");
+  const id2 = await Calls.place({ actorId: rogue.id }, [{ actorId: vee.id }]);
+  await Calls.answer(id2, "p1");
+  await Calls.end(id2);
+  await settle();
+  assert.equal(sent.length, 2);
+  assert.equal(sent[1].threadId, mail.threadId, "the same conversation as the last call");
+  Settings.set("callLogs", "button");
+
+  // A player keeps the log for their own character only.
+  const hazel = pc("Hazel");
+  const id3 = await Calls.place({ actorId: rogue.id }, [{ actorId: hazel.id }]);
+  await Calls.answer(id3, "p1");
+  await Calls.end(id3);
+  assert.deepEqual(await Socket.handlers.get("callLog")({ callId: id3 }, player.id), [hazel.id]);
+  game.modules.delete("night-city-messenger");
+});
+
+test("the hub's templates render with every string", async () => {
+  const html = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/hub.hbs", { gm: true, views: [{ id: "city", label: "City" }], cats: [] });
+  assert.match(html, /ncm-hub-stage/);
+  const panel = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/hub-panel.hbs", {
+    kind: "district", gm: true, name: "Little China", code: "C", chips: [{ label: "Moderate", color: "#f00" }], sc: 6, provider: "NCPD", uc: 4, places: [], signal: false, actions: ""
+  });
+  assert.match(panel, /Little China/);
+  assert.match(panel, /No signal/);
+  const route = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/hub-route.hbs", {
+    gm: true, a: "A place", b: "B place", ready: true, km: 4, rush: true, modes: [{ id: "car", label: "Car", time: "15 min", on: true }],
+    ncart: { legs: [{ name: "Northern Line", color: "#f0f", from: "Little China", to: "Little Europe", stops: 1 }], walkIn: 5, walkOut: 6 }, danger: [{ name: "Kabuki", label: "Combat", color: "#f00" }]
+  });
+  assert.match(route, /Rush hour/);
+  assert.match(route, /Northern Line/);
+  assert.equal(missingKeys.size, 0, [...missingKeys].join(", "));
+});

@@ -28,11 +28,13 @@
       <button type="button" class="ncm-cta" data-ncm="start"><i class="fa-solid fa-bolt"></i> {{localize "NEONCOMBAT.Carousel.Start"}}</button>
       {{/if}}
       <button type="button" data-ncm="stakes" data-tooltip="NEONCOMBAT.Stakes.Title"><i class="fa-solid fa-dice-six"></i></button>
+      <button type="button" data-ncm="hub" data-tooltip="NEONCOMBAT.Hub.Title"><i class="fa-solid fa-map-location-dot"></i></button>
       <button type="button" data-ncm="lab" data-tooltip="NEONCOMBAT.Lab.Title"><i class="fa-solid fa-flask"></i></button>
       <button type="button" data-ncm="tracker" data-tooltip="NEONCOMBAT.Carousel.Tracker"><i class="fa-solid fa-list-ol"></i></button>
       <button type="button" class="is-danger" data-ncm="end" data-tooltip="COMBAT.End"><i class="fa-solid fa-power-off"></i></button>
     {{else}}
       <button type="button" data-ncm="stakes" data-tooltip="NEONCOMBAT.Stakes.Title"><i class="fa-solid fa-dice-six"></i></button>
+      <button type="button" data-ncm="hub" data-tooltip="NEONCOMBAT.Hub.Title"><i class="fa-solid fa-map-location-dot"></i></button>
       {{#if myTurn}}<button type="button" class="ncm-cta" data-ncm="endTurn"><i class="fa-solid fa-check"></i> {{localize "NEONCOMBAT.Carousel.EndTurn"}}</button>{{/if}}
     {{/if}}
   </div>

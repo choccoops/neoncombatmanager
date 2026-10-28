@@ -20,6 +20,7 @@ import { Environment } from "./environment/environment.js";
 import { Sources } from "./environment/sources.js";
 import { Stakes } from "./stakes/stakes.js";
 import { Awareness } from "./awareness/awareness.js";
+import { Hub } from "./hub/hub.js";
 import { debounce, L } from "./util.js";
 
 /** Neon Combat Manager's public API: game.modules.get("cpr-neon-combat-manager").api */
@@ -79,9 +80,26 @@ const api = {
     calls: () => Calls.live(),
     /** Ring people: from { actorId } (or GM: a messenger directory contact); targets { actorId } or contacts. */
     place: (from, targets) => Calls.place(from, targets),
+    /** Keep a call's log in Night City Messenger (each player character's inbox). */
+    saveLog: (callId, actorIds) => Calls.saveLog(callId, actorIds),
+    /** Open the dialer: { from: "actor:<id>", targets: ["actor:<id>"] }. */
+    dial: (options) => Comms.openHolocall(options),
     say: (callId, participantId, text) => Calls.say(callId, participantId, text),
     hangUp: (callId) => Calls.hangUp(callId),
     end: (callId) => Calls.end(callId)
+  },
+  /** The City & NCART hub: Night City 2070. */
+  hub: {
+    open: (options) => Hub.open(options),
+    close: () => Hub.app?.close(),
+    get state() {
+      return Hub.state;
+    },
+    setCrew: (point, label) => Hub.setCrew(point, label),
+    setPin: (actor, point) => Hub.setPin(actor, point),
+    travel: (from, to, mode, options) => Hub.travel(from, to, mode, options),
+    noSignal: (actor) => Hub.noSignal(actor),
+    whereIs: (actor) => Hub.whereIs(actor)
   },
   /** Raising the Stakes: the Plot Die (2070 Core Rules). */
   stakes: {
@@ -123,7 +141,10 @@ Hooks.once("init", () => {
     `${TEMPLATE_PATH}/environment.hbs`,
     `${TEMPLATE_PATH}/settings-menu.hbs`,
     `${TEMPLATE_PATH}/stakes.hbs`,
-    `${TEMPLATE_PATH}/awareness.hbs`
+    `${TEMPLATE_PATH}/awareness.hbs`,
+    `${TEMPLATE_PATH}/hub.hbs`,
+    `${TEMPLATE_PATH}/hub-panel.hbs`,
+    `${TEMPLATE_PATH}/hub-route.hbs`
   ]);
 
   // Conditions: the same handling whether placed through the API, the token HUD or a macro.
@@ -165,6 +186,7 @@ Hooks.once("init", () => {
   Comms.init();
   Stakes.init();
   Awareness.init();
+  Hub.init();
   TrackerHooks.init();
 
   game.modules.get(MODULE_ID).api = api;
@@ -181,6 +203,7 @@ Hooks.once("setup", () => {
   Links.registerSocket();
   Calls.registerSocket();
   Stakes.registerSocket();
+  Hub.registerSocket();
 });
 
 Hooks.once("ready", async () => {

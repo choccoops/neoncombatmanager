@@ -3,6 +3,7 @@ import { Calls } from "./calls.js";
 import { Links } from "./links.js";
 import { Messenger } from "./messenger.js";
 import { Comms } from "./comms.js";
+import { Settings } from "../settings.js";
 import { L } from "../util.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -35,7 +36,8 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
       hangUp: HolocallApp.#onHangUp,
       endCall: HolocallApp.#onEnd,
       inviteMore: HolocallApp.#onInvite,
-      routeChat: HolocallApp.#onRoute
+      routeChat: HolocallApp.#onRoute,
+      saveLog: HolocallApp.#onSaveLog
     }
   };
 
@@ -43,9 +45,10 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Open the dialer.
-   * @param {object} [options] - link: tick a Biomon Link's other members; inviteTo: add to this call
+   * @param {object} [options] - link: tick a Biomon Link's other members; inviteTo: add to this call;
+   *   from: call as ("actor:<id>"); targets: tick these ("actor:<id>", contact keys)
    */
-  static dial({ link = null, inviteTo = null } = {}) {
+  static dial({ link = null, inviteTo = null, from = null, targets = [] } = {}) {
     const key = inviteTo ? `invite-${inviteTo}` : "dialer";
     let app = this.windows.get(key);
     if (!app) {
@@ -58,6 +61,11 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
       const own = Links.members(link).find((a) => mine.has(a.id));
       if (own) app._from = `actor:${own.id}`;
     }
+    if (from) {
+      app._from = from;
+      app._picked.clear();
+    }
+    for (const t of targets) app._picked.add(t);
     app.render(true);
     return app;
   }
@@ -325,8 +333,28 @@ export class HolocallApp extends HandlebarsApplicationMixin(ApplicationV2) {
       })),
       voices: voices.map((p) => ({ value: p.id, label: p.name, selected: p.id === this._as })),
       routing: Comms.routing === call.id,
-      canTalk: voices.length > 0 && call.status !== "ended"
+      canTalk: voices.length > 0 && call.status !== "ended",
+      log: this._logContext(call)
     };
+  }
+
+  /** Keeping the log in Night City Messenger: for the GM, and for players with a character who was on it. */
+  _logContext(call) {
+    if (call.status !== "ended" || !Messenger.ready || Settings.get("callLogs") === "off") return null;
+    const pcs = call.participants.filter((p) => p.joinedAt && Calls._isPC(p) && (game.user.isGM || Calls.speaksFor(p)));
+    if (!pcs.length || call.participants.filter((p) => p.joinedAt).length < 2) return null;
+    const saved = pcs.every((p) => Calls.logged(call, p.actorId));
+    return { saved, names: pcs.map((p) => p.name).join(", ") };
+  }
+
+  static async #onSaveLog() {
+    try {
+      const saved = await Calls.saveLog(this.callId);
+      if (saved?.length) ui.notifications.info(L(`${LANG}.Holocall.LogSaved`));
+      else ui.notifications.warn(L(`${LANG}.Holocall.LogFailed`));
+    } catch (err) {
+      ui.notifications.warn(err.message);
+    }
   }
 
   static async #onSend() {

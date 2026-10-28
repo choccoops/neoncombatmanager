@@ -1,0 +1,33 @@
+<div id="ncm-hub" class="neon-combat ncm-hub">
+  <header class="ncm-hub-bar">
+    <div class="ncm-hub-brand"><b>NIGHT CITY</b><span>// 2070 · {{localize "NEONCOMBAT.Hub.Kicker"}}</span></div>
+    <nav class="ncm-hub-views">
+      {{#each views}}<button type="button" data-hub="view" data-hub-view="{{id}}">{{label}}</button>{{/each}}
+    </nav>
+    <input type="search" name="hubSearch" placeholder="{{localize 'NEONCOMBAT.Hub.Search'}}" autocomplete="off">
+    <div class="ncm-hub-clock"></div>
+    <button type="button" class="ncm-hub-x" data-hub="close" data-tooltip="{{localize 'NEONCOMBAT.Hub.Close'}}" aria-label="{{localize 'NEONCOMBAT.Hub.Close'}}"><i class="fa-solid fa-xmark"></i></button>
+  </header>
+  <div class="ncm-hub-body">
+    <div class="ncm-hub-stage">
+      <div class="ncm-hub-world">
+        <img class="ncm-hub-img" alt="" draggable="false">
+        <svg class="ncm-hub-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="ncm-hub-tools">
+        <button type="button" data-hub="zoomIn" aria-label="+"><i class="fa-solid fa-plus"></i></button>
+        <button type="button" data-hub="zoomOut" aria-label="−"><i class="fa-solid fa-minus"></i></button>
+        <button type="button" data-hub="fit" data-tooltip="{{localize 'NEONCOMBAT.Hub.Fit'}}"><i class="fa-solid fa-expand"></i></button>
+      </div>
+      <div class="ncm-hub-layers">
+        <button type="button" class="on" data-hub="layer" data-layer="places"><i class="fa-solid fa-location-dot"></i> {{localize "NEONCOMBAT.Hub.Layer.places"}}</button>
+        <button type="button" class="on" data-hub="layer" data-layer="ncart"><i class="fa-solid fa-train-subway"></i> NCART</button>
+        <button type="button" class="on" data-hub="layer" data-layer="people"><i class="fa-solid fa-users"></i> {{localize "NEONCOMBAT.Hub.Layer.people"}}</button>
+        <span class="ncm-hub-cats">{{#each cats}}<button type="button" class="on" data-hub="cat" data-cat="{{id}}" style="--c:{{color}}" data-tooltip="{{label}}"><i></i></button>{{/each}}</span>
+      </div>
+      <div class="ncm-hub-tip"></div>
+      <div class="ncm-hub-routebar" hidden></div>
+    </div>
+    <aside class="ncm-hub-panel"></aside>
+  </div>
+</div>
