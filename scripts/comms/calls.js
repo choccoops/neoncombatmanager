@@ -3,6 +3,7 @@ import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { Socket } from "../socket.js";
 import { Messenger } from "./messenger.js";
+import { Hub } from "../hub/hub.js";
 import { L, esc } from "../util.js";
 
 const { deepClone } = foundry.utils;
@@ -17,7 +18,7 @@ const jammed = (actor) => !!actor?.statuses?.has?.("qhCommsJam");
 /*  Pure call rules (tested)                    */
 /* -------------------------------------------- */
 
-/** Participant states: ringing, joined, declined, missed, nosignal, nodevice, left, cancelled. */
+/** Participant states: ringing, joined, declined, missed, busy, nosignal, nodevice, left, cancelled. */
 export const LIVE = ["ringing", "joined"];
 
 /**
@@ -53,8 +54,41 @@ export function participant(target, id) {
     source: target.source ?? null,
     name: target.name || actor?.name || "Unknown",
     img: target.img || actor?.img || "icons/svg/mystery-man.svg",
-    state: "ringing"
+    state: "ringing",
+    joinedAt: null
   };
+}
+
+/** The text of a holocall chat message (the line under the HOLO tag), as plain text. */
+export function lineText(content) {
+  const html = String(content ?? "");
+  const m = html.match(/<p>([\s\S]*?)<\/p>/);
+  return (m ? m[1] : html).replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&").trim();
+}
+
+/**
+ * Who each player character on a call keeps the log with: the caller, or (for the caller) the
+ * first other person who picked up. A conversation between two player characters is logged
+ * once: the messenger files the sender's copy itself.
+ * @param {object} call
+ * @param {(p) => boolean} isPC - is this participant a player character?
+ * @returns {{ pc: object, other: object }[]}
+ */
+export function logPairs(call, isPC) {
+  const on = call.participants.filter((p) => p.joinedAt);
+  const caller = on.find((p) => p.id === call.callerId);
+  const out = [];
+  const done = new Set();
+  for (const pc of on.filter(isPC)) {
+    const other = caller && caller.id !== pc.id ? caller : on.find((p) => p.id !== pc.id);
+    if (!other) continue;
+    const pair = [pc.id, other.id].sort().join("|");
+    if (done.has(pair)) continue;
+    done.add(pair);
+    out.push({ pc, other });
+  }
+  return out;
 }
 
 /**
@@ -135,6 +169,7 @@ export const Calls = {
     const caller = from?.actorId ? game.actors.get(from.actorId) : null;
     if (Settings.get("callNeedsAgent") && caller && !Messenger.hasAgent(caller)) throw new Error(L(`${LANG}.Holocall.NoAgent`, { name: caller.name }));
     if (jammed(caller)) throw new Error(L(`${LANG}.Holocall.Jammed`, { name: caller.name }));
+    if (Hub.noSignal(caller)) throw new Error(L(`${LANG}.Holocall.NoSignalAt`, { name: caller.name, where: Hub.whereIs(caller) }));
     if (!targets?.length) throw new Error(L(`${LANG}.Holocall.NoOne`));
     return Socket.request("callPlace", { from, targets });
   },
@@ -146,7 +181,12 @@ export const Calls = {
       throw new Error(L(`${LANG}.Holocall.NoSignalHere`));
     }
     const p = this.get(callId)?.participants.find((x) => x.id === pid);
-    if (jammed(p?.actorId ? game.actors.get(p.actorId) : null)) {
+    const who = p?.actorId ? game.actors.get(p.actorId) : null;
+    if (Hub.noSignal(who)) {
+      await this.decline(callId, pid, "nosignal");
+      throw new Error(L(`${LANG}.Holocall.NoSignalAt`, { name: p.name, where: Hub.whereIs(who) }));
+    }
+    if (jammed(who)) {
       await this.decline(callId, pid, "nosignal");
       throw new Error(L(`${LANG}.Holocall.Jammed`, { name: p.name }));
     }
@@ -243,13 +283,99 @@ export const Calls = {
 
   async _write(fn) {
     const calls = deepClone(Settings.get("holocalls") ?? {});
+    const was = Object.fromEntries(Object.entries(calls).map(([id, c]) => [id, c.status]));
     const result = fn(calls);
     const now = Date.now();
     for (const [id, c] of Object.entries(calls)) {
       if (c.status === "ended" && now - (c.endedAt ?? now) > KEEP_ENDED) delete calls[id];
     }
     await Settings.set("holocalls", calls);
+    // Calls that just ended: the logs go to the messenger now, when the GM keeps them automatically.
+    const ended = Object.values(calls).filter((c) => c.status === "ended" && was[c.id] !== "ended");
+    if (ended.length && Settings.get("callLogs") === "auto") {
+      for (const c of ended) await this.saveLog(c.id).catch((err) => console.warn(`${MODULE_ID} | holocall log`, err));
+    }
     return result;
+  },
+
+  /** Is this character on (or picking up) another live call? */
+  _busy(actorId, exceptCallId = null) {
+    if (!actorId || !Settings.get("busySignal")) return false;
+    return this.live().some((c) => c.id !== exceptCallId && c.participants.some((p) => p.actorId === actorId && p.state === "joined"));
+  },
+
+  /** A target's state when the call goes out: busy, no signal, no device, or ringing. */
+  _reach(p, callId = null) {
+    const actor = p.actorId ? game.actors.get(p.actorId) : null;
+    if (!actor) return "ringing";
+    if (this._busy(actor.id, callId)) return "busy";
+    if (Hub.noSignal(actor) || jammed(actor)) return "nosignal";
+    if (Settings.get("callNeedsAgent") && actor.hasPlayerOwner && !Messenger.hasAgent(actor)) return "nodevice";
+    return "ringing";
+  },
+
+  /* ---------------------------------------- */
+  /*  Logs to Night City Messenger            */
+  /* ---------------------------------------- */
+
+  /** Is a participant a player character? */
+  _isPC(p) {
+    const actor = p?.actorId ? game.actors.get(p.actorId) : null;
+    return !!actor?.hasPlayerOwner;
+  },
+
+  /** Has this call's log been kept for a character? */
+  logged(call, actorId) {
+    return (call?.logged ?? []).includes(actorId);
+  },
+
+  /** The log as messenger mail: a subject, and the conversation as the body. */
+  logMessage(call, messages = this.messages(call.id)) {
+    const on = call.participants.filter((p) => p.joinedAt);
+    const names = on.map((p) => p.name).join(", ");
+    const start = call.connectedAt ?? call.createdAt ?? Date.now();
+    const length = call.connectedAt ? Math.max(0, Math.round(((call.endedAt ?? Date.now()) - call.connectedAt) / 1000)) : 0;
+    const dur = `${String(Math.floor(length / 60)).padStart(2, "0")}:${String(length % 60).padStart(2, "0")}`;
+    const lines = messages.map((m) => {
+      const f = m.flags?.[MODULE_ID] ?? {};
+      return `<p><b>${esc(f.name ?? m.speaker?.alias ?? "")}:</b> ${esc(lineText(m.content)).replace(/\n/g, "<br>")}</p>`;
+    });
+    return {
+      subject: L(`${LANG}.Holocall.LogSubject`, { names, length: dur }),
+      body: `<p><i>${esc(L(`${LANG}.Holocall.LogHeader`, { names, length: dur, time: new Date(start).toLocaleString() }))}</i></p>`
+        + (lines.length ? lines.join("") : `<p><i>${esc(L(`${LANG}.Holocall.LogSilent`))}</i></p>`)
+    };
+  },
+
+  /**
+   * GM: keep a call's log in the Night City Messenger inbox of each player character who was on
+   * it (or only `actorIds`), as mail from the person they spoke with, threaded with every other
+   * holocall between the two of them.
+   * @returns {Promise<string[]>} the actor ids it was kept for
+   */
+  async saveLog(callId, actorIds = null) {
+    if (!game.user.isGM) return Socket.request("callLog", { callId, actorIds });
+    const call = this.get(callId);
+    if (!call || !Messenger.ready || Settings.get("callLogs") === "off") return [];
+    const mail = this.logMessage(call);
+    const saved = [];
+    for (const { pc, other } of logPairs(call, (p) => this._isPC(p))) {
+      if (actorIds && !actorIds.includes(pc.actorId) && !actorIds.includes(other.actorId)) continue;
+      if (this.logged(call, pc.actorId)) continue;
+      const actor = game.actors.get(pc.actorId);
+      const threadId = `holocall-${[pc.actorId, other.actorId ?? other.contactId ?? other.name].sort().join("-")}`;
+      if (await Messenger.callLog(actor, other, { ...mail, threadId })) {
+        saved.push(pc.actorId);
+        if (this._isPC(other)) saved.push(other.actorId);
+      }
+    }
+    if (saved.length) {
+      await this._write((calls) => {
+        const c = calls[callId];
+        if (c) c.logged = [...new Set([...(c.logged ?? []), ...saved])];
+      });
+    }
+    return saved;
   },
 
   _ring(callId) {
@@ -298,6 +424,7 @@ export const Calls = {
       const id = foundry.utils.randomID(12);
       const caller = participant({ ...from, type: from.actorId ? "actor" : "contact" }, "p0");
       caller.state = "joined";
+      caller.joinedAt = Date.now();
       const seen = new Set([caller.actorId ?? caller.contactId]);
       const list = [caller];
       for (const t of targets) {
@@ -305,8 +432,7 @@ export const Calls = {
         if (!key || seen.has(key)) continue;
         seen.add(key);
         const p = participant(t, `p${list.length}`);
-        const actor = p.actorId ? game.actors.get(p.actorId) : null;
-        if (Settings.get("callNeedsAgent") && actor?.hasPlayerOwner && !Messenger.hasAgent(actor)) p.state = "nodevice";
+        p.state = this._reach(p);
         list.push(p);
       }
       await this._write((calls) => {
@@ -323,6 +449,7 @@ export const Calls = {
         if (!p || p.state !== "ringing" || call.status === "ended") return;
         if (!this.answerers(p).some((u) => u.id === userId) && !game.users.get(userId)?.isGM) throw new Error(L(`${LANG}.Error.NotOwner`));
         p.state = "joined";
+        p.joinedAt = Date.now();
         settle(call);
       });
       return true;
@@ -365,6 +492,15 @@ export const Calls = {
       return true;
     });
 
+    // A player keeps the log of a call they were on (for their own characters).
+    Socket.on("callLog", async ({ callId, actorIds }, userId) => {
+      const user = game.users.get(userId);
+      const call = this.get(callId);
+      const mine = (call?.participants ?? []).filter((p) => p.joinedAt && p.actorId && game.actors.get(p.actorId)?.testUserPermission(user, "OWNER")).map((p) => p.actorId);
+      if (!user?.isGM && !mine.length) throw new Error(L(`${LANG}.Error.NotOwner`));
+      return this.saveLog(callId, user?.isGM ? actorIds : mine.filter((id) => !actorIds || actorIds.includes(id)));
+    });
+
     Socket.on("callInvite", async ({ callId, targets }, userId) => {
       const user = game.users.get(userId);
       let ringing = false;
@@ -377,8 +513,10 @@ export const Calls = {
           const key = t.actorId ?? t.contactId;
           if (!key || seen.has(key)) continue;
           seen.add(key);
-          call.participants.push(participant(t, `p${call.participants.length}`));
-          ringing = true;
+          const p = participant(t, `p${call.participants.length}`);
+          p.state = this._reach(p, callId);
+          call.participants.push(p);
+          if (p.state === "ringing") ringing = true;
         }
       });
       if (ringing) this._ring(callId);

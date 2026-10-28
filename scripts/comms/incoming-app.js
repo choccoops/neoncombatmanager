@@ -1,5 +1,6 @@
 import { MODULE_ID, TEMPLATE_PATH, LANG } from "../constants.js";
 import { Calls } from "./calls.js";
+import { Sounds } from "./sounds.js";
 import { L } from "../util.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -49,6 +50,7 @@ export class IncomingCallApp extends HandlebarsApplicationMixin(ApplicationV2) {
   _onClose(options) {
     super._onClose?.(options);
     IncomingCallApp.windows.delete(IncomingCallApp.key(this.callId, this.pid));
+    if (!IncomingCallApp.windows.size && Sounds.playing === "ring") Sounds.stop();
   }
 
   async _prepareContext() {

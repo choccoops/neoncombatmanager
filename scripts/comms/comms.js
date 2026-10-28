@@ -4,6 +4,8 @@ import { Settings } from "../settings.js";
 import { Links } from "./links.js";
 import { Calls } from "./calls.js";
 import { Messenger } from "./messenger.js";
+import { Sounds } from "./sounds.js";
+import { Hub } from "../hub/hub.js";
 import { alarm } from "./vitals.js";
 import { L, esc } from "../util.js";
 
@@ -17,6 +19,8 @@ export const Comms = {
   _rung: new Set(),
   /** Calls whose window this user already had opened for them. */
   _opened: new Set(),
+  /** Last status of each call this client is part of, for the connect and drop blips. */
+  _status: new Map(),
   /** Last vitals per linked character, for the alarms. */
   _vitals: new Map(),
   /** The call this user's regular chat goes to while "talk from chat" is on, or null. */
@@ -40,6 +44,19 @@ export const Comms = {
         this.openHolocall();
         return true;
       }
+    });
+
+    // Holocall straight from an actor: the Actors directory's menu and the sheet header.
+    for (const hook of ["getActorDirectoryEntryContext", "getActorContextOptions"]) {
+      Hooks.on(hook, (html, options) => this.actorMenu(options));
+    }
+    Hooks.on("getActorSheetHeaderButtons", (sheet, buttons) => {
+      const b = this.sheetButton(sheet.actor ?? sheet.object);
+      if (b) buttons.unshift({ label: b.label, class: "ncm-holo-sheet", icon: b.icon, onclick: b.onClick });
+    });
+    Hooks.on("getHeaderControlsActorSheetV2", (sheet, controls) => {
+      const b = this.sheetButton(sheet.actor ?? sheet.document);
+      if (b) controls.unshift({ label: b.label, icon: b.icon, action: "ncmHolocall", onClick: b.onClick });
     });
 
     Hooks.on("getSceneControlButtons", (controls) => Compat.addSceneTools(controls, [
@@ -76,9 +93,41 @@ export const Comms = {
     return BiomonApp.open();
   },
 
-  async openHolocall() {
+  async openHolocall(options = {}) {
     const { HolocallApp } = await import("./holocall-app.js");
-    return HolocallApp.dial();
+    return HolocallApp.dial(options);
+  },
+
+  /**
+   * Holocall with an actor: the GM calls as an NPC; anyone calls a character (not their own).
+   * @returns {{ label, icon, onClick } | null}
+   */
+  holoFor(actor) {
+    if (!actor || !["character", "mook"].includes(actor.type)) return null;
+    if (game.user.isGM && !actor.hasPlayerOwner) {
+      return { label: L(`${LANG}.Holocall.CallAsActor`, { name: actor.name }), icon: "fa-solid fa-phone-volume", onClick: () => this.openHolocall({ from: `actor:${actor.id}` }) };
+    }
+    if (actor.isOwner && !game.user.isGM) return { label: L(`${LANG}.Holocall.Title`), icon: "fa-solid fa-phone-volume", onClick: () => this.openHolocall({ from: `actor:${actor.id}` }) };
+    return { label: L(`${LANG}.Holocall.CallActor`, { name: actor.name }), icon: "fa-solid fa-phone", onClick: () => this.openHolocall({ targets: [`actor:${actor.id}`] }) };
+  },
+
+  sheetButton(actor) {
+    const b = this.holoFor(actor);
+    return b ? { ...b, label: L(`${LANG}.Holocall.SheetButton`) } : null;
+  },
+
+  /** Actors directory entries: "Holocall as <NPC>" for the GM, "Holocall <name>" for anyone. */
+  actorMenu(options) {
+    const idOf = (li) => {
+      const el = li?.[0] ?? li;
+      return el?.dataset?.documentId ?? el?.dataset?.entryId;
+    };
+    options.push({
+      name: `${LANG}.Holocall.MenuEntry`,
+      icon: '<i class="fa-solid fa-phone-volume"></i>',
+      condition: (li) => !!this.holoFor(game.actors.get(idOf(li))),
+      callback: (li) => this.holoFor(game.actors.get(idOf(li)))?.onClick()
+    });
   },
 
   async refreshBiomon() {
@@ -106,7 +155,9 @@ export const Comms = {
         if (p.state === "ringing" && mine && !this._rung.has(key)) {
           this._rung.add(key);
           // No signal here: the call can't reach this phone.
+          const who = p.actorId ? game.actors.get(p.actorId) : null;
           if (!game.user.isGM && Messenger.deadZone(Calls.here)) await Calls.decline(call.id, p.id, "nosignal").catch(() => null);
+          else if (Hub.noSignal(who)) await Calls.decline(call.id, p.id, "nosignal").catch(() => null);
           else IncomingCallApp.show(call.id, p.id);
         } else if (p.state !== "ringing") {
           IncomingCallApp.dismiss(call.id, p.id);
@@ -122,6 +173,26 @@ export const Comms = {
       }
     }
     HolocallApp.refresh();
+    this.sounds();
+  },
+
+  /** Ring while a call is coming in; ringback while this user's own call rings; blips on connect and drop. */
+  async sounds() {
+    const { IncomingCallApp } = await import("./incoming-app.js");
+    const ringing = IncomingCallApp.windows.size > 0;
+    const mine = Calls.live().filter((c) => c.startedBy === game.user.id);
+    const back = mine.some((c) => c.status === "ringing");
+    if (ringing) Sounds.ring();
+    else if (back) Sounds.back();
+    else if (Sounds.playing) Sounds.stop();
+    for (const call of Calls.all()) {
+      const was = this._status.get(call.id);
+      const involved = call.startedBy === game.user.id || call.participants.some((p) => p.joinedAt && Calls.speaksFor(p) && !(game.user.isGM && !Calls._gmOnly(p)));
+      if (!involved) continue;
+      if (was && was !== "active" && call.status === "active") Sounds.blip(true);
+      if (was === "active" && call.status === "ended") Sounds.blip(false);
+      this._status.set(call.id, call.status);
+    }
   },
 
   /* ---------------------------------------- */

@@ -2,7 +2,7 @@
 // data into preview/index.html (`npm run preview`), to look at the styling without Foundry.
 // Cyberpunk RED's status icons are copied in when the system's source is found next door
 // (CPR_SOURCE=/path/to/fvtt-cyberpunk-red-core/src).
-import { mkdir, writeFile, cp, access } from "node:fs/promises";
+import { mkdir, writeFile, readFile, cp, access } from "node:fs/promises";
 import path from "node:path";
 import { makeActor, makeCombat, registerSettings, root } from "../tests/helpers/foundry.mjs";
 
@@ -156,5 +156,7 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
 </div>
 <div class="icons">${icons}</div>
 </body></html>`;
+// The hub runs live in the browser (tools/hub-harness.html), from preview/hub.html.
+await writeFile(path.join(out, "hub.html"), await readFile(path.join(root, "tools", "hub-harness.html"), "utf8"));
 await writeFile(path.join(out, "index.html"), html.replaceAll('src="modules/cpr-neon-combat-manager/', 'src="../').replaceAll('src="systems/', 'src="systems/'));
 console.log(`preview/index.html written`);

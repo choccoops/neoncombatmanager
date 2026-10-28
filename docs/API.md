@@ -190,6 +190,28 @@ when the session counter moves.
 
 Hook: `cpr-neon-combat-manager.awarenessAssigned` `(actor, points, mode)`.
 
+## Night City Map: `ncm.hub`
+
+| | |
+| --- | --- |
+| `open({ view, focus })` / `close()` | the map; `view` is `city`, `zones` or `ncart`; `focus` `{ x, y, key }` |
+| `state` | `{ crew: { x, y, label }, pins: { [actorId]: { x, y } }, notes, shown, seen, custom, edits }` |
+| `places()` / `visiblePlaces(user?)` | every place (built-in with the GM's edits, then the GM's own: `{ key, name, cat, x, y, text, sc, guard, img, custom, edited, hidden }`) / what a user may see |
+| `reveal(keys, { quiet })` / `hide(keys)` | (GM) discovery: reveal places to the players (a "Location discovered" card unless `quiet`), or hide them |
+| `addPlace({ name, cat, x, y, text, sc, guard, img }, { visible })` | (GM) a place of your own, hidden until revealed unless `visible`. Resolves to its key (`c-<id>`) |
+| `updatePlace(key, fields)` / `resetPlace(key)` / `removePlace(key)` | (GM) change a place (built-in ones keep only what differs), undo a built-in's changes, delete one of your own |
+| `setCrew(point, label)` | (GM) the crew marker (`null` clears it) |
+| `setPin(actor, point)` | pin a character you own (`null` unpins) |
+| `travel(from, to, mode, { storm })` | (GM) the crew travels: time passes, the marker moves, a card posts. `mode`: walk, skates, bike, ncart, moto, car, av. Resolves to `{ minutes, jam, trip }` |
+| `noSignal(actor)` / `whereIs(actor)` | no signal where the character is pinned / the district's name |
+
+Points are in the city map's world grid (1294 × 2000). The 2070 data (districts with their
+NCZTA-70 entries, places, stations, lines) is `scripts/hub/data.js`; the pure rules (district at
+a point, travel times, NCART routes, dead zones) are in `scripts/hub/geo.js`.
+
+Hooks: `cpr-neon-combat-manager.hubChanged` (the shared state), `cpr-neon-combat-manager.hubTravel`
+`({ from, to, mode, minutes, jam })`.
+
 ## Holocalls: `ncm.holocall`
 
 | | |
@@ -199,6 +221,8 @@ Hook: `cpr-neon-combat-manager.awarenessAssigned` `(actor, points, mode)`.
 | `place(from, targets)` | ring people. `from`: `{ actorId }` (a character you own; the GM can use any actor, or a Night City Messenger directory contact `{ contactId, source: "directory", name, img }`). `targets`: `{ actorId }` or contacts. Resolves to the call id |
 | `say(callId, participantId, text)` | talk on a call as one of its participants |
 | `hangUp(callId)` / `end(callId)` | leave a call / (GM) end it for everyone |
+| `saveLog(callId, actorIds?)` | keep a call's log in Night City Messenger: each player character's inbox, from the person they spoke with, threaded `holocall-<idA>-<idB>`. Resolves to the actor ids it was kept for |
+| `dial({ from, targets })` | open the dialer, calling as `from` (`"actor:<id>"`) with `targets` ticked |
 
 In chat, `/holo <text>` says something on the user's latest call, and `/holo` alone toggles
 routing plain chat to it (handled in the `chatMessage` hook, which returns false for them).

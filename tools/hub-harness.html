@@ -1,0 +1,79 @@
+<!doctype html>
+<!-- The City & NCART hub in a browser without Foundry: just enough of Foundry's globals to run
+     scripts/hub/hub-app.js for real (pan, zoom, clicks, routes). Served from preview/ by
+     `npm run preview` (http://localhost:8766/preview/hub.html). -->
+<html><head><meta charset="utf-8"><title>City & NCART hub preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../styles/neon-combat.css">
+<script src="../node_modules/handlebars/dist/handlebars.min.js"></script>
+<style>body{margin:0;background:#222;font-family:Signika,sans-serif}</style>
+</head><body>
+<script type="module">
+const lang = await (await fetch("../lang/en.json")).json();
+const lookup = (k) => k.split(".").reduce((o, p) => (o && typeof o === "object" ? o[p] : undefined), lang);
+const localize = (k) => (typeof lookup(k) === "string" ? lookup(k) : k);
+const format = (k, d = {}) => localize(k).replace(/{(\w+)}/g, (m, p) => (p in d ? String(d[p]) : m));
+Handlebars.registerHelper("localize", (k, o) => (o?.hash && Object.keys(o.hash).length ? format(k, o.hash) : localize(k)));
+Handlebars.registerHelper("eq", (a, b) => a === b);
+const clone = (v) => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
+const getProperty = (o, p) => String(p).split(".").reduce((x, k) => x?.[k], o);
+const cache = new Map();
+const settings = new Map(Object.entries({
+  "cpr-neon-combat-manager.cityHub": { crew: { x: 562, y: 726, label: "The Afterlife" }, pins: { a1: { x: 772, y: 948 }, a2: { x: 390, y: 1386 } }, notes: {} },
+  "cpr-neon-combat-manager.hubSignal": true, "cpr-neon-combat-manager.hubDeadZones": "", "cpr-neon-combat-manager.hubPlayers": true,
+  "cpr-neon-combat-manager.hubDiscovery": true, "cpr-neon-combat-manager.conditionChat": "off"
+}));
+const portrait = (hue) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="hsl(${hue},40%,14%)"/><circle cx="32" cy="24" r="12" fill="hsl(${hue},80%,60%)"/><path d="M10 64c2-16 12-22 22-22s20 6 22 22z" fill="hsl(${hue},80%,45%)"/></svg>`)}`;
+const actors = [
+  { id: "a1", name: "Velvet", type: "character", hasPlayerOwner: true, isOwner: true, img: portrait(320), statuses: new Set(), testUserPermission: () => true },
+  { id: "a2", name: "Hazel Monroe", type: "character", hasPlayerOwner: true, isOwner: true, img: portrait(190), statuses: new Set(), testUserPermission: () => true }
+];
+const coll = (list) => Object.assign(list, { get: (id) => list.find((x) => x.id === id), contents: list });
+globalThis.foundry = {
+  utils: { deepClone: clone, getProperty, setProperty() {}, mergeObject: (a, b) => ({ ...a, ...b }), randomID: () => Math.random().toString(36).slice(2, 14) },
+  applications: {
+    api: { ApplicationV2: class {}, HandlebarsApplicationMixin: (B) => class extends B {}, DialogV2: {
+      // A plain <dialog> standing in for Foundry's: the form, OK and Cancel.
+      prompt: ({ window: w, content, ok }) => new Promise((resolve) => {
+        const d = document.createElement("dialog");
+        d.className = "neon-combat ncm-dialog";
+        d.style.cssText = "z-index:1000;background:#111;color:#ddd;border:1px solid #555;min-width:440px";
+        d.innerHTML = `<form method="dialog"><h3>${w?.title ?? ""}</h3>${content}<p><button value="ok">OK</button> <button value="no">Cancel</button></p></form>`;
+        document.body.appendChild(d);
+        d.addEventListener("close", () => {
+          const form = d.querySelector("form");
+          resolve(d.returnValue === "ok" ? ok.callback(null, { form }) : null);
+          d.remove();
+        });
+        d.showModal();
+      }),
+      confirm: async ({ content }) => confirm(content.replace(/<[^>]+>/g, ""))
+    } },
+    handlebars: { renderTemplate: async (p, d) => {
+      const url = p.replace("modules/cpr-neon-combat-manager/", "../");
+      if (!cache.has(url)) cache.set(url, Handlebars.compile(await (await fetch(url)).text()));
+      return cache.get(url)(d);
+    } }
+  }
+};
+globalThis.ChatMessage = { create: async (d) => (console.log("chat card:", d.content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()), d), getSpeaker: () => ({}) };
+globalThis.Hooks = { on() {}, once() {}, callAll() {}, call: () => true };
+globalThis.ui = { notifications: { info: console.log, warn: console.warn, error: console.error } };
+globalThis.CONFIG = { statusEffects: [] };
+globalThis.game = {
+  release: { generation: 12 }, i18n: { localize, format, has: (k) => typeof lookup(k) === "string" },
+  settings: {
+    get: (m, k) => { const key = `${m}.${k}`; if (!settings.has(key)) throw new Error(key); return clone(settings.get(key)); },
+    set: async (m, k, v) => { settings.set(`${m}.${k}`, clone(v)); window.__hub?.refresh(); return v; }, settings: new Map()
+  },
+  user: { id: "gm", isGM: new URLSearchParams(location.search).get("player") === null, character: actors[0] },
+  users: Object.assign([{ id: "gm", isGM: true, active: true }], { activeGM: { id: "gm" } }),
+  time: { worldTime: 8 * 3600 + 20 * 60, advance: async (s) => (game.time.worldTime += s) },
+  modules: new Map(), actors: coll(actors), scenes: coll([{ id: "s1", name: "Afterlife (battle map)" }]), combat: null, combats: []
+};
+const { HubApp } = await import("../scripts/hub/hub-app.js");
+const { Hub } = await import("../scripts/hub/hub.js");
+window.__hub = HubApp.open();
+Hub.app = window.__hub;
+</script>
+</body></html>

@@ -1,0 +1,139 @@
+{{#if (eq kind "search")}}
+<section class="ncm-hub-sec">
+  <span class="ncm-kicker">// {{localize "NEONCOMBAT.Hub.Results"}}</span>
+  {{#if empty}}<p class="ncm-hint">{{localize "NEONCOMBAT.Hub.NoResults"}}</p>{{/if}}
+  {{#if places.length}}<ul class="ncm-hub-list">{{#each places}}<li class="{{#if hidden}}is-hidden{{/if}}"><button type="button" data-hub="select" data-key="{{key}}"><span class="ncm-hub-num" style="--c:{{color}}">{{n}}</span> {{name}}{{#if hidden}} <i class="fa-solid fa-eye-slash"></i>{{/if}}</button></li>{{/each}}</ul>{{/if}}
+  {{#if districts.length}}<ul class="ncm-hub-list">{{#each districts}}<li><button type="button" data-hub="select" data-key="{{key}}"><span class="ncm-hub-code">{{code}}</span> {{name}}</button></li>{{/each}}</ul>{{/if}}
+  {{#if stations.length}}<ul class="ncm-hub-list">{{#each stations}}<li><button type="button" data-hub="select" data-key="{{key}}"><i class="fa-solid fa-train-subway"></i> {{name}}</button></li>{{/each}}</ul>{{/if}}
+</section>
+
+{{else if (eq kind "place")}}
+<section class="ncm-hub-sec" style="--c:{{color}}">
+  <button type="button" class="ncm-hub-back" data-hub="home"><i class="fa-solid fa-chevron-left"></i> {{localize "NEONCOMBAT.Hub.Back"}}</button>
+  <span class="ncm-kicker">// {{cat}}{{#if n}} · #{{n}}{{/if}}{{#if custom}} · {{localize "NEONCOMBAT.Hub.YourPlace"}}{{/if}}</span>
+  <h2>{{name}}</h2>
+  {{#if gm}}{{#if hidden}}<p class="ncm-hub-hidden"><i class="fa-solid fa-eye-slash"></i> {{localize "NEONCOMBAT.Hub.HiddenNote"}}</p>{{/if}}{{/if}}
+  {{#if img}}<img class="ncm-hub-art" src="{{img}}" alt="">{{/if}}
+  <p class="ncm-hub-where">{{#if districtKey}}<button type="button" data-hub="select" data-key="{{districtKey}}">{{district}}</button>{{else}}{{district}}{{/if}}
+    {{#each chips}}<span class="ncm-hub-chip" style="--c:{{color}}">{{label}}</span>{{/each}}
+    {{#unless signal}}<span class="ncm-hub-chip is-dead"><i class="fa-solid fa-signal"></i> {{localize "NEONCOMBAT.Hub.NoSignal"}}</span>{{/unless}}</p>
+  {{#if sc}}<p class="ncm-hub-sc"><b>SC {{sc}}</b>{{#if guard}} · {{guard}}{{/if}}</p>{{/if}}
+  {{#if text}}<p class="ncm-hub-text">{{text}}</p>{{/if}}
+  {{#if stations.length}}
+  <h4 class="ncm-sub">// NCART</h4>
+  <ul class="ncm-hub-list">{{#each stations}}<li><button type="button" data-hub="select" data-key="s:{{id}}"><i class="fa-solid fa-train-subway"></i> {{name}} <small>{{localize "NEONCOMBAT.Hub.WalkFor" time=walk}}</small> {{#each lines}}<span class="ncm-hub-dot" style="--c:{{color}}" data-tooltip="{{name}}"></span>{{/each}}</button></li>{{/each}}</ul>
+  {{/if}}
+  {{{actions}}}
+  {{#if gm}}
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Hub.GMPlace"}}</h4>
+  <div class="ncm-hub-btns">
+    {{#if hidden}}
+    <button type="button" class="ncm-hub-reveal" data-hub="reveal" data-key="{{key}}"><i class="fa-solid fa-eye"></i> {{localize "NEONCOMBAT.Hub.Reveal"}}</button>
+    <button type="button" data-hub="revealQuiet" data-key="{{key}}" data-tooltip="{{localize 'NEONCOMBAT.Hub.RevealQuietHint'}}"><i class="fa-regular fa-eye"></i> {{localize "NEONCOMBAT.Hub.RevealQuiet"}}</button>
+    {{else}}
+    <button type="button" data-hub="hide" data-key="{{key}}"><i class="fa-solid fa-eye-slash"></i> {{localize "NEONCOMBAT.Hub.Hide"}}</button>
+    {{/if}}
+    <button type="button" data-hub="editPlace" data-key="{{key}}"><i class="fa-solid fa-pen"></i> {{localize "NEONCOMBAT.Hub.Edit"}}</button>
+    <button type="button" class="{{#if moving}}on{{/if}}" data-hub="movePlace" data-key="{{key}}"><i class="fa-solid fa-up-down-left-right"></i> {{localize "NEONCOMBAT.Hub.Move"}}</button>
+    {{#if edited}}<button type="button" data-hub="resetPlace" data-key="{{key}}" data-tooltip="{{localize 'NEONCOMBAT.Hub.ResetHint'}}"><i class="fa-solid fa-rotate-left"></i> {{localize "NEONCOMBAT.Hub.Reset"}}</button>{{/if}}
+    {{#if custom}}<button type="button" class="is-danger" data-hub="deletePlace" data-key="{{key}}"><i class="fa-solid fa-trash"></i> {{localize "NEONCOMBAT.Hub.Delete"}}</button>{{/if}}
+  </div>
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Hub.GMNotes"}}</h4>
+  <textarea name="placeNote" data-key="{{key}}" rows="3" placeholder="{{localize 'NEONCOMBAT.Hub.NotePlaceholder'}}">{{note}}</textarea>
+  <label class="ncm-hub-scene">{{localize "NEONCOMBAT.Hub.Scene"}}
+    <select name="placeScene" data-key="{{key}}">{{#each scenes}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>
+  {{#if scene}}<div class="ncm-hub-btns">
+    <button type="button" data-hub="viewScene" data-scene="{{scene}}"><i class="fa-solid fa-eye"></i> {{localize "NEONCOMBAT.Hub.ViewScene"}}</button>
+    <button type="button" data-hub="activateScene" data-scene="{{scene}}"><i class="fa-solid fa-bullseye"></i> {{localize "NEONCOMBAT.Hub.ActivateScene"}}</button></div>{{/if}}
+  {{/if}}
+</section>
+
+{{else if (eq kind "district")}}
+<section class="ncm-hub-sec" style="--c:{{chips.0.color}}">
+  <button type="button" class="ncm-hub-back" data-hub="home"><i class="fa-solid fa-chevron-left"></i> {{localize "NEONCOMBAT.Hub.Back"}}</button>
+  <span class="ncm-kicker">// {{#if code}}{{localize "NEONCOMBAT.Hub.District"}} {{code}} · {{boro}}{{else}}{{localize "NEONCOMBAT.Hub.Outside"}}{{/if}}</span>
+  <h2>{{name}}</h2>
+  <p class="ncm-hub-where">{{#each chips}}<span class="ncm-hub-chip" style="--c:{{color}}">{{label}}</span>{{/each}}{{#if zone}} <small>{{zone}}</small>{{/if}}
+    {{#unless signal}}<span class="ncm-hub-chip is-dead"><i class="fa-solid fa-signal"></i> {{localize "NEONCOMBAT.Hub.NoSignal"}}</span>{{/unless}}</p>
+  <dl class="ncm-hub-codes">
+    <dt>{{localize "NEONCOMBAT.Hub.Security"}}</dt><dd><b>{{sc}}</b> {{provider}}{{#if intensity}} · {{intensity}}{{/if}}</dd>
+    <dt>{{localize "NEONCOMBAT.Hub.Utility"}}</dt><dd><b>{{uc}}</b></dd>
+    {{#if was}}<dt>{{localize "NEONCOMBAT.Hub.Was"}}</dt><dd>{{was}}</dd>{{/if}}
+    {{#if ncart}}<dt>NCART</dt><dd>{{ncart}}</dd>{{/if}}
+    {{#if turf}}<dt>{{localize "NEONCOMBAT.Hub.Turf"}}</dt><dd>{{turf}}</dd>{{/if}}
+  </dl>
+  {{#if dossier}}<blockquote class="ncm-hub-dossier"><span class="ncm-kicker">// NCZTA-70</span>{{dossier}}{{#if note}}<small>{{note}}</small>{{/if}}</blockquote>{{/if}}
+  {{{actions}}}
+  {{#if gm}}
+  <div class="ncm-hub-btns">
+    {{#if canAdd}}<button type="button" class="ncm-hub-reveal" data-hub="addPlace"><i class="fa-solid fa-map-pin"></i> {{localize "NEONCOMBAT.Hub.AddPlaceHere"}}</button>{{/if}}
+    {{#if hiddenCount}}<button type="button" data-hub="revealHere"><i class="fa-solid fa-eye"></i> {{localize "NEONCOMBAT.Hub.RevealHere" count=hiddenCount}}</button>{{/if}}
+    {{#if shownCount}}<button type="button" data-hub="hideHere"><i class="fa-solid fa-eye-slash"></i> {{localize "NEONCOMBAT.Hub.HideHere" count=shownCount}}</button>{{/if}}
+  </div>
+  {{/if}}
+  {{#if places.length}}
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Hub.Places"}}</h4>
+  <ul class="ncm-hub-list">{{#each places}}<li class="{{#if hidden}}is-hidden{{/if}}"><button type="button" data-hub="select" data-key="{{key}}"><span class="ncm-hub-num" style="--c:{{color}}">{{n}}</span> {{name}}{{#if hidden}} <i class="fa-solid fa-eye-slash"></i>{{/if}} <small>{{cat}}</small></button></li>{{/each}}</ul>
+  {{else}}
+  {{#unless gm}}{{#if code}}<p class="ncm-hint">{{localize "NEONCOMBAT.Hub.NothingKnown"}}</p>{{/if}}{{/unless}}
+  {{/if}}
+</section>
+
+{{else if (eq kind "station")}}
+<section class="ncm-hub-sec">
+  <button type="button" class="ncm-hub-back" data-hub="home"><i class="fa-solid fa-chevron-left"></i> {{localize "NEONCOMBAT.Hub.Back"}}</button>
+  <span class="ncm-kicker">// NCART {{#if statusText}}· {{statusText}}{{/if}}</span>
+  <h2>{{name}}</h2>
+  <p class="ncm-hub-where">{{#each lines}}<span class="ncm-hub-chip" style="--c:{{color}}">{{name}}</span>{{/each}}</p>
+  <p class="ncm-hub-where">{{#if districtKey}}<button type="button" data-hub="select" data-key="{{districtKey}}">{{district}}</button>{{else}}{{district}}{{/if}} {{#each chips}}<span class="ncm-hub-chip" style="--c:{{color}}">{{label}}</span>{{/each}}</p>
+  {{{actions}}}
+  {{#if places.length}}
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Hub.NearStation"}}</h4>
+  <ul class="ncm-hub-list">{{#each places}}<li><button type="button" data-hub="select" data-key="{{key}}"><span class="ncm-hub-num" style="--c:{{color}}">{{n}}</span> {{name}}</button></li>{{/each}}</ul>
+  {{/if}}
+</section>
+
+{{else if (eq kind "pin")}}
+<section class="ncm-hub-sec">
+  <button type="button" class="ncm-hub-back" data-hub="home"><i class="fa-solid fa-chevron-left"></i> {{localize "NEONCOMBAT.Hub.Back"}}</button>
+  <div class="ncm-hub-who"><img src="{{img}}" alt=""><div><span class="ncm-kicker">// {{localize "NEONCOMBAT.Hub.Character"}}</span><h2>{{name}}</h2></div></div>
+  <p class="ncm-hub-where">{{#if districtKey}}<button type="button" data-hub="select" data-key="{{districtKey}}">{{district}}</button>{{else}}{{district}}{{/if}} {{#each chips}}<span class="ncm-hub-chip" style="--c:{{color}}">{{label}}</span>{{/each}}
+    {{#if noSignal}}<span class="ncm-hub-chip is-dead"><i class="fa-solid fa-signal"></i> {{localize "NEONCOMBAT.Hub.NoSignal"}}</span>{{/if}}</p>
+  <div class="ncm-hub-btns">
+    {{#if canCall}}<button type="button" class="ncm-hub-holo" data-hub="call" data-actor="{{actorId}}"><i class="fa-solid fa-phone-volume"></i> {{localize "NEONCOMBAT.Hub.Holocall"}}</button>{{/if}}
+    {{#if mine}}<button type="button" data-hub="unpin" data-actor="{{actorId}}"><i class="fa-solid fa-location-pin-lock"></i> {{localize "NEONCOMBAT.Hub.Unpin"}}</button>{{/if}}
+  </div>
+  {{{actions}}}
+</section>
+
+{{else if (eq kind "crew")}}
+<section class="ncm-hub-sec">
+  <button type="button" class="ncm-hub-back" data-hub="home"><i class="fa-solid fa-chevron-left"></i> {{localize "NEONCOMBAT.Hub.Back"}}</button>
+  <span class="ncm-kicker">// {{localize "NEONCOMBAT.Hub.WeAreHere"}}</span>
+  <h2>{{#if label}}{{label}}{{else}}{{district}}{{/if}}</h2>
+  <p class="ncm-hub-where">{{district}} {{#each chips}}<span class="ncm-hub-chip" style="--c:{{color}}">{{label}}</span>{{/each}}</p>
+  {{#if gm}}<div class="ncm-hub-btns"><button type="button" data-hub="crewClear"><i class="fa-solid fa-xmark"></i> {{localize "NEONCOMBAT.Hub.CrewClear"}}</button></div>{{/if}}
+  {{{actions}}}
+</section>
+
+{{else}}
+<section class="ncm-hub-sec">
+  <span class="ncm-kicker">// NCZTA-70 · {{localize "NEONCOMBAT.Hub.Ratings"}}</span>
+  <h2>{{localize "NEONCOMBAT.Hub.HomeTitle"}}</h2>
+  <p class="ncm-hint">{{localize "NEONCOMBAT.Hub.HomeHint"}}</p>
+  {{#if discovery}}<p class="ncm-hub-disc"><i class="fa-solid fa-eye"></i> {{localize "NEONCOMBAT.Hub.DiscoveryCount" shown=discovery.shown total=discovery.total}}{{#if discovery.on}} <small>{{localize "NEONCOMBAT.Hub.DiscoveryOnHint"}}</small>{{/if}}</p>{{/if}}
+  {{#if crew}}<p class="ncm-hub-crewline"><button type="button" data-hub="select" data-key="crew"><i class="fa-solid fa-diamond"></i> {{localize "NEONCOMBAT.Hub.WeAreHere"}}: {{#if crew.label}}{{crew.label}}, {{/if}}{{crew.district}}</button></p>{{/if}}
+  {{#if mine.length}}
+  <ul class="ncm-hub-list ncm-hub-mine">{{#each mine}}<li>{{#if pinned}}<button type="button" data-hub="select" data-key="pin:{{id}}">{{else}}<span>{{/if}}<img src="{{img}}" alt=""> {{name}} <small>{{where}}</small>{{#if pinned}}</button>{{else}}</span>{{/if}}</li>{{/each}}</ul>
+  {{/if}}
+  {{#each groups}}
+  <div class="ncm-hub-rating" style="--c:{{color}}">
+    <h4><i></i>{{label}}</h4>
+    <p>{{text}}</p>
+    <div>{{#each districts}}<button type="button" data-hub="select" data-key="{{key}}"><span class="ncm-hub-code">{{code}}</span> {{name}}</button>{{/each}}</div>
+  </div>
+  {{/each}}
+  <h4 class="ncm-sub">// NCART 2070</h4>
+  <ul class="ncm-hub-lines">{{#each lines}}<li style="--c:{{color}}"><i></i><b>{{id}} {{name}}</b> <small>{{#if state}}{{state}}{{else}}{{summary}}{{/if}}</small></li>{{/each}}</ul>
+</section>
+{{/if}}

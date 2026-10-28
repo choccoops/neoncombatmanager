@@ -777,6 +777,11 @@
           "name": "Biomon Link & Holocalls",
           "label": "Biomon & Holocalls",
           "hint": "What linking and calling need, ring time, and missed calls in Night City Messenger."
+        },
+        "hub": {
+          "name": "City & NCART hub",
+          "label": "Map settings",
+          "hint": "Who can open the 2070 city map, and how map positions affect holocall signal."
         }
       },
       "Placement": {
@@ -819,6 +824,43 @@
       "linkImplants": {
         "name": "Implants that link",
         "hint": "Installed cyberware (comma-separated names) that broadcasts vitals: the CEMK Neuroport (and Neuroport (Free)) and Biomonitor cyberware by default."
+      },
+      "callLogs": {
+        "name": "Holocall logs to Night City Messenger",
+        "hint": "Keep each holocall's conversation in the player characters' messenger inboxes, threaded per contact: with a button on the ended call, automatically when a call ends, or not at all."
+      },
+      "CallLogs": {
+        "off": "Off",
+        "button": "Save button on the ended call",
+        "auto": "Automatically"
+      },
+      "busySignal": {
+        "name": "Busy signal",
+        "hint": "A character already on a holocall shows as Busy instead of ringing."
+      },
+      "callSounds": {
+        "name": "Holocall sounds",
+        "hint": "Ringtone, ringback and connect/drop blips."
+      },
+      "callRingtone": {
+        "name": "Holocall ringtone",
+        "hint": "Your own audio file for incoming holocalls. Empty: the built-in chirp."
+      },
+      "hubPlayers": {
+        "name": "Players can open the city map",
+        "hint": "Players see the places, districts, NCART and the crew. Off: only the GM."
+      },
+      "hubSignal": {
+        "name": "Map position decides holocall signal",
+        "hint": "A character pinned where the Utility Code is 9 or worse (West Wind, the Occupied Zone, Laguna Bend) has no signal: no calls in or out."
+      },
+      "hubDeadZones": {
+        "name": "More dead zones",
+        "hint": "District codes or names with no signal on top of those, separated by commas (\"E, The Badlands\")."
+      },
+      "hubDiscovery": {
+        "name": "Places are discovered",
+        "hint": "Players only see the places you reveal (the 85 on the 2070 map and your own). Off: they see every place you haven't hidden."
       }
     },
     "SceneWeather": {
@@ -1067,7 +1109,8 @@
         "nosignal": "No signal",
         "nodevice": "No Agent",
         "left": "Hung up",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "busy": "Busy"
       },
       "OnCall": "Calls",
       "CallAs": "Calling as",
@@ -1105,7 +1148,20 @@
       "RoutingStop": "Click to go back to regular chat",
       "Route": "Talk from chat",
       "RouteHint": "Your regular chat box talks on this call (other /commands and rolls still work). /holo in chat does the same.",
-      "Jammed": "{name}'s comms are jammed: no calls in or out."
+      "Jammed": "{name}'s comms are jammed: no calls in or out.",
+      "NoSignalAt": "{name} has no signal in {where}.",
+      "CallAsActor": "Holocall as {name}",
+      "CallActor": "Holocall {name}",
+      "SheetButton": "Holocall",
+      "MenuEntry": "Holocall",
+      "SaveLog": "Save to Messenger",
+      "LogHint": "Keep this call's log in Night City Messenger, in the inbox of: {names}",
+      "LogKept": "Log kept in Messenger",
+      "LogSaved": "Holocall log kept in Night City Messenger.",
+      "LogFailed": "The log couldn't be kept (is Night City Messenger running, and is anyone on the call a player character?).",
+      "LogSubject": "Holocall log · {names} ({length})",
+      "LogHeader": "Holocall · {names} · {time} · {length}",
+      "LogSilent": "Nobody said anything."
     },
     "Stakes": {
       "Title": "Plot Die",
@@ -1278,6 +1334,139 @@
         "damageDeflection": "Every 2 points: the first damage you take each Round is 1 less (up to 5).",
         "threatDetection": "1 point each: +1 Perception.",
         "fumbleRecovery": "4 points: ignore implodes (1s) on attack rolls. The 1 still counts as 1."
+      }
+    },
+    "Hub": {
+      "Title": "Night City Map",
+      "KeyHint": "Open the City & NCART hub (Night City 2070).",
+      "Kicker": "City & NCART",
+      "GMOnly": "The GM has the city map to themselves for now.",
+      "View": {
+        "city": "City",
+        "zones": "Threat Zones",
+        "ncart": "NCART"
+      },
+      "Search": "Search places, districts, stations…",
+      "Close": "Close (Esc)",
+      "Fit": "Fit the map",
+      "Layer": {
+        "places": "Places",
+        "people": "Crew"
+      },
+      "Back": "Overview",
+      "Results": "Results",
+      "NoResults": "Nothing by that name.",
+      "HomeTitle": "Night City, 2070",
+      "HomeHint": "Drag to move, scroll to zoom. Click a place, a district or a station. Pick two to plan a route.",
+      "Ratings": "Threat Ratings",
+      "District": "District",
+      "Outside": "Outside the districts",
+      "Security": "Security",
+      "Utility": "Utility",
+      "Was": "In 2045",
+      "Turf": "Turf",
+      "Places": "Notable Places",
+      "NearStation": "Near the station",
+      "Character": "Character",
+      "Crew": "The crew",
+      "WeAreHere": "We are here",
+      "Unpinned": "not on the map",
+      "NoSignal": "No signal",
+      "StationName": "{name} station",
+      "Status": {
+        "closed": "Closed",
+        "uc": "Under construction",
+        "planned": "Planned",
+        "suspended": "Suspended"
+      },
+      "WalkFor": "{time} on foot",
+      "GMNotes": "GM notes",
+      "NotePlaceholder": "Only you see this. Who's here tonight, what's going on…",
+      "Scene": "Battle map",
+      "ViewScene": "View",
+      "ActivateScene": "Move everyone there",
+      "RouteFrom": "Route from here",
+      "RouteTo": "Route to here",
+      "PinHere": "I'm here",
+      "CrewHere": "Crew is here",
+      "CrewClear": "Take the marker off",
+      "ShowPlayers": "Show the players",
+      "Unpin": "Off the map",
+      "Holocall": "Holocall",
+      "Route": "Route",
+      "PickStart": "pick a start",
+      "PickEnd": "pick a destination",
+      "Swap": "Swap",
+      "StormHint": "Fog, a storm or a closed bridge: every trip on the ground takes twice as long.",
+      "ClearRoute": "Clear the route",
+      "RushHour": "Rush hour",
+      "WalkIn": "{min} min to the platform ·",
+      "WalkOut": "· {min} min on foot after",
+      "DangerOnRoute": "Through:",
+      "Travel": "Travel",
+      "TravelHint": "Moves the clock by the trip and the crew marker to the destination. Cars roll for a jam.",
+      "NoWay": "There's no way to make this trip like that.",
+      "TravelDone": "The crew arrives. {time} passed.",
+      "TravelKicker": "On the move",
+      "Traveled": "{from} → {to}",
+      "TravelBody": "By {mode}: {time} ({km} km).",
+      "Through": "Through {names}.",
+      "Jam": {
+        "jam": "Traffic jam (1d10: {roll}): twice as long.",
+        "gridlock": "Gridlock (1d10: {roll}): three times as long.",
+        "clear": "Traffic moves (1d10: {roll})."
+      },
+      "Mode": {
+        "walk": "Walk",
+        "skates": "Skates",
+        "bike": "Bike",
+        "ncart": "NCART",
+        "moto": "Moto",
+        "car": "Car",
+        "av": "AV"
+      },
+      "CampaignCat": "Campaign",
+      "HiddenTag": "hidden from players",
+      "HiddenNote": "Hidden from the players. They don't see it on the map, in searches or in lists.",
+      "YourPlace": "your place",
+      "GMPlace": "This place",
+      "Reveal": "Reveal",
+      "RevealQuiet": "Reveal quietly",
+      "RevealQuietHint": "Show it on the players' map without a chat card.",
+      "Hide": "Hide from players",
+      "Edit": "Edit",
+      "Move": "Move",
+      "MoveHint": "Click the map where {name} goes. Esc cancels.",
+      "Reset": "Back to the map's",
+      "ResetHint": "Undo your changes to this place.",
+      "Delete": "Delete",
+      "DeletePlace": "Delete this place?",
+      "DeleteConfirm": "Delete {name} from the map? Its notes go with it.",
+      "CantDelete": "The map's own places can be hidden, not deleted.",
+      "AddPlace": "New place",
+      "EditPlace": "Edit place",
+      "AddPlaceHere": "Add a place here",
+      "RevealHere": "Reveal all here ({count})",
+      "HideHere": "Hide all here ({count})",
+      "NothingKnown": "Nothing you know of here. Yet.",
+      "DiscoveryCount": "Players know {shown} of {total} places.",
+      "DiscoveryOnHint": "Places stay hidden until you reveal them.",
+      "NeedName": "A place needs a name.",
+      "NeedSpot": "Click the map where the place is first.",
+      "DiscoveredKicker": "Location discovered",
+      "Discovered": "{name}",
+      "DiscoveredMany": "{count} new places on the map",
+      "DiscoveredHint": "It's on the Night City Map now (Shift+M).",
+      "Form": {
+        "name": "Name",
+        "cat": "Category",
+        "sc": "Security Code",
+        "guard": "Who guards it",
+        "text": "Description (players see it)",
+        "img": "Picture",
+        "imgHint": "optional",
+        "visible": "Players see it right away",
+        "save": "Save"
       }
     }
   }

@@ -10,7 +10,11 @@ Cyberpunk RED's own rolls.
   everyone's vitals (ECG, HP, status, Death Save penalty, injuries) and raises the alarm when
   someone crashes.
 - **Holocalls**: ring the crew, a Biomon Link or an NPC anywhere in Night City and talk in
-  holo blue, with Night City Messenger contacts, dead zones and missed calls.
+  holo blue, with Night City Messenger contacts, dead zones, missed calls, ringtones, and call
+  logs kept as conversations in the messenger.
+- **Night City Map**: the 2070 city full screen, with the NCZTA-70 threat zones, 85 Notable
+  Places, the NCART network, the crew and the characters where they are, and a route planner
+  with the 2070 travel times.
 - **The Plot Die**: the GM Raises the Stakes on a Check; the player rolls the d6 and the card
   hands out the bonus, the Opportunity or the Complication (2070 Core Rules).
 - **Combat Awareness**: Solos split their Rank across the six abilities in a small window,
@@ -113,8 +117,69 @@ Talk to the crew, or to someone who isn't in the scene, the way calls look in *E
 - **Night City Messenger**: its dead-zone scenes have no signal (you can't call out, and calls
   there go unanswered); a call that rings out leaves a **missed holocall** in the character's
   messenger inbox (setting).
+- **Call logs in Night City Messenger**: when a call ends, **Save to Messenger** keeps the
+  conversation in the inbox of every player character who was on it, as mail from the person
+  they spoke with. Every call between the same two lands in one thread, so the messenger shows
+  their whole holocall history as one conversation. The GM can make it automatic, or switch it
+  off.
+- **Call from an actor**: the Actors directory's right-click menu and the sheet header have a
+  **Holocall** entry. The GM calls *as* an NPC; anyone calls a character.
+- **Ringtone and busy**: incoming calls ring (a synth chirp, or your own audio file in the
+  settings), callers hear ringback, and calls blip when they connect and drop. Someone already
+  on a call shows **Busy**.
+- **Signal on the map**: a character pinned on the Night City Map where nothing works
+  (Utility Code 9+: West Wind, the Occupied Zone, Laguna Bend, plus any district the GM adds)
+  can't call out, and calls to them don't get through.
 - Settings: ring time; whether characters need something to call with: an Agent (carried), an
   Internal Agent, or a Neuroport (its Holophone).
+
+## Night City Map
+
+The City & NCART hub: Night City in 2070, full screen. Open it with **Shift+M**, the map button
+in the token controls or on the carousel, or `/map` (`/ncart` opens the metro). Drag to move,
+scroll to zoom, Esc to close.
+
+- **Three views**: the **City** map, the **Threat Zones** map (each district tinted by its
+  NCZTA-70 rating), and the **NCART** poster.
+- **Notable Places**: all 85, numbered and colored by category (filter them by category). Click
+  one for its write-up from the Night City 2070 sourcebook, its Security Code, its district and
+  rating, and the nearest NCART stations with the walk.
+- **Districts**: click anywhere for the district's NCZTA-70 dossier: Threat Rating (and the
+  secondary one), Zone Type, Security Code and provider, Utility Code, what it was in 2045, its
+  NCART stops, whose turf it is, and its places. The Badlands and Laguna Bend too.
+- **NCART**: the network over the city (closed, planned and suspended track dashed), and the
+  poster view with every station clickable: its lines, its district, what's near it.
+- **Routes**: pick a start and a destination (places, stations, characters, the crew, or any
+  spot) for the distance and the trip **on foot, skates, bike, NCART, motorcycle, car and AV**,
+  from the 2070 Travel Times (Core Ch.11): rush hour from the world clock (Arroyo's shift
+  changes too), a storm toggle, the NCART ride with its changes and the walk at each end, and a
+  warning for the Combat, Extraterritorial or Occupied ground on the way.
+- **Travel** (GM): the crew makes the trip. The clock moves by the trip's time, a car rolls for a
+  jam (gridlock in rush hour), the crew marker moves, and a card tells the table.
+- **Where everyone is**: the GM sets **We are here** for the crew, and players pin their own
+  characters (**I'm here**). Click a character to holocall them (unless they're out of signal).
+- **Discovery**: the players start with an empty map and find Night City as the campaign goes.
+  The GM sees every place (the undiscovered ones faded) and **Reveals** them one at a time, or a
+  whole district at once. A reveal posts a "Location discovered" card (or **Reveal quietly**).
+  **Hide** takes a place back off the players' map. Turn the setting off and players see every
+  place except the ones you hide.
+- **Your own places**: click the map where it is, then **Add a place here**: a name, a category
+  (the map's seven, or Campaign), a Security Code and who guards it, a description the players
+  read, and a picture. Your places start hidden unless you tick "Players see it right away".
+  **Edit**, **Move** (then click the new spot) and **Delete** them.
+- **The map's own places**: edit their name, category, description or picture, and move them.
+  **Back to the map's** undoes your changes. They can be hidden, not deleted.
+- **For the GM**: notes on any place (only you see them), a battle-map scene linked to a place
+  (view it, or move everyone there), and **Show the players** to open the map on their screens
+  at what you're looking at (showing a hidden place reveals it).
+- Settings: whether players can open the map, whether places are discovered, whether map
+  positions decide holocall signal, and extra dead zones.
+
+The maps, places and district data are the Night City 2070 maps and the NCZTA-70 threat zones
+made for this campaign (`tools/nc2070-data.py` rebuilds the data from their source). The hub's
+approach (a full-screen map with places, districts, routes and a crew marker) and the holocall
+ringtone, ringback, busy signal and actor-menu calls were inspired by Verlierboy's
+[Night City · Interactive Map](https://github.com/samroaleksej-bit/night-city-map).
 
 ## The Plot Die
 
@@ -303,7 +368,8 @@ See [docs/API.md](docs/API.md).
 npm ci
 npm test          # rules, conditions engine, CLT import, Turn automation, templates
 npm run check     # scripts parse, JSON and localization complete, icons exist, v13 guard
-npm run preview   # renders the carousel, Biomon, holocalls, Lab and cards to preview/index.html
+npm run preview   # renders the carousel, Biomon, holocalls, Lab and cards to preview/index.html,
+                  # and the live Night City Map to preview/hub.html (serve the repo, open /preview/hub.html)
 ```
 
 Nothing here reproduces the Cyberpunk RED rulebooks' text: names and summaries are this

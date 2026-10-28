@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.4.0
+
+- **Night City Map** (the City & NCART hub): Night City 2070 full screen, from Shift+M, the token
+  controls, the carousel or `/map`. City, Threat Zones and NCART views of the 2070 maps; the 85
+  Notable Places with their sourcebook write-ups; every district's NCZTA-70 dossier (ratings,
+  Security and Utility Codes, turf, NCART); the NCART network on the city and every station on
+  the poster.
+- **Routes** between any two points with the 2070 Travel Times for every mode, rush hour from
+  the clock, a storm toggle, the NCART ride with its changes, and warnings for dangerous ground.
+  The GM's **Travel** moves the clock and the crew, and rolls for jams.
+- **Discovery**: players see only the places the GM reveals (one at a time with a "Location
+  discovered" card, quietly, or a whole district), and the GM can hide any again.
+- **Your own places**: add pins with a name, category, Security Code, description and picture
+  (hidden until revealed); edit, move and delete them. The map's 85 can be edited, moved, put
+  back, or hidden.
+- **Where everyone is**: the crew's "We are here" marker and each character's pin (players pin
+  their own). Click a character to holocall them. GM notes and linked battle maps on places, and
+  **Show the players**.
+- **Holocall logs in Night City Messenger**: keep a call's conversation in each player
+  character's inbox, threaded per contact into one holocall history (a button on the ended call,
+  automatic, or off).
+- **Holocalls**: a ringtone (synth, or your own file), ringback for the caller, connect and drop
+  blips, a **Busy** signal, and **Holocall** in the Actors directory menu and the sheet header.
+  A character pinned where the Utility Code is 9+ (or in a district the GM lists) has no signal.
+
 ## 1.3.0
 
 From the 2070 Core Rules (Cyberpunk: The Unification Era):

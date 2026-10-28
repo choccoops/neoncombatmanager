@@ -89,6 +89,10 @@
     <button type="button" class="is-danger" data-action="hangUp"><i class="fa-solid fa-phone-slash"></i> {{localize "NEONCOMBAT.Holocall.HangUp"}}</button>
     {{#if gm}}<button type="button" class="is-danger" data-action="endCall"><i class="fa-solid fa-power-off"></i> {{localize "NEONCOMBAT.Holocall.EndAll"}}</button>{{/if}}
     {{/unless}}
+    {{#if log}}
+    {{#if log.saved}}<span class="ncm-holo-logged"><i class="fa-solid fa-envelope-circle-check"></i> {{localize "NEONCOMBAT.Holocall.LogKept"}}</span>
+    {{else}}<button type="button" class="ncm-cta" data-action="saveLog" data-tooltip="{{localize 'NEONCOMBAT.Holocall.LogHint' names=log.names}}"><i class="fa-solid fa-envelope-open-text"></i> {{localize "NEONCOMBAT.Holocall.SaveLog"}}</button>{{/if}}
+    {{/if}}
   </footer>
 </section>
 {{/if}}
