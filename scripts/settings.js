@@ -7,7 +7,7 @@ export const MENUS = {
   combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCriticals", "critItems", "cltShim"],
   comms: ["linkNeedsImplant", "linkImplants", "callNeedsAgent", "ringSeconds", "missedCallMessages", "callLogs", "busySignal"],
-  hub: ["hubPlayers", "hubSignal", "hubDeadZones"],
+  hub: ["hubPlayers", "hubDiscovery", "hubSignal", "hubDeadZones"],
   environment: [
     "weatherSource", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
     "lowLightAt", "darkAt", "sightKeys", "visibilityCap", "visibilityFrom", "envOutsideCombat",
@@ -40,6 +40,7 @@ const DEFS = [
 
   // City & NCART hub
   ["hubPlayers", "world", Boolean, true, {}],
+  ["hubDiscovery", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.hubChanged`, null) }],
   ["hubSignal", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.callsChanged`) }],
   ["hubDeadZones", "world", String, "", {}],
   ["cityHub", "world", Object, {}, { config: false, onChange: (v) => Hooks.callAll(`${MODULE_ID}.hubChanged`, v) }],

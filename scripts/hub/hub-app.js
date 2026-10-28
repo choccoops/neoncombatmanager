@@ -40,7 +40,9 @@ export class HubApp {
     this.t = { x: 0, y: 0, s: 0.4 };
     this.sel = null;
     this.route = { a: null, b: null };
-    this.cats = new Set(Object.keys(NC2070.cats));
+    this.cats = new Set(Object.keys(Hub.cats));
+    /** A place being moved: its key, until the next click on the map. */
+    this.moving = null;
     this.layers = { places: true, ncart: true, people: true };
     this.query = "";
     this.storm = false;
@@ -63,7 +65,7 @@ export class HubApp {
     const html = await Compat.renderTemplate(`${TEMPLATE_PATH}/hub.hbs`, {
       gm: game.user.isGM,
       views: Object.keys(VIEWS).map((v) => ({ id: v, label: L(`${LANG}.Hub.View.${v}`) })),
-      cats: Object.entries(NC2070.cats).map(([id, c]) => ({ id, label: c.label, color: c.color }))
+      cats: Object.entries(Hub.cats).map(([id, c]) => ({ id, label: c.label, color: c.color }))
     });
     const wrap = document.createElement("div");
     wrap.innerHTML = html.trim();
@@ -224,7 +226,8 @@ export class HubApp {
     this._onKey = (ev) => {
       if (ev.key === "Escape" && this.el && !ev.target.closest?.("input, textarea, select")) {
         ev.stopPropagation();
-        if (this.sel) this.select(null);
+        if (this.moving) this.setMoving(null);
+        else if (this.sel) this.select(null);
         else this.close();
       }
     };
@@ -243,6 +246,12 @@ export class HubApp {
   }
 
   _click(ev, target = ev.target) {
+    if (this.moving && this.view !== "ncart") {
+      const w = this.toWorld(ev.clientX, ev.clientY);
+      const key = this.moving;
+      this.setMoving(null);
+      return Hub.updatePlace(key, { x: w.x, y: w.y }).catch((err) => ui.notifications.warn(err.message));
+    }
     const hit = target.closest?.("[data-sel]");
     if (hit) return this.select(hit.dataset.sel);
     if (this.view === "ncart") {
@@ -330,13 +339,18 @@ export class HubApp {
     }
     // Notable Places.
     if (this.layers.places) {
-      out.push(`<g class="ncm-hub-places">${NC2070.places.filter((p) => this.cats.has(p.cat)).map((p) => {
-        const key = `p:${Hub.placeKey(p)}`;
-        const c = NC2070.cats[p.cat]?.color ?? "#fff";
-        const mark = p.badge
-          ? `<path d="M0 -9 L8 0 L0 9 L-8 0 Z"/><text y="3.2">${p.badge === "ncu" ? "U" : "+"}</text>`
-          : `<circle r="7.5"/><text y="3">${p.n}</text>`;
-        return `<g class="ncm-m ncm-hub-place${sel === key ? " is-sel" : ""}${Hub.state.notes[Hub.placeKey(p)] && game.user.isGM ? " has-note" : ""}" transform="translate(${p.x} ${p.y})" style="--c:${c}" data-sel="${key}" data-tip="${esc(p.name)}"><g class="ncm-mi">${mark}<text class="ncm-hub-label" x="11" y="3.5">${esc(p.name)}</text></g></g>`;
+      const cats = Hub.cats;
+      const notes = Hub.state.notes;
+      out.push(`<g class="ncm-hub-places">${Hub.visiblePlaces().filter((p) => this.cats.has(p.cat)).map((p) => {
+        const key = `p:${p.key}`;
+        const c = cats[p.cat]?.color ?? "#fff";
+        const mark = p.custom
+          ? `<path d="M0 -10 L2.9 -3.1 L10 -3.1 L4.3 1.4 L6.5 8.6 L0 4.3 L-6.5 8.6 L-4.3 1.4 L-10 -3.1 L-2.9 -3.1 Z"/>`
+          : p.badge
+            ? `<path d="M0 -9 L8 0 L0 9 L-8 0 Z"/><text y="3.2">${p.badge === "ncu" ? "U" : "+"}</text>`
+            : `<circle r="7.5"/><text y="3">${p.n}</text>`;
+        const cls = `${sel === key ? " is-sel" : ""}${notes[p.key] && game.user.isGM ? " has-note" : ""}${p.hidden ? " is-hidden" : ""}`;
+        return `<g class="ncm-m ncm-hub-place${cls}" transform="translate(${p.x} ${p.y})" style="--c:${c}" data-sel="${key}" data-tip="${esc(p.name)}${p.hidden ? ` (${esc(L(`${LANG}.Hub.HiddenTag`))})` : ""}"><g class="ncm-mi">${mark}<text class="ncm-hub-label" x="11" y="3.5">${esc(p.name)}</text></g></g>`;
       }).join("")}</g>`);
     }
     out.push(this._svgRoute());
@@ -429,7 +443,8 @@ export class HubApp {
   }
 
   _placeRow(p) {
-    return { key: `p:${Hub.placeKey(p)}`, n: p.n ?? "◆", name: p.name, color: NC2070.cats[p.cat]?.color, cat: NC2070.cats[p.cat]?.label };
+    const cat = Hub.cats[p.cat];
+    return { key: `p:${p.key}`, n: p.custom ? "★" : p.n ?? "◆", name: p.name, color: cat?.color, cat: cat?.label, hidden: p.hidden };
   }
 
   /** The buttons every selection shares: route from / to, put the crew or a character here, show the players. */
@@ -462,7 +477,7 @@ export class HubApp {
     const k = this.sel ?? "";
     const q = this.query.trim().toLowerCase();
     if (q) {
-      const places = NC2070.places.filter((p) => p.name.toLowerCase().includes(q)).map((p) => this._placeRow(p));
+      const places = Hub.visiblePlaces().filter((p) => p.name.toLowerCase().includes(q)).map((p) => this._placeRow(p));
       const districts = NC2070.districts.filter((d) => d.name.toLowerCase().includes(q)).map((d) => ({ key: `d:${d.code}`, code: d.code, name: d.name }));
       const stations = Object.entries(NC2070.stations).filter(([, s]) => s.name.toLowerCase().includes(q)).map(([id, s]) => ({ key: `s:${id}`, name: s.name }));
       return { ...base, kind: "search", places, districts, stations, empty: !places.length && !districts.length && !stations.length };
@@ -481,11 +496,12 @@ export class HubApp {
 
   _placeContext(key) {
     const p = Hub.place(key);
-    if (!p) return {};
-    const d = p.district ? districtByCode(p.district) : districtAt(p.x, p.y);
+    if (!p || (p.hidden && !game.user.isGM)) return {};
+    const d = districtAt(p.x, p.y);
     const note = Hub.state.notes[key] ?? {};
     return {
-      key, n: p.n, name: p.name, badge: !!p.badge, cat: NC2070.cats[p.cat]?.label, color: NC2070.cats[p.cat]?.color,
+      key, n: p.n, name: p.name, badge: !!p.badge, cat: Hub.cats[p.cat]?.label, color: Hub.cats[p.cat]?.color,
+      custom: p.custom, edited: p.edited, hidden: p.hidden, img: p.img, moving: this.moving === key,
       text: p.text, sc: p.sc, guard: p.guard, district: d?.name, districtKey: d?.code ? `d:${d.code}` : null, chips: d ? this._chips(d) : [],
       stations: this._stationsNear(p),
       note: note.note ?? "", scene: note.scene ?? "", sceneName: game.scenes?.get(note.scene)?.name ?? "",
@@ -498,13 +514,17 @@ export class HubApp {
   _districtContext(k) {
     const d = k.startsWith("d:") ? districtByCode(k.slice(2)) : NC2070.outside.find((o) => o.name === k.slice(2));
     if (!d) return {};
-    const places = d.code ? NC2070.places.filter((p) => p.district === d.code).map((p) => this._placeRow(p)) : [];
+    const places = Hub.visiblePlaces().filter((p) => (districtAt(p.x, p.y).code ?? districtAt(p.x, p.y).name) === (d.code ?? d.name)).map((p) => this._placeRow(p));
     const at = this._clicked ?? (d.label ? { x: d.label[0], y: d.label[1] } : null);
     return {
       code: d.code, name: d.name, boro: d.boro, zone: d.zone, chips: this._chips(d), ratingText: NC2070.threat[d.rating]?.text,
       sc: d.sc, provider: d.provider, intensity: d.intensity, uc: d.uc ?? "—", was: d.was, dossier: d.dossier, note: d.note,
       ncart: d.ncart, turf: d.turf, places,
-      signal: at ? !deadAt(at.x, at.y, { extra: Settings.list("hubDeadZones") }) : true
+      signal: at ? !deadAt(at.x, at.y, { extra: Settings.list("hubDeadZones") }) : true,
+      // GM: what's still hidden here, and adding a place where the map was clicked.
+      hiddenCount: places.filter((p) => p.hidden).length,
+      shownCount: places.filter((p) => !p.hidden).length,
+      canAdd: !!this._clicked && this.view !== "ncart"
     };
   }
 
@@ -512,7 +532,7 @@ export class HubApp {
     const s = NC2070.stations[id];
     if (!s) return {};
     const d = districtAt(s.x, s.y);
-    const places = NC2070.places.filter((p) => km(p, s) < 0.9).map((p) => this._placeRow(p));
+    const places = Hub.visiblePlaces().filter((p) => km(p, s) < 0.9).map((p) => this._placeRow(p));
     return { id, name: s.name, status: s.status, statusText: s.status ? L(`${LANG}.Hub.Status.${s.status}`) : "", lines: this._linesAt(id), district: d.name, districtKey: d.code ? `d:${d.code}` : null, chips: this._chips(d), places };
   }
 
@@ -535,8 +555,10 @@ export class HubApp {
       districts: NC2070.districts.filter((d) => d.rating === r).map((d) => ({ key: `d:${d.code}`, code: d.code, name: d.name }))
     })).filter((g) => g.districts.length);
     const crew = Hub.state.crew;
+    const all = Hub.places();
     return {
       groups,
+      discovery: game.user.isGM ? { shown: all.filter((p) => !p.hidden).length, total: all.length, on: Settings.get("hubDiscovery") !== false } : null,
       crew: crew ? { label: crew.label, district: districtAt(crew.x, crew.y).name } : null,
       mine: this._myActors().map((a) => ({ id: a.id, name: a.name, img: a.img, where: Hub.whereIs(a) || L(`${LANG}.Hub.Unpinned`), pinned: !!Hub.pinOf(a) })),
       lines: Object.entries(NC2070.lines).map(([id, l]) => ({ id, name: l.name, color: l.color, summary: l.summary, state: l.segs.length ? "" : l.planned.length ? L(`${LANG}.Hub.Status.planned`) : L(`${LANG}.Hub.Status.suspended`) }))
@@ -669,7 +691,49 @@ export class HubApp {
       }
       case "showPlayers": {
         const s = this.selSpot();
+        // Showing a place the players haven't found yet is how they find it.
+        const p = this.sel?.startsWith("p:") ? Hub.place(this.sel.slice(2)) : null;
+        if (p?.hidden) await Hub.setSeen(p.key, true);
         return Hub.show({ view: this.view, key: this.sel, x: s?.x, y: s?.y, s: this.t.s });
+      }
+      case "reveal":
+      case "revealQuiet":
+        return Hub.setSeen(d.key, true, { quiet: action === "revealQuiet" });
+      case "hide":
+        return Hub.setSeen(d.key, false);
+      case "revealHere":
+      case "hideHere": {
+        const ctx = this._districtContext(this.sel ?? "");
+        const keys = (ctx.places ?? []).filter((p) => (action === "revealHere" ? p.hidden : !p.hidden)).map((p) => p.key.slice(2));
+        return keys.length ? Hub.setSeen(keys, action === "revealHere") : null;
+      }
+      case "addPlace": {
+        const at = this._clicked;
+        if (!at) return null;
+        const data = await this.placeDialog({ x: at.x, y: at.y }, { isNew: true });
+        if (!data) return null;
+        const key = await Hub.addPlace(data, { visible: data.visible });
+        return this.select(`p:${key}`);
+      }
+      case "editPlace": {
+        const p = Hub.place(d.key);
+        const data = p && (await this.placeDialog(p));
+        if (data) await Hub.updatePlace(d.key, data);
+        return null;
+      }
+      case "movePlace":
+        return this.setMoving(d.key);
+      case "resetPlace":
+        return Hub.resetPlace(d.key);
+      case "deletePlace": {
+        const ok = await Compat.DialogV2.confirm({
+          window: { title: L(`${LANG}.Hub.DeletePlace`) },
+          content: `<p>${esc(L(`${LANG}.Hub.DeleteConfirm`, { name: Hub.place(d.key)?.name ?? "" }))}</p>`,
+          rejectClose: false
+        });
+        if (!ok) return null;
+        await Hub.removePlace(d.key);
+        return this.select(null);
       }
       case "viewScene":
         return game.scenes.get(d.scene)?.view();
@@ -677,6 +741,64 @@ export class HubApp {
         return game.scenes.get(d.scene)?.activate();
       default:
         return null;
+    }
+  }
+
+  /** Move a place: the next click on the map puts it there (Esc cancels). */
+  setMoving(key) {
+    this.moving = key;
+    this.el?.classList.toggle("is-moving", !!key);
+    const tip = this.el?.querySelector(".ncm-hub-movetip");
+    if (tip) tip.textContent = key ? L(`${LANG}.Hub.MoveHint`, { name: Hub.place(key)?.name ?? "" }) : "";
+    this.renderPanel();
+  }
+
+  /**
+   * The place form: name, category, Security Code and who guards it, the description, a picture,
+   * and (new places) whether the players see it right away.
+   * @returns {Promise<object|null>} the fields, or null when cancelled
+   */
+  async placeDialog(p, { isNew = false } = {}) {
+    const cats = Object.entries(Hub.cats).map(([id, c]) => `<option value="${id}"${id === (p.cat ?? "campaign") ? " selected" : ""}>${esc(c.label)}</option>`).join("");
+    const content = `<div class="ncm-grid ncm-hub-form">
+      <label>${esc(L(`${LANG}.Hub.Form.name`))} <input type="text" name="name" value="${esc(p.name ?? "")}" required autofocus></label>
+      <label>${esc(L(`${LANG}.Hub.Form.cat`))} <select name="cat">${cats}</select></label>
+      <label>${esc(L(`${LANG}.Hub.Form.sc`))} <input type="number" name="sc" min="0" max="10" value="${p.sc ?? ""}"></label>
+      <label>${esc(L(`${LANG}.Hub.Form.guard`))} <input type="text" name="guard" value="${esc(p.guard ?? "")}"></label>
+      <label class="ncm-hub-form-wide">${esc(L(`${LANG}.Hub.Form.text`))} <textarea name="text" rows="5">${esc(p.text ?? "")}</textarea></label>
+      <label class="ncm-hub-form-wide">${esc(L(`${LANG}.Hub.Form.img`))} <span class="ncm-hub-fp"><input type="text" name="img" value="${esc(p.img ?? "")}" placeholder="${esc(L(`${LANG}.Hub.Form.imgHint`))}"><button type="button" data-ncm-fp="img"><i class="fa-solid fa-file-image"></i></button></span></label>
+      ${isNew ? `<label class="ncm-hub-form-wide ncm-check"><input type="checkbox" name="visible"> ${esc(L(`${LANG}.Hub.Form.visible`))}</label>` : ""}
+    </div>`;
+    // The picture's file browser, while the form is up.
+    const pick = (ev) => {
+      const btn = ev.target.closest?.("[data-ncm-fp]");
+      if (!btn) return;
+      const input = btn.closest("form, .window-content, .dialog-content")?.querySelector(`[name="${btn.dataset.ncmFp}"]`);
+      const FP = Compat.FilePicker;
+      if (!input || !FP) return;
+      new FP({ type: "image", current: input.value, callback: (path) => (input.value = path) }).render(true);
+    };
+    document.addEventListener("click", pick);
+    try {
+      const data = await Compat.DialogV2.prompt({
+        window: { title: L(`${LANG}.Hub.${isNew ? "AddPlace" : "EditPlace"}`) },
+        classes: ["neon-combat", "ncm-dialog"],
+        position: { width: 480 },
+        content,
+        ok: {
+          label: L(`${LANG}.Hub.Form.save`),
+          callback: (event, button) => {
+            const f = button.form.elements;
+            return { name: f.name.value, cat: f.cat.value, sc: f.sc.value, guard: f.guard.value, text: f.text.value, img: f.img.value, visible: !!f.visible?.checked };
+          }
+        },
+        rejectClose: false
+      });
+      if (!data) return null;
+      const { visible, ...fields } = data;
+      return isNew ? { ...fields, x: p.x, y: p.y, visible } : fields;
+    } finally {
+      document.removeEventListener("click", pick);
     }
   }
 

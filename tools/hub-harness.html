@@ -20,7 +20,8 @@ const getProperty = (o, p) => String(p).split(".").reduce((x, k) => x?.[k], o);
 const cache = new Map();
 const settings = new Map(Object.entries({
   "cpr-neon-combat-manager.cityHub": { crew: { x: 562, y: 726, label: "The Afterlife" }, pins: { a1: { x: 772, y: 948 }, a2: { x: 390, y: 1386 } }, notes: {} },
-  "cpr-neon-combat-manager.hubSignal": true, "cpr-neon-combat-manager.hubDeadZones": "", "cpr-neon-combat-manager.hubPlayers": true
+  "cpr-neon-combat-manager.hubSignal": true, "cpr-neon-combat-manager.hubDeadZones": "", "cpr-neon-combat-manager.hubPlayers": true,
+  "cpr-neon-combat-manager.hubDiscovery": true, "cpr-neon-combat-manager.conditionChat": "off"
 }));
 const portrait = (hue) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="hsl(${hue},40%,14%)"/><circle cx="32" cy="24" r="12" fill="hsl(${hue},80%,60%)"/><path d="M10 64c2-16 12-22 22-22s20 6 22 22z" fill="hsl(${hue},80%,45%)"/></svg>`)}`;
 const actors = [
@@ -31,7 +32,23 @@ const coll = (list) => Object.assign(list, { get: (id) => list.find((x) => x.id 
 globalThis.foundry = {
   utils: { deepClone: clone, getProperty, setProperty() {}, mergeObject: (a, b) => ({ ...a, ...b }), randomID: () => Math.random().toString(36).slice(2, 14) },
   applications: {
-    api: { ApplicationV2: class {}, HandlebarsApplicationMixin: (B) => class extends B {}, DialogV2: {} },
+    api: { ApplicationV2: class {}, HandlebarsApplicationMixin: (B) => class extends B {}, DialogV2: {
+      // A plain <dialog> standing in for Foundry's: the form, OK and Cancel.
+      prompt: ({ window: w, content, ok }) => new Promise((resolve) => {
+        const d = document.createElement("dialog");
+        d.className = "neon-combat ncm-dialog";
+        d.style.cssText = "z-index:1000;background:#111;color:#ddd;border:1px solid #555;min-width:440px";
+        d.innerHTML = `<form method="dialog"><h3>${w?.title ?? ""}</h3>${content}<p><button value="ok">OK</button> <button value="no">Cancel</button></p></form>`;
+        document.body.appendChild(d);
+        d.addEventListener("close", () => {
+          const form = d.querySelector("form");
+          resolve(d.returnValue === "ok" ? ok.callback(null, { form }) : null);
+          d.remove();
+        });
+        d.showModal();
+      }),
+      confirm: async ({ content }) => confirm(content.replace(/<[^>]+>/g, ""))
+    } },
     handlebars: { renderTemplate: async (p, d) => {
       const url = p.replace("modules/cpr-neon-combat-manager/", "../");
       if (!cache.has(url)) cache.set(url, Handlebars.compile(await (await fetch(url)).text()));
@@ -39,6 +56,7 @@ globalThis.foundry = {
     } }
   }
 };
+globalThis.ChatMessage = { create: async (d) => (console.log("chat card:", d.content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()), d), getSpeaker: () => ({}) };
 globalThis.Hooks = { on() {}, once() {}, callAll() {}, call: () => true };
 globalThis.ui = { notifications: { info: console.log, warn: console.warn, error: console.error } };
 globalThis.CONFIG = { statusEffects: [] };

@@ -15,25 +15,170 @@ const { deepClone } = foundry.utils;
  *   pins   { [actorId]: { x, y } } - where each character is (players pin their own)
  *   notes  { [placeKey]: { note, scene } } - the GM's notes and battle-map scenes on places
  *   shown  { view, x, y, key, at } - what the GM last showed the players
+ *   seen   { [placeKey]: true | false } - places the GM revealed (true) or hid (false)
+ *   custom { [id]: { id, name, cat, x, y, text, sc, guard, img } } - the GM's own places
+ *   edits  { [placeKey]: { name?, cat?, text?, sc?, guard?, img?, x?, y? } } - changes to built-in places
  * Map positions also decide holocall signal: a character pinned on dead ground can't call or be
  * reached.
+ *
+ * Discovery (setting "hubDiscovery", on by default): players see a place only once the GM reveals
+ * it. With it off, they see every place the GM hasn't hidden.
  */
+
+/** The category for the GM's own places, beside the map's seven. */
+export const CAMPAIGN_CAT = { campaign: { label: "Campaign", color: "#f3e600" } };
 export const Hub = {
   /** The open hub, if any (hub-app.js sets it). */
   app: null,
 
   get state() {
     const s = Settings.get("cityHub") ?? {};
-    return { crew: s.crew ?? null, pins: s.pins ?? {}, notes: s.notes ?? {}, shown: s.shown ?? null };
+    return {
+      crew: s.crew ?? null, pins: s.pins ?? {}, notes: s.notes ?? {}, shown: s.shown ?? null,
+      seen: s.seen ?? {}, custom: s.custom ?? {}, edits: s.edits ?? {}
+    };
   },
 
-  /** A place's key: its map number, or its badge id (NCU, Trauma Team). */
+  /** Place categories: the map's seven and the GM's "Campaign". */
+  get cats() {
+    return { ...NC2070.cats, campaign: { ...CAMPAIGN_CAT.campaign, label: L(`${LANG}.Hub.CampaignCat`) } };
+  },
+
+  /** A place's key: its map number, its badge id (NCU, Trauma Team), or "c-<id>" for the GM's own. */
   placeKey(p) {
+    if (p?.custom) return `c-${p.id}`;
     return p?.n ? `p${p.n}` : p?.id ?? null;
   },
 
+  /**
+   * Every place, as it stands: the built-in 85 with the GM's edits, then the GM's own. Each has
+   * key, custom, edited, and hidden (from the players, whoever's looking).
+   */
+  places() {
+    const { seen, custom, edits } = this.state;
+    const discovery = Settings.get("hubDiscovery") !== false;
+    const out = NC2070.places.map((p) => {
+      const key = this.placeKey(p);
+      const e = edits[key];
+      // Discovery: hidden until revealed. Without it: shown unless hidden.
+      const hidden = discovery ? seen[key] !== true : seen[key] === false;
+      return { ...p, ...(e ?? {}), key, custom: false, edited: !!e, hidden };
+    });
+    for (const c of Object.values(custom)) {
+      const key = `c-${c.id}`;
+      out.push({ n: null, cat: "campaign", sc: null, guard: "", text: "", ...c, key, custom: true, edited: false, hidden: seen[key] !== true });
+    }
+    return out;
+  },
+
+  /** The places this user may see: everything for the GM, the discovered for players. */
+  visiblePlaces(user = game.user) {
+    const all = this.places();
+    return user.isGM ? all : all.filter((p) => !p.hidden);
+  },
+
   place(key) {
-    return NC2070.places.find((p) => this.placeKey(p) === key) ?? null;
+    return this.places().find((p) => p.key === key) ?? null;
+  },
+
+  /* ---------------------------------------- */
+  /*  Places (GM)                             */
+  /* ---------------------------------------- */
+
+  /**
+   * GM: reveal places to the players (or hide them). A reveal posts a "Location discovered" card
+   * unless `quiet`.
+   * @param {string|string[]} keys
+   */
+  async setSeen(keys, seen, { quiet = false } = {}) {
+    const list = [keys].flat().filter(Boolean);
+    const before = new Map(this.places().map((p) => [p.key, p.hidden]));
+    await this._write((s) => {
+      s.seen ??= {};
+      for (const k of list) s.seen[k] = !!seen;
+    });
+    if (!seen || quiet) return;
+    const found = list.map((k) => this.place(k)).filter((p) => p && before.get(p.key));
+    if (!found.length) return;
+    const where = (p) => districtAt(p.x, p.y).name;
+    await Cards.post({
+      kicker: L(`${LANG}.Hub.DiscoveredKicker`),
+      title: found.length === 1 ? L(`${LANG}.Hub.Discovered`, { name: esc(found[0].name) }) : L(`${LANG}.Hub.DiscoveredMany`, { count: found.length }),
+      img: found.length === 1 && found[0].img ? found[0].img : `modules/${MODULE_ID}/assets/icons/hub.svg`,
+      tone: "yellow",
+      body: found.map((p) => `<p><b>${esc(p.name)}</b> · ${esc(where(p))}${found.length === 1 && p.text ? `<br>${esc(p.text)}` : ""}</p>`).join("")
+        + `<p class="ncm-ref">${L(`${LANG}.Hub.DiscoveredHint`)}</p>`
+    });
+  },
+
+  /** The fields a place can carry, cleaned up. */
+  _fields(data) {
+    const out = {};
+    if ("name" in data) out.name = String(data.name ?? "").trim().slice(0, 80);
+    if ("cat" in data) out.cat = this.cats[data.cat] ? data.cat : "campaign";
+    if ("text" in data) out.text = String(data.text ?? "").trim().slice(0, 2000);
+    if ("guard" in data) out.guard = String(data.guard ?? "").trim().slice(0, 120);
+    if ("img" in data) out.img = String(data.img ?? "").trim();
+    if ("sc" in data) out.sc = Number.isFinite(Number(data.sc)) && data.sc !== "" && data.sc !== null ? Math.max(0, Math.min(10, Math.round(Number(data.sc)))) : null;
+    if ("x" in data) out.x = Math.round(Number(data.x));
+    if ("y" in data) out.y = Math.round(Number(data.y));
+    return out;
+  },
+
+  /**
+   * GM: a new place of your own at a point. Hidden from the players until revealed (or pass
+   * `visible`).
+   * @returns {Promise<string>} its key
+   */
+  async addPlace(data, { visible = false } = {}) {
+    const f = this._fields({ cat: "campaign", ...data });
+    if (!f.name) throw new Error(L(`${LANG}.Hub.NeedName`));
+    if (!Number.isFinite(f.x) || !Number.isFinite(f.y)) throw new Error(L(`${LANG}.Hub.NeedSpot`));
+    const id = foundry.utils.randomID(10);
+    await this._write((s) => {
+      s.custom ??= {};
+      s.custom[id] = { id, name: f.name, cat: f.cat, x: f.x, y: f.y, text: f.text ?? "", sc: f.sc ?? null, guard: f.guard ?? "", img: f.img ?? "" };
+      if (visible) (s.seen ??= {})[`c-${id}`] = true;
+    });
+    return `c-${id}`;
+  },
+
+  /** GM: change a place (yours, or a built-in one: those changes can be undone with resetPlace). */
+  async updatePlace(key, data) {
+    const f = this._fields(data);
+    if ("name" in f && !f.name) throw new Error(L(`${LANG}.Hub.NeedName`));
+    await this._write((s) => {
+      if (key.startsWith("c-")) {
+        const c = s.custom?.[key.slice(2)];
+        if (c) Object.assign(c, f);
+        return;
+      }
+      const base = NC2070.places.find((p) => this.placeKey(p) === key);
+      if (!base) return;
+      // Keep only what differs from the map's own.
+      const next = { ...(s.edits?.[key] ?? {}), ...f };
+      for (const [k, v] of Object.entries(next)) if (v === (base[k] ?? (k === "img" ? "" : base[k]))) delete next[k];
+      s.edits ??= {};
+      if (Object.keys(next).length) s.edits[key] = next;
+      else delete s.edits[key];
+    });
+  },
+
+  /** GM: a built-in place back to how the map has it. */
+  async resetPlace(key) {
+    await this._write((s) => {
+      delete s.edits?.[key];
+    });
+  },
+
+  /** GM: delete one of your own places (built-in ones can only be hidden). */
+  async removePlace(key) {
+    if (!key.startsWith("c-")) throw new Error(L(`${LANG}.Hub.CantDelete`));
+    await this._write((s) => {
+      delete s.custom?.[key.slice(2)];
+      delete s.seen?.[key];
+      delete s.notes?.[key];
+    });
   },
 
   /** Where a character is pinned (or null). */

@@ -195,7 +195,11 @@ Hook: `cpr-neon-combat-manager.awarenessAssigned` `(actor, points, mode)`.
 | | |
 | --- | --- |
 | `open({ view, focus })` / `close()` | the map; `view` is `city`, `zones` or `ncart`; `focus` `{ x, y, key }` |
-| `state` | `{ crew: { x, y, label }, pins: { [actorId]: { x, y } }, notes, shown }` |
+| `state` | `{ crew: { x, y, label }, pins: { [actorId]: { x, y } }, notes, shown, seen, custom, edits }` |
+| `places()` / `visiblePlaces(user?)` | every place (built-in with the GM's edits, then the GM's own: `{ key, name, cat, x, y, text, sc, guard, img, custom, edited, hidden }`) / what a user may see |
+| `reveal(keys, { quiet })` / `hide(keys)` | (GM) discovery: reveal places to the players (a "Location discovered" card unless `quiet`), or hide them |
+| `addPlace({ name, cat, x, y, text, sc, guard, img }, { visible })` | (GM) a place of your own, hidden until revealed unless `visible`. Resolves to its key (`c-<id>`) |
+| `updatePlace(key, fields)` / `resetPlace(key)` / `removePlace(key)` | (GM) change a place (built-in ones keep only what differs), undo a built-in's changes, delete one of your own |
 | `setCrew(point, label)` | (GM) the crew marker (`null` clears it) |
 | `setPin(actor, point)` | pin a character you own (`null` unpins) |
 | `travel(from, to, mode, { storm })` | (GM) the crew travels: time passes, the marker moves, a card posts. `mode`: walk, skates, bike, ncart, moto, car, av. Resolves to `{ minutes, jam, trip }` |

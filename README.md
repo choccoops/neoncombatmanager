@@ -158,11 +158,22 @@ scroll to zoom, Esc to close.
   jam (gridlock in rush hour), the crew marker moves, and a card tells the table.
 - **Where everyone is**: the GM sets **We are here** for the crew, and players pin their own
   characters (**I'm here**). Click a character to holocall them (unless they're out of signal).
+- **Discovery**: the players start with an empty map and find Night City as the campaign goes.
+  The GM sees every place (the undiscovered ones faded) and **Reveals** them one at a time, or a
+  whole district at once. A reveal posts a "Location discovered" card (or **Reveal quietly**).
+  **Hide** takes a place back off the players' map. Turn the setting off and players see every
+  place except the ones you hide.
+- **Your own places**: click the map where it is, then **Add a place here**: a name, a category
+  (the map's seven, or Campaign), a Security Code and who guards it, a description the players
+  read, and a picture. Your places start hidden unless you tick "Players see it right away".
+  **Edit**, **Move** (then click the new spot) and **Delete** them.
+- **The map's own places**: edit their name, category, description or picture, and move them.
+  **Back to the map's** undoes your changes. They can be hidden, not deleted.
 - **For the GM**: notes on any place (only you see them), a battle-map scene linked to a place
   (view it, or move everyone there), and **Show the players** to open the map on their screens
-  at what you're looking at.
-- Settings: whether players can open the map, whether map positions decide holocall signal, and
-  extra dead zones.
+  at what you're looking at (showing a hidden place reveals it).
+- Settings: whether players can open the map, whether places are discovered, whether map
+  positions decide holocall signal, and extra dead zones.
 
 The maps, places and district data are the Night City 2070 maps and the NCZTA-70 threat zones
 made for this campaign (`tools/nc2070-data.py` rebuilds the data from their source). The hub's

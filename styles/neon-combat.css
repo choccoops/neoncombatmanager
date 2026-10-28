@@ -829,3 +829,24 @@ textarea#chat-message.ncm-holo-route {
   .ncm-hub-bar { flex-wrap: wrap; }
 }
 .ncm-holocall .ncm-holo-logged { align-self: center; font-family: var(--ncm-display); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ncm-holo); }
+/* hub: discovery and the GM's places */
+.ncm-hub-place.is-hidden { opacity: 0.45; }
+.ncm-hub-place.is-hidden circle, .ncm-hub-place.is-hidden path { stroke-dasharray: 3 2; stroke: #fff; }
+.ncm-hub-list li.is-hidden button { color: var(--ncm-dim); }
+.ncm-hub-hidden { margin: 0 0 8px; padding: 4px 8px; font-size: 11px; color: var(--ncm-dim); border: 1px dashed var(--ncm-line-2); }
+.ncm-hub-disc { margin: 0 0 8px; font-size: 12px; color: var(--ncm-yellow); }
+.ncm-hub-disc small { display: block; color: var(--ncm-dim); font-size: 10px; }
+.ncm-hub-art { display: block; width: 100%; max-height: 220px; margin: 0 0 10px; object-fit: cover; border: 1px solid var(--ncm-line-2); }
+.ncm-hub-btns button.ncm-hub-reveal { border-color: var(--ncm-yellow); color: var(--ncm-yellow); }
+.ncm-hub-btns button.on { border-color: var(--ncm-cyan); color: var(--ncm-cyan); box-shadow: inset 0 0 0 1px var(--ncm-cyan); }
+.ncm-hub-btns button.is-danger:hover { border-color: var(--ncm-pink); color: var(--ncm-pink); }
+#ncm-hub.is-moving .ncm-hub-stage { cursor: crosshair; }
+.ncm-hub-movetip { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); padding: 4px 12px; pointer-events: none; font-family: var(--ncm-display); font-size: 11px; letter-spacing: 0.1em; color: #000; background: var(--ncm-yellow); }
+.ncm-hub-movetip:empty { display: none; }
+.ncm-hub-form { grid-template-columns: 1fr 1fr; gap: 8px; }
+.ncm-hub-form label { display: grid; gap: 2px; font-size: 11px; }
+.ncm-hub-form .ncm-hub-form-wide { grid-column: 1 / -1; }
+.ncm-hub-form .ncm-check { display: flex; align-items: center; gap: 6px; }
+.ncm-hub-fp { display: flex; gap: 4px; }
+.ncm-hub-fp input { flex: 1; }
+.ncm-hub-fp button { flex: 0 0 auto; width: auto; }

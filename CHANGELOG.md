@@ -10,6 +10,11 @@
 - **Routes** between any two points with the 2070 Travel Times for every mode, rush hour from
   the clock, a storm toggle, the NCART ride with its changes, and warnings for dangerous ground.
   The GM's **Travel** moves the clock and the crew, and rolls for jams.
+- **Discovery**: players see only the places the GM reveals (one at a time with a "Location
+  discovered" card, quietly, or a whole district), and the GM can hide any again.
+- **Your own places**: add pins with a name, category, Security Code, description and picture
+  (hidden until revealed); edit, move and delete them. The map's 85 can be edited, moved, put
+  back, or hidden.
 - **Where everyone is**: the crew's "We are here" marker and each character's pin (players pin
   their own). Click a character to holocall them. GM notes and linked battle maps on places, and
   **Show the players**.

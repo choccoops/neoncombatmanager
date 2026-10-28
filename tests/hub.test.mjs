@@ -223,6 +223,96 @@ test("holocall logs go to Night City Messenger, threaded per contact, once", asy
   game.modules.delete("night-city-messenger");
 });
 
+/* ---------------------------------------- */
+/*  Discovery and the GM's own places       */
+/* ---------------------------------------- */
+
+test("discovery: players see a place once the GM reveals it, with a card (or quietly)", async () => {
+  asGM(true);
+  await Settings.set("cityHub", {});
+  assert.equal(Hub.places().length, 85);
+  assert.equal(Hub.visiblePlaces().length, 85, "the GM sees everything");
+  assert.equal(Hub.visiblePlaces(player).length, 0, "the players start with nothing");
+  const before = chat.length;
+  await Hub.setSeen("p1", true);
+  assert.deepEqual(Hub.visiblePlaces(player).map((p) => p.name), ["The Afterlife"]);
+  assert.equal(chat.length, before + 1);
+  assert.match(chat.at(-1).content, /Location discovered/);
+  assert.match(chat.at(-1).content, /The Afterlife/);
+  await Hub.setSeen(["p2", "p3"], true, { quiet: true });
+  assert.equal(chat.length, before + 1, "quietly: no card");
+  await Hub.setSeen("p1", true);
+  assert.equal(chat.length, before + 1, "already known: no second card");
+  await Hub.setSeen("p2", false);
+  assert.deepEqual(Hub.visiblePlaces(player).map((p) => p.key), ["p1", "p3"]);
+  // Discovery off: every place the GM hasn't hidden.
+  await Settings.set("hubDiscovery", false);
+  assert.equal(Hub.visiblePlaces(player).length, 84, "all but the one hidden");
+  await Settings.set("hubDiscovery", true);
+});
+
+test("the GM's own places: added hidden (or visible), edited, moved, deleted", async () => {
+  asGM(true);
+  await Settings.set("cityHub", {});
+  await assert.rejects(Hub.addPlace({ name: "  ", x: 1, y: 1 }), /name/);
+  const key = await Hub.addPlace({ name: "Mama Chen's Noodles", text: "The crew's safehouse is upstairs.", sc: 3, x: 570, y: 690 });
+  let p = Hub.place(key);
+  assert.equal(p.custom, true);
+  assert.equal(p.cat, "campaign");
+  assert.equal(p.hidden, true, "hidden until revealed");
+  assert.equal(G.districtAt(p.x, p.y).name, "Little China");
+  const shown = await Hub.addPlace({ name: "Drop point", x: 600, y: 700 }, { visible: true });
+  assert.equal(Hub.place(shown).hidden, false);
+  await Hub.updatePlace(key, { name: "Mama Chen's", x: 575, y: 695, sc: "" });
+  p = Hub.place(key);
+  assert.deepEqual([p.name, p.x, p.y, p.sc], ["Mama Chen's", 575, 695, null]);
+  await Hub.setNote(key, { note: "Owes Rogue a favor." });
+  await Hub.removePlace(key);
+  assert.equal(Hub.place(key), null);
+  assert.equal(Hub.state.notes[key], undefined, "its notes go with it");
+  await assert.rejects(Hub.removePlace("p1"), /hidden, not deleted/);
+});
+
+test("built-in places can be edited and moved, and put back as the map has them", async () => {
+  asGM(true);
+  await Settings.set("cityHub", {});
+  await Hub.updatePlace("p2", { text: "Closed since the shootout. Boarded up.", x: 561, y: 656 });
+  let p = Hub.place("p2");
+  assert.equal(p.edited, true);
+  assert.equal(p.text, "Closed since the shootout. Boarded up.");
+  assert.deepEqual(Hub.state.edits.p2, { text: "Closed since the shootout. Boarded up.", x: 561, y: 656 }, "only what changed");
+  await Hub.updatePlace("p2", { name: "Tom's Diner" });
+  assert.equal(Hub.state.edits.p2.name, undefined, "the same name isn't an edit");
+  await Hub.resetPlace("p2");
+  p = Hub.place("p2");
+  assert.equal(p.edited, false);
+  assert.equal(p.x, 560);
+});
+
+test("players' map: only what they've discovered, in every list", async () => {
+  asGM(true);
+  await Settings.set("cityHub", {});
+  await Hub.setSeen("p1", true, { quiet: true });
+  const { HubApp } = await import("../scripts/hub/hub-app.js");
+  asGM(false);
+  const app = new HubApp();
+  app.sel = "d:C";
+  const district = app.panelContext();
+  assert.deepEqual(district.places.map((p) => p.name), ["The Afterlife"]);
+  app.query = "diner";
+  assert.equal(app.panelContext().places.length, 0, "a hidden place doesn't come up in search");
+  app.query = "";
+  app.sel = "p:p2";
+  assert.equal(app.panelContext().name, undefined, "a hidden place has nothing to show");
+  assert.ok(!app.svgMarkup().includes('data-sel="p:p2"'), "and no marker");
+  assert.ok(app.svgMarkup().includes('data-sel="p:p1"'));
+  asGM(true);
+  const gmApp = new HubApp();
+  assert.ok(gmApp.svgMarkup().includes('ncm-hub-place is-hidden'), "the GM sees hidden places, faded");
+  gmApp.sel = "d:C";
+  assert.equal(gmApp.panelContext().hiddenCount, 4, "Tom's Diner, Riot, Precinct 3, Trauma Team Tower");
+});
+
 test("the hub's templates render with every string", async () => {
   const html = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/hub.hbs", { gm: true, views: [{ id: "city", label: "City" }], cats: [] });
   assert.match(html, /ncm-hub-stage/);

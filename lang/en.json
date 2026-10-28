@@ -857,6 +857,10 @@
       "hubDeadZones": {
         "name": "More dead zones",
         "hint": "District codes or names with no signal on top of those, separated by commas (\"E, The Badlands\")."
+      },
+      "hubDiscovery": {
+        "name": "Places are discovered",
+        "hint": "Players only see the places you reveal (the 85 on the 2070 map and your own). Off: they see every place you haven't hidden."
       }
     },
     "SceneWeather": {
@@ -1420,6 +1424,49 @@
         "moto": "Moto",
         "car": "Car",
         "av": "AV"
+      },
+      "CampaignCat": "Campaign",
+      "HiddenTag": "hidden from players",
+      "HiddenNote": "Hidden from the players. They don't see it on the map, in searches or in lists.",
+      "YourPlace": "your place",
+      "GMPlace": "This place",
+      "Reveal": "Reveal",
+      "RevealQuiet": "Reveal quietly",
+      "RevealQuietHint": "Show it on the players' map without a chat card.",
+      "Hide": "Hide from players",
+      "Edit": "Edit",
+      "Move": "Move",
+      "MoveHint": "Click the map where {name} goes. Esc cancels.",
+      "Reset": "Back to the map's",
+      "ResetHint": "Undo your changes to this place.",
+      "Delete": "Delete",
+      "DeletePlace": "Delete this place?",
+      "DeleteConfirm": "Delete {name} from the map? Its notes go with it.",
+      "CantDelete": "The map's own places can be hidden, not deleted.",
+      "AddPlace": "New place",
+      "EditPlace": "Edit place",
+      "AddPlaceHere": "Add a place here",
+      "RevealHere": "Reveal all here ({count})",
+      "HideHere": "Hide all here ({count})",
+      "NothingKnown": "Nothing you know of here. Yet.",
+      "DiscoveryCount": "Players know {shown} of {total} places.",
+      "DiscoveryOnHint": "Places stay hidden until you reveal them.",
+      "NeedName": "A place needs a name.",
+      "NeedSpot": "Click the map where the place is first.",
+      "DiscoveredKicker": "Location discovered",
+      "Discovered": "{name}",
+      "DiscoveredMany": "{count} new places on the map",
+      "DiscoveredHint": "It's on the Night City Map now (Shift+M).",
+      "Form": {
+        "name": "Name",
+        "cat": "Category",
+        "sc": "Security Code",
+        "guard": "Who guards it",
+        "text": "Description (players see it)",
+        "img": "Picture",
+        "imgHint": "optional",
+        "visible": "Players see it right away",
+        "save": "Save"
       }
     }
   }
