@@ -31,6 +31,7 @@ const DEFS = [
   ["chatPortraitShape", "client", String, "notch", { config: true, choices: { notch: K("PortraitShape.notch"), circle: K("PortraitShape.circle"), square: K("PortraitShape.square") } }],
   ["rollPrivacyButtons", "client", Boolean, true, { config: true }],
   ["chatCommandMenu", "client", Boolean, true, { config: true }],
+  ["chatSpeakAs", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.stageChanged`) }],
   ["stageShow", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.stageChanged`) }],
 
   // Chat
@@ -40,7 +41,7 @@ const DEFS = [
   ["adventureLog", "world", Boolean, true, {}],
   ["adventureLogName", "world", String, "", {}],
   ["stageEnabled", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.stageChanged`) }],
-  ["stageCast", "world", Object, { cast: [] }, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.stageChanged`) }],
+  ["stageCast", "world", Object, { cast: [], focus: true }, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.stageChanged`) }],
 
   ["biomonAlerts", "client", String, "toast", { config: true, choices: { toast: K("BiomonAlerts.toast"), open: K("BiomonAlerts.open"), off: K("BiomonAlerts.off") } }],
 

@@ -99,7 +99,18 @@ const chatLog = [
 ].join("");
 const cmdMenu = `<div class="neon-combat ncm-cc" style="position:static;width:300px"><ul>${[["/stage", "fa-masks-theater", "Put a character on stage (yours, or the selected tokens)"], ["/narrate", "fa-bullhorn", "Narrate across the stage (nothing: narrator mode on or off)"], ["/log", "fa-book", "Keep a line in the Adventure Log"]].map(([n, i, d], k) => `<li class="ncm-cc-entry command${k === 0 ? " is-active" : ""}"><span class="ncm-cc-icon"><i class="fa-solid ${i}"></i></span><b>${n}</b><small>${d}</small></li>`).join("")}</ul></div>`;
 const moodBtns = ["face-meh", "face-smile", "face-angry", "face-sad-tear", "face-surprise", "face-grimace", "face-smile-wink", "face-dizzy", "face-rolling-eyes"].map((f, i) => `<button type="button" class="${i === 2 ? "on" : ""}"><i class="fa-solid fa-${f}"></i></button>`).join("");
-const dock = `<div class="neon-combat ncm-st-dock"><div class="ncm-st-dockrow"><span class="ncm-kicker">// Stage</span><span class="ncm-st-chip is-on"><img src="${vee.img}" alt=""></span><span class="ncm-st-chip"><img src="${portrait(280)}" alt=""></span><button type="button"><i class="fa-solid fa-user-plus"></i></button><button type="button" class="on"><i class="fa-solid fa-bullhorn"></i></button></div><div class="ncm-st-dockrow ncm-st-moods">${moodBtns}</div></div>`;
+const dockOpts = `<option>Selected token</option><option>Eduardo (yourself)</option><optgroup label="On stage"><option selected>Velvet</option></optgroup><optgroup label="In this scene"><option>Hazel Monroe</option></optgroup>`;
+const dock = `<div class="neon-combat ncm-st-dock is-staged"><div class="ncm-st-dockrow"><img class="ncm-st-as-img" src="${vee.img}" alt=""><select name="speakAs">${dockOpts}</select><button type="button"><i class="fa-solid fa-masks-theater"></i></button><button type="button" class="on"><i class="fa-solid fa-bullhorn"></i></button></div><div class="ncm-st-dockrow ncm-st-moods">${moodBtns}<button type="button" class="ncm-st-leave"><i class="fa-solid fa-person-walking-arrow-right"></i></button></div></div>`;
+const dockPlain = `<div class="neon-combat ncm-st-dock"><div class="ncm-st-dockrow"><i class="fa-solid fa-comment ncm-st-as-icon"></i><select name="speakAs"><option selected>Selected token</option><option>Eduardo (yourself)</option><optgroup label="In this scene"><option>Velvet</option></optgroup></select></div></div>`;
+const { Stage } = await import("../scripts/chat/stage.js");
+const { StageDirector } = await import("../scripts/chat/director.js");
+await game.settings.set("cpr-neon-combat-manager", "stageCast", { cast: [
+  { id: vee.id, name: vee.name, img: vee.img, side: "left", mood: "angry", flip: false },
+  { id: hazel.id, name: hazel.name, img: hazel.img, side: "right", mood: "smug", flip: true }
+], focus: true });
+Stage.speaker = vee.id;
+const director = await T("stage-director", await new StageDirector()._prepareContext());
+Stage.speaker = null;
 const bigPortrait = (hue) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 420"><circle cx="150" cy="120" r="70" fill="hsl(${hue},80%,60%)"/><path d="M20 420c10-150 70-200 130-200s120 50 130 200z" fill="hsl(${hue},80%,45%)"/></svg>`)}`;
 const stageHtml = `<section id="ncm-stage" class="neon-combat ncm-stage" style="position:absolute;right:0;--ncm-stage-right:0px">
   <div class="ncm-st-side left"><figure class="ncm-st-insert mood-angry is-speaking is-mine"><div class="ncm-st-say"><b>Velvet</b><div class="ncm-st-text">${format("You *sold us out*, Rogue. **Why?**")}</div></div><img src="${bigPortrait(320)}" alt=""><figcaption>Velvet</figcaption></figure></div>
@@ -187,8 +198,10 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
   <div class="neon-combat ncm-window ncm-ah-editor application win" style="width:560px;height:640px;display:flex;flex-direction:column"><header class="window-header">Customize Action HUD</header><section class="window-content" style="flex:1;min-height:0">${hudEditor}</section></div>
 </div>
 <div class="row" style="align-items:flex-end">
-  <div style="position:relative;width:900px;height:620px;background:#14141f;overflow:hidden">${stageHtml}</div>
-  <div style="width:300px;display:grid;gap:6px"><ol id="chat-log" style="list-style:none;padding:0;margin:0;font-size:13px">${chatLog}</ol>${cmdMenu}${dock}<form id="chat-form"><textarea id="chat-message" rows="2" style="width:100%">/stage</textarea></form></div>
+  <div style="position:relative;width:900px;height:620px;background:repeating-linear-gradient(45deg,#1d3b4a 0 40px,#2a1d3a 40px 80px);overflow:hidden"><div id="ncm-stage-veil" style="position:absolute"></div>${stageHtml}</div>
+  <div style="width:300px;display:flex;flex-direction:column;gap:6px;height:620px"><ol id="chat-log" style="flex:1;overflow:hidden;list-style:none;padding:0;margin:0;font-size:13px">${chatLog}</ol>${cmdMenu}${dock}<form id="chat-form"><textarea id="chat-message" rows="2" style="width:100%">/stage</textarea></form></div>
+  <div style="width:300px;display:grid;gap:6px">${dockPlain}<form><textarea rows="2" style="width:100%"></textarea></form></div>
+  <div class="neon-combat ncm-window ncm-st-director application win" style="width:420px"><header class="window-header">Stage director</header><section class="window-content">${director}</section></div>
 </div>
 <div class="row">
   <div class="neon-combat ncm-window ncm-stakes application win" style="width:520px"><header class="window-header">Plot Die</header><section class="window-content">${stakesWin}</section></div>

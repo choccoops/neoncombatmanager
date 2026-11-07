@@ -930,6 +930,10 @@
         "name": "Chat command menu",
         "hint": "Type / in the chat box for the commands you can use, with what each takes. @name starts a whisper."
       },
+      "chatSpeakAs": {
+        "name": "Speak-as menu",
+        "hint": "A menu over the chat box to choose who you speak as: yourself, or one of your characters in the scene you're viewing (or on stage)."
+      },
       "stageShow": {
         "name": "Show the stage",
         "hint": "The visual novel stage on your screen. Off hides it for you only."
@@ -1776,10 +1780,11 @@
         "NoCondition": "No condition called {name}.",
         "Stage": "Put a character on stage (yours, or the selected tokens)",
         "Unstage": "Take a character off stage (all: everyone)",
-        "As": "Speak as someone on stage (nothing: as yourself)",
+        "As": "Speak as: me, or a character of yours in this scene or on stage (nothing: the selected token)",
         "Mood": "Change your expression on stage",
         "Narrate": "Narrate across the stage (nothing: narrator mode on or off)",
-        "Curtain": "Clear the stage"
+        "Curtain": "Clear the stage",
+        "Director": "Open the stage director"
       }
     },
     "Stage": {
@@ -1791,7 +1796,7 @@
       "NoMood": "No expression called {mood}.",
       "NoActor": "No one called {name}.",
       "SpeakAs": "Speak as {name} (click again to stop; right-click: other side; ×: off stage)",
-      "AddHint": "Put your selected tokens (or your character) on stage",
+      "AddHint": "Put the selected tokens (or your character) on stage",
       "NarratorHint": "Narrator mode: what you type is narration",
       "NarratorOn": "Narrator mode on: what you type is narration.",
       "NarratorOff": "Narrator mode off.",
@@ -1810,7 +1815,26 @@
         "thinking": "Thinking"
       },
       "PutOn": "Put on stage",
-      "Expressions": "Stage expressions"
+      "Expressions": "Stage expressions",
+      "SpeakAsHint": "Who your messages come from",
+      "AsDefault": "Selected token",
+      "AsMe": "{name} (yourself)",
+      "OnStage": "On stage",
+      "InScene": "In this scene",
+      "Director": "Stage director",
+      "DirectorHint": "Drop actors or tokens here to bring them on. Right side, left side, a flip and an expression for each; the speech bubble makes you speak as them.",
+      "Leave": "Take {name} off stage",
+      "StepOn": "Put {name} on stage",
+      "AddSelected": "Add selected",
+      "FocusHint": "Stage mode: the table dims and other interface steps back while someone is on stage",
+      "Disabled": "The stage is turned off in Neon Chat's settings.",
+      "DirSpeak": "Speak as them",
+      "DirSide": "Other side",
+      "DirFlip": "Face the other way",
+      "DirRemove": "Off stage",
+      "Left": "Left",
+      "Right": "Right",
+      "Empty": "No one on stage"
     }
   }
 }

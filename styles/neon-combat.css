@@ -976,16 +976,48 @@
 .ncm-cc .ncm-cc-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
 
 /* The stage dock over the chat box */
-.ncm-st-dock { display: grid; gap: 3px; margin: 3px 0; padding: 4px; background: linear-gradient(90deg, rgba(26, 7, 18, 0.9), rgba(13, 13, 22, 0.9)); border: 1px solid var(--ncm-line-2); border-bottom-color: var(--ncm-pink); }
-.ncm-st-dockrow { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
-.ncm-st-dock .ncm-kicker { margin-right: 4px; }
-.ncm-st-dock button { padding: 3px 6px; font-size: 11px; }
-.ncm-st-chip { position: relative; display: inline-flex; cursor: pointer; }
-.ncm-st-chip img { width: 30px; height: 30px; object-fit: cover; object-position: top; border: 1px solid var(--ncm-line-2); clip-path: var(--ncm-notch-sm); }
-.ncm-st-chip.is-on img { border: 2px solid var(--ncm-pink); box-shadow: 0 0 10px rgba(255, 42, 109, 0.7); }
-.ncm-st-dock .ncm-st-chip button { position: absolute; top: -4px; right: -4px; display: none; padding: 0 3px; font-size: 8px; clip-path: none; }
-.ncm-st-chip:hover button { display: inline-flex; }
-.ncm-st-moods button { padding: 3px 5px; font-size: 13px; }
+/* The bar over the chat box: one row (two speaking on stage), never more. */
+#ncm-stage-dock.ncm-st-dock { flex: 0 0 auto; height: auto; min-height: 0; max-height: none; display: grid; gap: 3px; margin: 3px 0; padding: 3px 4px; background: linear-gradient(90deg, rgba(26, 7, 18, 0.9), rgba(13, 13, 22, 0.9)); border: 1px solid var(--ncm-line-2); }
+#ncm-stage-dock.is-staged { border-bottom-color: var(--ncm-pink); }
+.ncm-st-dockrow { display: flex; align-items: center; gap: 3px; min-width: 0; }
+.ncm-st-dock button { flex: 0 0 auto; width: auto; height: 24px; padding: 0 6px; font-size: 11px; line-height: 1; }
+.ncm-st-dock select { flex: 1 1 auto; min-width: 0; height: 24px; font-size: 12px; }
+.ncm-st-dock .ncm-st-as-img { flex: 0 0 24px; width: 24px; height: 24px; object-fit: cover; object-position: top; border: 1px solid var(--ncm-line-2); clip-path: var(--ncm-notch-sm); }
+.ncm-st-dock.is-staged .ncm-st-as-img { border-color: var(--ncm-pink); }
+.ncm-st-dock .ncm-st-as-icon { flex: 0 0 24px; text-align: center; color: var(--ncm-dim); }
+.ncm-st-moods { justify-content: space-between; }
+.ncm-st-moods button { flex: 1 1 0; padding: 0 2px; font-size: 13px; }
+.ncm-st-moods .ncm-st-leave { flex: 0 0 auto; margin-left: 4px; }
+
+/* The stage director (GM). */
+.ncm-st-director .window-content { padding: 8px; }
+.ncm-sd { display: grid; gap: 8px; }
+.ncm-sd-bar { display: flex; gap: 4px; }
+.ncm-sd-bar button:first-child { flex: 1 1 auto; }
+.ncm-sd-bar button { width: auto; }
+.ncm-sd-cast { display: grid; gap: 4px; max-height: 60vh; overflow-y: auto; }
+.ncm-sd-row { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 8px; padding: 4px; border: 1px solid var(--ncm-line-2); background: rgba(255, 255, 255, 0.02); clip-path: var(--ncm-notch-sm); }
+.ncm-sd-row.is-speaking { border-color: var(--ncm-pink); background: rgba(255, 42, 109, 0.08); }
+.ncm-sd-row > img { width: 52px; height: 52px; object-fit: cover; object-position: top; }
+.ncm-sd-row > img.is-flip { transform: scaleX(-1); }
+.ncm-sd-main { display: grid; gap: 4px; min-width: 0; }
+.ncm-sd-name { display: flex; align-items: center; gap: 4px; }
+.ncm-sd-name b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ncm-display); font-weight: 400; letter-spacing: 0.08em; color: #fff; }
+.ncm-sd-tools { display: flex; gap: 2px; }
+.ncm-sd-tools button, .ncm-sd-moods button { width: auto; height: 22px; padding: 0 5px; font-size: 11px; }
+.ncm-sd-moods { display: flex; gap: 2px; }
+.ncm-sd-moods button { flex: 1 1 0; }
+.ncm-sd-side { writing-mode: vertical-rl; font-family: var(--ncm-display); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ncm-dim); }
+
+/* Stage mode: the table dims and blurs, everything else steps out but the chat and open windows. */
+#ncm-stage-veil { position: fixed; inset: 0; z-index: 1; pointer-events: auto; background: radial-gradient(ellipse at 50% 70%, rgba(20, 6, 18, 0.55), rgba(3, 3, 8, 0.9) 75%), repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px); backdrop-filter: blur(6px) saturate(0.5); animation: ncm-st-veil 0.5s ease-out; }
+body.ncm-stage-z #interface { z-index: 2; }
+@keyframes ncm-st-veil { from { opacity: 0; } to { opacity: 1; } }
+body.ncm-stage-focus > :not(#board, #interface, #ncm-stage, #ncm-stage-veil, .app, .application, .window-app, dialog, #tooltip, .locked-tooltip, #context-menu, #notifications, #dice-box-canvas, #pause, script, template, audio, video),
+body.ncm-stage-focus #interface > :not(#ui-right, #ui-middle, #context-menu),
+body.ncm-stage-focus #ui-middle > :not(#ui-top),
+body.ncm-stage-focus #ui-top > :not(#notifications, #loading),
+body.ncm-stage-focus #ui-right > :not(#sidebar, [id*=notification]) { visibility: hidden !important; pointer-events: none !important; }
 
 /* The stage */
 #ncm-stage { position: fixed; left: 0; right: var(--ncm-stage-right, 310px); bottom: 0; height: 0; z-index: 35; pointer-events: none; }
@@ -1043,7 +1075,7 @@
 
 /* Less motion, when asked for */
 @media (prefers-reduced-motion: reduce) {
-  #ncm-hub, #ncm-hub *, .ncm-dossier, .ncm-dossier *, #ncm-stage, #ncm-stage * { animation: none !important; transition: none !important; }
+  #ncm-hub, #ncm-hub *, .ncm-dossier, .ncm-dossier *, #ncm-stage, #ncm-stage *, #ncm-stage-veil { animation: none !important; transition: none !important; }
   .ncm-hub-scan, .ncm-hub-boot { display: none !important; }
 }
 /* hub: doorways */
