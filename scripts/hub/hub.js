@@ -23,8 +23,8 @@ const { deepClone } = foundry.utils;
  *   seen   { [placeKey]: true | false } - places the GM revealed (true) or hid (false)
  *   custom { [id]: { id, name, cat, x, y, text, sc, guard, img } } - the GM's own places
  *   edits  { [placeKey]: { name?, cat?, text?, sc?, guard?, img?, x?, y? } } - changes to built-in places
- * Map positions also decide holocall signal: a character pinned on dead ground can't call or be
- * reached.
+ * Map positions also decide holocall signal: a character pinned on dead ground can't call out
+ * (calls ring through Night City Messenger, which keeps its own dead zones).
  *
  * Discovery (setting "hubDiscovery", on by default): players see a place only once the GM reveals
  * it. With it off, they see every place the GM hasn't hidden.

@@ -5,7 +5,6 @@
       <span class="ncm-kicker">// {{localize "NEONCOMBAT.Biomon.Link"}}</span>
       <b>{{name}}</b>
       <span class="ncm-bm-tools">
-        {{#if canCall}}<button type="button" data-action="callLink" data-tooltip="NEONCOMBAT.Biomon.CallLink"><i class="fa-solid fa-phone-volume"></i></button>{{/if}}
         {{#if ../gm}}
         <button type="button" data-action="renameLink" data-tooltip="NEONCOMBAT.Biomon.Rename"><i class="fa-solid fa-pen"></i></button>
         <button type="button" class="is-danger" data-action="removeLink" data-tooltip="NEONCOMBAT.Biomon.Remove"><i class="fa-solid fa-link-slash"></i></button>
@@ -33,6 +32,7 @@
           {{/if}}
         </div>
         <div class="ncm-bm-side">
+          {{#if canCall}}<button type="button" data-action="callMember" data-tooltip="NEONCOMBAT.Biomon.CallMember"><i class="fa-solid fa-phone-volume"></i></button>{{/if}}
           {{#if fullBiomon}}<button type="button" data-action="fullBiomon" data-tooltip="NEONCOMBAT.Biomon.Full"><i class="fa-solid fa-wave-square"></i></button>{{/if}}
           {{#if mine}}<button type="button" class="is-danger" data-action="leaveLink" data-tooltip="NEONCOMBAT.Biomon.Leave"><i class="fa-solid fa-link-slash"></i></button>{{/if}}
         </div>

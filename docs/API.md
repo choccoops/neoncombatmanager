@@ -140,9 +140,12 @@ Hook: `cpr-neon-combat-manager.environmentChanged` (state), on the GM's client.
 
 ### Night City Messenger
 
-Holocalls read the messenger's stable `api` (apiVersion 1.x): `contacts.getContacts(actorId)`,
-`masterContacts.getAll()`, `portraits.resolvePortrait(contact)` and `messenger.sendMessage` for
-missed calls, plus the `deadZone` flag it sets on scenes. Nothing is required of it.
+Holocalls go through the messenger's `api.v2` (2.1+): `features.has("calls")`, `calls.place(number, { actorId })`,
+`directory.list()` (the GM: an NPC's directory contact) and `open.inbox(actorId)`. api v2 has no
+number lookup yet, so a number comes from its macro helper `game.nightcity.messenger.getNumber(actorId)`
+(then `callService.numberOf` / `numberOfContact`), and a phone opens at its Calls tab through
+`game.nightcity.openInbox(actorId, null, { filter: "calls" })` (falling back to `open.inbox`). All
+of it is guarded: without the messenger the Holocall buttons don't show. Nothing is required of it.
 
 ### Neon Hub
 
@@ -217,18 +220,15 @@ Hooks: `cpr-neon-combat-manager.hubChanged` (the shared state), `cpr-neon-combat
 
 ## Holocalls: `ncm.holocall`
 
+Calls are Night City Messenger's (2.1+); these are the module's ways in.
+
 | | |
 | --- | --- |
-| `open()` | the dialer |
-| `calls()` | live calls: `{ id, status, callerId, participants: [{ id, name, img, actorId, contactId, state }] }` |
-| `place(from, targets)` | ring people. `from`: `{ actorId }` (a character you own; the GM can use any actor, or a Night City Messenger directory contact `{ contactId, source: "directory", name, img }`). `targets`: `{ actorId }` or contacts. Resolves to the call id |
-| `say(callId, participantId, text)` | talk on a call as one of its participants |
-| `hangUp(callId)` / `end(callId)` | leave a call / (GM) end it for everyone |
-| `saveLog(callId, actorIds?)` | keep a call's log in Night City Messenger: each player character's inbox, from the person they spoke with, threaded `holocall-<idA>-<idB>`. Resolves to the actor ids it was kept for |
-| `dial({ from, targets })` | open the dialer, calling as `from` (`"actor:<id>"`) with `targets` ticked |
+| `available` | Night City Messenger is up with Calls on |
+| `call(actor, { as? })` | holocall a character: their number, as `as` (an actor you own), else your selected token (if yours) or your character; the GM with neither calls as the messenger's operator. Resolves to `{ callId, emergency }`, or `null` after a warning (no messenger, no number, a Comms Jam, no signal on the map, or the messenger's own refusal) |
+| `open(actor?)` | open a character's phone (their Agent, at its Calls tab); with no actor, the messenger's phone button |
+| `numberOf(actor)` | resolves to the number they answer on (an NPC: its directory contact's, for the GM), or `""` |
+| `blocked(actor)` | why they can't call out, in words (Comms Jam, dead ground on the map), or `""` |
 
-In chat, `/holo <text>` says something on the user's latest call, and `/holo` alone toggles
-routing plain chat to it (handled in the `chatMessage` hook, which returns false for them).
-
-Hook: `cpr-neon-combat-manager.callsChanged` when any call changes. Holocall chat messages carry
-`flags["cpr-neon-combat-manager"].holocall` (the call id).
+1.6's `place`, `say`, `hangUp`, `end`, `saveLog`, `dial` and `calls`, the `/holo` chat command and
+the `callsChanged` hook are gone with the module's own calls.

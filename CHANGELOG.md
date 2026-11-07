@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.7.0
+
+Holocalls are now **Night City Messenger**'s (2.1 or later; 2.3 recommended). Its phone does
+what this module's calls did, and more: numbers, voicemail, call logs, networks, payphones,
+taps and traces.
+
+- **Holocall buttons ring through the messenger**: the Actors directory menu, the sheet header,
+  a phone button on each linkmate in the Biomon Link, and the Holocall button on the Night City
+  Map's pins. The GM's *Holocall as* an NPC opens that NPC's phone.
+- **Calling out still respects the table**: a Comms Jam or a pin on dead ground on the map
+  (Utility Code 9+) stops a character calling. The messenger decides who can be reached.
+- **Removed**: this module's own dialer, call window and incoming-call prompt, group calls,
+  `/holo` and talking from chat, ringtones and busy signals, missed-call mail, call logs saved to
+  the messenger, the "needs an Agent" rule, their settings, and the 1.6 `holocall` API
+  (`place`, `say`, `saveLog`...). See docs/API.md for the new `holocall.call` / `open`.
+
 ## 1.6.0
 
 The 2070 Core Rules, in the roller and on the table:

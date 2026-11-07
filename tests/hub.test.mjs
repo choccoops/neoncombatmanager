@@ -1,18 +1,17 @@
-/** The City & NCART hub (Night City 2070) and what it does to holocalls; holocall logs to Night City Messenger. */
+/** The City & NCART hub (Night City 2070), and what it does to holocalls. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeActor, registerSettings, settle, chat, dice, asGM, testUsers, missingKeys } from "./helpers/foundry.mjs";
+import { makeActor, registerSettings, settle, chat, dice, asGM, testUsers, missingKeys, notes, fakeMessenger } from "./helpers/foundry.mjs";
 
 const Settings = await registerSettings();
 const { NC2070 } = await import("../scripts/hub/data.js");
 const G = await import("../scripts/hub/geo.js");
 const { Hub } = await import("../scripts/hub/hub.js");
-const { Calls, logPairs, lineText } = await import("../scripts/comms/calls.js");
+const { Phone } = await import("../scripts/comms/phone.js");
 const { Socket } = await import("../scripts/socket.js");
 const { Doorway } = await import("../scripts/hub/doorway.js");
 const { Compat } = await import("../scripts/compat.js");
 Hub.registerSocket();
-Calls.registerSocket();
 
 const { player } = testUsers;
 const place = (name) => NC2070.places.find((p) => p.name === name);
@@ -172,86 +171,26 @@ test("travel moves the clock and the crew, and a car rolls for a jam", async () 
 /*  Holocalls                               */
 /* ---------------------------------------- */
 
-test("no signal where a character is pinned: they can't call, and they don't ring", async () => {
+test("no signal where a character is pinned: they can't call out", async () => {
   asGM(true);
   Settings.set("hubSignal", true);
   const vee = pc("Velvet");
   const hazel = pc("Hazel");
+  const ncm = fakeMessenger({ numbers: { [vee.id]: "555-0101", [hazel.id]: "555-0142" } });
   await Hub.setPin(vee, { x: 390, y: 1386 });
-  await assert.rejects(Calls.place({ actorId: vee.id }, [{ actorId: hazel.id }]), /no signal in West Wind Estate/);
-  const id = await Calls.place({ actorId: hazel.id }, [{ actorId: vee.id }]);
-  assert.equal(Calls.get(id).participants[1].state, "nosignal");
+  assert.equal(await Phone.call(hazel, { as: vee }), null);
+  assert.match(notes.at(-1)[1], /no signal in West Wind Estate/);
+  assert.equal(ncm.placed.length, 0, "never reached Night City Messenger");
+  assert.equal(Phone.blocked(vee), "Velvet has no signal in West Wind Estate.");
+  // Calling them still goes to Night City Messenger, whose own dead zones decide.
+  await Phone.call(vee, { as: hazel });
+  assert.deepEqual(ncm.placed, [["555-0101", { actorId: hazel.id }]]);
   Settings.set("hubSignal", false);
   assert.equal(Hub.noSignal(vee), false, "the rule off");
+  assert.equal(Phone.blocked(vee), "");
   Settings.set("hubSignal", true);
   await Hub.setPin(vee, null);
-});
-
-test("busy: someone already on a call shows Busy instead of ringing", async () => {
-  asGM(true);
-  const vee = pc("Velvet");
-  const hazel = pc("Hazel");
-  const rogue = makeActor({ name: "Rogue", hasPlayerOwner: false });
-  const first = await Calls.place({ actorId: rogue.id }, [{ actorId: vee.id }]);
-  await Calls.answer(first, "p1");
-  const second = await Calls.place({ actorId: hazel.id }, [{ actorId: vee.id }]);
-  assert.equal(Calls.get(second).participants[1].state, "busy");
-  assert.equal(Calls.get(second).status, "ended", "nobody to ring");
-  await Calls.end(first);
-});
-
-test("a log line reads back as text; each character keeps the log with the person they spoke to", () => {
-  assert.equal(lineText('<div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>Meet me &amp; bring the van.<br>Now.</p></div>'), "Meet me & bring the van.\nNow.");
-  const call = { callerId: "p0", participants: [
-    { id: "p0", name: "Rogue", joinedAt: 1 }, { id: "p1", name: "Vee", pc: true, joinedAt: 2 },
-    { id: "p2", name: "Hazel", pc: true, joinedAt: 3 }, { id: "p3", name: "Sage", pc: true, joinedAt: null }
-  ] };
-  assert.deepEqual(logPairs(call, (p) => p.pc).map(({ pc, other }) => [pc.name, other.name]), [["Vee", "Rogue"], ["Hazel", "Rogue"]]);
-  const pcCall = { callerId: "p0", participants: [{ id: "p0", name: "Vee", pc: true, joinedAt: 1 }, { id: "p1", name: "Hazel", pc: true, joinedAt: 2 }] };
-  assert.deepEqual(logPairs(pcCall, (p) => p.pc).map(({ pc, other }) => [pc.name, other.name]), [["Vee", "Hazel"]], "two characters: once (the messenger files the sender's copy)");
-});
-
-test("holocall logs go to Night City Messenger, threaded per contact, once", async () => {
-  asGM(true);
-  const sent = [];
-  game.modules.set("night-city-messenger", { id: "night-city-messenger", active: true, api: { messenger: { sendMessage: async (data) => (sent.push(data), { success: true }) } } });
-  const vee = pc("Velvet");
-  const rogue = makeActor({ name: "Rogue", hasPlayerOwner: false });
-  const id = await Calls.place({ actorId: rogue.id }, [{ actorId: vee.id }]);
-  await Calls.answer(id, "p1");
-  await Calls.say(id, "p0", "Got a job, choom.");
-  await Calls.say(id, "p1", "How much?");
-  await Calls.end(id);
-  assert.equal(sent.length, 0, "the button by default");
-  assert.deepEqual(await Calls.saveLog(id), [vee.id]);
-  assert.equal(sent.length, 1);
-  const mail = sent[0];
-  assert.equal(mail.toActorId, vee.id);
-  assert.equal(mail.fromActorId, rogue.id);
-  assert.equal(mail.threadId, `holocall-${[vee.id, rogue.id].sort().join("-")}`);
-  assert.match(mail.subject, /Holocall log · Rogue, Velvet/);
-  assert.match(mail.body, /<b>Rogue:<\/b> Got a job, choom\./);
-  assert.match(mail.body, /<b>Velvet:<\/b> How much\?/);
-  assert.equal(Calls.logged(Calls.get(id), vee.id), true);
-  assert.deepEqual(await Calls.saveLog(id), [], "kept once");
-
-  // Automatic: when the call ends.
-  Settings.set("callLogs", "auto");
-  const id2 = await Calls.place({ actorId: rogue.id }, [{ actorId: vee.id }]);
-  await Calls.answer(id2, "p1");
-  await Calls.end(id2);
-  await settle();
-  assert.equal(sent.length, 2);
-  assert.equal(sent[1].threadId, mail.threadId, "the same conversation as the last call");
-  Settings.set("callLogs", "button");
-
-  // A player keeps the log for their own character only.
-  const hazel = pc("Hazel");
-  const id3 = await Calls.place({ actorId: rogue.id }, [{ actorId: hazel.id }]);
-  await Calls.answer(id3, "p1");
-  await Calls.end(id3);
-  assert.deepEqual(await Socket.handlers.get("callLog")({ callId: id3 }, player.id), [hazel.id]);
-  game.modules.delete("night-city-messenger");
+  ncm.off();
 });
 
 /* ---------------------------------------- */

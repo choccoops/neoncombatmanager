@@ -428,7 +428,7 @@
       },
       "qhCommsJam": {
         "name": "Comms Jam",
-        "hint": "No calls, texts or messages in or out for 20 Rounds (holocalls are blocked)."
+        "hint": "No calls, texts or messages in or out for 20 Rounds (the Holocall buttons won't call out)."
       },
       "qhVitalsSpoof": {
         "name": "Vitals Spoof",
@@ -790,9 +790,9 @@
           "hint": "Night City weather from Neon Hub, light and darkness, shelter and protective gear."
         },
         "comms": {
-          "name": "Biomon Link & Holocalls",
-          "label": "Biomon & Holocalls",
-          "hint": "What linking and calling need, ring time, and missed calls in Night City Messenger."
+          "name": "Biomon Link",
+          "label": "Biomon Link",
+          "hint": "What linking needs. Holocalls are Night City Messenger's: numbers, voicemail and call logs are set up in its Phone settings."
         },
         "hub": {
           "name": "City & NCART hub",
@@ -822,50 +822,13 @@
         "name": "Biomon Link needs a Biomonitor or Neuroport",
         "hint": "Only characters with one of the implants below installed can link (it's the implant that broadcasts their vitals). A linked character whose implant comes out shows NO SIGNAL."
       },
-      "callNeedsAgent": {
-        "name": "Holocalls need an Agent",
-        "hint": "Characters need an Agent (carried), an Internal Agent, or a CEMK Neuroport (its Holophone) to place or take a holocall."
-      },
-      "ringSeconds": {
-        "name": "Ring time (seconds)",
-        "hint": "How long a holocall rings before it's a missed call."
-      },
-      "missedCallMessages": {
-        "name": "Missed calls to Night City Messenger",
-        "hint": "A missed holocall leaves a message in the character's Night City Messenger inbox, when that module is running."
-      },
       "vitalLinks": {
         "name": "Biomon Links",
-        "hint": ""
-      },
-      "holocalls": {
-        "name": "Holocalls",
         "hint": ""
       },
       "linkImplants": {
         "name": "Implants that link",
         "hint": "Installed cyberware (comma-separated names) that broadcasts vitals: the CEMK Neuroport (and Neuroport (Free)) and Biomonitor cyberware by default."
-      },
-      "callLogs": {
-        "name": "Holocall logs to Night City Messenger",
-        "hint": "Keep each holocall's conversation in the player characters' messenger inboxes, threaded per contact: with a button on the ended call, automatically when a call ends, or not at all."
-      },
-      "CallLogs": {
-        "off": "Off",
-        "button": "Save button on the ended call",
-        "auto": "Automatically"
-      },
-      "busySignal": {
-        "name": "Busy signal",
-        "hint": "A character already on a holocall shows as Busy instead of ringing."
-      },
-      "callSounds": {
-        "name": "Holocall sounds",
-        "hint": "Ringtone, ringback and connect/drop blips."
-      },
-      "callRingtone": {
-        "name": "Holocall ringtone",
-        "hint": "Your own audio file for incoming holocalls. Empty: the built-in chirp."
       },
       "hubPlayers": {
         "name": "Players can open the city map",
@@ -873,7 +836,7 @@
       },
       "hubSignal": {
         "name": "Map position decides holocall signal",
-        "hint": "A character pinned where the Utility Code is 9 or worse (West Wind, the Occupied Zone, Laguna Bend) has no signal: no calls in or out."
+        "hint": "A character pinned where the Utility Code is 9 or worse (West Wind, the Occupied Zone, Laguna Bend) has no signal and can't call out. Who can be reached is Night City Messenger's call, by its own networks and dead zones."
       },
       "hubDeadZones": {
         "name": "More dead zones",
@@ -1120,7 +1083,6 @@
       "Title": "Biomon Link",
       "KeyHint": "Open the Biomon Link readouts.",
       "Link": "Biomon Link",
-      "CallLink": "Holocall the link",
       "Rename": "Rename link",
       "Remove": "Unlink everyone",
       "RemoveConfirm": "Break the {name} link? Everyone on it stops sharing vitals.",
@@ -1149,86 +1111,21 @@
       "NoImplant": "no Biomonitor or Neuroport",
       "NoSignalHint": "No Biomonitor or Neuroport installed: nothing to read.",
       "Spoofed": "SPOOFED",
-      "SpoofedHint": "Vitals Spoof: this readout is fake. Only you (the GM) see this tag."
+      "SpoofedHint": "Vitals Spoof: this readout is fake. Only you (the GM) see this tag.",
+      "CallMember": "Holocall (through Night City Messenger)"
     },
     "Holocall": {
       "Title": "Holocall",
-      "KeyHint": "Open the holocall dialer.",
-      "CallTitle": "Holocall",
-      "InviteTitle": "Add to the call",
-      "Tag": "◈ HOLO",
-      "NoSignalHere": "No signal here: this is a dead zone.",
-      "NoAgent": "{name} has nothing to call with (an Agent, Internal Agent or Neuroport).",
       "NoOne": "Pick someone to call.",
-      "NoCaller": "Pick who's calling.",
-      "MissedSubject": "Missed holocall: {name}",
-      "MissedBody": "{name} tried to holocall you and couldn't get through.",
-      "Status": {
-        "ringing": "ringing",
-        "active": "live",
-        "ended": "ended"
-      },
-      "State": {
-        "ringing": "Ringing…",
-        "joined": "On the line",
-        "declined": "Declined",
-        "missed": "No answer",
-        "nosignal": "No signal",
-        "nodevice": "No Agent",
-        "left": "Hung up",
-        "cancelled": "Cancelled",
-        "busy": "Busy"
-      },
-      "OnCall": "Calls",
-      "CallAs": "Calling as",
-      "Search": "Search",
-      "Crew": "Crew",
-      "Online": "Player online",
-      "Offline": "Player away (the GM can pick up)",
-      "Contacts": "Contacts",
-      "NoMessenger": "(Night City Messenger not running)",
-      "Burned": "burned",
-      "NoContacts": "No contacts in this character's address book.",
-      "Directory": "Directory",
-      "Npcs": "NPCs",
-      "Add": "Add",
-      "Call": "Call",
-      "Gone": "This call is over.",
-      "Ended": "Call ended",
-      "Ringing": "Ringing",
-      "Live": "Live",
-      "Quiet": "Line open. Nobody's said anything yet.",
-      "SpeakAs": "Speak as",
-      "Say": "Say something… (Enter sends)",
-      "Send": "Send",
-      "HangUp": "Hang up",
-      "EndAll": "End for everyone",
-      "Incoming": "Incoming holocall",
-      "For": "For {name}",
-      "With": "Also on: {names}",
-      "Accept": "Accept",
-      "Decline": "Decline",
-      "NotOnCall": "You're not on a holocall.",
-      "RoutingOn": "Talking on the holocall from chat. Type /holo again (or click the blue banner) to stop.",
-      "RoutingOff": "Back to regular chat.",
-      "Routing": "Holocall: talking to {names}",
-      "RoutingStop": "Click to go back to regular chat",
-      "Route": "Talk from chat",
-      "RouteHint": "Your regular chat box talks on this call (other /commands and rolls still work). /holo in chat does the same.",
-      "Jammed": "{name}'s comms are jammed: no calls in or out.",
+      "NoMessenger": "Holocalls go through Night City Messenger: turn it on (2.1 or later, with Calls switched on).",
+      "Jammed": "{name}'s comms are jammed: no calls out.",
       "NoSignalAt": "{name} has no signal in {where}.",
       "CallAsActor": "Holocall as {name}",
       "CallActor": "Holocall {name}",
       "SheetButton": "Holocall",
       "MenuEntry": "Holocall",
-      "SaveLog": "Save to Messenger",
-      "LogHint": "Keep this call's log in Night City Messenger, in the inbox of: {names}",
-      "LogKept": "Log kept in Messenger",
-      "LogSaved": "Holocall log kept in Night City Messenger.",
-      "LogFailed": "The log couldn't be kept (is Night City Messenger running, and is anyone on the call a player character?).",
-      "LogSubject": "Holocall log · {names} ({length})",
-      "LogHeader": "Holocall · {names} · {time} · {length}",
-      "LogSilent": "Nobody said anything."
+      "NoNumber": "{name} has no number in Night City Messenger. The GM gives numbers in its Phone settings.",
+      "Failed": "The call to {name} didn't go through."
     },
     "Stakes": {
       "Title": "Plot Die",

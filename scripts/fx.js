@@ -1,7 +1,7 @@
 import { MODULE_ID } from "./constants.js";
 
 /**
- * Small screen effects shared by the hub and the holocall windows: typed-out text, the reduced-
+ * Small screen effects for the hub and its dossiers: typed-out text, the reduced-
  * motion check every animation respects, and a per-browser memory of the places a player has
  * opened (so new ones can ping).
  */

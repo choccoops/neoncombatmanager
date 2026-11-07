@@ -61,32 +61,18 @@ const env = await T("environment", { gm: true, manual: true, hub: false, sources
   now: ["wxHeavyRain", "wxHot"].map((id) => ({ img: Registry.get(id).img, name: Registry.get(id).name, hint: Registry.get(id).hint })), band: "Hot", temp: "85°F / 29°C", scene: { name: "Watson Alley", darkness: 80 }, sceneModes: [{ value: "default", label: "Default", selected: true }],
   rows: [{ name: "Velvet", img: vee.img, outdoors: true, level: "dim", levelLabel: "Low light", sightLabel: "-3", conditions: ["wxHeavyRain", "obscured"].map((id) => Registry.get(id)) }, { name: "Hazel Monroe", img: hazel.img, outdoors: true, level: "dark", levelLabel: "Dark", sightLabel: "—", vision: true, conditions: [] }] });
 
-// Comms: Biomon Link, a live holocall, the dialer, an incoming call, a holo message in chat.
+// Comms: the Biomon Link (Holocall a linkmate through Night City Messenger).
 const { readout, ecgPath } = await import("../scripts/comms/vitals.js");
 const row = (actor, wound, extra = {}) => {
   const hp = actor.system.derivedStats.hp;
   const v = readout({ hp: hp.value, max: hp.max, wound, ...extra });
   const label = { stable: "STABLE", light: "MINOR TRAUMA", serious: "SERIOUS TRAUMA", critical: "CRITICAL", down: "UNRESPONSIVE", flatline: "FLATLINE" }[v.state];
-  return { id: actor.id, name: actor.name, img: actor.img, ...v, label: v.signal ? label : "NO SIGNAL", implantHint: v.implant ? `Vitals broadcast through: ${v.implant}` : "", ecg: ecgPath(v.state), beat: v.bpm ? `${(60 / v.bpm) * 3}s` : "0s", icons: [], mine: actor === vee, fullBiomon: true };
+  return { id: actor.id, name: actor.name, img: actor.img, ...v, label: v.signal ? label : "NO SIGNAL", implantHint: v.implant ? `Vitals broadcast through: ${v.implant}` : "", ecg: ecgPath(v.state), beat: v.bpm ? `${(60 / v.bpm) * 3}s` : "0s", icons: [], mine: actor === vee, canCall: actor !== vee, fullBiomon: true };
 };
-const biomon = await T("biomon", { gm: false, links: [{ id: "l1", name: "Crew", canCall: true, members: [
+const biomon = await T("biomon", { gm: false, links: [{ id: "l1", name: "Crew", members: [
   row(vee, "lightlyWounded", { implant: "Neuroport" }), row(hazel, "seriouslyWounded", { implant: "Biomonitor" }), row(sage, "mortallyWounded", { deathSave: 2, implant: "Neuroport" }),
   row(ganger, "notWounded", { signal: false })
 ] }], unlinked: [{ id: "x", name: "New Recruit", ok: true }, { id: "y", name: "Unchromed", ok: false }], canLink: true, needsImplant: true, joinable: [{ id: "l1", name: "Crew" }] });
-const rogue = { name: "Rogue", img: portrait(280) };
-const holo = await T("holocall", { dialer: false, gm: true, timer: "01:12", participants: [
-  { id: "p0", name: "Velvet", img: vee.img, stateLabel: "On the line", state: "joined", live: true },
-  { id: "p1", name: "Rogue", img: rogue.img, stateLabel: "On the line", state: "joined", live: true },
-  { id: "p2", name: "Hazel Monroe", img: hazel.img, stateLabel: "Ringing…", state: "ringing" }
-], messages: [
-  { name: "Rogue", img: rogue.img, time: "21:04", content: '<div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>Got a job for you, choom. Arasaka convoy, Watson, midnight.</p></div>' },
-  { name: "Velvet", img: vee.img, time: "21:05", mine: true, content: '<div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>How much?</p></div>' }
-], voices: [{ value: "p1", label: "Rogue", selected: true }], canTalk: true, routing: true });
-const dialer = await T("holocall", { dialer: true, gm: false, callers: [{ value: "a", label: "Velvet", selected: true }], crew: [{ key: "k1", name: "Hazel Monroe", img: hazel.img, online: true }, { key: "k2", name: "Professor Sage", img: sage.img, online: false }],
-  links: [{ id: "l1", name: "Crew", count: 3 }], contacts: [{ key: "c1", name: "Rogue", img: rogue.img, trustPips: [true, true, true, true, false] }, { key: "c2", name: "Snitch", img: portrait(60), burned: true, trustPips: [true, false, false, false, false] }], live: [], count: 1, messenger: true });
-const ring = await T("incoming-call", { caller: rogue, others: "Velvet" });
-const holoChat = `<li class="chat-message message ncm-holo"><header class="message-header"><h4 class="message-sender">Rogue</h4><span class="whisper-to">To: Velvet, GM</span></header><div class="message-content"><div class="ncm-holo-line"><span class="ncm-holo-tag">◈ HOLO</span><p>Got a job for you, choom.</p></div></div></li>`;
-
 // The Plot Die and Combat Awareness.
 const { StakesApp } = await import("../scripts/stakes/stakes-app.js");
 const { AwarenessApp } = await import("../scripts/awareness/awareness-app.js");
@@ -162,13 +148,6 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
 </div>
 <div class="row">
   <div class="neon-combat ncm-window ncm-biomon application win" style="width:340px"><header class="window-header">Biomon Link</header><section class="window-content">${biomon}</section></div>
-  <div class="neon-combat ncm-window ncm-holocall application win" style="width:460px;height:560px;display:flex;flex-direction:column"><header class="window-header">Holocall</header><section class="window-content" style="flex:1">${holo}</section></div>
-  <div class="neon-combat ncm-window ncm-holocall application win" style="width:400px;height:560px;display:flex;flex-direction:column"><header class="window-header">Holocall</header><section class="window-content" style="flex:1">${dialer}</section></div>
-  <div style="display:grid;gap:12px;align-content:start">
-    <div class="neon-combat ncm-window ncm-incoming application win" style="width:300px"><header class="window-header">Incoming holocall</header><section class="window-content">${ring}</section></div>
-    <ol style="list-style:none;padding:0;width:300px;font-size:13px">${holoChat}</ol>
-    <form id="chat-form" style="width:300px"><button type="button" class="ncm-holo-banner"><i class="fa-solid fa-phone-volume"></i> Holocall: talking to Rogue</button><textarea id="chat-message" class="ncm-holo-route" rows="3" style="width:100%">Bring the van.</textarea></form>
-  </div>
 </div>
 <div class="row">
   <div class="neon-combat ncm-window ncm-stakes application win" style="width:520px"><header class="window-header">Plot Die</header><section class="window-content">${stakesWin}</section></div>
