@@ -13,6 +13,7 @@
 
 .neon-combat,
 .neon-combat-chat,
+.chat-message,
 .ncm-tracker-clock,
 .ncm-wound,
 .ncm-scene-weather {
@@ -921,9 +922,128 @@
 .ncm-ahe-foot { display: flex; gap: 4px; justify-content: flex-end; padding-top: 4px; border-top: 1px dashed var(--ncm-line-2); }
 .ncm-ahe-foot button:first-child { margin-right: auto; }
 
+/* ==========================================================================
+   Neon Chat
+   ========================================================================== */
+/* Discord-style formatting */
+.chat-message .message-content .ncm-spoiler { padding: 0 2px; background: #202030; color: transparent; border-radius: 2px; cursor: pointer; user-select: none; transition: color 0.15s, background 0.15s; }
+.chat-message .message-content .ncm-spoiler.is-shown, .chat-message .message-content .ncm-spoiler:focus { color: inherit; background: rgba(255, 42, 109, 0.14); user-select: text; }
+.chat-message .message-content code { padding: 0 3px; font-family: monospace; font-size: 0.92em; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(5, 217, 232, 0.25); color: var(--ncm-cyan); }
+.chat-message .message-content pre.ncm-code { margin: 4px 0; padding: 6px 8px; max-height: 260px; overflow: auto; background: #07070b; border: 1px solid var(--ncm-line-2); border-left: 2px solid var(--ncm-cyan); white-space: pre-wrap; }
+.chat-message .message-content pre.ncm-code code { padding: 0; background: none; border: 0; color: var(--ncm-text); }
+.chat-message .message-content blockquote.ncm-quote { margin: 3px 0; padding: 1px 0 1px 8px; border-left: 3px solid var(--ncm-line-2); background: none; color: inherit; font-style: normal; }
+.chat-message .message-content .ncm-h { margin: 4px 0 2px; padding: 0; border: 0; font-family: var(--ncm-display); font-weight: 400; letter-spacing: 0.06em; color: var(--ncm-pink); }
+.chat-message .message-content h3.ncm-h { font-size: 1.35em; }
+.chat-message .message-content h4.ncm-h { font-size: 1.15em; }
+.chat-message .message-content h5.ncm-h { font-size: 1em; }
+.chat-message .message-content .ncm-sub { display: block; font-size: 0.82em; color: var(--ncm-dim); }
+.chat-message .message-content ul, .chat-message .message-content ol { margin: 2px 0; padding-left: 18px; }
+.chat-message .ncm-edited { margin-right: 4px; font-size: 10px; font-style: italic; color: var(--ncm-dim); }
+
+/* Merged messages: one block per speaker */
+#chat-log .chat-message.ncm-merged { margin-top: -6px; padding-top: 2px; border-top-color: transparent; }
+#chat-log .chat-message.ncm-merged .message-header { display: none; }
+
+/* Portraits */
+.chat-message .message-header.ncm-has-portrait { align-items: center; }
+.chat-message .ncm-chat-portrait {
+  flex: 0 0 var(--ncm-portrait, 36px); width: var(--ncm-portrait, 36px); height: var(--ncm-portrait, 36px); margin-right: 6px;
+  object-fit: cover; object-position: top; border: 2px solid var(--ncm-portrait-color, var(--ncm-pink)); background: #000; cursor: pointer;
+}
+.chat-message .ncm-chat-portrait.shape-notch { clip-path: var(--ncm-notch-sm); }
+.chat-message .ncm-chat-portrait.shape-circle { border-radius: 50%; }
+
+/* Narration in the log */
+#chat-log .chat-message.ncm-narration-msg { background: linear-gradient(90deg, rgba(26, 7, 18, 0.95), rgba(7, 7, 11, 0.95)); border: 1px solid var(--ncm-line-2); border-left: 3px solid var(--ncm-yellow); color: var(--ncm-text); }
+#chat-log .chat-message.ncm-narration-msg .message-sender { font-family: var(--ncm-display); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ncm-yellow); }
+#chat-log .chat-message.ncm-narration-msg .message-content { font-style: italic; }
+
+/* Roll privacy buttons */
+.ncm-privacy { display: flex; gap: 2px; flex: 1; }
+.ncm-privacy button { flex: 1; padding: 3px 0; font-size: 12px; }
+
+/* The command menu */
+.ncm-cc { position: fixed; z-index: 1000; max-height: 50vh; overflow-y: auto; background: rgba(7, 7, 11, 0.97); border: 1px solid var(--ncm-line-2); border-bottom: 2px solid var(--ncm-pink); box-shadow: 0 0 16px rgba(255, 42, 109, 0.22), 0 -6px 16px rgba(0, 0, 0, 0.6); }
+.ncm-cc .ncm-cc-entry { display: flex; align-items: baseline; gap: 6px; padding: 4px 8px; font-size: 12px; color: var(--ncm-text); }
+.ncm-cc .ncm-cc-entry.command { cursor: pointer; }
+.ncm-cc .ncm-cc-entry.command:hover, .ncm-cc .ncm-cc-entry.is-active { background: rgba(255, 42, 109, 0.16); }
+.ncm-cc .ncm-cc-entry.info { color: var(--ncm-dim); font-style: italic; }
+.ncm-cc .ncm-cc-entry.separator { padding: 0; border-top: 1px dashed var(--ncm-line-2); }
+.ncm-cc .ncm-cc-icon { width: 16px; text-align: center; color: var(--ncm-pink); }
+.ncm-cc .ncm-cc-entry b { font-family: var(--ncm-display); font-weight: 400; letter-spacing: 0.06em; color: #fff; }
+.ncm-cc .ncm-cc-entry em { font-style: normal; font-size: 10px; color: var(--ncm-cyan); }
+.ncm-cc .ncm-cc-entry small { margin-left: auto; color: var(--ncm-dim); text-align: right; }
+.ncm-cc .ncm-cc-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+
+/* The stage dock over the chat box */
+.ncm-st-dock { display: grid; gap: 3px; margin: 3px 0; padding: 4px; background: linear-gradient(90deg, rgba(26, 7, 18, 0.9), rgba(13, 13, 22, 0.9)); border: 1px solid var(--ncm-line-2); border-bottom-color: var(--ncm-pink); }
+.ncm-st-dockrow { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
+.ncm-st-dock .ncm-kicker { margin-right: 4px; }
+.ncm-st-dock button { padding: 3px 6px; font-size: 11px; }
+.ncm-st-chip { position: relative; display: inline-flex; cursor: pointer; }
+.ncm-st-chip img { width: 30px; height: 30px; object-fit: cover; object-position: top; border: 1px solid var(--ncm-line-2); clip-path: var(--ncm-notch-sm); }
+.ncm-st-chip.is-on img { border: 2px solid var(--ncm-pink); box-shadow: 0 0 10px rgba(255, 42, 109, 0.7); }
+.ncm-st-dock .ncm-st-chip button { position: absolute; top: -4px; right: -4px; display: none; padding: 0 3px; font-size: 8px; clip-path: none; }
+.ncm-st-chip:hover button { display: inline-flex; }
+.ncm-st-moods button { padding: 3px 5px; font-size: 13px; }
+
+/* The stage */
+#ncm-stage { position: fixed; left: 0; right: var(--ncm-stage-right, 310px); bottom: 0; height: 0; z-index: 35; pointer-events: none; }
+#ncm-stage .ncm-st-side { position: absolute; bottom: 0; display: flex; align-items: flex-end; gap: 0; }
+#ncm-stage .ncm-st-side.left { left: 8px; }
+#ncm-stage .ncm-st-side.right { right: 8px; flex-direction: row-reverse; }
+#ncm-stage .ncm-st-insert { position: relative; display: flex; flex-direction: column; align-items: center; margin: 0 -24px; width: min(30vw, 380px); pointer-events: none; animation: ncm-st-in 0.45s ease-out; }
+#ncm-stage .ncm-st-insert img { display: block; max-height: 52vh; max-width: 100%; object-fit: contain; border: 0; filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.9)) brightness(0.72) saturate(0.8); transition: filter 0.3s, transform 0.3s; transform-origin: bottom center; }
+#ncm-stage .ncm-st-insert.is-flip img { transform: scaleX(-1); }
+#ncm-stage .ncm-st-insert.is-speaking img { filter: drop-shadow(0 0 14px rgba(255, 42, 109, 0.55)) brightness(1); }
+#ncm-stage .ncm-st-insert figcaption {
+  position: absolute; bottom: 10px; padding: 2px 12px; font-family: var(--ncm-display); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: #fff; background: rgba(7, 7, 11, 0.85); border-bottom: 2px solid var(--ncm-pink); clip-path: var(--ncm-notch-sm);
+}
+#ncm-stage .ncm-st-insert.is-speaking figcaption { display: none; }
+#ncm-stage .ncm-st-say {
+  display: none; position: absolute; bottom: 12px; left: 24px; z-index: 2;
+  width: min(36vw, 460px); padding: 8px 12px 10px; pointer-events: all;
+  background: linear-gradient(180deg, rgba(13, 13, 22, 0.94), rgba(7, 7, 11, 0.97)); border: 1px solid var(--ncm-line-2); border-top: 2px solid var(--ncm-pink);
+  box-shadow: 0 0 22px rgba(255, 42, 109, 0.25), 0 8px 20px rgba(0, 0, 0, 0.8); clip-path: var(--ncm-notch);
+  font-size: 15px; line-height: 1.4; color: var(--ncm-text);
+}
+#ncm-stage .ncm-st-side.right .ncm-st-say { left: auto; right: 24px; }
+#ncm-stage .ncm-st-insert.is-speaking .ncm-st-say { display: block; animation: ncm-st-say 0.25s ease-out; }
+#ncm-stage .ncm-st-say b { display: block; font-family: var(--ncm-display); font-weight: 400; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ncm-yellow); }
+#ncm-stage .ncm-st-say.is-emote .ncm-st-text { font-style: italic; color: var(--ncm-cyan); }
+#ncm-stage .ncm-st-text .ncm-spoiler { background: #202030; color: transparent; }
+#ncm-stage .ncm-st-text code { color: var(--ncm-cyan); }
+#ncm-stage .ncm-st-narration {
+  position: fixed; left: calc(50% - min(35vw, 410px)); top: 22vh; z-index: 36; pointer-events: all; cursor: pointer;
+  width: min(70vw, 820px); padding: 14px 20px 18px; text-align: center;
+  background: rgba(3, 3, 6, 0.94); border-top: 1px solid var(--ncm-yellow); border-bottom: 1px solid var(--ncm-yellow);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), 0 0 18px rgba(243, 230, 0, 0.18); animation: ncm-st-say 0.35s ease-out;
+}
+#ncm-stage .ncm-st-narration .ncm-st-ntext { margin-top: 6px; font-size: 18px; line-height: 1.5; font-style: italic; color: #fff; }
+/* Expressions */
+#ncm-stage .mood-happy img { animation: ncm-st-hop 0.5s ease-out 2; }
+#ncm-stage .mood-angry img { animation: ncm-st-shake 0.4s linear 2; filter: drop-shadow(0 0 14px rgba(255, 75, 75, 0.6)) brightness(0.95); }
+#ncm-stage .mood-sad img { transform: translateY(8px); filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.9)) brightness(0.6) saturate(0.4); }
+#ncm-stage .mood-surprised img { animation: ncm-st-jump 0.35s ease-out 1; }
+#ncm-stage .mood-scared img { animation: ncm-st-tremble 0.15s linear 8; }
+#ncm-stage .mood-smug img { transform: rotate(-2deg); }
+#ncm-stage .mood-hurt img { animation: ncm-st-hurt 0.6s ease-out 1; }
+#ncm-stage .mood-thinking img { transform: translateX(-6px) rotate(1deg); }
+#ncm-stage .is-flip.mood-smug img { transform: scaleX(-1) rotate(-2deg); }
+@keyframes ncm-st-in { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+@keyframes ncm-st-say { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+@keyframes ncm-st-hop { 50% { translate: 0 -14px; } }
+@keyframes ncm-st-jump { 40% { translate: 0 -24px; } }
+@keyframes ncm-st-shake { 25% { translate: -6px 0; } 75% { translate: 6px 0; } }
+@keyframes ncm-st-tremble { 25% { translate: -2px 1px; } 75% { translate: 2px -1px; } }
+@keyframes ncm-st-hurt { 20% { filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.9)) brightness(1.4) sepia(1) hue-rotate(-50deg) saturate(4); translate: 4px 0; } }
+.ncm-st-moodform { display: grid; gap: 4px; }
+.ncm-st-moodrow { display: grid; grid-template-columns: 18px 80px 1fr auto; align-items: center; gap: 6px; }
+
 /* Less motion, when asked for */
 @media (prefers-reduced-motion: reduce) {
-  #ncm-hub, #ncm-hub *, .ncm-dossier, .ncm-dossier * { animation: none !important; transition: none !important; }
+  #ncm-hub, #ncm-hub *, .ncm-dossier, .ncm-dossier *, #ncm-stage, #ncm-stage * { animation: none !important; transition: none !important; }
   .ncm-hub-scan, .ncm-hub-boot { display: none !important; }
 }
 /* hub: doorways */

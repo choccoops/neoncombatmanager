@@ -134,7 +134,7 @@ globalThis.foundry = {
   }
 };
 
-globalThis.CONST = { ACTIVE_EFFECT_MODES: { CUSTOM: 0, MULTIPLY: 1, ADD: 2, OVERRIDE: 5 }, TOKEN_DISPLAY_MODES: { NONE: 0, CONTROL: 10, OWNER_HOVER: 20, HOVER: 30, OWNER: 40, ALWAYS: 50 } };
+globalThis.CONST = { ACTIVE_EFFECT_MODES: { CUSTOM: 0, MULTIPLY: 1, ADD: 2, OVERRIDE: 5 }, TOKEN_DISPLAY_MODES: { NONE: 0, CONTROL: 10, OWNER_HOVER: 20, HOVER: 30, OWNER: 40, ALWAYS: 50 }, CHAT_MESSAGE_STYLES: { OTHER: 0, OOC: 1, IC: 2, EMOTE: 3 }, DOCUMENT_OWNERSHIP_LEVELS: { NONE: 0, LIMITED: 1, OBSERVER: 2, OWNER: 3 } };
 export const notes = [];
 globalThis.ui = { notifications: { info: (m) => notes.push(["info", m]), warn: (m) => notes.push(["warn", m]), error: (m) => notes.push(["error", m]) } };
 globalThis.CONFIG = {
@@ -202,8 +202,8 @@ const userDoc = (data) => ({
     return this;
   }
 });
-const gm = userDoc({ id: "gm1", name: "GM", isGM: true, active: true });
-const player = userDoc({ id: "pl1", name: "Player", isGM: false, active: true });
+const gm = userDoc({ id: "gm1", name: "GM", isGM: true, active: true, role: 4 });
+const player = userDoc({ id: "pl1", name: "Player", isGM: false, active: true, role: 1 });
 const users = new Collection([[gm.id, gm], [player.id, player]]);
 Object.defineProperty(users, "activeGM", { get: () => (gm.active ? gm : null) });
 

@@ -218,6 +218,27 @@ Hooks: `cpr-neon-combat-manager.hubChanged` (the shared state), `cpr-neon-combat
 `({ from, to, mode, minutes, jam })`, `cpr-neon-combat-manager.hubDoorway` `({ key, actor, scene, tile, token, userId })`
 (GM side, after someone walks through a doorway).
 
+## Neon Chat: `ncm.chat`
+
+| | |
+| --- | --- |
+| `format(text)` | Discord-style formatting, as HTML |
+| `register(data, override?)` / `unregister(name)` | a chat command, in Chat Commander's shape: `{ name, module, aliases, description, icon, requiredRole, callback(chat, parameters, messageData), autocompleteCallback(menu, alias, parameters), closeOnComplete }`. With Chat Commander running, it goes there |
+| `commands()` | every registered command (Foundry's own are listed with `core: true`) |
+| `log(text, { gm? })` / `quote(source, text, { gm? })` | an Adventure Log entry |
+| `narrate(text)` | GM: narration, in chat and across the stage |
+| `stage.cast` | `[{ id, name, img, side, mood, flip }]` |
+| `stage.add(actors)` / `remove(actorId)` / `mood(mood, actorId?)` / `speakAs(actorId)` / `clear()` | change the stage (players: their own characters) |
+| `stage.editMoods(actor)` | the expression pictures, kept in `flags["cpr-neon-combat-manager"].moods` |
+
+Without Chat Commander, `game.chatCommands` is this module's registry, with Chat Commander's
+`register`, `unregister`, `createCommandElement`, `createInfoElement`, `createSeparatorElement`
+and `createLoadingElement`. The `chatCommandsReady` and `invokeChatCommand` hooks fire as they do
+there.
+
+Typed messages carry `flags["cpr-neon-combat-manager"].chat` and `.raw` (what was typed, for
+editing). Narration carries `.narration`. The stage's cast is the world setting `stageCast`.
+
 ## Action HUD: `ncm.hud`
 
 | | |

@@ -17,6 +17,11 @@ import { Comms } from "./comms/comms.js";
 import { Links } from "./comms/links.js";
 import { Phone } from "./comms/phone.js";
 import { Hud } from "./hud/hud.js";
+import { Chat } from "./chat/chat.js";
+import { Commands } from "./chat/commands.js";
+import { format } from "./chat/format.js";
+import { Stage } from "./chat/stage.js";
+import { AdventureLog } from "./chat/log.js";
 import { Environment } from "./environment/environment.js";
 import { Sources } from "./environment/sources.js";
 import { Stakes } from "./stakes/stakes.js";
@@ -66,6 +71,29 @@ const api = {
   },
   ui: {
     renderCarousel: () => Carousel.render()
+  },
+  /** Neon Chat: formatting, commands, the adventure log and the stage. */
+  chat: {
+    /** Discord-style formatting, as HTML. */
+    format: (text) => format(text),
+    /** Register a chat command (Chat Commander's shape; with Chat Commander running, it goes there). */
+    register: (data, override) => Commands.register(data, override),
+    unregister: (name) => Commands.unregister(name),
+    commands: () => [...Commands.list.values()],
+    log: (text, options) => AdventureLog.event(text, options),
+    quote: (source, text, options) => AdventureLog.quote(source, text, options),
+    narrate: (text) => Chat.narrate(text),
+    stage: {
+      get cast() {
+        return Stage.cast;
+      },
+      add: (actors) => Stage.add(actors),
+      remove: (actorId) => Stage.remove(actorId),
+      mood: (mood, actorId) => Stage.mood(mood, actorId),
+      speakAs: (actorId) => Stage.speakAs(actorId),
+      clear: () => Stage.clear(),
+      editMoods: (actor) => Stage.editMoods(actor)
+    }
   },
   /** The Action HUD: the controlled token's actions, laid out by each player. */
   hud: {
@@ -221,6 +249,7 @@ Hooks.once("init", () => {
   Environment.init();
   Carousel.init();
   Hud.init();
+  Chat.init();
   Comms.init();
   Stakes.init();
   Awareness.init();
@@ -243,12 +272,14 @@ Hooks.once("setup", () => {
   Links.registerSocket();
   Stakes.registerSocket();
   Hub.registerSocket();
+  Chat.registerSocket();
 });
 
 Hooks.once("ready", async () => {
   CombatTime.apply();
   Carousel.render();
   Hud.render();
+  Chat.ready();
   if (Compat.isActiveGM) {
     try {
       // Wound States for everyone who might be on screen.

@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.9.0
+
+**Neon Chat**: Foundry's chat, enhanced.
+
+- **Discord-style formatting**: bold, italic, underline, strike, spoilers, code, quotes,
+  headings, small text, lists and masked links.
+- **Chat portraits** from the token or the actor, in the player's colour.
+- **Messages**: consecutive ones from the same speaker merge, and you can edit what you sent
+  (right-click, or Up in an empty chat box).
+- **Roll privacy as buttons** on Foundry v12.
+- **Adventure Log**: `/log`, `/log q`, `/gmlog`, and adding any message to it from its
+  right-click menu.
+- **Chat archive** to a journal: `/archive`.
+- **Chat commands in one place**, with a completion menu. Chat Commander's
+  `game.chatCommands.register` works without that module, and with it installed, this module's
+  commands go there.
+- **The stage**, visual novel scenes over the table:
+  - characters on stage, and speaking as them
+  - dialogue boxes typed out
+  - nine expressions, with animations and a picture each
+  - the narrator
+  - `/stage`, `/as`, `/mood`, `/narrate`, `/unstage`, `/curtain`, and a stage bar over the chat
+    box
+- **Settings**: a new **Chat & stage** menu, plus client settings for portraits, the privacy
+  buttons, the command menu and showing the stage.
+
 ## 1.8.0
 
 - **Action HUD**: a bar of the controlled token's actions above the hotbar, with no Token
