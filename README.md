@@ -9,9 +9,9 @@ Cyberpunk RED's own rolls.
 - **Biomon Link**: players link their characters' Biomonitors as a group; a small popout shows
   everyone's vitals (ECG, HP, status, Death Save penalty, injuries) and raises the alarm when
   someone crashes.
-- **Holocalls**: ring the crew, a Biomon Link or an NPC anywhere in Night City and talk in
-  holo blue, with Night City Messenger contacts, dead zones, missed calls, ringtones, and call
-  logs kept as conversations in the messenger.
+- **Holocalls**: Night City Messenger's phone, one click away. Holocall a character from the
+  Actors directory, their sheet, the Biomon Link or the Night City Map; a Comms Jam or dead
+  ground on the map stops a character calling out.
 - **Night City Map**: the 2070 city full screen, with the NCZTA-70 threat zones, 85 Notable
   Places, the NCART network, the crew and the characters where they are, and a route planner
   with the 2070 travel times.
@@ -45,7 +45,7 @@ https://github.com/choccoops/neoncombatmanager/releases/latest/download/module.j
 
 Requires the Cyberpunk RED - CORE system (0.92+). Works best with
 [Neon Hub](https://github.com/choccoops/neonredlanding) (weather and clock),
-Night City Messenger (contacts to holocall),
+[Night City Messenger](https://github.com/christinophrappuccino/night-city-messenger) 2.1+ (holocalls),
 [SmallTime](https://github.com/unsoluble/smalltime) (darkness that follows the clock) and
 DF Active Lights. Nothing else is required.
 
@@ -91,50 +91,34 @@ their vitals), and everyone on the link sees everyone's readout.
   wave button opens that character's full Biomonitor.
 - **Alarms**: when someone on your link goes critical, drops unconscious or flatlines, you get a
   notice (or the Biomon pops open, or nothing: a per-user setting).
-- The phone button on a link holocalls everyone else on it.
+- The phone button on someone else's readout holocalls them (through Night City Messenger).
 - The GM sees every link and can rename or break one.
 
 ## Holocalls
 
-Talk to the crew, or to someone who isn't in the scene, the way calls look in *Edgerunners* and
-2077: blue holo portraits, and the conversation in blue.
+Calls are [Night City Messenger](https://github.com/christinophrappuccino/night-city-messenger)'s
+(2.1 or later, with Calls on): phone numbers, the call screen, voicemail, call logs, networks
+and dead zones, payphones and the rest. This module gives it more ways in, and stays out of the
+call itself.
 
-- Open the dialer from the **phone button** in the token controls (or a keybinding). Pick who
-  you're calling as, then who to ring: the crew (with who's online), a whole Biomon Link, your
-  character's **Night City Messenger contacts** (with trust pips; burned contacts can't be
-  reached), and for the GM every NPC and the messenger's directory, as anyone.
-- The people called get an **incoming holocall** with Accept and Decline. Players answer for
-  their own characters; the GM answers for NPCs, messenger contacts, and characters whose
-  players are away (so you can call an NPC anywhere in Night City and the GM picks up as them).
-- On the call: holo tiles for everyone (ringing, on the line, declined, no answer...), a call
-  timer, the conversation, and a line to talk on (Enter sends; the GM picks which NPC is
-  speaking). **Add** rings more people into the call; **Hang up** leaves it; the GM can end it.
-- Messages are chat messages **whispered to the people on the call** (and the GM), shown in holo
-  blue in the call window and in the chat log. Closing or minimizing the call window doesn't
-  hang up.
-- **Talking from the regular chat box**: `/holo On my way` says it on your call (the latest, if
-  you're on several), as whoever you last spoke as there (the GM: the NPC). `/holo` alone, or the
-  **Talk from chat** button in the call window, switches your regular chat to the call: plain
-  messages go to it, while other commands and rolls work as usual. A blue banner over the chat box
-  shows it's on; click it (or `/holo` again) to go back. It switches off when the call ends.
-- **Night City Messenger**: its dead-zone scenes have no signal (you can't call out, and calls
-  there go unanswered); a call that rings out leaves a **missed holocall** in the character's
-  messenger inbox (setting).
-- **Call logs in Night City Messenger**: when a call ends, **Save to Messenger** keeps the
-  conversation in the inbox of every player character who was on it, as mail from the person
-  they spoke with. Every call between the same two lands in one thread, so the messenger shows
-  their whole holocall history as one conversation. The GM can make it automatic, or switch it
-  off.
-- **Call from an actor**: the Actors directory's right-click menu and the sheet header have a
-  **Holocall** entry. The GM calls *as* an NPC; anyone calls a character.
-- **Ringtone and busy**: incoming calls ring (a synth chirp, or your own audio file in the
-  settings), callers hear ringback, and calls blip when they connect and drop. Someone already
-  on a call shows **Busy**.
-- **Signal on the map**: a character pinned on the Night City Map where nothing works
-  (Utility Code 9+: West Wind, the Occupied Zone, Laguna Bend, plus any district the GM adds)
-  can't call out, and calls to them don't get through.
-- Settings: ring time; whether characters need something to call with: an Agent (carried), an
-  Internal Agent, or a Neuroport (its Holophone).
+- **Holocall** in the Actors directory's right-click menu and in the sheet header: the GM gets
+  *Holocall as* an NPC (that NPC's phone opens, at its Calls tab); a player's own character opens
+  their phone; anyone else is called.
+- **Calling someone** dials their number in Night City Messenger, as the token you have selected
+  (if it's yours), else your character. The GM with nothing selected calls as the messenger's
+  operator. An NPC without a number of its own answers on the number of the directory contact
+  linked to it. No number, no call: the GM gives numbers in the messenger's Phone settings.
+- The **Biomon Link** has a phone button on each linkmate, and the **Night City Map** a Holocall
+  button on each pinned character.
+- **What stops a call going out**: a **Comms Jam** quickhack, and a pin on the Night City Map
+  where nothing works (Utility Code 9+: West Wind, the Occupied Zone, Laguna Bend, plus any
+  district the GM adds). Night City Messenger decides who can be reached, by its own networks
+  and dead zones: this module can't stop a call ringing.
+- Without Night City Messenger (or with its Calls off), the Holocall buttons don't show.
+
+Up to 1.6 this module had its own holocalls (group calls, a dialer, `/holo` in chat, logs saved
+to the messenger). Night City Messenger 2.3 does all of that one-to-one and more, so they were
+retired in 1.7. Old call logs stay in the messenger.
 
 ## Night City Map
 
@@ -190,16 +174,15 @@ scroll to zoom, Esc to close.
   looking at (showing a hidden place reveals it).
 - **Motion**: the map boots up like a CitiNet uplink and switches off like an old screen, a scan
   line sweeps it, it goes dark at night (21:00 to 06:00 by the world clock), and panels glitch in.
-  On holocalls an equalizer runs while someone talks, their lines type out, and ringing portraits
-  shake under a glitch band. All of it stops for anyone whose system asks for reduced motion.
+  All of it stops for anyone whose system asks for reduced motion.
 - Settings: whether players can open the map, whether places are discovered, whether a reveal
   opens the dossier, when players can visit places, whether map positions decide holocall signal,
   and extra dead zones.
 
 The maps, places and district data are the Night City 2070 maps and the NCZTA-70 threat zones
 made for this campaign (`tools/nc2070-data.py` rebuilds the data from their source). The hub's
-approach (a full-screen map with places, districts, routes and a crew marker) and the holocall
-ringtone, ringback, busy signal and actor-menu calls were inspired by Verlierboy's
+approach (a full-screen map with places, districts, routes and a crew marker) and the
+actor-menu calls were inspired by Verlierboy's
 [Night City · Interactive Map](https://github.com/samroaleksej-bit/night-city-map).
 
 ## The Plot Die
@@ -287,7 +270,7 @@ with their source, situational ones as toggles.
 | Combat (p.168-185, p.345-347) | Prone (**2070**: -4 Evasion vs melee and Grapples, as roll-dialog toggles), Grappled, Grappling, Iron Grip, Choked, Human Shield, In Cover, Hidden, **Into the Wall** (2070: Spinal Injury for one Round), Holding Action, Suppressed, Netrunning, Blinded, Deafened, Flashbanged, Teargassed, Knocked Out (Sleep), EMP'd |
 | Hazards (p.180-181) | On Fire (Mild/Strong/Deadly; **2070**: a fire that wouldn't raise the stage pushes it up one), Drowning, Asphyxiating, Electrocuted, Radiation (Low/High), Falling, Exposure, Acid |
 | Situational (p.129) | Exhausted, Fatigued / Slept Badly, Extreme Stress, Drunk or Sedated, In Smoke; the Plot Die's one-Check Bonus, Aided and Hindered |
-| Quickhacks (2070 ch.10) | Comms Jam (no holocalls), Vitals Spoof (the Biomon Link shows calm vitals; the GM sees SPOOFED), PopUp-geddon, Impair Movement, Slow (MOVE -1d6, rolled), Short Circuit, Cyberware Malfunction, Reboot Optics, Cripple Movement, Weapon Glitch, Limb Seize, Speedware Crash, Sonic Shock (Damaged Ear), Frame Lock, Q-KRASH, System Reset (Unconscious and Prone), Puppet, Cyberpsychosis. Each runs its 3 or 20 Rounds. Overheat is On Fire (Strong) |
+| Quickhacks (2070 ch.10) | Comms Jam (no holocalls out), Vitals Spoof (the Biomon Link shows calm vitals; the GM sees SPOOFED), PopUp-geddon, Impair Movement, Slow (MOVE -1d6, rolled), Short Circuit, Cyberware Malfunction, Reboot Optics, Cripple Movement, Weapon Glitch, Limb Seize, Speedware Crash, Sonic Shock (Damaged Ear), Frame Lock, Q-KRASH, System Reset (Unconscious and Prone), Puppet, Cyberpsychosis. Each runs its 3 or 20 Rounds. Overheat is On Fire (Strong) |
 | Drugs (p.150, p.227-229) | Antibiotics, Rapidetox, Speedheal, Stim, Surge, Black Lace, Blue Glass, Boost, Smash, Synthcoke and their addictions |
 | Weather (Night City Weather) | Light/Heavy Rain, Acid Rain, Blood Rain, Ash Storm, Dust Storm, Inversion Smog, Deadly Thunderstorm, Radioactive Windstorm, Cold Snap, Heat Wave, Hot, Cold, Flooding, Blackout |
 | Visibility (p.129) | Low Light (-1), Darkness (-4), Obscured |
@@ -422,7 +405,7 @@ See [docs/API.md](docs/API.md).
 npm ci
 npm test          # rules, conditions engine, CLT import, Turn automation, templates
 npm run check     # scripts parse, JSON and localization complete, icons exist, v13 guard
-npm run preview   # renders the carousel, Biomon, holocalls, Lab and cards to preview/index.html,
+npm run preview   # renders the carousel, Biomon, Lab and cards to preview/index.html,
                   # and the live Night City Map to preview/hub.html (serve the repo, open /preview/hub.html)
 ```
 

@@ -3,6 +3,7 @@ import { Compat } from "../compat.js";
 import { CombatTime } from "../combat/time.js";
 import { Hub } from "./hub.js";
 import { Doorway } from "./doorway.js";
+import { Phone } from "../comms/phone.js";
 import { NC2070 } from "./data.js";
 import { districtAt, districtByCode, deadAt, nearestStations, plan, rushHour, formatMinutes, km, DANGER } from "./geo.js";
 import { Settings } from "../settings.js";
@@ -592,8 +593,8 @@ export class HubApp {
     const d = districtAt(pin.x, pin.y);
     return {
       actorId, name: actor.name, img: actor.img, district: d.name, districtKey: d.code ? `d:${d.code}` : null, chips: this._chips(d),
-      // Ring them, unless they're yours (you'd be calling yourself) or out of signal.
-      noSignal: Hub.noSignal(actor), mine: actor.isOwner, canCall: !Hub.noSignal(actor) && (game.user.isGM || !actor.isOwner)
+      // Ring them (through Night City Messenger), unless they're yours or out of signal.
+      noSignal: Hub.noSignal(actor), mine: actor.isOwner, canCall: Phone.on && !Hub.noSignal(actor) && (game.user.isGM || !actor.isOwner)
     };
   }
 
@@ -734,10 +735,8 @@ export class HubApp {
       case "unpin":
         await Hub.setPin(d.actor, null);
         return this.select(null);
-      case "call": {
-        const { HolocallApp } = await import("../comms/holocall-app.js");
-        return HolocallApp.dial({ targets: [`actor:${d.actor}`] });
-      }
+      case "call":
+        return Phone.call(game.actors.get(d.actor));
       case "showPlayers": {
         const s = this.selSpot();
         // Showing a place the players haven't found yet is how they find it.

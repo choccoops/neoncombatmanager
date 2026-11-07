@@ -1,7 +1,7 @@
 /** The Plot Die, Combat Awareness and the 2070 conditions (quickhacks, legs, Prone, Into the Wall). */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeActor, makeCombat, registerSettings, settle, chat, dice, asGM, missingKeys } from "./helpers/foundry.mjs";
+import { makeActor, makeCombat, registerSettings, settle, chat, dice, asGM, missingKeys, notes, fakeMessenger } from "./helpers/foundry.mjs";
 
 const Settings = await registerSettings();
 const { Registry } = await import("../scripts/conditions/registry.js");
@@ -11,7 +11,7 @@ const { Stakes } = await import("../scripts/stakes/stakes.js");
 const { ABILITIES, abilityEffect, check, step, assignMode, keyOf } = await import("../scripts/awareness/rules.js");
 const { Awareness } = await import("../scripts/awareness/awareness.js");
 const { readout } = await import("../scripts/comms/vitals.js");
-const { Calls } = await import("../scripts/comms/calls.js");
+const { Phone } = await import("../scripts/comms/phone.js");
 const { Compat } = await import("../scripts/compat.js");
 const { pageLabel } = await import("../scripts/util.js");
 Hooks.on("preCreateActiveEffect", (e, d, o, u) => Conditions.onPreCreate(e, d, o, u));
@@ -327,7 +327,12 @@ test("Vitals Spoof shows calm vitals; Comms Jam blocks holocalls", async () => {
   assert.deepEqual([spoof.state, spoof.pct, spoof.deathSave, spoof.alerts.length, spoof.spoofed], ["stable", 100, null, 0, true]);
   const jammed = makeActor({ name: "Jammed", owners: ["pl1"] });
   await Conditions.add("qhCommsJam", jammed);
-  await assert.rejects(Calls.place({ actorId: jammed.id }, [{ actorId: "x" }]), /jammed/);
+  const other = makeActor({ name: "Other" });
+  const ncm = fakeMessenger({ numbers: { [other.id]: "555-0199" } });
+  assert.equal(await Phone.call(other, { as: jammed }), null);
+  assert.match(notes.at(-1)[1], /jammed/);
+  assert.equal(ncm.placed.length, 0);
+  ncm.off();
 });
 
 test("book references: core pages, the 2070 rules, and both", () => {

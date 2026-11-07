@@ -15,7 +15,7 @@ import { Carousel } from "./combat/carousel.js";
 import { TrackerHooks } from "./combat/tracker.js";
 import { Comms } from "./comms/comms.js";
 import { Links } from "./comms/links.js";
-import { Calls } from "./comms/calls.js";
+import { Phone } from "./comms/phone.js";
 import { Environment } from "./environment/environment.js";
 import { Sources } from "./environment/sources.js";
 import { Stakes } from "./stakes/stakes.js";
@@ -76,19 +76,18 @@ const api = {
     join: (linkId, actor) => Links.join(linkId, actor),
     leave: (actor) => Links.leave(actor)
   },
-  /** Holocalls. */
+  /** Holocalls, through Night City Messenger's phone. */
   holocall: {
-    open: () => Comms.openHolocall(),
-    calls: () => Calls.live(),
-    /** Ring people: from { actorId } (or GM: a messenger directory contact); targets { actorId } or contacts. */
-    place: (from, targets) => Calls.place(from, targets),
-    /** Keep a call's log in Night City Messenger (each player character's inbox). */
-    saveLog: (callId, actorIds) => Calls.saveLog(callId, actorIds),
-    /** Open the dialer: { from: "actor:<id>", targets: ["actor:<id>"] }. */
-    dial: (options) => Comms.openHolocall(options),
-    say: (callId, participantId, text) => Calls.say(callId, participantId, text),
-    hangUp: (callId) => Calls.hangUp(callId),
-    end: (callId) => Calls.end(callId)
+    get available() {
+      return Phone.on;
+    },
+    /** Call a character: as { as: actor } (one you own), else your selected token or character. */
+    call: (actor, options) => Phone.call(actor, options),
+    /** Open a character's phone (NCM's Agent, at its Calls tab). */
+    open: (actor) => Phone.open(actor),
+    numberOf: (actor) => Phone.numberOf(actor),
+    /** Why a character can't call out (Comms Jam, dead ground on the map), or "". */
+    blocked: (actor) => Phone.blocked(actor)
   },
   /** The City & NCART hub: Night City 2070. */
   hub: {
@@ -146,8 +145,6 @@ Hooks.once("init", () => {
   Compat.loadTemplates([
     `${TEMPLATE_PATH}/carousel.hbs`,
     `${TEMPLATE_PATH}/biomon.hbs`,
-    `${TEMPLATE_PATH}/holocall.hbs`,
-    `${TEMPLATE_PATH}/incoming-call.hbs`,
     `${TEMPLATE_PATH}/chat-card.hbs`,
     `${TEMPLATE_PATH}/lab.hbs`,
     `${TEMPLATE_PATH}/lab-edit.hbs`,
@@ -230,7 +227,6 @@ Hooks.once("setup", () => {
   Socket.init();
   Conditions.registerSocket();
   Links.registerSocket();
-  Calls.registerSocket();
   Stakes.registerSocket();
   Hub.registerSocket();
 });
@@ -252,7 +248,7 @@ Hooks.once("ready", async () => {
       console.error(`${MODULE_ID} | ready`, err);
     }
   }
-  await Comms.ready().catch((err) => console.error(`${MODULE_ID} | comms`, err));
+  Comms.ready();
   await Roller.ready().catch((err) => console.error(`${MODULE_ID} | roller`, err));
   Hooks.callAll(HOOKS.ready, api);
 });

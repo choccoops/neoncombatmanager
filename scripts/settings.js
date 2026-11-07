@@ -6,7 +6,7 @@ const K = (key) => `${LANG}.Settings.${key}`;
 export const MENUS = {
   combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim"],
-  comms: ["linkNeedsImplant", "linkImplants", "callNeedsAgent", "ringSeconds", "missedCallMessages", "callLogs", "busySignal"],
+  comms: ["linkNeedsImplant", "linkImplants"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones"],
   environment: [
@@ -26,25 +26,17 @@ const DEFS = [
 
   ["biomonAlerts", "client", String, "toast", { config: true, choices: { toast: K("BiomonAlerts.toast"), open: K("BiomonAlerts.open"), off: K("BiomonAlerts.off") } }],
 
-  // Biomon Link and Holocalls
+  // Biomon Link
   ["linkNeedsImplant", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.linksChanged`) }],
   ["linkImplants", "world", String, "Neuroport, Biomonitor", { onChange: () => Hooks.callAll(`${MODULE_ID}.linksChanged`) }],
-  ["callNeedsAgent", "world", Boolean, false, {}],
-  ["ringSeconds", "world", Number, 30, { range: { min: 10, max: 120, step: 5 } }],
-  ["missedCallMessages", "world", Boolean, true, {}],
   ["vitalLinks", "world", Object, {}, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.linksChanged`) }],
-  ["holocalls", "world", Object, {}, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.callsChanged`) }],
-  ["callLogs", "world", String, "button", { choices: { off: K("CallLogs.off"), button: K("CallLogs.button"), auto: K("CallLogs.auto") } }],
-  ["busySignal", "world", Boolean, true, {}],
-  ["callSounds", "client", Boolean, true, {}],
-  ["callRingtone", "client", String, "", { filePicker: "audio" }],
 
   // City & NCART hub
   ["hubPlayers", "world", Boolean, true, {}],
   ["hubDiscovery", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.hubChanged`, null) }],
   ["hubRevealDossier", "world", Boolean, true, {}],
   ["hubTravel", "world", String, "always", { choices: { off: K("HubTravel.off"), session: K("HubTravel.session"), always: K("HubTravel.always") } }],
-  ["hubSignal", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.callsChanged`) }],
+  ["hubSignal", "world", Boolean, true, {}],
   ["hubDeadZones", "world", String, "", {}],
   ["cityHub", "world", Object, {}, { config: false, onChange: (v) => Hooks.callAll(`${MODULE_ID}.hubChanged`, v) }],
 

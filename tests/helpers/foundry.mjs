@@ -459,3 +459,35 @@ export async function registerSettings() {
   Settings.register();
   return Settings;
 }
+
+/**
+ * Night City Messenger 2.1+, as far as the Holocall buttons use it: api v2 (features, calls.place,
+ * directory.list, open.inbox) and game.nightcity's number lookup and phone launchers.
+ * @param {object} [o] - { numbers: { actorId: number }, contacts: [{ id, actorId, number }], calls: false, refuse: "words" }
+ * @returns {{ placed: [number, as][], opened: [actorId, options][], off: () => void }}
+ */
+export function fakeMessenger({ numbers = {}, contacts = [], calls = true, refuse = "" } = {}) {
+  const placed = [];
+  const opened = [];
+  const v2 = {
+    features: { has: (name) => name === "calls" && calls },
+    calls: { place: async (number, as) => (placed.push([number, as]), refuse ? { ok: false, code: "FAILED", error: refuse } : { ok: true, data: { callId: `c${placed.length}`, emergency: false } }) },
+    directory: { list: async () => (game.user.isGM ? { ok: true, data: contacts.map(({ id, actorId }) => ({ id, actorId })) } : { ok: false, code: "NOT_GM" }) },
+    open: { inbox: async (actorId) => (opened.push([actorId, {}]), { ok: true, data: true }) }
+  };
+  modules.set("night-city-messenger", { id: "night-city-messenger", active: true, api: { v2 } });
+  globalThis.game.nightcity = {
+    messenger: { getNumber: (id) => numbers[id] ?? "" },
+    callService: { numberOf: (id) => numbers[id] ?? "", numberOfContact: (id) => contacts.find((c) => c.id === id)?.number ?? "" },
+    openInbox: (actorId, messageId, options) => opened.push([actorId, options]),
+    openPhone: async () => opened.push([null, { filter: "calls" }])
+  };
+  return {
+    placed,
+    opened,
+    off() {
+      modules.delete("night-city-messenger");
+      delete globalThis.game.nightcity;
+    }
+  };
+}

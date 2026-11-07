@@ -1,6 +1,7 @@
 import { MODULE_ID, TEMPLATE_PATH, LANG, NEON_HOME_ID } from "../constants.js";
 import { Compat } from "../compat.js";
 import { Links } from "./links.js";
+import { Phone } from "./phone.js";
 import { ecgPath } from "./vitals.js";
 import { debounce, L, esc } from "../util.js";
 
@@ -23,7 +24,7 @@ export class BiomonApp extends HandlebarsApplicationMixin(ApplicationV2) {
       joinLink: BiomonApp.#onJoin,
       createLink: BiomonApp.#onCreate,
       leaveLink: BiomonApp.#onLeave,
-      callLink: BiomonApp.#onCall,
+      callMember: BiomonApp.#onCall,
       renameLink: BiomonApp.#onRename,
       removeLink: BiomonApp.#onRemove,
       focusMember: BiomonApp.#onFocus,
@@ -55,7 +56,10 @@ export class BiomonApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const mine = Links.mine();
     const myIds = new Set(mine.map((a) => a.id));
     const hub = game.modules.get(NEON_HOME_ID);
-    const links = Links.visible().map((link) => ({
+    const links = Links.visible().map((link) => {
+      // Holocall a linkmate (through Night City Messenger): anyone on the link, and the GM.
+      const canCall = Phone.on && (game.user.isGM || Links.members(link).some((a) => myIds.has(a.id)));
+      return {
       id: link.id,
       name: link.name,
       members: Links.members(link).map((actor) => {
@@ -65,6 +69,7 @@ export class BiomonApp extends HandlebarsApplicationMixin(ApplicationV2) {
           name: actor.name,
           img: actor.img,
           mine: myIds.has(actor.id),
+          canCall: canCall && !myIds.has(actor.id),
           ...v,
           label: L(`${LANG}.Biomon.State.${v.state}`),
           implantHint: v.implant ? L(`${LANG}.Biomon.ImplantHint`, { implant: v.implant }) : "",
@@ -76,9 +81,9 @@ export class BiomonApp extends HandlebarsApplicationMixin(ApplicationV2) {
           spoofed: !!v.spoofed && game.user.isGM,
           fullBiomon: !!hub?.active && typeof hub.api?.biomonitor === "function" && actor.testUserPermission(game.user, "OBSERVER")
         };
-      }),
-      canCall: Links.members(link).some((a) => myIds.has(a.id)) || game.user.isGM
-    }));
+      })
+      };
+    });
     // Characters of this user not in any link, to join one or start one.
     const unlinked = mine.filter((a) => !Links.of(a));
     return {
@@ -112,11 +117,10 @@ export class BiomonApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (actor) await run(() => Links.leave(actor));
   }
 
-  /** Holocall everyone else on the link. */
+  /** Holocall a linkmate. */
   static async #onCall(event, target) {
-    const link = Links.get(target.closest("[data-link-id]").dataset.linkId);
-    const { HolocallApp } = await import("./holocall-app.js");
-    HolocallApp.dial({ link });
+    const actor = game.actors.get(target.closest("[data-actor-id]").dataset.actorId);
+    if (actor) await Phone.call(actor);
   }
 
   static async #onRename(event, target) {

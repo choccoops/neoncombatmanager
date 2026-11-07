@@ -13,7 +13,6 @@
 
 .neon-combat,
 .neon-combat-chat,
-.chat-message.ncm-holo,
 .ncm-tracker-clock,
 .ncm-wound,
 .ncm-scene-weather {
@@ -35,11 +34,8 @@
   --ncm-notch: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
   --ncm-notch-card: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
   --ncm-notch-sm: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
-  /* Holocall blue (Edgerunners / 2077) */
+  /* Holocall blue (Edgerunners / 2077): the hub's Holocall button */
   --ncm-holo: #49d8ff;
-  --ncm-holo-2: #1d8fd1;
-  --ncm-holo-text: #c9f4ff;
-  --ncm-holo-bg: rgba(3, 24, 44, 0.9);
 }
 
 .neon-combat * { box-sizing: border-box; }
@@ -528,132 +524,6 @@
 @keyframes ncm-ecg { to { stroke-dashoffset: -160; } }
 
 /* ==========================================================================
-   Holocall
-   ========================================================================== */
-.ncm-holocall.application,
-.ncm-incoming.application {
-  border-color: var(--ncm-holo-2);
-  box-shadow: 0 0 0 1px #000, 0 0 28px rgba(73, 216, 255, 0.28), 0 14px 42px rgba(0, 0, 0, 0.7);
-}
-.neon-combat.ncm-holocall.application > .window-header,
-.neon-combat.ncm-incoming.application > .window-header { background: linear-gradient(90deg, #04182c, #0b2238 55%, #062030); border-bottom-color: var(--ncm-holo); }
-.neon-combat.ncm-holocall.application > .window-header .window-icon,
-.neon-combat.ncm-incoming.application > .window-header .window-icon { color: var(--ncm-holo); }
-.ncm-holocall .window-content,
-.ncm-incoming .window-content {
-  background:
-    repeating-linear-gradient(0deg, rgba(73, 216, 255, 0.05) 0 1px, transparent 1px 3px),
-    radial-gradient(ellipse at 50% -20%, rgba(73, 216, 255, 0.18), transparent 60%),
-    #020c16;
-  color: var(--ncm-holo-text);
-  display: flex; flex-direction: column; min-height: 0;
-}
-.ncm-holocall .ncm-kicker, .ncm-incoming .ncm-kicker { color: var(--ncm-holo); }
-.ncm-holocall button.ncm-cta, .ncm-incoming button.ncm-cta { background: var(--ncm-holo); border-color: var(--ncm-holo); color: #021018; }
-.ncm-holocall button.on { background: rgba(73, 216, 255, 0.22); border-color: var(--ncm-holo); color: #fff; box-shadow: 0 0 8px rgba(73, 216, 255, 0.5); }
-
-/* holo portraits: blue, scanned, flickering */
-.ncm-holo-face, .ncm-ring-face { position: relative; overflow: hidden; border: 1px solid var(--ncm-holo); background: #021422; clip-path: var(--ncm-notch); }
-.ncm-holo-face img, .ncm-ring-face img {
-  width: 100%; height: 100%; object-fit: cover; object-position: top; border: 0;
-  filter: grayscale(1) brightness(1.15) sepia(1) hue-rotate(160deg) saturate(3.2);
-  opacity: 0.85; mix-blend-mode: screen;
-  animation: ncm-flicker 4s steps(1) infinite;
-}
-.ncm-holo-face::after, .ncm-ring-face::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(73, 216, 255, 0.18) 0 1px, transparent 1px 3px);
-  animation: ncm-scan 2.4s linear infinite;
-}
-@keyframes ncm-flicker { 0%, 100% { opacity: 0.85; } 47% { opacity: 0.85; } 48% { opacity: 0.45; } 49% { opacity: 0.9; } 82% { opacity: 0.6; transform: translateX(1px); } 83% { opacity: 0.85; transform: none; } }
-@keyframes ncm-scan { from { background-position: 0 0; } to { background-position: 0 24px; } }
-
-/* dialer */
-.ncm-holocall .ncm-dial { display: flex; flex-direction: column; gap: 6px; min-height: 0; height: 100%; }
-.ncm-holocall .ncm-dial-from { display: grid; gap: 3px; font-family: var(--ncm-display); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ncm-holo); }
-.ncm-holocall .ncm-dial-live { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-.ncm-holocall .ncm-dial-lists { flex: 1; min-height: 0; overflow-y: auto; }
-.ncm-holocall .ncm-dial-links { display: flex; flex-wrap: wrap; gap: 4px; }
-.ncm-holocall .ncm-dial-list { display: grid; gap: 2px; }
-.ncm-holocall .ncm-dial-list label { display: flex; align-items: center; gap: 8px; padding: 3px 6px; border: 1px solid rgba(73, 216, 255, 0.15); background: rgba(4, 30, 52, 0.55); cursor: pointer; }
-.ncm-holocall .ncm-dial-list label:hover { border-color: var(--ncm-holo); }
-.ncm-holocall .ncm-dial-list img { width: 26px; height: 26px; object-fit: cover; border: 0; filter: grayscale(0.4) sepia(0.6) hue-rotate(160deg); }
-.ncm-holocall .ncm-dial-list b { flex: 1; min-width: 0; font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ncm-holo-text); }
-.ncm-holocall .ncm-dial-list .is-burned { opacity: 0.5; }
-.ncm-holocall .ncm-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ncm-dim); }
-.ncm-holocall .ncm-dot.on { background: var(--ncm-green); box-shadow: 0 0 6px var(--ncm-green); }
-.ncm-holocall .ncm-trust { display: flex; gap: 2px; }
-.ncm-holocall .ncm-trust i { width: 5px; height: 9px; background: rgba(73, 216, 255, 0.15); }
-.ncm-holocall .ncm-trust i.on { background: var(--ncm-holo); }
-.ncm-holocall .ncm-sub { color: var(--ncm-holo-2); }
-
-/* the call */
-.ncm-holocall .ncm-holo { display: flex; flex-direction: column; gap: 6px; height: 100%; min-height: 0; }
-.ncm-holocall .ncm-holo-bar { display: flex; align-items: baseline; justify-content: space-between; }
-.ncm-holocall .ncm-holo-timer { font-family: var(--ncm-display); font-size: 14px; color: var(--ncm-holo); text-shadow: 0 0 6px var(--ncm-holo); }
-.ncm-holocall .is-ringing .ncm-holo-timer { animation: ncm-blink 1s steps(2) infinite; }
-.ncm-holocall .ncm-holo-tiles { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.ncm-holocall .ncm-holo-tiles li { width: 84px; display: grid; justify-items: center; gap: 2px; text-align: center; opacity: 0.55; }
-.ncm-holocall .ncm-holo-tiles li.is-live { opacity: 1; }
-.ncm-holocall .ncm-holo-tiles li.st-ringing { opacity: 0.8; animation: ncm-blink 1.4s ease-in-out infinite; }
-.ncm-holocall .ncm-holo-tiles .ncm-holo-face { width: 72px; height: 72px; }
-.ncm-holocall .ncm-holo-tiles b { font-family: var(--ncm-display); font-weight: 400; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ncm-holo-text); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ncm-holocall .ncm-holo-tiles small { font-size: 9px; color: var(--ncm-holo-2); }
-.ncm-holocall .ncm-holo-feed { flex: 1; min-height: 80px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid rgba(73, 216, 255, 0.25); background: rgba(2, 16, 30, 0.75); }
-.ncm-holocall .ncm-holo-feed li { display: flex; gap: 6px; align-items: flex-start; }
-.ncm-holocall .ncm-holo-feed li > img { width: 24px; height: 24px; object-fit: cover; border: 1px solid rgba(73, 216, 255, 0.4); filter: grayscale(1) sepia(1) hue-rotate(160deg) saturate(3); }
-.ncm-holocall .ncm-holo-feed li > div { flex: 1; min-width: 0; }
-.ncm-holocall .ncm-holo-feed b { font-family: var(--ncm-display); font-weight: 400; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ncm-holo); }
-.ncm-holocall .ncm-holo-feed small { font-size: 9px; color: var(--ncm-holo-2); }
-.ncm-holocall .ncm-holo-feed li.is-mine b { color: #fff; }
-.ncm-holocall .ncm-holo-feed .ncm-holo-tag { display: none; }
-.ncm-holocall .ncm-holo-feed p { margin: 1px 0 0; font-size: 13px; color: var(--ncm-holo-text); text-shadow: 0 0 6px rgba(73, 216, 255, 0.5); }
-.ncm-holocall .ncm-holo-quiet { justify-content: center; font-size: 11px; color: var(--ncm-holo-2); font-style: italic; }
-.ncm-holocall .ncm-holo-say { display: flex; gap: 4px; align-items: stretch; }
-.ncm-holocall .ncm-holo-say select { flex: 0 0 110px; height: auto; }
-.ncm-holocall .ncm-holo-say textarea { flex: 1; resize: none; background: rgba(2, 16, 30, 0.9); border-color: var(--ncm-holo-2); color: var(--ncm-holo-text); }
-.ncm-holocall .is-ended .ncm-holo-tiles, .ncm-holocall .is-ended .ncm-holo-feed { filter: grayscale(0.8); opacity: 0.7; }
-@keyframes ncm-blink { 50% { opacity: 0.35; } }
-
-/* incoming call */
-.ncm-incoming .ncm-ring { display: grid; justify-items: center; gap: 4px; text-align: center; }
-.ncm-incoming .ncm-ring-face { width: 96px; height: 96px; animation: ncm-ring 1.2s ease-in-out infinite; }
-.ncm-incoming .ncm-ring-name { font-family: var(--ncm-display); font-weight: 400; font-size: 16px; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; text-shadow: 0 0 8px var(--ncm-holo); }
-.ncm-incoming .ncm-ring-buttons { display: flex; gap: 6px; margin-top: 6px; }
-.ncm-incoming .ncm-ring-accept { background: rgba(57, 255, 136, 0.15); border-color: var(--ncm-green); color: var(--ncm-green); }
-.ncm-incoming .ncm-ring-accept:hover:not(:disabled) { background: var(--ncm-green) !important; color: #021008 !important; }
-@keyframes ncm-ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(73, 216, 255, 0.7); } 50% { box-shadow: 0 0 0 10px rgba(73, 216, 255, 0); } }
-
-/* holocall messages in the chat log */
-.chat-message.ncm-holo {
-  background: linear-gradient(135deg, rgba(4, 34, 60, 0.96), rgba(2, 14, 28, 0.96)) !important;
-  border: 1px solid var(--ncm-holo-2) !important;
-  box-shadow: inset 0 0 14px rgba(73, 216, 255, 0.18);
-  color: var(--ncm-holo-text);
-}
-.chat-message.ncm-holo .message-header,
-.chat-message.ncm-holo .message-sender,
-.chat-message.ncm-holo .whisper-to { color: var(--ncm-holo) !important; }
-.chat-message.ncm-holo .ncm-holo-line { position: relative; }
-.chat-message.ncm-holo .ncm-holo-tag { font-family: var(--ncm-display); font-size: 9px; letter-spacing: 0.2em; color: var(--ncm-holo-2); }
-.chat-message.ncm-holo .ncm-holo-line p { margin: 2px 0 0; color: var(--ncm-holo-text); text-shadow: 0 0 6px rgba(73, 216, 255, 0.6); }
-
-/* talking on a call from the regular chat box */
-textarea#chat-message.ncm-holo-route {
-  background: rgba(3, 24, 44, 0.92) !important;
-  border-color: #49d8ff !important;
-  color: #c9f4ff !important;
-  box-shadow: inset 0 0 10px rgba(73, 216, 255, 0.25), 0 0 8px rgba(73, 216, 255, 0.35) !important;
-}
-.ncm-holo-banner {
-  display: flex; align-items: center; gap: 6px; width: 100%; margin: 0 0 3px; padding: 3px 8px;
-  border: 1px solid #1d8fd1; border-radius: 0; background: linear-gradient(90deg, rgba(4, 34, 60, 0.95), rgba(2, 14, 28, 0.95));
-  color: #49d8ff; font-family: "Neon Combat Tektur", "Signika", sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
-  text-align: left; line-height: 1.4; cursor: pointer; animation: ncm-blink 2.4s ease-in-out infinite;
-}
-.ncm-holo-banner:hover { background: #49d8ff; color: #021018; animation: none; }
-
-/* ==========================================================================
    City & NCART hub
    ========================================================================== */
 #ncm-hub {
@@ -828,7 +698,6 @@ textarea#chat-message.ncm-holo-route {
   .ncm-hub-modes { grid-template-columns: repeat(4, 1fr); }
   .ncm-hub-bar { flex-wrap: wrap; }
 }
-.ncm-holocall .ncm-holo-logged { align-self: center; font-family: var(--ncm-display); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ncm-holo); }
 /* hub: discovery and the GM's places */
 .ncm-hub-place.is-hidden { opacity: 0.45; }
 .ncm-hub-place.is-hidden circle, .ncm-hub-place.is-hidden path { stroke-dasharray: 3 2; stroke: #fff; }
@@ -852,7 +721,7 @@ textarea#chat-message.ncm-holo-route {
 .ncm-hub-fp button { flex: 0 0 auto; width: auto; }
 
 /* ==========================================================================
-   Motion: the hub's uplink, night, scan and dossiers; holocall effects
+   Motion: the hub's uplink, night, scan and dossiers
    ========================================================================== */
 /* boot */
 .ncm-hub-boot {
@@ -953,26 +822,10 @@ textarea#chat-message.ncm-holo-route {
   .nd-art { min-height: 200px; border-right: 0; border-bottom: 1px solid var(--ncm-line-2); }
   .nd-body h1 { font-size: 28px; }
 }
-/* holocalls */
-.ncm-holo-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; margin-left: auto; margin-right: 8px; }
-.ncm-holo-eq i { width: 3px; height: 3px; background: var(--ncm-holo); opacity: 0.35; }
-.ncm-holo.is-talking .ncm-holo-eq i { opacity: 1; animation: ncm-eq 0.45s ease-in-out infinite; box-shadow: 0 0 4px var(--ncm-holo); }
-.ncm-holo.is-ringing .ncm-holo-eq i { opacity: 0.8; background: var(--ncm-yellow); animation: ncm-eq 0.9s ease-in-out infinite; }
-.ncm-holo-eq i:nth-child(3n) { animation-delay: -0.15s !important; }
-.ncm-holo-eq i:nth-child(3n + 1) { animation-delay: -0.3s !important; }
-.ncm-holo-eq i:nth-child(4n) { animation-duration: 0.6s !important; }
-@keyframes ncm-eq { 0%, 100% { height: 3px; } 50% { height: 16px; } }
-.ncm-holo-band { position: absolute; left: 0; right: 0; height: 18%; top: -20%; pointer-events: none; background: rgba(73, 216, 255, 0.28); mix-blend-mode: screen; animation: ncm-band 2.6s linear infinite; }
-@keyframes ncm-band { to { top: 120%; } }
-.ncm-holocall .ncm-holo-tiles li.st-ringing .ncm-holo-face, .ncm-incoming .ncm-ring-face { animation: ncm-shake 0.5s infinite, ncm-ring 1.2s ease-in-out infinite; }
-@keyframes ncm-shake { 0%, 100% { translate: 0 0; } 25% { translate: 1px -1px; } 75% { translate: -1px 1px; } }
-.ncm-incoming .ncm-ring-accept { animation: ncm-accept 1.1s ease-in-out infinite; }
-@keyframes ncm-accept { 50% { box-shadow: 0 0 18px rgba(57, 255, 136, 0.8); } }
-.ncm-holo-feed .ncm-holo-line p { white-space: pre-wrap; }
 
 /* Less motion, when asked for */
 @media (prefers-reduced-motion: reduce) {
-  #ncm-hub, #ncm-hub *, .ncm-dossier, .ncm-dossier *, .ncm-holocall *, .ncm-incoming * { animation: none !important; transition: none !important; }
+  #ncm-hub, #ncm-hub *, .ncm-dossier, .ncm-dossier * { animation: none !important; transition: none !important; }
   .ncm-hub-scan, .ncm-hub-boot { display: none !important; }
 }
 /* hub: doorways */
