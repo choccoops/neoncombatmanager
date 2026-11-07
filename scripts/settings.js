@@ -7,6 +7,7 @@ export const MENUS = {
   combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim"],
   comms: ["linkNeedsImplant", "linkImplants"],
+  chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones"],
   environment: [
@@ -25,6 +26,21 @@ const DEFS = [
   ["carouselCollapsed", "client", Boolean, false, { config: false }],
   ["actionHud", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["actionHudState", "client", Object, {}, { config: false }],
+  ["chatPortraits", "client", String, "token", { config: true, choices: { token: K("ChatPortraits.token"), actor: K("ChatPortraits.actor"), off: K("ChatPortraits.off") } }],
+  ["chatPortraitSize", "client", Number, 36, { config: true, range: { min: 20, max: 64, step: 2 } }],
+  ["chatPortraitShape", "client", String, "notch", { config: true, choices: { notch: K("PortraitShape.notch"), circle: K("PortraitShape.circle"), square: K("PortraitShape.square") } }],
+  ["rollPrivacyButtons", "client", Boolean, true, { config: true }],
+  ["chatCommandMenu", "client", Boolean, true, { config: true }],
+  ["stageShow", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.stageChanged`) }],
+
+  // Chat
+  ["chatFormatting", "world", Boolean, true, {}],
+  ["chatMerge", "world", Boolean, true, {}],
+  ["chatEditing", "world", Boolean, true, {}],
+  ["adventureLog", "world", Boolean, true, {}],
+  ["adventureLogName", "world", String, "", {}],
+  ["stageEnabled", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.stageChanged`) }],
+  ["stageCast", "world", Object, { cast: [] }, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.stageChanged`) }],
 
   ["biomonAlerts", "client", String, "toast", { config: true, choices: { toast: K("BiomonAlerts.toast"), open: K("BiomonAlerts.open"), off: K("BiomonAlerts.off") } }],
 
@@ -119,7 +135,7 @@ export const Settings = {
           name: K(`Menu.${id}.name`),
           label: K(`Menu.${id}.label`),
           hint: K(`Menu.${id}.hint`),
-          icon: { combat: "fa-solid fa-hourglass-half", conditions: "fa-solid fa-heart-pulse", rules: "fa-solid fa-dice-d10", comms: "fa-solid fa-phone-volume", hub: "fa-solid fa-map-location-dot", environment: "fa-solid fa-cloud-moon-rain" }[id],
+          icon: { combat: "fa-solid fa-hourglass-half", conditions: "fa-solid fa-heart-pulse", rules: "fa-solid fa-dice-d10", comms: "fa-solid fa-heart-pulse", chat: "fa-solid fa-comments", hub: "fa-solid fa-map-location-dot", environment: "fa-solid fa-cloud-moon-rain" }[id],
           type: menuClass.for(id, keys),
           restricted: true
         });

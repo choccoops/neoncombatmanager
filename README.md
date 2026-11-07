@@ -8,6 +8,9 @@ Cyberpunk RED's own rolls.
 - **Combat carousel**: the Initiative Queue as neon cards across the top of the screen.
 - **Action HUD**: the controlled token's actions in one bar (Initiative, attacks with their fire
   modes, skills, role abilities, conditions), laid out by each player.
+- **Neon Chat**: Discord-style formatting, chat portraits, merged and editable messages, roll
+  privacy buttons, an Adventure Log, one place for chat commands with a completion menu, and a
+  visual novel **stage** for roleplay scenes.
 - **Biomon Link**: players link their characters' Biomonitors as a group; a small popout shows
   everyone's vitals (ECG, HP, status, Death Save penalty, injuries) and raises the alarm when
   someone crashes.
@@ -109,6 +112,62 @@ their own character. Each group opens on hover, or click a group to keep it open
 Inspired by Token Action HUD and p4vl0-dev's
 [Cyberpunk style](https://github.com/p4vl0-dev/Token-Action-HUD-Cyberpunk-style), but standalone:
 it doesn't need Token Action HUD Core. If you run Token Action HUD too, turn one of them off.
+
+## Neon Chat
+
+Foundry's chat, enhanced. Each part can be switched off under **Chat & stage** (world) or in
+your own settings (client).
+
+- **Discord formatting**: `**bold**`, `*italic*` or `_italic_`, `__underline__`, `~~strike~~`,
+  `||spoiler||` (click to reveal), `` `code` `` and code blocks, `> quotes` (`>>>` quotes the rest),
+  `#` headings, `-# small text`, lists, and `[masked links](https://…)`. Inline rolls, `@UUID`
+  links and HTML you type pass through untouched.
+- **Chat portraits**: the speaker's token art or actor art by their name, in their player's
+  colour. Out of character, a player gets their avatar. Double-click a portrait to pan to the
+  token. Size and shape are client settings.
+- **Merged messages**: lines from the same speaker a few minutes apart read as one block.
+- **Edit sent messages**: right-click a message, or press Up in an empty chat box. It shows
+  *edited*. The GM can edit anyone's.
+- **Roll privacy buttons**: Public, GM, Blind and Self as buttons instead of the dropdown
+  (Foundry v12; v13 has its own).
+- **Adventure Log**: `/log something happened` keeps a dated line in a journal the players can
+  read, and `/log q "Source" what they said` keeps a quote. `/gmlog` writes to the GM's own log.
+  Right-click any message to add it to the log.
+- **Chat archive** (GM): `/archive [name]` saves the chat log to a journal, then offers to
+  clear it.
+- **Chat commands, one place for all of them**: type `/` for every command you may use, with
+  aliases and what each does. Keep typing, and the menu offers what the command takes (names,
+  conditions, expressions). Arrow keys move, Tab or Enter picks. `@name` starts a whisper.
+  - Other modules register with Chat Commander's own call, `game.chatCommands.register(...)`,
+    which this module provides when Chat Commander isn't installed. With Chat Commander
+    installed, this module's commands go to it instead.
+  - This module's commands are `/log`, `/gmlog`, `/archive`, `/plot`, `/map`, `/biomon`, `/hud`,
+    `/cond <condition>` (on your selected tokens), and the stage's commands below.
+
+### The stage
+
+Visual novel scenes over the table, in the spirit of Theatre Inserts.
+
+- **Putting characters on stage**:
+  - from the chat box, `/stage` (your selected tokens or your character) or `/stage Name`
+  - the + on the stage bar over the chat box
+  - **Put on stage** in the Actors directory menu
+
+  They come on as big portraits at the bottom of the screen, alternating sides.
+- **Speaking as someone**: click their portrait on the stage bar, or type `/as Name`. What you
+  type in chat is then theirs, in character, and appears in a dialogue box under them, typed
+  out and formatted. Emotes (`/em`) show in italics. Out of character (`/ooc`) stays off stage.
+- **Expressions**: the face buttons on the stage bar, or `/mood angry`. The expressions are
+  Neutral, Happy, Angry, Sad, Surprised, Scared, Smug, Hurt and Thinking, each with its own
+  animation. **Stage expressions** in the Actors directory menu sets a picture for each.
+- **The narrator** (GM): `/narrate text`, or the megaphone (narrator mode: everything you type
+  is narration). It shows in a box across the screen and in chat.
+- On the stage bar, right-click a portrait to move it to the other side, and × takes it off.
+  `/unstage [Name|all]` and `/curtain` (GM) clear the stage. **Show the stage** hides it for
+  you alone.
+
+If you also run DF Chat Enhancements, Chat Portrait or Theatre Inserts, switch off the matching
+part here or there.
 
 ## Biomon Link
 

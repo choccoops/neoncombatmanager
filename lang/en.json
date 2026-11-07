@@ -803,6 +803,11 @@
           "name": "2070 roller & table rules",
           "label": "Roller & rules",
           "hint": "The Plot Die in the roll dialog, Riding the Edge, Chain Reactions, Tarot Criticals, Flash of Luck and the Awareness Ladder."
+        },
+        "chat": {
+          "name": "Neon Chat",
+          "hint": "Formatting, merged messages, editing, the Adventure Log and the visual novel stage.",
+          "label": "Chat & stage"
         }
       },
       "Placement": {
@@ -894,6 +899,68 @@
       "actionHud": {
         "name": "Action HUD",
         "hint": "A bar of the controlled token's actions: Initiative, attacks, skills, role abilities and more, laid out your way (the sliders button customizes it)."
+      },
+      "chatPortraits": {
+        "name": "Chat portraits",
+        "hint": "The speaker's picture by their name in chat: the token's art or the actor's. Players talking out of character get their avatar."
+      },
+      "ChatPortraits": {
+        "token": "Token art",
+        "actor": "Actor art",
+        "off": "Off"
+      },
+      "chatPortraitSize": {
+        "name": "Chat portrait size",
+        "hint": "In pixels."
+      },
+      "chatPortraitShape": {
+        "name": "Chat portrait shape",
+        "hint": "Framed in the player's colour."
+      },
+      "PortraitShape": {
+        "notch": "Notched",
+        "circle": "Round",
+        "square": "Square"
+      },
+      "rollPrivacyButtons": {
+        "name": "Roll privacy buttons",
+        "hint": "Four buttons (Public, GM, Blind, Self) instead of the roll mode dropdown under the chat box (Foundry v12)."
+      },
+      "chatCommandMenu": {
+        "name": "Chat command menu",
+        "hint": "Type / in the chat box for the commands you can use, with what each takes. @name starts a whisper."
+      },
+      "stageShow": {
+        "name": "Show the stage",
+        "hint": "The visual novel stage on your screen. Off hides it for you only."
+      },
+      "chatFormatting": {
+        "name": "Discord-style formatting",
+        "hint": "**bold**, *italic*, __underline__, ~~strike~~, ||spoilers||, `code`, > quotes, # headings, lists and [links](https://…) in chat messages."
+      },
+      "chatMerge": {
+        "name": "Merge messages",
+        "hint": "Messages from the same speaker a few minutes apart show as one block."
+      },
+      "chatEditing": {
+        "name": "Edit sent messages",
+        "hint": "Right-click your message (or press Up in an empty chat box) to edit it. The GM can edit anyone's."
+      },
+      "adventureLog": {
+        "name": "Adventure Log",
+        "hint": "/log keeps dated lines and quotes in a journal the players can read; /gmlog in the GM's own."
+      },
+      "adventureLogName": {
+        "name": "Adventure Log journal",
+        "hint": "The journal's name (made the first time something is logged). Empty: \"Adventure Log\"."
+      },
+      "stageEnabled": {
+        "name": "The stage",
+        "hint": "Visual novel scenes: characters on stage as big portraits, their lines in dialogue boxes, expressions, and the narrator."
+      },
+      "stageCast": {
+        "name": "Stage cast",
+        "hint": ""
       }
     },
     "SceneWeather": {
@@ -1657,6 +1724,93 @@
       "ResetHint": "Start over from the template (combat basics). Nothing is kept until you save.",
       "Save": "Save",
       "Saved": "Action HUD layout saved."
+    },
+    "Chat": {
+      "Loading": "Loading…",
+      "Online": "online",
+      "Offline": "offline",
+      "NotAllowed": "You can't use {name}.",
+      "Edited": "edited",
+      "Edit": "Edit message",
+      "EditHint": "Discord formatting works here too.",
+      "Save": "Save",
+      "EditLast": "Edit my last chat message",
+      "EditLastHint": "Edit the last message you sent (Up in an empty chat box does the same).",
+      "Core": {
+        "Roll": "Roll dice: /r 1d10+7",
+        "GmRoll": "Roll for you and the GM",
+        "BlindRoll": "Roll for the GM only",
+        "SelfRoll": "Roll for yourself",
+        "PublicRoll": "Roll for everyone",
+        "Whisper": "Whisper: /w [Name] message (or @Name)",
+        "Reply": "Reply to the last whisper",
+        "IC": "Speak in character",
+        "OOC": "Speak out of character",
+        "Emote": "Do something: /em draws her pistol"
+      },
+      "Log": {
+        "Default": "Adventure Log",
+        "Said": "{source} said: “{text}”",
+        "Empty": "Nothing to log.",
+        "Added": "Logged in {name}.",
+        "AddEvent": "Add to the Adventure Log",
+        "AddQuote": "Add to the Adventure Log as a quote"
+      },
+      "Archive": {
+        "Empty": "The chat log is empty.",
+        "Title": "Chat Archive · {name}",
+        "Saved": "{count} messages kept in {name}.",
+        "ClearTitle": "Clear the chat log?",
+        "Clear": "The {count} archived messages are in the journal. Delete them from the chat log now?"
+      },
+      "Cmd": {
+        "Log": "Keep a line in the Adventure Log",
+        "LogHelp": "/log something happened · /log q Source what they said · /log q \"Two Words\" what they said",
+        "GmLog": "Keep a line in the GM's own log",
+        "Archive": "Keep the chat log in a journal, then clear it",
+        "Plot": "Open the Plot Die",
+        "Map": "Open the Night City Map",
+        "Biomon": "Open the Biomon Link",
+        "Hud": "Customize the Action HUD",
+        "Cond": "Toggle a condition on your selected tokens",
+        "NoCondition": "No condition called {name}.",
+        "Stage": "Put a character on stage (yours, or the selected tokens)",
+        "Unstage": "Take a character off stage (all: everyone)",
+        "As": "Speak as someone on stage (nothing: as yourself)",
+        "Mood": "Change your expression on stage",
+        "Narrate": "Narrate across the stage (nothing: narrator mode on or off)",
+        "Curtain": "Clear the stage"
+      }
+    },
+    "Stage": {
+      "Title": "Stage",
+      "Narrator": "Narrator",
+      "NotYours": "That character isn't yours.",
+      "NoOne": "Select a token or set your character first.",
+      "NotSpeaking": "You aren't speaking as anyone on stage.",
+      "NoMood": "No expression called {mood}.",
+      "NoActor": "No one called {name}.",
+      "SpeakAs": "Speak as {name} (click again to stop; right-click: other side; ×: off stage)",
+      "AddHint": "Put your selected tokens (or your character) on stage",
+      "NarratorHint": "Narrator mode: what you type is narration",
+      "NarratorOn": "Narrator mode on: what you type is narration.",
+      "NarratorOff": "Narrator mode off.",
+      "Curtain": "Clear the stage",
+      "MoodsTitle": "{name}: expressions",
+      "MoodsHint": "An image for each expression (empty: the portrait). Characters animate either way.",
+      "Mood": {
+        "neutral": "Neutral",
+        "happy": "Happy",
+        "angry": "Angry",
+        "sad": "Sad",
+        "surprised": "Surprised",
+        "scared": "Scared",
+        "smug": "Smug",
+        "hurt": "Hurt",
+        "thinking": "Thinking"
+      },
+      "PutOn": "Put on stage",
+      "Expressions": "Stage expressions"
     }
   }
 }
