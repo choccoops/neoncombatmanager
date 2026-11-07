@@ -77,7 +77,7 @@ test("Chat Commander's game.chatCommands is there without it; this module's comm
   Commands.list.clear();
   await Chat.ready();
   assert.equal(typeof game.chatCommands.register, "function");
-  for (const n of ["/log", "/archive", "/plot", "/cond", "/stage", "/as", "/mood", "/narrate", "/curtain"]) assert.ok(Commands.list.has(n), n);
+  for (const n of ["/log", "/archive", "/plot", "/cond", "/stage", "/as", "/mood", "/narrate", "/curtain", "/director"]) assert.ok(Commands.list.has(n), n);
   assert.ok(Commands.list.get("/roll").core);
 });
 
@@ -180,4 +180,47 @@ test("staging: players put their own characters on; speaking as one makes what y
   for (const l of Stage.lines.values()) clearTimeout(l.timer);
   await Settings.set("stageCast", { cast: [] });
   assert.equal(missingKeys.size, 0, [...missingKeys].join(", "));
+});
+
+test("speak as: yourself, or a character of yours in this scene (by their token) or on stage", async () => {
+  const vee = makeActor({ name: "Vee" });
+  const mook = makeActor({ name: "Ganger", type: "mook" });
+  const ice = makeActor({ name: "Hellhound", type: "blackIce" });
+  const tokens = [
+    { id: "t1", actorId: vee.id, name: "Vee (masked)" },
+    { id: "t2", actorId: mook.id, name: "Ganger" },
+    { id: "t3", actorId: mook.id, name: "Ganger" },
+    { id: "t4", actorId: ice.id, name: "Hellhound" }
+  ];
+  game.scenes.viewed = { id: "s1", tokens };
+  try {
+    assert.deepEqual(Stage.speakOptions().map((o) => o.name), ["Ganger", "Vee (masked)"], "characters and mooks, once each, by their token's name");
+    Stage.speakAs("me");
+    assert.deepEqual(Stage.speakerFor(), { speaker: { scene: null, token: null, actor: null, alias: game.user.name } });
+    Stage.speakAs(vee.id);
+    assert.deepEqual(Stage.speakerFor(), { speaker: { scene: "s1", token: "t1", actor: vee.id, alias: "Vee (masked)" } });
+    const data = { speaker: {} };
+    Chat.onChatMessage(null, "On my way", data);
+    assert.equal(data.speaker.token, "t1");
+    Stage.speakAs(null);
+    assert.equal(Stage.speakerFor(), null, "nothing picked: Foundry decides");
+  } finally {
+    delete game.scenes.viewed;
+    Stage.speakAs(null);
+  }
+});
+
+test("stage mode: the GM's switch, kept as the cast changes, back on after the curtain", async () => {
+  const vee = makeActor({ name: "Vee", owners: [player.id] });
+  const set = Socket.handlers.get("stageSet");
+  await Settings.set("stageCast", { cast: [] });
+  assert.equal(Stage.focus, true, "on by default");
+  await assert.rejects(set({ op: "focus", value: false }, player.id), /isn't yours/, "the GM's call");
+  await set({ op: "focus", value: false }, game.user.id);
+  await set({ op: "add", actorId: vee.id }, player.id);
+  assert.equal(Stage.focus, false, "adding someone keeps it");
+  assert.equal(Stage.active, true);
+  await set({ op: "clear" }, game.user.id);
+  assert.equal(Stage.focus, true);
+  assert.equal(Stage.active, false);
 });

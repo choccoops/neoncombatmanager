@@ -1,0 +1,38 @@
+<section class="ncm-sd">
+  <header class="ncm-sd-bar">
+    <button type="button" data-action="addSelected" data-tooltip="NEONCOMBAT.Stage.AddHint"><i class="fa-solid fa-user-plus"></i> {{localize "NEONCOMBAT.Stage.AddSelected"}}</button>
+    <button type="button" class="{{#if narrating}}on{{/if}}" data-action="narrator" data-tooltip="NEONCOMBAT.Stage.NarratorHint"><i class="fa-solid fa-bullhorn"></i></button>
+    <button type="button" class="{{#if focus}}on{{/if}}" data-action="focus" data-tooltip="NEONCOMBAT.Stage.FocusHint"><i class="fa-solid fa-eye-low-vision"></i></button>
+    <button type="button" class="is-danger" data-action="curtain" data-tooltip="NEONCOMBAT.Stage.Curtain" {{#unless cast.length}}disabled{{/unless}}><i class="fa-solid fa-person-booth"></i></button>
+  </header>
+  {{#unless enabled}}<p class="ncm-warn">{{localize "NEONCOMBAT.Stage.Disabled"}}</p>{{/unless}}
+
+  {{#if cast.length}}
+  <ol class="ncm-sd-cast">
+    {{#each cast}}
+    <li class="ncm-sd-row{{#if speaking}} is-speaking{{/if}}" data-actor-id="{{id}}">
+      <img src="{{img}}" alt="" class="{{#if flip}}is-flip{{/if}}">
+      <div class="ncm-sd-main">
+        <div class="ncm-sd-name">
+          <b>{{name}}</b>
+          <span class="ncm-sd-tools">
+            <button type="button" class="{{#if speaking}}on{{/if}}" data-action="speak" data-tooltip="NEONCOMBAT.Stage.DirSpeak"><i class="fa-solid fa-comment"></i></button>
+            <button type="button" data-action="side" data-tooltip="NEONCOMBAT.Stage.DirSide"><i class="fa-solid {{#if left}}fa-arrow-right{{else}}fa-arrow-left{{/if}}"></i></button>
+            <button type="button" data-action="flip" data-tooltip="NEONCOMBAT.Stage.DirFlip"><i class="fa-solid fa-arrows-left-right"></i></button>
+            <button type="button" data-action="moods" data-tooltip="NEONCOMBAT.Stage.Expressions"><i class="fa-solid fa-images"></i></button>
+            <button type="button" class="is-danger" data-action="remove" data-tooltip="NEONCOMBAT.Stage.DirRemove"><i class="fa-solid fa-xmark"></i></button>
+          </span>
+        </div>
+        <div class="ncm-sd-moods">
+          {{#each moods}}<button type="button" class="{{#if on}}on{{/if}}" data-action="mood" data-mood="{{key}}" data-tooltip="{{label}}"><i class="{{icon}}"></i></button>{{/each}}
+        </div>
+      </div>
+      <span class="ncm-sd-side">{{#if left}}{{localize "NEONCOMBAT.Stage.Left"}}{{else}}{{localize "NEONCOMBAT.Stage.Right"}}{{/if}}</span>
+    </li>
+    {{/each}}
+  </ol>
+  {{else}}
+  <p class="ncm-empty">{{localize "NEONCOMBAT.Stage.Empty"}}</p>
+  {{/if}}
+  <p class="ncm-hint">{{localize "NEONCOMBAT.Stage.DirectorHint"}}</p>
+</section>

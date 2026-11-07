@@ -310,6 +310,19 @@ export const Chat = {
         return entries("/cond", Registry.all().filter((c) => c.name.toLowerCase().includes(want)).map((c) => c.name)).slice(0, 10);
       } });
 
+    // Who you speak as: yourself, or a character of yours in this scene or on stage.
+    reg({ name: "/as", description: L(`${LANG}.Chat.Cmd.As`), icon: '<i class="fa-solid fa-comment"></i>',
+      callback: run((p) => {
+        const want = p.trim().toLowerCase();
+        if (!want) return Stage.speakAs(null);
+        if (want === "me" || want === game.user.name.toLowerCase()) return Stage.speakAs("me");
+        const options = Stage.speakOptions();
+        const c = options.find((o) => o.name.toLowerCase() === want) ?? options.find((o) => o.name.toLowerCase().startsWith(want));
+        if (!c) throw new Error(L(`${LANG}.Stage.NoActor`, { name: p }));
+        return Stage.speakAs(c.id);
+      }),
+      autocompleteCallback: (menu, alias, p) => entries("/as", ["me", ...Stage.speakOptions().map((o) => o.name)].filter((n) => n.toLowerCase().startsWith(p.toLowerCase()))) });
+
     // The stage.
     if (!Settings.get("stageEnabled")) return;
     const names = (list) => list.map((a) => a.name);
@@ -329,14 +342,6 @@ export const Chat = {
         return Stage.remove(c.id);
       }),
       autocompleteCallback: (menu, alias, p) => entries("/unstage", [...Stage.cast.map((c) => c.name), ...(game.user.isGM ? ["all"] : [])].filter((n) => n.toLowerCase().startsWith(p.toLowerCase()))) });
-    reg({ name: "/as", description: L(`${LANG}.Chat.Cmd.As`), icon: '<i class="fa-solid fa-comment"></i>',
-      callback: run((p) => {
-        if (!p.trim()) return Stage.speakAs(null);
-        const c = Stage.findCast(p);
-        if (!c) throw new Error(L(`${LANG}.Stage.NoActor`, { name: p }));
-        return Stage.speakAs(c.id);
-      }),
-      autocompleteCallback: (menu, alias, p) => entries("/as", Stage.cast.filter((c) => game.user.isGM || game.actors.get(c.id)?.isOwner).map((c) => c.name).filter((n) => n.toLowerCase().startsWith(p.toLowerCase()))) });
     reg({ name: "/mood", aliases: ["/emotion"], description: L(`${LANG}.Chat.Cmd.Mood`), icon: '<i class="fa-solid fa-face-smile"></i>',
       callback: run((p) => Stage.mood(p.trim().toLowerCase())),
       autocompleteCallback: (menu, alias, p) => Object.keys(MOODS).filter((m) => m.startsWith(p.toLowerCase())).map((m) => Commands.createCommandElement(`/mood ${m}`, `<i class="${MOODS[m]}"></i> <b>${esc(L(`${LANG}.Stage.Mood.${m}`))}</b>`)) });
@@ -349,6 +354,8 @@ export const Chat = {
         }
         return this.narrate(p);
       }) });
+    reg({ name: "/director", requiredRole: "GAMEMASTER", description: L(`${LANG}.Chat.Cmd.Director`), icon: '<i class="fa-solid fa-masks-theater"></i>',
+      callback: run(() => Stage.openDirector()) });
     reg({ name: "/curtain", requiredRole: "GAMEMASTER", description: L(`${LANG}.Chat.Cmd.Curtain`), icon: '<i class="fa-solid fa-person-booth"></i>',
       callback: run(() => Stage.clear()) });
   }

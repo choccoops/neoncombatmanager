@@ -92,6 +92,9 @@ const api = {
       mood: (mood, actorId) => Stage.mood(mood, actorId),
       speakAs: (actorId) => Stage.speakAs(actorId),
       clear: () => Stage.clear(),
+      /** GM: stage mode (the table dims, other interface steps out) on, off or toggled. */
+      focus: (value) => Stage.setFocus(value),
+      director: () => Stage.openDirector(),
       editMoods: (actor) => Stage.editMoods(actor)
     }
   },
@@ -185,6 +188,7 @@ Hooks.once("init", () => {
     `${TEMPLATE_PATH}/carousel.hbs`,
     `${TEMPLATE_PATH}/action-hud.hbs`,
     `${TEMPLATE_PATH}/action-hud-editor.hbs`,
+    `${TEMPLATE_PATH}/stage-director.hbs`,
     `${TEMPLATE_PATH}/biomon.hbs`,
     `${TEMPLATE_PATH}/chat-card.hbs`,
     `${TEMPLATE_PATH}/lab.hbs`,

@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.10.0
+
+**Neon Chat: speak as, and the stage director.**
+
+- **Speak as**: a menu over the chat box to choose who your messages come from. The options are
+  yourself, any of your characters with a token in the scene you're viewing (or on stage), or the
+  selected token as before. `/as me` and `/as <name>` do the same.
+- **The bar over the chat box** is a single compact row now. It no longer stretches into the chat
+  log.
+- **Stage director** (GM): a window to run the stage from, with `/director`. It covers:
+  - who's on stage and on which side, flipping them, and their expressions
+  - speaking as them, and their expression pictures
+  - narration, stage mode, and clearing the stage
+  - dropping actors or tokens onto the window to bring them on stage
+- **Players** on stage get one row of expressions under the menu, and a button to step off.
+- **Stage mode**: while someone is on stage, the table dims and blurs, and all other interface
+  (Foundry's and other modules') steps back. Only the chat and open windows stay. The GM switches
+  it from the director, and clearing the stage turns it back on for next time.
+
 ## 1.9.0
 
 **Neon Chat**: Foundry's chat, enhanced.

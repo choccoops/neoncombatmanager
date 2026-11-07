@@ -84,19 +84,37 @@ export const Stage = {
     return !!Settings.get("stageEnabled");
   },
 
+  /** Someone is on stage. */
+  get active() {
+    return this.enabled && this.cast.length > 0;
+  },
+
+  /** Stage mode: while the stage is up, everything but it and the chat steps back (the GM's switch). */
+  get focus() {
+    return Settings.get("stageCast")?.focus !== false;
+  },
+
   init() {
     Hooks.on(`${MODULE_ID}.stageChanged`, () => this.render());
     Hooks.on("createChatMessage", (message) => this.onMessage(message));
-    Hooks.on("updateActor", (actor) => this.cast.some((c) => c.id === actor.id) && this.render());
+    Hooks.on("updateActor", (actor) => (this.cast.some((c) => c.id === actor.id) ? this.render() : this.renderDock()));
+    // Who you can speak as follows the scene.
+    for (const hook of ["canvasReady", "createToken", "deleteToken", "updateToken"]) Hooks.on(hook, () => this.renderDock());
+    Hooks.on("collapseSidebar", () => this.render());
   },
 
   registerSocket() {
     Socket.on("stageSet", async (change, userId) => {
       const user = game.users.get(userId);
       const actor = change.actorId ? game.actors.get(change.actorId) : null;
-      if (change.op === "clear" ? !user?.isGM : !(user?.isGM || actor?.testUserPermission(user, "OWNER"))) throw new Error(L(`${LANG}.Stage.NotYours`));
+      const gmOnly = change.op === "clear" || change.op === "focus";
+      if (gmOnly ? !user?.isGM : !(user?.isGM || actor?.testUserPermission(user, "OWNER"))) throw new Error(L(`${LANG}.Stage.NotYours`));
+      const cur = Settings.get("stageCast") ?? {};
+      if (change.op === "focus") return Settings.set("stageCast", { ...cur, focus: !!change.value, at: Date.now() });
       const data = change.op === "add" ? { ...change, name: actor?.name ?? change.name, img: actor?.img ?? change.img } : change;
-      return Settings.set("stageCast", { cast: castChange(this.cast, data), at: Date.now() });
+      // A cleared stage comes back in stage mode next time.
+      const focus = change.op === "clear" ? true : cur.focus !== false;
+      return Settings.set("stageCast", { cast: castChange(this.cast, data), focus, at: Date.now() });
     });
   },
 
@@ -108,18 +126,17 @@ export const Stage = {
     return Socket.request("stageSet", change);
   },
 
-  /** Put characters on stage; you speak as the last one of yours. */
-  async add(actors) {
+  /** Put characters on stage; you speak as the last one of yours (speak: false, you don't). */
+  async add(actors, { speak = true } = {}) {
     const list = (Array.isArray(actors) ? actors : [actors]).filter((a) => a && (game.user.isGM || a.isOwner));
     if (!list.length) throw new Error(L(`${LANG}.Stage.NoOne`));
     for (const a of list) await this.set({ op: "add", actorId: a.id });
     const mine = list.filter((a) => a.isOwner).at(-1);
-    if (mine) this.speakAs(mine.id);
+    if (mine && speak) this.speakAs(mine.id);
     return list;
   },
 
   async remove(actorId) {
-    if (this.speaker === actorId) this.speakAs(null);
     return this.set({ op: "remove", actorId });
   },
 
@@ -130,15 +147,44 @@ export const Stage = {
   },
 
   async clear() {
-    this.speakAs(null);
+    if (this.cast.some((c) => c.id === this.speaker)) this.speakAs(null);
     return this.set({ op: "clear" });
   },
 
-  /** Speak as a staged character (or stop: null). */
+  /** GM: stage mode on or off. */
+  async setFocus(value = !this.focus) {
+    return this.set({ op: "focus", value });
+  },
+
+  /**
+   * Who your messages come from: "me" (you, out of character), one of your characters (on this
+   * scene or on stage), or null (Foundry's way: the selected token, else your character).
+   */
   speakAs(actorId) {
-    this.speaker = actorId && this.cast.some((c) => c.id === actorId) ? actorId : actorId && game.actors.get(actorId) ? actorId : null;
+    this.speaker = actorId === "me" ? "me" : actorId && (this.cast.some((c) => c.id === actorId) || game.actors.get(actorId)) ? actorId : null;
     this.renderDock();
     this.render();
+  },
+
+  /**
+   * Who this user may speak as: their characters with a token on the scene they're viewing, and
+   * theirs on stage. @returns {{ id, name, img, staged }[]}
+   */
+  speakOptions() {
+    const out = new Map();
+    const scene = game.scenes?.viewed ?? globalThis.canvas?.scene ?? null;
+    for (const t of scene?.tokens ?? []) {
+      const actor = t.actorId ? game.actors.get(t.actorId) : null;
+      if (!actor?.isOwner || !["character", "mook"].includes(actor.type) || out.has(actor.id)) continue;
+      out.set(actor.id, { id: actor.id, name: t.name || actor.name, img: actor.img, staged: false });
+    }
+    for (const c of this.cast) {
+      const actor = game.actors.get(c.id);
+      if (!actor?.isOwner) continue;
+      const o = out.get(c.id) ?? { id: c.id, name: actor.name, img: actor.img };
+      out.set(c.id, { ...o, staged: true });
+    }
+    return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
   },
 
   /** The picture for a cast member: the expression's image if their actor has one. */
@@ -152,13 +198,18 @@ export const Stage = {
   /* ---------------------------------------- */
 
   /**
-   * Before a typed message is sent: speaking as someone on stage makes it theirs, in character.
-   * @returns {object|null} what to set on the message, or null
+   * Before a typed message is sent: who it comes from, as picked (yourself, or one of your
+   * characters: by their token on this scene, the selected one first, if they have one).
+   * @returns {object|null} what to set on the message, or null (Foundry decides)
    */
-  speakerFor(messageData) {
-    if (!this.enabled || !this.speaker || !this.cast.some((c) => c.id === this.speaker)) return null;
-    const actor = game.actors.get(this.speaker);
+  speakerFor() {
+    if (this.speaker === "me") return { speaker: { scene: null, token: null, actor: null, alias: game.user.name } };
+    const actor = this.speaker ? game.actors.get(this.speaker) : null;
     if (!actor?.isOwner) return null;
+    const scene = game.scenes?.viewed ?? globalThis.canvas?.scene ?? null;
+    const controlled = (globalThis.canvas?.tokens?.controlled ?? []).map((t) => t.document).find((t) => t?.actorId === actor.id && t.parent?.id === scene?.id);
+    const token = controlled ?? scene?.tokens?.find((t) => t.actorId === actor.id) ?? null;
+    if (token) return { speaker: { scene: scene.id, token: token.id, actor: actor.id, alias: token.name || actor.name } };
     return { speaker: { scene: null, token: null, actor: actor.id, alias: actor.name } };
   },
 
@@ -215,8 +266,10 @@ export const Stage = {
 
   render() {
     if (typeof document === "undefined") return;
+    this.director?.render();
     const cast = this.enabled && Settings.get("stageShow") ? this.cast : [];
     if (!cast.length) {
+      this.renderFocus(false);
       this.el?.querySelectorAll(".ncm-st-insert").forEach((e) => e.remove());
       if (this.el && !this.el.querySelector(".ncm-st-narration")) {
         this.el.remove();
@@ -232,6 +285,7 @@ export const Stage = {
       this.el.innerHTML = '<div class="ncm-st-side left"></div><div class="ncm-st-side right"></div>';
       document.body.append(this.el);
     }
+    this.renderFocus(this.focus);
     // Stop short of the sidebar.
     const sidebar = document.getElementById("sidebar");
     this.el.style.setProperty("--ncm-stage-right", `${sidebar && !sidebar.classList.contains("collapsed") ? sidebar.offsetWidth + 10 : 40}px`);
@@ -273,12 +327,44 @@ export const Stage = {
     this.renderDock();
   },
 
-  /** The stage bar over the chat box: who you speak as, expressions, staging. */
+  /**
+   * Stage mode: the table goes dark and blurred behind the stage, and every other piece of
+   * interface (Foundry's and other modules') steps out, the chat sidebar and open windows aside.
+   */
+  renderFocus(on) {
+    document.body.classList.toggle("ncm-stage-focus", on);
+    let veil = document.getElementById("ncm-stage-veil");
+    if (!on) {
+      document.body.classList.remove("ncm-stage-z");
+      veil?.remove();
+      return;
+    }
+    if (!veil) {
+      veil = document.createElement("div");
+      veil.id = "ncm-stage-veil";
+      veil.className = "ncm-stage-veil";
+      document.body.append(veil);
+    }
+    // Over the canvas, under the interface (the sidebar stays on top), whatever their layers are;
+    // an interface without a layer of its own gets one for the while.
+    const ui = document.getElementById("interface");
+    document.body.classList.remove("ncm-stage-z");
+    const z = parseInt(ui ? getComputedStyle(ui).zIndex : "", 10);
+    if (!Number.isFinite(z)) document.body.classList.add("ncm-stage-z");
+    veil.style.zIndex = Number.isFinite(z) ? String(Math.max(1, z - 1)) : "1";
+    if (this.el) this.el.style.zIndex = String(Math.max(35, (Number.isFinite(z) ? z : 2) + 1));
+  },
+
+  /**
+   * The bar over the chat box: who you speak as (yourself, or a character of yours in this scene
+   * or on stage) and, speaking as someone on stage, their expressions. The GM runs the stage from
+   * the director (a window), opened here.
+   */
   renderDock() {
     if (typeof document === "undefined") return;
     const form = document.querySelector("#chat-form, #chat-message")?.closest("form") ?? document.querySelector("#chat-form");
     let dock = document.getElementById("ncm-stage-dock");
-    if (!this.enabled || !form) {
+    if (!form || !(Settings.get("chatSpeakAs") || this.enabled)) {
       dock?.remove();
       return;
     }
@@ -287,51 +373,75 @@ export const Stage = {
       dock.id = "ncm-stage-dock";
       dock.className = "neon-combat ncm-st-dock";
       dock.addEventListener("click", (ev) => this._onDock(ev));
-      dock.addEventListener("contextmenu", (ev) => {
-        const chip = ev.target.closest("[data-actor-id]");
-        if (!chip) return;
-        ev.preventDefault();
-        this.set({ op: "side", actorId: chip.dataset.actorId });
+      dock.addEventListener("change", (ev) => {
+        if (ev.target.matches("select[name=speakAs]")) this.speakAs(ev.target.value || null);
       });
     }
     if (dock.nextElementSibling !== form) form.before(dock);
-    const mine = this.cast.filter((c) => game.user.isGM || game.actors.get(c.id)?.isOwner);
-    const speaking = this.cast.find((c) => c.id === this.speaker);
-    const chips = mine.map((c) => `<span class="ncm-st-chip${c.id === this.speaker ? " is-on" : ""}" data-actor-id="${c.id}" data-tooltip="${esc(L(`${LANG}.Stage.SpeakAs`, { name: c.name }))}"><img src="${esc(this.imgOf(c))}" alt=""><button type="button" data-st="off" aria-label="×"><i class="fa-solid fa-xmark"></i></button></span>`).join("");
-    const moods = speaking ? Object.entries(MOODS).map(([k, icon]) => `<button type="button" class="${speaking.mood === k ? "on" : ""}" data-st="mood" data-mood="${k}" data-tooltip="${esc(L(`${LANG}.Stage.Mood.${k}`))}"><i class="${icon}"></i></button>`).join("") : "";
+    // Don't pull the list out from under someone choosing.
+    if (dock.contains(document.activeElement) && document.activeElement.tagName === "SELECT") return;
+    const options = this.speakOptions();
+    if (this.speaker && this.speaker !== "me" && !options.some((o) => o.id === this.speaker)) this.speaker = null;
+    const speaking = this.enabled ? this.cast.find((c) => c.id === this.speaker) : null;
+    const actor = this.speaker && this.speaker !== "me" ? game.actors.get(this.speaker) : null;
+    const opt = (value, label, sel) => `<option value="${esc(value)}"${sel ? " selected" : ""}>${esc(label)}</option>`;
+    const group = (label, list) => (list.length ? `<optgroup label="${esc(label)}">${list.map((o) => opt(o.id, o.name, o.id === this.speaker)).join("")}</optgroup>` : "");
+    const select = Settings.get("chatSpeakAs") || speaking
+      ? `<select name="speakAs" data-tooltip="${esc(L(`${LANG}.Stage.SpeakAsHint`))}">
+          ${opt("", L(`${LANG}.Stage.AsDefault`), !this.speaker)}
+          ${opt("me", L(`${LANG}.Stage.AsMe`, { name: game.user.name }), this.speaker === "me")}
+          ${group(L(`${LANG}.Stage.OnStage`), options.filter((o) => o.staged))}
+          ${group(L(`${LANG}.Stage.InScene`), options.filter((o) => !o.staged))}
+        </select>`
+      : "";
+    const portrait = actor ? `<img class="ncm-st-as-img" src="${esc(speaking ? this.imgOf(speaking) : actor.img)}" alt="">` : this.speaker === "me" ? `<img class="ncm-st-as-img" src="${esc(game.user.avatar ?? "icons/svg/mystery-man.svg")}" alt="">` : '<i class="fa-solid fa-comment ncm-st-as-icon"></i>';
+    const canStep = this.enabled && actor && !speaking && actor.isOwner && (game.user.isGM || this.active);
+    const gm = game.user.isGM && this.enabled
+      ? `<button type="button" data-st="director" data-tooltip="${esc(L(`${LANG}.Stage.Director`))}"><i class="fa-solid fa-masks-theater"></i></button>
+         <button type="button" class="${this.narrating ? "on" : ""}" data-st="narrator" data-tooltip="${esc(L(`${LANG}.Stage.NarratorHint`))}"><i class="fa-solid fa-bullhorn"></i></button>`
+      : "";
+    const moods = speaking
+      ? `<div class="ncm-st-dockrow ncm-st-moods">${Object.entries(MOODS).map(([k, icon]) => `<button type="button" class="${speaking.mood === k ? "on" : ""}" data-st="mood" data-mood="${k}" data-tooltip="${esc(L(`${LANG}.Stage.Mood.${k}`))}"><i class="${icon}"></i></button>`).join("")}<button type="button" class="ncm-st-leave" data-st="off" data-tooltip="${esc(L(`${LANG}.Stage.Leave`, { name: speaking.name }))}"><i class="fa-solid fa-person-walking-arrow-right"></i></button></div>`
+      : "";
+    dock.classList.toggle("is-staged", !!speaking);
     dock.innerHTML = `<div class="ncm-st-dockrow">
-      <span class="ncm-kicker">// ${esc(L(`${LANG}.Stage.Title`))}</span>
-      ${chips}
-      <button type="button" data-st="add" data-tooltip="${esc(L(`${LANG}.Stage.AddHint`))}"><i class="fa-solid fa-user-plus"></i></button>
-      ${game.user.isGM ? `<button type="button" class="${this.narrating ? "on" : ""}" data-st="narrator" data-tooltip="${esc(L(`${LANG}.Stage.NarratorHint`))}"><i class="fa-solid fa-bullhorn"></i></button>` : ""}
-      ${game.user.isGM && this.cast.length ? `<button type="button" data-st="curtain" data-tooltip="${esc(L(`${LANG}.Stage.Curtain`))}"><i class="fa-solid fa-person-booth"></i></button>` : ""}
-    </div>${moods ? `<div class="ncm-st-dockrow ncm-st-moods">${moods}</div>` : ""}`;
+      ${portrait}${select}
+      ${canStep ? `<button type="button" data-st="step" data-tooltip="${esc(L(`${LANG}.Stage.StepOn`, { name: actor.name }))}"><i class="fa-solid fa-user-plus"></i></button>` : ""}
+      ${gm}
+    </div>${moods}`;
   },
 
   async _onDock(ev) {
     const btn = ev.target.closest("[data-st]");
-    const chip = ev.target.closest("[data-actor-id]");
     try {
       switch (btn?.dataset.st) {
         case "off":
-          return await this.remove(chip.dataset.actorId);
+          return await this.remove(this.speaker);
         case "mood":
           return await this.mood(btn.dataset.mood);
-        case "add":
-          return await this.add(this.defaultActors());
+        case "step":
+          return await this.add(game.actors.get(this.speaker));
+        case "director":
+          return this.openDirector();
         case "narrator":
           this.narrating = !this.narrating;
           return this.renderDock();
-        case "curtain":
-          return await this.clear();
-        default:
-          if (chip) return this.speakAs(this.speaker === chip.dataset.actorId ? null : chip.dataset.actorId);
       }
     } catch (err) {
       ui.notifications.warn(err.message);
     }
     return null;
   },
+
+  /** GM: the stage director, a window to run the stage from. */
+  async openDirector() {
+    if (!game.user.isGM) throw new Error(L(`${LANG}.Error.GMOnly`));
+    const { StageDirector } = await import("./director.js");
+    return StageDirector.open();
+  },
+
+  /** The open director window (it re-renders with the stage). */
+  director: null,
 
   /** Who "stage" means with no name: the selected tokens, else your character. */
   defaultActors() {
