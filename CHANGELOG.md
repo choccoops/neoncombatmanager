@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.8.0
+
+- **Action HUD**: a bar of the controlled token's actions above the hotbar, with no Token
+  Action HUD needed.
+  - The template has the basics of a fight: Initiative, End Turn, Death Save, each equipped
+    weapon's Attack, fire modes, Damage and Reload, combat skills, role abilities, Interface
+    abilities for netrunners, combat conditions and this module's windows.
+  - Everything rolls through Cyberpunk RED's own rolls, as the sheet does.
+- **Customize Action HUD**: each player lays out their own HUD.
+  - Rename, reorder, hide and show groups.
+  - Pick the actions in a group, or leave it on Auto.
+  - Add groups of your own.
+  - Keep a layout for all your characters, or one for a single character.
+- New client setting (Action HUD on or off) and keybinding (show or hide it).
+
 ## 1.7.0
 
 Holocalls are now **Night City Messenger**'s (2.1 or later; 2.3 recommended). Its phone does

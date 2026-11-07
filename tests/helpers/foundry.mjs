@@ -194,8 +194,16 @@ globalThis.Roll = class Roll {
 
 const store = new Map();
 const defs = new Map();
-const gm = { id: "gm1", name: "GM", isGM: true, active: true, targets: new Set() };
-const player = { id: "pl1", name: "Player", isGM: false, active: true, targets: new Set() };
+const userDoc = (data) => ({
+  ...data, flags: {}, targets: new Set(),
+  async update(u) {
+    for (const [k, v] of Object.entries(u)) applyPath(this, k, v);
+    Hooks.callAll("updateUser", this, u, {}, this.id);
+    return this;
+  }
+});
+const gm = userDoc({ id: "gm1", name: "GM", isGM: true, active: true });
+const player = userDoc({ id: "pl1", name: "Player", isGM: false, active: true });
 const users = new Collection([[gm.id, gm], [player.id, player]]);
 Object.defineProperty(users, "activeGM", { get: () => (gm.active ? gm : null) });
 
@@ -259,6 +267,16 @@ export const testUsers = { gm, player };
 /* ---------------------------------------- */
 /*  Documents                               */
 /* ---------------------------------------- */
+
+/** Apply one update path, as Foundry does: "a.b.-=c" deletes c. */
+function applyPath(doc, path, value) {
+  const parts = path.split(".");
+  const last = parts.at(-1);
+  if (last.startsWith("-=")) {
+    const parent = getProperty(doc, parts.slice(0, -1).join("."));
+    if (parent) delete parent[last.slice(2)];
+  } else setProperty(doc, path, clone(value));
+}
 
 function flagApi(doc) {
   doc.getFlag = (scope, key) => getProperty(doc.flags?.[scope], key);
@@ -348,7 +366,7 @@ export function makeActor(data = {}, items = []) {
     testUserPermission: (user) => user.isGM || !!data.owners?.includes?.(user.id),
     getActiveTokens: () => [],
     async update(u, options = {}) {
-      for (const [k, v] of Object.entries(u)) setProperty(this, k, clone(v));
+      for (const [k, v] of Object.entries(u)) applyPath(this, k, v);
       this._setWoundState();
       Hooks.callAll("updateActor", this, u, options, game.user.id);
       return this;

@@ -1,0 +1,162 @@
+import { LANG, SYSTEM_ID } from "../constants.js";
+import { Compat } from "../compat.js";
+import { Conditions } from "../conditions/engine.js";
+import { Bridge } from "../roller/bridge.js";
+import { combatantOf } from "./catalog.js";
+import { L } from "../util.js";
+
+/** Fire modes that stay set on the weapon (as the sheet's checkboxes do), for its Damage roll too. */
+const MODES = { atk: "attack", aim: "aimed", auto: "autofire", supp: "suppressive" };
+
+/**
+ * Run an Action HUD action the way Cyberpunk RED's sheet does: its roll dialog (Ctrl-click skips
+ * it, as on the sheet), the item's confirmRoll (ammo), LUCK, the Death Save result, and its roll
+ * card with the targets. This module's roller features ride along, since they hook CPR's rolls.
+ */
+export const Run = {
+  /**
+   * @param {Actor} actor
+   * @param {string} key - the action's run key ("atk:<id>", "sk:<id>", "turn:initiative"...)
+   * @param {object} [ctx] - { event, token }
+   */
+  async action(actor, key, { event = null, token = null } = {}) {
+    if (!actor?.isOwner) return null;
+    const [kind, ...rest] = String(key).split(":");
+    const id = rest[0];
+    const item = id ? actor.items.get(id) : null;
+    switch (kind) {
+      case "turn":
+        return this.turn(actor, id, { event, token });
+      case "atk":
+      case "aim":
+      case "auto":
+      case "supp": {
+        if (!item) return null;
+        // The mode sticks to the weapon, so its Damage roll knows it (Autofire's multiplier).
+        if (kind === "atk") await actor.unsetFlag(SYSTEM_ID, `firetype-${item.id}`);
+        else await actor.setFlag(SYSTEM_ID, `firetype-${item.id}`, MODES[kind]);
+        return this.roll(actor, item, () => item.createRoll(MODES[kind], actor), { event, token });
+      }
+      case "dmg": {
+        if (!item) return null;
+        const damageType = actor.flags?.[SYSTEM_ID]?.[`firetype-${item.id}`] || "attack";
+        return this.roll(actor, item, () => {
+          const r = item.createRoll("damage", actor, { damageType });
+          if (damageType === "aimed" && r) r.location = actor.flags?.[SYSTEM_ID]?.aimedLocation || "body";
+          return r;
+        }, { event, token });
+      }
+      case "rld":
+        if (!item?.doAction) return null;
+        // As the sheet's reload button: loaded ammo tops up, none opens the load dialog.
+        return item.doAction(actor, { "data-action": { nodeValue: "reload-ammo" } });
+      case "sk":
+        return item ? this.roll(actor, item, () => item.createRoll("skill", actor), { event, token }) : null;
+      case "ra": {
+        const [, sub, ...name] = rest;
+        const subRoleName = name.join(":");
+        return item ? this.roll(actor, item, () => item.createRoll("roleAbility", actor, { rollSubType: sub === "main" ? "mainRoleAbility" : "subRoleAbility", subRoleName }), { event, token }) : null;
+      }
+      case "net": {
+        const deck = item;
+        const role = (actor.items ?? []).find((i) => i.type === "role" && i.id === actor.system?.roleInfo?.activeNetRole);
+        if (!deck) return null;
+        if (!role) {
+          ui.notifications.error(L(`${LANG}.Hud.NoNetRole`));
+          return null;
+        }
+        return this.roll(actor, deck, () => deck.createRoll("interfaceAbility", actor, { interfaceAbility: rest[1], cyberdeck: deck, netRoleItem: role }), { event, token });
+      }
+      case "stat":
+        return this.roll(actor, null, () => actor.createRoll("stat", id), { event, token });
+      case "drug":
+        return item?.snort?.();
+      case "cond":
+        return Conditions.toggle(id, actor);
+      case "util":
+        return this.utility(actor, id);
+      default:
+        return null;
+    }
+  },
+
+  async turn(actor, what, { event, token }) {
+    const combat = game.combat;
+    switch (what) {
+      case "initiative": {
+        if (!combat) {
+          ui.notifications.warn(L(`${LANG}.Hud.NoCombat`));
+          return null;
+        }
+        let cb = combatantOf(actor, token, combat);
+        // Not in the fight yet: join it (with this token) and roll.
+        if (!cb && token?.document) {
+          await token.document.toggleCombatant?.();
+          cb = combatantOf(actor, token, combat);
+        }
+        if (!cb) {
+          ui.notifications.warn(L(`${LANG}.Hud.NotInCombat`, { name: actor.name }));
+          return null;
+        }
+        return combat.rollInitiative([cb.id]);
+      }
+      case "endTurn": {
+        const cb = combatantOf(actor, token, combat);
+        if (combat?.started && cb && combat.combatant?.id === cb.id) return combat.nextTurn();
+        ui.notifications.warn(L(`${LANG}.Hud.NotYourTurn`));
+        return null;
+      }
+      case "deathSave":
+        return this.roll(actor, null, () => actor.createRoll("deathsave"), { event, token, deathSave: true });
+      case "facedown":
+        return this.roll(actor, null, () => actor.createRoll("facedown"), { event, token });
+      default:
+        return null;
+    }
+  },
+
+  async utility(actor, what) {
+    switch (what) {
+      case "stakes":
+        return (await import("../stakes/stakes.js")).Stakes.open(actor);
+      case "phone":
+        return (await import("../comms/phone.js")).Phone.open(actor);
+      case "biomon":
+        return (await import("../comms/biomon-app.js")).BiomonApp.open();
+      case "map":
+        return (await import("../hub/hub.js")).Hub.open();
+      case "sheet":
+        return Compat.openSheet(actor);
+      default:
+        return null;
+    }
+  },
+
+  /** A CPR roll, from making it to its card (the sheet's _onRoll). */
+  async roll(actor, item, make, { event = null, token = null, deathSave = false } = {}) {
+    let roll = make();
+    if (!roll) return null;
+    const ev = event ?? { type: "click", ctrlKey: false, metaKey: false };
+    if (typeof roll.handleRollDialog === "function" && !(await roll.handleRollDialog(ev, actor, item))) return null;
+    if (item && typeof item.confirmRoll === "function") roll = await item.confirmRoll(roll);
+    await roll.roll();
+    if (deathSave && typeof actor.processDeathSave === "function") roll.saveResult = actor.processDeathSave(roll);
+    const luck = Number(roll.luck);
+    if (Number.isInteger(luck) && luck > 0) {
+      const have = Number(actor.system?.stats?.luck?.value) || 0;
+      await actor.update({ "system.stats.luck.value": have - Math.min(luck, have) });
+    }
+    const targets = [...(game.user.targets ?? [])].sort((a, b) => (a.name > b.name ? 1 : -1));
+    roll.entityData = { actor: actor.id, token: token?.id ?? null, tokens: targets };
+    if (item) roll.entityData.item = item.id;
+    if (!Bridge.chat) await Bridge.load();
+    if (typeof Bridge.chat?.RenderRollCard === "function") await Bridge.chat.RenderRollCard(roll);
+    else if (roll.rollCard) {
+      roll.criticalCard = typeof roll.wasCritical === "function" ? roll.wasCritical() : false;
+      await ChatMessage.create({ content: await Compat.renderTemplate(roll.rollCard, roll), speaker: ChatMessage.getSpeaker({ actor }) });
+    }
+    // Later Damage rolls hit where the aimed shot did.
+    if (roll.location && MODES.aim === actor.flags?.[SYSTEM_ID]?.[`firetype-${item?.id}`]) await actor.setFlag(SYSTEM_ID, "aimedLocation", roll.location);
+    return roll;
+  }
+};

@@ -73,6 +73,21 @@ const biomon = await T("biomon", { gm: false, links: [{ id: "l1", name: "Crew", 
   row(vee, "lightlyWounded", { implant: "Neuroport" }), row(hazel, "seriouslyWounded", { implant: "Biomonitor" }), row(sage, "mortallyWounded", { deathSave: 2, implant: "Neuroport" }),
   row(ganger, "notWounded", { signal: false })
 ] }], unlinked: [{ id: "x", name: "New Recruit", ok: true }, { id: "y", name: "Unchromed", ok: false }], canLink: true, needsImplant: true, joinable: [{ id: "l1", name: "Crew" }] });
+// The Action HUD (weapons pinned open) and its editor.
+const { Hud } = await import("../scripts/hud/hud.js");
+const { HudEditor } = await import("../scripts/hud/hud-editor.js");
+const kade = makeActor({ name: "Kade Ryder", img: portrait(280), system: { derivedStats: { hp: { value: 22, max: 40 }, seriouslyWounded: 20 } } }, [
+  { _id: "w1", name: "Militech Viper SMG", type: "weapon", system: { equipped: "equipped", isRanged: true, magazine: { value: 22, max: 30 }, fireModes: { autoFire: 3, suppressiveFire: true } } },
+  { _id: "w2", name: "Constitution Arms Hurricane", type: "weapon", system: { equipped: "equipped", isRanged: true, magazine: { value: 0, max: 4 } } },
+  { _id: "w3", name: "Kendachi Mono-Katana", type: "weapon", system: { equipped: "equipped", isRanged: false, damage: "3d6" } },
+  ...["Evasion", "Perception", "Brawling", "Athletics", "Stealth", "First Aid", "Handgun"].map((name, i) => ({ _id: `s${i}`, name, type: "skill", system: { stat: "dex", level: 4 + (i % 3) } })),
+  { _id: "r1", name: "Solo", type: "role", system: { hasRoll: true, mainRoleAbility: "Combat Awareness", abilities: [{ name: "Threat Detection", hasRoll: true }] } }
+]);
+await kade.setFlag("cyberpunk-red-core", "firetype-w1", "autofire");
+Hud.pinned = "weapons";
+const actionHud = await T("action-hud", Hud.context(kade));
+const hudEditor = await T("action-hud-editor", await HudEditor.open(kade)._prepareContext());
+
 // The Plot Die and Combat Awareness.
 const { StakesApp } = await import("../scripts/stakes/stakes-app.js");
 const { AwarenessApp } = await import("../scripts/awareness/awareness-app.js");
@@ -148,6 +163,10 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
 </div>
 <div class="row">
   <div class="neon-combat ncm-window ncm-biomon application win" style="width:340px"><header class="window-header">Biomon Link</header><section class="window-content">${biomon}</section></div>
+</div>
+<div class="row" style="align-items:flex-end">
+  <div style="position:relative;width:760px;height:430px"><section id="ncm-action-hud" class="neon-combat ncm-ah" style="position:absolute;left:0;bottom:0">${actionHud}</section></div>
+  <div class="neon-combat ncm-window ncm-ah-editor application win" style="width:560px;height:640px;display:flex;flex-direction:column"><header class="window-header">Customize Action HUD</header><section class="window-content" style="flex:1;min-height:0">${hudEditor}</section></div>
 </div>
 <div class="row">
   <div class="neon-combat ncm-window ncm-stakes application win" style="width:520px"><header class="window-header">Plot Die</header><section class="window-content">${stakesWin}</section></div>

@@ -218,6 +218,28 @@ Hooks: `cpr-neon-combat-manager.hubChanged` (the shared state), `cpr-neon-combat
 `({ from, to, mode, minutes, jam })`, `cpr-neon-combat-manager.hubDoorway` `({ key, actor, scene, tile, token, userId })`
 (GM side, after someone walks through a doorway).
 
+## Action HUD: `ncm.hud`
+
+| | |
+| --- | --- |
+| `render()` | redraw the HUD for the controlled token |
+| `layoutFor(actor)` | the layout this user sees for a character: the character's own, else the user's, else the template |
+| `saveLayout(layout, actor?)` | keep a layout on the user: for all their characters, or one |
+| `clearLayout(actor)` | drop a character's own layout |
+| `customize(actor?)` | open the Customize window |
+| `resetPosition()` | put the HUD back above the hotbar |
+
+A layout is `{ v: 1, groups: [{ id, source, name, icon, picks, hidden }] }`:
+- `source` is one of `turn`, `weapons`, `skills`, `role`, `net`, `status`, `utility`, `stats`
+  or `gear`, or `null` for a user's own group.
+- `picks` are action keys in order, or `null` for everything the source has. The keys are
+  `turn:initiative`, `weapon:<name>`, `skill:<name>`, `role:<ability>`, `net:<ability>`,
+  `cond:<condition id>`, `util:stakes|phone|biomon|map|sheet`, `stat:<ref>` and `drug:<name>`.
+  Names are lower-case letters and digits only.
+
+Layouts live in the user's flags: `flags["cpr-neon-combat-manager"].hud.layout` and
+`.hud.actors[actorId]`. The pure rules are in `scripts/hud/layout.js`.
+
 ## Holocalls: `ncm.holocall`
 
 Calls are Night City Messenger's (2.1+); these are the module's ways in.

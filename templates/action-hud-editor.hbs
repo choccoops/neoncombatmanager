@@ -1,0 +1,63 @@
+<section class="ncm-ahe">
+  <header class="ncm-ahe-head">
+    {{#if actor}}<img src="{{actor.img}}" alt="">{{/if}}
+    <label class="ncm-ahe-scope">
+      <span class="ncm-kicker">// {{localize "NEONCOMBAT.Hud.LayoutFor"}}</span>
+      <select name="scope">
+        <option value="me" {{#if (eq scope "me")}}selected{{/if}}>{{localize "NEONCOMBAT.Hud.ScopeMe"}}</option>
+        {{#if actor}}<option value="actor" {{#if (eq scope "actor")}}selected{{/if}}>{{localize "NEONCOMBAT.Hud.ScopeActor" name=actor.name}}</option>{{/if}}
+      </select>
+    </label>
+    {{#if hasOwn}}<button type="button" data-action="clearOwn" data-tooltip="NEONCOMBAT.Hud.ClearOwnHint"><i class="fa-solid fa-user-xmark"></i> {{localize "NEONCOMBAT.Hud.ClearOwn"}}</button>{{/if}}
+  </header>
+  <p class="ncm-hint">{{localize "NEONCOMBAT.Hud.EditorHint"}}</p>
+
+  <ol class="ncm-ahe-groups">
+    {{#each groups}}
+    <li class="ncm-ahe-group{{#if hidden}} is-hidden{{/if}}" data-group="{{id}}">
+      <div class="ncm-ahe-row">
+        <i class="{{icon}} ncm-ahe-icon"></i>
+        <input type="text" name="groupName" value="{{name}}" placeholder="{{placeholder}}">
+        {{#if canAuto}}
+        <label class="ncm-ahe-auto" data-tooltip="NEONCOMBAT.Hud.AutoHint"><input type="checkbox" name="auto" {{#if auto}}checked{{/if}}> {{localize "NEONCOMBAT.Hud.Auto"}}</label>
+        {{/if}}
+        <span class="ncm-ahe-tools">
+          <button type="button" data-action="grpUp" {{#if first}}disabled{{/if}} aria-label="↑"><i class="fa-solid fa-arrow-up"></i></button>
+          <button type="button" data-action="grpDown" {{#if last}}disabled{{/if}} aria-label="↓"><i class="fa-solid fa-arrow-down"></i></button>
+          <button type="button" data-action="grpHide" data-tooltip="{{#if hidden}}NEONCOMBAT.Hud.Show{{else}}NEONCOMBAT.Hud.Hide{{/if}}"><i class="fa-solid {{#if hidden}}fa-eye-slash{{else}}fa-eye{{/if}}"></i></button>
+          {{#if custom}}<button type="button" class="is-danger" data-action="grpRemove" data-tooltip="NEONCOMBAT.Hud.RemoveGroup"><i class="fa-solid fa-trash"></i></button>{{/if}}
+        </span>
+      </div>
+      {{#if auto}}
+      <p class="ncm-ahe-autolist">{{#if autoList}}{{autoList}}{{else}}{{localize "NEONCOMBAT.Hud.Nothing"}}{{/if}}</p>
+      {{else}}
+      <ul class="ncm-ahe-chips">
+        {{#each chips}}
+        <li class="ncm-ahe-chip{{#if missing}} is-missing{{/if}}" data-key="{{key}}"{{#if missing}} data-tooltip="NEONCOMBAT.Hud.Missing"{{/if}}>
+          <button type="button" data-action="pickLeft" aria-label="←"><i class="fa-solid fa-caret-left"></i></button>
+          <span>{{label}}</span>
+          <button type="button" data-action="pickRight" aria-label="→"><i class="fa-solid fa-caret-right"></i></button>
+          <button type="button" data-action="pickRemove" aria-label="×"><i class="fa-solid fa-xmark"></i></button>
+        </li>
+        {{/each}}
+        <li class="ncm-ahe-add">
+          <select name="addPick">
+            <option value="">+ {{localize "NEONCOMBAT.Hud.AddAction"}}</option>
+            {{#each addable}}
+              {{#if label}}<optgroup label="{{label}}">{{#each options}}<option value="{{key}}">{{label}}</option>{{/each}}</optgroup>
+              {{else}}{{#each options}}<option value="{{key}}">{{label}}</option>{{/each}}{{/if}}
+            {{/each}}
+          </select>
+        </li>
+      </ul>
+      {{/if}}
+    </li>
+    {{/each}}
+  </ol>
+
+  <footer class="ncm-ahe-foot">
+    <button type="button" data-action="addGroup"><i class="fa-solid fa-plus"></i> {{localize "NEONCOMBAT.Hud.AddGroup"}}</button>
+    <button type="button" data-action="resetLayout" data-tooltip="NEONCOMBAT.Hud.ResetHint"><i class="fa-solid fa-rotate-left"></i> {{localize "NEONCOMBAT.Hud.Reset"}}</button>
+    <button type="button" class="ncm-cta" data-action="saveLayout"><i class="fa-solid fa-floppy-disk"></i> {{localize "NEONCOMBAT.Hud.Save"}}</button>
+  </footer>
+</section>
