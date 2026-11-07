@@ -40,7 +40,7 @@
       },
       "mortallyWounded": {
         "name": "Mortally Wounded",
-        "hint": "Under 1 HP: -4 to all Actions, -6 MOVE and a Death Save at the start of each Turn (Cyberpunk RED applies the penalties)."
+        "hint": "Under 1 HP: -4 to all Actions, -6 MOVE and a Death Save at the start of each Turn (Cyberpunk RED applies the penalties). -6 MOVE (minimum 1)."
       },
       "dead": {
         "name": "Dead",
@@ -48,7 +48,7 @@
       },
       "unconscious": {
         "name": "Unconscious",
-        "hint": "Out cold: no Actions and no Move Action until they come round."
+        "hint": "Helpless: melee auto-hits. Wakes on damage or an Action to rouse them (unless choked or drugged)."
       },
       "stabilized": {
         "name": "Stabilized",
@@ -200,7 +200,7 @@
       },
       "flashbanged": {
         "name": "Flashbanged",
-        "hint": "Damaged Eye and Damaged Ear effects for a minute, with no bonus damage. Anti-Dazzle protects."
+        "hint": "A Damaged Eye and a Damaged Ear for a minute (no Bonus Damage). Anti-Dazzle stops it."
       },
       "teargassed": {
         "name": "Teargassed",
@@ -497,6 +497,22 @@
       "qhCyberpsychosis": {
         "name": "Cyberpsychosis (hack)",
         "hint": "For 3 Rounds they attack the nearest person. Then 2d6 Humanity Loss."
+      },
+      "tarotWinded": {
+        "name": "Winded (Justice)",
+        "hint": "The wind knocked out of them: -5 Evasion against melee and no dodging ranged attacks, for a minute."
+      },
+      "tarotNoPain": {
+        "name": "No Pain (The Tower)",
+        "hint": "For an hour they feel no pain and ignore the Seriously Wounded penalty."
+      },
+      "tarotChromeShutdown": {
+        "name": "Chrome Shutdown (The Fool)",
+        "hint": "All their cyberware is off for an hour, Neuroport included. Cyberlimbs hang limp like dismembered limbs. With no other way to sense the enemy, another -4 to every Check."
+      },
+      "tarotFated": {
+        "name": "Fated (The Empress)",
+        "hint": "The next three successful attacks against them this combat each cause a Critical Injury, whatever the dice say."
       }
     },
     "Key": {
@@ -782,6 +798,11 @@
           "name": "City & NCART hub",
           "label": "Map settings",
           "hint": "Who can open the 2070 city map, and how map positions affect holocall signal."
+        },
+        "rules": {
+          "name": "2070 roller & table rules",
+          "label": "Roller & rules",
+          "hint": "The Plot Die in the roll dialog, Riding the Edge, Chain Reactions, Tarot Criticals, Flash of Luck and the Awareness Ladder."
         }
       },
       "Placement": {
@@ -874,6 +895,38 @@
         "off": "Off",
         "session": "While a GM is online",
         "always": "Any time (downtime too)"
+      },
+      "fireEscalates": {
+        "name": "Already On Fire",
+        "hint": "A fire that wouldn't raise someone's stage still pushes it up one: Mild to Strong, Strong to Deadly (2070 Core Rules)."
+      },
+      "wakeOnDamage": {
+        "name": "Damage wakes the unconscious",
+        "hint": "Unconscious (and System Reset) ends when the character takes damage, unless they're drugged asleep or being choked."
+      },
+      "rollerHooks": {
+        "name": "2070 roller",
+        "hint": "Hook into Cyberpunk RED's own rolls for the Plot Die bar, Riding the Edge, Chain Reactions and Tarot Criticals. Needs a reload."
+      },
+      "rideEdge": {
+        "name": "Riding the Edge",
+        "hint": "LUCK buys Push the Limit, Second Chance and Close Call instead of +1 a point (CPR's LUCK box is hidden)."
+      },
+      "chainReactions": {
+        "name": "Chain Reactions",
+        "hint": "A second 10 on an explosion (or 1 on an implosion) chains: a card pays out Opportunities, Complications, damage or a Critical Injury."
+      },
+      "tarotCriticals": {
+        "name": "Tarot Criticals",
+        "hint": "Three or more 6s on a damage roll offer the GM a Major Arcana card instead of the normal Critical Injury (one a session)."
+      },
+      "flashOfLuck": {
+        "name": "Flash of Luck",
+        "hint": "Players spend LUCK on flashbacks from the Plot Die window, with the GM's approval (one a Beat, three a Mission)."
+      },
+      "awarenessLadder": {
+        "name": "Awareness Ladder",
+        "hint": "The GM sees the encounter's enemies' awareness (Unaware to Spotted) and the Stealth DV on the carousel."
       }
     },
     "SceneWeather": {
@@ -906,7 +959,8 @@
       "CombatOverKicker": "Combat over",
       "CombatOver": "{rounds} Rounds",
       "CombatOverBody": "{elapsed} passed in the world. It's now {clock}.",
-      "Page2070": "2070 Core Rules"
+      "Page2070": "2070 Core Rules",
+      "WokeUp": "{name} takes a hit and comes to."
     },
     "Reminder": {
       "spinalInjury": "Spinal Injury: no Action this Turn. The Move Action is still there.",
@@ -1249,13 +1303,15 @@
         "opportunity": "Opportunity for {name}",
         "nothing": "Nothing changes for {name}",
         "complication": "+{bonus} for {name}, and a Complication",
-        "complicationNoBonus": "A Complication for {name}"
+        "complicationNoBonus": "A Complication for {name}",
+        "complicationInline": "+{bonus} for {name}, and a Complication"
       },
       "ResultBody": {
-        "opportunity": "Pick one Opportunity below.",
+        "opportunity": "Pick {count} Opportunity(s) below.",
         "nothing": "Roll the Check as normal.",
         "complication": "+{bonus} is on this Check (ticked in the roll dialog). The GM picks {count} Complication(s).",
-        "complicationNoBonus": "The GM picks {count} Complication(s)."
+        "complicationNoBonus": "The GM picks {count} Complication(s).",
+        "complicationInline": "+{bonus} is on the roll being made now. The GM picks {count} Complication(s)."
       },
       "DoubleDown": "Double Down",
       "DoubleDownCost": "Doubled Down into a Complication: -{luck} LUCK, {count} Complication(s).",
@@ -1511,6 +1567,141 @@
           "noGM": "Visits need a GM online right now."
         }
       }
+    },
+    "Roller": {
+      "RollPlot": "Roll the Plot Die",
+      "Raised": "the GM raised the Stakes",
+      "NotRaised": "The GM hasn't raised the Stakes on this roll.",
+      "NoStakes": "LUCK 5+ can ask for the Stakes.",
+      "EdgeKicker": "Riding the Edge",
+      "PushLabel": "Push the Limit: +{stat} (2 LUCK)",
+      "PushHint": "Spend 2 LUCK before you roll to add your LUCK STAT ({stat}). One way to Ride the Edge per roll. Second Chance and Close Call are on the roll card afterwards.",
+      "Push": "Push the Limit",
+      "SecondChance": "Second Chance (1 LUCK)",
+      "SecondChanceHint": "Reroll this Check (it failed). Not on a natural 1.",
+      "SecondChanceTitle": "{name}: Second Chance → {total}",
+      "CloseCall": "Close Call (3 LUCK)",
+      "CloseCallHint": "The natural 1 doesn't implode. The die still reads 1.",
+      "CloseCallTitle": "{name}: Close Call → {total}",
+      "CloseCallBody": "The implosion die ({crit}) doesn't count. It was {was}.",
+      "Was": "It was {total}.",
+      "CantEdge": "That's not on for this roll (LUCK, a natural 1, or LUCK already ridden).",
+      "Used": {
+        "secondChance": "Second Chance taken",
+        "closeCall": "Close Call taken"
+      },
+      "ChainKicker": "Chain Reaction",
+      "Chain": {
+        "explode": "{name}: an explosion chain, {links} link(s)",
+        "implode": "{name}: an implosion chain, {links} link(s)"
+      },
+      "ChainDice": "chain: {dice}",
+      "ChainHint": "Chain dice don't change the total. The payout is automatic; the Opportunities or Complications bring no +2/+4.",
+      "Pay": {
+        "opportunities": "{count} Opportunity(s).",
+        "damage": "On a hit: +{dice}d6 damage.",
+        "autoCrit": "A Critical Injury of your choice that fits the attack (with its Bonus Damage).",
+        "complications": "{count} Complication(s).",
+        "malfunction": "The weapon malfunctions (an Action to clear).",
+        "malfunctionOrCondition": "Plus a gear or chrome malfunction, or a fitting condition.",
+        "condition": "Plus a condition the GM picks that fits (Prone, Blinded, Suppressed, a dropped weapon)."
+      },
+      "TakeOpps": "Take {count} Opportunity(s)",
+      "GiveComps": "Pick {count} Complication(s)",
+      "RollDamage": "Roll +{dice}d6",
+      "ChainDamage": "Chain Reaction: bonus damage",
+      "PickCrit": "Pick the Critical Injury"
+    },
+    "Tarot": {
+      "Kicker": "Tarot Critical",
+      "Offer": "Three or more 6s: {sixes} on the damage dice",
+      "OfferBody": "Draw a Tarot card instead of the normal Critical Injury: one target, not an area attack (grenades, rockets, Shotgun Shells), not a drone or turret. One card a session.",
+      "Draw": "Draw a card",
+      "DrawHint": "Draws for your current target. One card a session; the deck isn't shuffled until every card has been seen.",
+      "AlreadyDrawn": "This session's card has been drawn. Draw another anyway?",
+      "ApplyTo": "Apply to {name}",
+      "Apply": "Apply to the target",
+      "Applies": "Applies: {list}.",
+      "Rules": "Each Critical Injury it brings deals its Bonus Damage unless the card says otherwise. Resolve it, then the card goes to the bottom of the deck.",
+      "NoTarget": "Target the victim (or select their token) first.",
+      "Status": "{seen} of {total} cards seen",
+      "DrawnThisSession": "this session's card is drawn",
+      "Card": {
+        "fool": "All the victim's cyberware shuts down for 1 hour, Neuroport included; cyberlimbs work like dismembered limbs. If that leaves them no way to sense the enemy, another -4 to every Check. No chrome: Foreign Object and 3d6 Humanity Loss instead.",
+        "magician": "The GM picks one piece of the victim's cyberware: Destroyed (repairable). The victim is Deadly On Fire. No chrome: Deadly On Fire, and a weapon they carry malfunctions.",
+        "priestess": "Poisoned shrapnel: Foreign Object, but each Turn they move 4m+ on foot they must beat DV15 Resist Torture/Drugs or take 3d6 straight to HP (instead of the Bonus Damage again).",
+        "empress": "The next three successful attacks against the victim this combat each cause a Critical Injury, whatever the dice say (not biotoxins, poisons or stun batons).",
+        "emperor": "The GM picks a player, who chooses one injury from the Head table and one from the Body table. The victim suffers both.",
+        "hierophant": "Double damage, after armor and multipliers. The weapon is Destroyed Beyond Repair. An Iconic weapon's owner may keep it instead and deal normal damage.",
+        "lovers": "The attack hits the head, wherever it was aimed. A melee attack also leaves the victim Grappled by the attacker.",
+        "chariot": "A flaw in the armor: the armor at the hit location ablates 5 more SP, even if the attack didn't get through.",
+        "strength": "+25 damage, added before armor and multipliers.",
+        "justice": "The wind knocked out of them: for 1 minute, -5 Evasion against melee and no dodging ranged attacks.",
+        "hermit": "Lost Eye twice: both eyes gone (the penalty counts once). With no other way to sense the enemy, another -4 to every Check.",
+        "wheel": "The attack goes wild. Ranged: the GM picks a random new target. Melee: the attacker falls Prone and misses. Either way the weapon malfunctions.",
+        "hanged": "Prone, plus Spinal Injury and Whiplash.",
+        "death": "The victim rolls one Death Save now. Failed: 0 HP, Unconscious for 1 minute, and they wake having regained 3d6 Humanity (up to their maximum).",
+        "temperance": "The victim chooses one limb to be Dismembered and a different limb to be Broken.",
+        "devil": "The attack hits the head, wherever it was aimed, and adds Brain Injury and Lost Ear.",
+        "tower": "Cracked Skull, Crushed Windpipe and Whiplash, with no Bonus Damage. For 1 hour they feel no pain and ignore the Seriously Wounded penalty.",
+        "star": "Ranged: the round ricochets into a second enemy within 20m (GM's pick), or the same target again: it always hits, in the body; roll new damage. Melee: Broken Ribs and Collapsed Lung.",
+        "moon": "Foreign Object twice, in the body and in the head. A melee weapon that drew it is stuck in the victim, and the attacker is disarmed.",
+        "sun": "The GM picks a grenade or other explosive on the victim: it goes off. None: a non-weapon item they carry is Destroyed Beyond Repair.",
+        "judgement": "Crushed Fingers on one hand and Dismembered Hand on the other.",
+        "world": "The attacker takes an extra Turn right after this one: +5 to every Skill Check, no Wound State penalties, and no Death Save if Mortally Wounded."
+      }
+    },
+    "Ladder": {
+      "Title": "Awareness",
+      "unaware": "Unaware",
+      "suspicious": "Suspicious",
+      "searching": "Searching",
+      "alert": "Alert",
+      "spotted": "Spotted",
+      "DV": "Stealth DV {dv} ({n} enemies). Each failed Stealth roll: one step up.",
+      "Hint": {
+        "searching": "Stealth DV: the closest enemy's Perception roll.",
+        "alert": "Stealth DV: the highest Perception roll among them.",
+        "spotted": "No more sneaking: roll Initiative.",
+        "unaware": "",
+        "suspicious": ""
+      },
+      "Up": "A failed Stealth roll: one step up",
+      "Obvious": "Something obvious (a gunshot, a scream, a body): straight to Alert"
+    },
+    "Flash": {
+      "Kicker": "Flash of Luck",
+      "Title": "{name}: a Flash of Luck ({type})",
+      "Type": {
+        "simple": "Simple",
+        "unlikely": "Unlikely",
+        "improbable": "Improbable"
+      },
+      "TypeHint": {
+        "simple": "Could easily have happened earlier, on camera. 2 LUCK, up to 100eb.",
+        "unlikely": "Couldn't have happened on camera, but believable. 4 LUCK, up to 500eb.",
+        "improbable": "Needs remarkable foreknowledge or incredible luck. 8 LUCK, up to 1,000eb."
+      },
+      "Cost": "{luck} LUCK, up to {spend}eb (from your pocket). Any Check it needs is rolled now. In combat it takes your Action.",
+      "Placeholder": "\"Before we went in, I…\" What you did, when, and how it helps now.",
+      "Limits": "this Beat {beat}/{maxBeat} · this Mission {mission}/{maxMission}",
+      "Approve": "It happened",
+      "Veto": "Veto",
+      "Approved": "{name} spends {luck} LUCK: it happened.",
+      "Vetoed": "Not that one, {name}.",
+      "Sent": "Your Flash of Luck went to the GM.",
+      "Blocked": {
+        "luck": "Not enough LUCK.",
+        "beat": "One Flash of Luck a Beat.",
+        "mission": "Three Flashes of Luck a Mission.",
+        "type": "Pick a kind."
+      },
+      "NewBeat": "New beat",
+      "NewBeatHint": "A new scene or stretch of the job: one Flash of Luck each again.",
+      "NewMission": "New mission",
+      "NewMissionHint": "A new job: three Flashes of Luck each again.",
+      "NewBeatDone": "A new beat: one Flash of Luck each.",
+      "NewMissionDone": "A new mission: three Flashes of Luck each."
     }
   }
 }

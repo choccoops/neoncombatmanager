@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.6.0
+
+The 2070 Core Rules, in the roller and on the table:
+
+- **The 2070 roller**, hooked into Cyberpunk RED's own rolls:
+  - a **Raise the Stakes** bar in the roll dialog, where the Plot Die's +2/+4 lands on that roll
+  - **Riding the Edge** in place of +1 a LUCK point: Push the Limit in the dialog, Second Chance and Close Call under the roll card
+  - **Chain Reactions** with their payout card
+  - the GM's crit Opportunity and Complication buttons
+  - **Tarot Criticals** from three 6s on damage, with a 22-card deck, one card a session, and one-click injuries
+- **Flash of Luck** in the Plot Die window, with the GM's approval and the Beat and Mission limits.
+- **Awareness Ladder** on the carousel for the GM: Unaware to Spotted, with the Stealth DV. It goes to Alert when the fight starts.
+- **Conditions** to the 2070 book:
+  - Mortally Wounded −6 MOVE
+  - Already On Fire escalates
+  - damage wakes the Unconscious
+  - a flashbang is a Damaged Eye and a Damaged Ear for a minute
+  - new Tarot conditions (Fated, Winded, No Pain, Chrome Shutdown)
+- A new **Roller & rules** settings menu.
+
 ## 1.5.1
 
 - **Players pin themselves without a GM**: a character's "I'm here" pin is now kept on the

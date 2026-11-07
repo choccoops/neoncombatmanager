@@ -6,6 +6,7 @@ import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
 import { Cards } from "../combat/cards.js";
 import { plotResult, luckOptions, doubleDownCost, clampLuck, FORCE_FATE_COST, LUCKY_GAIN, UNLUCKY_LOSS } from "./plot-die.js";
+import { FLASH, flashBlocked } from "../roller/rules.js";
 import { L, esc } from "../util.js";
 
 const { getProperty } = foundry.utils;
@@ -129,8 +130,27 @@ export const Stakes = {
         { action: "stakes-roll", label: L(`${LANG}.Stakes.Roll`), icon: "fa-solid fa-dice-six", owner: true },
         ...(opts.forceFate ? [{ action: "stakes-force", label: L(`${LANG}.Stakes.ForceFate`, { cost: FORCE_FATE_COST }), icon: "fa-solid fa-star", owner: true }] : [])
       ],
-      flags: { stakes: { type: "raised" } }
+      flags: { stakes: { type: "raised", actor: actor.uuid } }
     });
+  },
+
+  /** The latest Raise the Stakes card still waiting on this character's roll, if any. */
+  pendingRaise(actor) {
+    const list = game.messages?.contents ?? [];
+    for (let i = list.length - 1; i >= 0; i--) {
+      const m = list[i];
+      const f = m.flags?.[MODULE_ID];
+      if (f?.stakes?.type === "raised" && f.stakes.actor === actor?.uuid && !f.done) return m;
+    }
+    return null;
+  },
+
+  /** Force Fate: 3 LUCK, once a session, for an Opportunity without rolling. */
+  async forceFate(actor, { inline = false } = {}) {
+    if (!this.options(actor).forceFate) throw new Error(L(`${LANG}.Stakes.CantForce`));
+    await this.setLuck(actor, -FORCE_FATE_COST);
+    await this.markUsed(actor, "forceFate");
+    return this.result(actor, plotResult(6), { forced: true, inline });
   },
 
   /** A player asks the GM to Raise the Stakes (LUCK STAT 5+). */
@@ -165,7 +185,7 @@ export const Stakes = {
    * @param {object} r - plotResult()
    * @param {object} [o] - doubleDown: it was a reroll; forced: Force Fate; granted: by the GM (a crit)
    */
-  async result(actor, r, { doubleDown = false, forced = false, granted = false, count = 1 } = {}) {
+  async result(actor, r, { doubleDown = false, forced = false, granted = false, count = 1, inline = false, kicker = null } = {}) {
     await this.clearBonus(actor);
     let costNote = "";
     if (doubleDown) {
@@ -174,7 +194,8 @@ export const Stakes = {
       if (complications) count = complications;
       if (r.kind === "complication") costNote = L(`${LANG}.Stakes.DoubleDownCost`, { luck: luckLost, count: complications });
     }
-    if (r.bonus) {
+    // Rolled from the roll dialog, the bonus goes straight onto that roll instead.
+    if (r.bonus && !inline) {
       await Conditions.add("stakesBonus", actor, { changes: [{ key: "bonuses.allActions", value: r.bonus, situational: true, onByDefault: true }], name: L(`${LANG}.Stakes.BonusName`, { bonus: r.bonus }) });
     }
     const opts = this.options(actor);
@@ -193,10 +214,10 @@ export const Stakes = {
     if (how === "rolled" && opts.doubleDown) buttons.push({ action: "stakes-double", label: L(`${LANG}.Stakes.DoubleDown`), icon: "fa-solid fa-rotate", owner: true });
     const face = forced ? "★" : granted ? "✦" : String(r.face);
     // A crit's Complication (or a chain's) carries no bonus: say so, not "+0".
-    const key = r.kind === "complication" && !r.bonus ? "complicationNoBonus" : r.kind;
+    const key = r.kind === "complication" && !r.bonus ? "complicationNoBonus" : inline && r.bonus ? "complicationInline" : r.kind;
     return Cards.post({
       actor,
-      kicker: L(`${LANG}.Stakes.How.${how}`, { face }),
+      kicker: kicker ?? L(`${LANG}.Stakes.How.${how}`, { face }),
       title: L(`${LANG}.Stakes.Result.${key}`, { name: esc(actor.name), bonus: r.bonus }),
       img: DIE_IMG,
       body: `<div class="ncm-plot-face kind-${r.kind}">${face}</div><p>${L(`${LANG}.Stakes.ResultBody.${key}`, { bonus: r.bonus, count })}</p>${costNote ? `<p class="ncm-ref">${costNote}</p>` : ""}`,
@@ -365,9 +386,7 @@ export const Stakes = {
       case "stakes-force": {
         if (!owner || !this.options(actor).forceFate) return ui.notifications.warn(L(`${LANG}.Stakes.CantForce`));
         await done();
-        await this.setLuck(actor, -FORCE_FATE_COST);
-        await this.markUsed(actor, "forceFate");
-        return this.result(actor, plotResult(6), { forced: true });
+        return this.forceFate(actor);
       }
       case "stakes-double": {
         if (!owner || !this.options(actor).doubleDown) return ui.notifications.warn(L(`${LANG}.Stakes.CantDouble`));
@@ -379,14 +398,28 @@ export const Stakes = {
         if (!game.user.isGM) return;
         await done();
         return this.raise(actor, { reason: d.reason ?? "" });
+      case "stakes-flash-ok":
+        if (!game.user.isGM) return;
+        await done();
+        return this.approveFlash(actor, d.type);
+      case "stakes-flash-no":
+        if (!game.user.isGM) return;
+        await done();
+        return this.note(actor, L(`${LANG}.Flash.Vetoed`, { name: esc(actor.name) }), "yellow");
       case "stakes-deny":
         if (!game.user.isGM) return;
         await done();
         return this.note(actor, L(`${LANG}.Stakes.Denied`, { name: esc(actor.name) }), "yellow");
-      case "stakes-opp":
+      case "stakes-opp": {
         if (!owner) return;
-        if (await this.opportunity(actor, d.option, event)) await done();
+        if (await this.opportunity(actor, d.option, event)) {
+          // A chain can bring several: the card stays open until they're all spent.
+          const picks = (Number(flags.picks) || 0) + 1;
+          if (picks >= (Number(flags.count) || 1)) await done();
+          else await message.update({ [`flags.${MODULE_ID}.stakes.picks`]: picks });
+        }
         return;
+      }
       case "stakes-comp": {
         if (!game.user.isGM) return;
         if (await this.complication(actor, d.option)) {
@@ -431,7 +464,8 @@ export const Stakes = {
       const doc = await fromUuid(actor);
       // Only LUCK and this module's stakes flag go through the GM.
       const keys = Object.keys(update);
-      if (!doc || keys.some((k) => k !== "system.stats.luck.value" && k !== `flags.${MODULE_ID}.stakes`)) throw new Error(L(`${LANG}.Error.NotOwner`));
+      const allowed = ["system.stats.luck.value", `flags.${MODULE_ID}.stakes`, `flags.${MODULE_ID}.flash`];
+      if (!doc || keys.some((k) => !allowed.includes(k))) throw new Error(L(`${LANG}.Error.NotOwner`));
       await doc.update(update);
       return true;
     });
@@ -439,6 +473,61 @@ export const Stakes = {
       await game.messages.get(message)?.setFlag(MODULE_ID, "done", true);
       return true;
     });
+  },
+
+  /* ---------------------------------------- */
+  /*  Flash of Luck                           */
+  /* ---------------------------------------- */
+
+  /** Flashbacks this character took this Beat and this Mission: { beat, mission }. */
+  flashUsed(actor) {
+    const f = actor?.flags?.[MODULE_ID]?.flash ?? {};
+    const mission = Settings.get("flashMission");
+    const beat = Settings.get("flashBeat");
+    return { beat: f.missionId === mission && f.beatId === beat ? Number(f.beat) || 0 : 0, mission: f.missionId === mission ? Number(f.mission) || 0 : 0 };
+  },
+
+  /**
+   * A player reveals something their character already did: a card to the GM, who approves it
+   * (the LUCK is spent and it counts toward the limits) or vetoes it.
+   * @param {string} type - simple, unlikely, improbable
+   */
+  async flash(actor, type, text = "") {
+    const why = flashBlocked(type, this.luck(actor).value, this.flashUsed(actor));
+    if (why) throw new Error(L(`${LANG}.Flash.Blocked.${why}`));
+    const f = FLASH[type];
+    return Cards.post({
+      actor,
+      kicker: L(`${LANG}.Flash.Kicker`),
+      title: L(`${LANG}.Flash.Title`, { name: esc(actor.name), type: L(`${LANG}.Flash.Type.${type}`) }),
+      img: DIE_IMG,
+      tone: "yellow",
+      body: `${text ? `<p><i>"${esc(text)}"</i></p>` : ""}<p class="ncm-ref">${L(`${LANG}.Flash.Cost`, { luck: f.luck, spend: f.spend })}</p>`,
+      buttons: [
+        { action: "stakes-flash-ok", label: L(`${LANG}.Flash.Approve`), icon: "fa-solid fa-check", gm: true, data: { type } },
+        { action: "stakes-flash-no", label: L(`${LANG}.Flash.Veto`), icon: "fa-solid fa-xmark", gm: true }
+      ],
+      whisper: [...new Set([...Cards.gms(), ...Cards.owners(actor)])],
+      flags: { stakes: { type: "flash" } }
+    });
+  },
+
+  /** GM: the flashback happened. LUCK is spent; it counts for this Beat and Mission. */
+  async approveFlash(actor, type) {
+    const f = FLASH[type];
+    if (!f) return;
+    const used = this.flashUsed(actor);
+    await this.setLuck(actor, -f.luck);
+    await this._asGM(actor, { [`flags.${MODULE_ID}.flash`]: { beat: used.beat + 1, mission: used.mission + 1, beatId: Settings.get("flashBeat"), missionId: Settings.get("flashMission") } });
+    return this.note(actor, L(`${LANG}.Flash.Approved`, { name: esc(actor.name), luck: f.luck }), "yellow");
+  },
+
+  /** GM: a new Beat (one Flash of Luck each again), or a new Mission (three each again). */
+  async newBeat({ mission = false } = {}) {
+    if (!game.user.isGM) return;
+    await Settings.set("flashBeat", (Number(Settings.get("flashBeat")) || 0) + 1);
+    if (mission) await Settings.set("flashMission", (Number(Settings.get("flashMission")) || 0) + 1);
+    ui.notifications.info(L(`${LANG}.Flash.${mission ? "NewMissionDone" : "NewBeatDone"}`));
   },
 
   /** GM: a new session: Double Down and Force Fate are available again. */

@@ -195,7 +195,7 @@ test("Wound States follow CPR's own as HP changes", async () => {
   await actor.update({ "system.derivedStats.hp.value": 0 });
   await Triggers.syncWound(actor);
   assert.deepEqual(Conditions.active(actor).map((c) => c.id), ["mortallyWounded"]);
-  assert.deepEqual(Conditions.effects(actor, "mortallyWounded")[0].changes, [], "CPR applies the -4 itself");
+  assert.deepEqual(Conditions.effects(actor, "mortallyWounded")[0].changes.map((c) => [c.key, c.value]), [["system.stats.move.value", "-6"]], "CPR applies the -4 itself; the -6 MOVE is ours (2070)");
   await actor.update({ "system.derivedStats.hp.value": 40 });
   await Triggers.syncWound(actor);
   assert.deepEqual(Conditions.active(actor), []);

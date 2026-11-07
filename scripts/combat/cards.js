@@ -164,10 +164,15 @@ export const Cards = {
   async _click(message, btn, event) {
     const d = btn.dataset;
     const actor = d.actor ? await fromUuid(d.actor) : null;
-    if (!actor) return;
+    // A Tarot card belongs to no one in particular.
+    if (!actor && !String(d.ncmAction).startsWith("roller-tarot")) return;
     if (String(d.ncmAction).startsWith("stakes-")) {
       const { Stakes } = await import("../stakes/stakes.js");
       return Stakes.click(message, btn, event, actor);
+    }
+    if (String(d.ncmAction).startsWith("roller-")) {
+      const { Roller } = await import("../roller/roller.js");
+      return Roller.click(message, btn, event, actor);
     }
     switch (d.ncmAction) {
       case "deathSave": {

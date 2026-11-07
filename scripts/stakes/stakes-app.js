@@ -1,6 +1,8 @@
 import { MODULE_ID, TEMPLATE_PATH, LANG } from "../constants.js";
 import { Stakes } from "./stakes.js";
 import { plotResult, OPPORTUNITIES, COMPLICATIONS, LUCK_NEEDS, FORCE_FATE_COST } from "./plot-die.js";
+import { FLASH, FLASH_LIMITS, flashBlocked } from "../roller/rules.js";
+import { Settings } from "../settings.js";
 import { L } from "../util.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -23,7 +25,11 @@ export class StakesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       grantOpp: StakesApp.#onGrantOpp,
       grantComp: StakesApp.#onGrantComp,
       askStakes: StakesApp.#onAsk,
-      newSession: StakesApp.#onNewSession
+      newSession: StakesApp.#onNewSession,
+      flashLuck: StakesApp.#onFlash,
+      newBeat: StakesApp.#onNewBeat,
+      newMission: StakesApp.#onNewMission,
+      drawTarot: StakesApp.#onDrawTarot
     }
   };
 
@@ -83,7 +89,22 @@ export class StakesApp extends HandlebarsApplicationMixin(ApplicationV2) {
         return { face: f, kind: r.kind, label: L(`${LANG}.Stakes.Face.${r.kind}`, { bonus: r.bonus }) };
       }),
       opportunities: OPPORTUNITIES.map((o) => ({ name: L(`${LANG}.Stakes.Opp.${o}`), text: L(`${LANG}.Stakes.OppText.${o}`) })),
+      flash: Settings.get("flashOfLuck") && actor ? this._flashContext(actor, luck) : null,
+      tarot: game.user.isGM && Settings.get("tarotCriticals") ? (await import("../roller/tarot.js")).Tarot.status() : null,
       complications: COMPLICATIONS.map((c) => ({ name: L(`${LANG}.Stakes.Comp.${c}`), text: L(`${LANG}.Stakes.CompText.${c}`) }))
+    };
+  }
+
+  /** Flash of Luck: each kind, what it costs, and whether this character can take it now. */
+  _flashContext(actor, luck) {
+    const used = Stakes.flashUsed(actor);
+    return {
+      used,
+      limits: FLASH_LIMITS,
+      types: Object.entries(FLASH).map(([id, f]) => {
+        const why = flashBlocked(id, luck.value, used);
+        return { id, luck: f.luck, spend: f.spend, label: L(`${LANG}.Flash.Type.${id}`), hint: L(`${LANG}.Flash.TypeHint.${id}`), ok: !why, why: why ? L(`${LANG}.Flash.Blocked.${why}`) : "" };
+      })
     };
   }
 
@@ -124,6 +145,35 @@ export class StakesApp extends HandlebarsApplicationMixin(ApplicationV2) {
     } catch (err) {
       ui.notifications.warn(err.message);
     }
+  }
+
+  static async #onFlash(event, target) {
+    const actor = this._actor();
+    if (!actor) return;
+    try {
+      await Stakes.flash(actor, target.dataset.type, this.element.querySelector("[name=flashText]")?.value?.trim() ?? "");
+      ui.notifications.info(L(`${LANG}.Flash.Sent`));
+    } catch (err) {
+      ui.notifications.warn(err.message);
+    }
+  }
+
+  static async #onNewBeat() {
+    await Stakes.newBeat();
+    this.render();
+  }
+
+  static async #onNewMission() {
+    await Stakes.newBeat({ mission: true });
+    this.render();
+  }
+
+  /** GM: draw a Tarot card for whoever you have targeted. */
+  static async #onDrawTarot() {
+    const { Tarot } = await import("../roller/tarot.js");
+    const target = [...(game.user.targets ?? [])][0]?.document?.uuid ?? "";
+    await Tarot.draw(target).catch((err) => ui.notifications.warn(err.message));
+    this.render();
   }
 
   static async #onNewSession() {

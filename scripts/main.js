@@ -21,6 +21,8 @@ import { Sources } from "./environment/sources.js";
 import { Stakes } from "./stakes/stakes.js";
 import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
+import { Roller } from "./roller/roller.js";
+import { Ladder } from "./roller/ladder.js";
 import { debounce, L } from "./util.js";
 
 /** Neon Combat Manager's public API: game.modules.get("cpr-neon-combat-manager").api */
@@ -169,7 +171,19 @@ Hooks.once("init", () => {
   Hooks.on("deleteItem", (item, options, userId) => Conditions.onDeleteItem(item, options, userId));
   Hooks.on(`${MODULE_ID}.conditionsChanged`, () => Registry.refresh());
 
-  // Triggers and Wound States follow the actor's data (active GM).
+  // Triggers and Wound States follow the actor's data (active GM). A hit (HP going down) wakes
+  // the unconscious: the HP before the change rides along in the update's options.
+  Hooks.on("preUpdateActor", (actor, changes, options) => {
+    const hp = foundry.utils.getProperty(changes, "system.derivedStats.hp.value");
+    if (hp !== undefined) options[`${MODULE_ID}HpBefore`] = Number(actor.system?.derivedStats?.hp?.value);
+  });
+  Hooks.on("updateActor", (actor, changes, options) => {
+    const before = options?.[`${MODULE_ID}HpBefore`];
+    const after = Number(actor.system?.derivedStats?.hp?.value);
+    if (Compat.isActiveGM && Number.isFinite(before) && after < before) {
+      Conditions.onDamaged(actor).catch((err) => console.error(`${MODULE_ID} | waking ${actor.name}`, err));
+    }
+  });
   const pending = new Map();
   Hooks.on("updateActor", (actor, changes) => {
     if (!Compat.isActiveGM || !Triggers.watched(changes)) return;
@@ -200,6 +214,8 @@ Hooks.once("init", () => {
   Stakes.init();
   Awareness.init();
   Hub.init();
+  Roller.init();
+  Ladder.init();
   TrackerHooks.init();
 
   game.modules.get(MODULE_ID).api = api;
@@ -237,6 +253,7 @@ Hooks.once("ready", async () => {
     }
   }
   await Comms.ready().catch((err) => console.error(`${MODULE_ID} | comms`, err));
+  await Roller.ready().catch((err) => console.error(`${MODULE_ID} | roller`, err));
   Hooks.callAll(HOOKS.ready, api);
 });
 
