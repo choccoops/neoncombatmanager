@@ -23,6 +23,8 @@ const DEFS = [
   ["carouselSize", "client", String, "medium", { config: true, choices: { small: K("Size.small"), medium: K("Size.medium"), large: K("Size.large") }, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["carouselPlacement", "client", String, "top", { config: true, choices: { top: K("Placement.top"), belowNav: K("Placement.belowNav") }, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["carouselCollapsed", "client", Boolean, false, { config: false }],
+  ["actionHud", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
+  ["actionHudState", "client", Object, {}, { config: false }],
 
   ["biomonAlerts", "client", String, "toast", { config: true, choices: { toast: K("BiomonAlerts.toast"), open: K("BiomonAlerts.open"), off: K("BiomonAlerts.off") } }],
 

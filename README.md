@@ -6,6 +6,8 @@ encounter screen and makes the fight's conditions, clock, weather and lighting c
 Cyberpunk RED's own rolls.
 
 - **Combat carousel**: the Initiative Queue as neon cards across the top of the screen.
+- **Action HUD**: the controlled token's actions in one bar (Initiative, attacks with their fire
+  modes, skills, role abilities, conditions), laid out by each player.
 - **Biomon Link**: players link their characters' Biomonitors as a group; a small popout shows
   everyone's vitals (ECG, HP, status, Death Save penalty, injuries) and raises the alarm when
   someone crashes.
@@ -68,6 +70,45 @@ While a combat is on, the Initiative Queue runs across the top of the screen:
   name display setting.
 
 Foundry's own sidebar tracker gets each combatant's Wound State and the combat clock too.
+
+## Action HUD
+
+A bar of the controlled token's actions, above the hotbar. A player with no token selected gets
+their own character. Each group opens on hover, or click a group to keep it open.
+
+- **The template**, a fight's basics:
+  - **Turn**: Initiative (joins the encounter if needed), End Turn (lit on your turn), Death
+    Save (lit when Mortally Wounded, with the penalty), Facedown
+  - **Weapons**: every equipped weapon and installed cyberweapon, with Attack, Aimed Shot,
+    Autofire and Suppressive Fire where the weapon has them, Damage and Reload. Ammo is shown,
+    and red when the magazine is empty.
+  - **Skills**: Evasion, Perception, Brawling, Melee Weapon, Athletics, Stealth and First Aid,
+    with their base
+  - **Role**: abilities that roll
+  - **Netrunning**: Interface abilities, when the character has a cyberdeck
+  - **Status**: Prone, In Cover, Hidden, Holding Action, Grappled and Suppressed, toggled on and
+    off
+  - **Utility**: the Plot Die, Holocall, Biomon Link, Night City Map and the sheet
+
+  STATs and Gear (drugs) are there too, hidden until you show them.
+- **Everything rolls the way the sheet does**: Cyberpunk RED's roll dialog (Ctrl-click skips
+  it), ammo, LUCK, targets and its roll card, with this module's 2070 roller on top. A fire
+  mode stays set on the weapon, as the sheet's checkboxes do, so Damage after Autofire is
+  Autofire damage.
+- **Customize it** (the sliders button). Each player has their own HUD:
+  - rename, reorder, hide and show groups
+  - leave a group on **Auto** (everything it has, like every equipped weapon), or pick its
+    actions and their order
+  - add groups of your own that mix actions from anywhere
+  - keep a layout for all your characters, or give one character a layout of its own. A
+    layout follows names ("Evasion", "Militech Viper"), so it carries over between characters.
+  - **Template** starts over.
+- Drag it by the grip; the chevron folds it to the portrait. A client setting turns it off, and
+  a keybinding shows or hides it.
+
+Inspired by Token Action HUD and p4vl0-dev's
+[Cyberpunk style](https://github.com/p4vl0-dev/Token-Action-HUD-Cyberpunk-style), but standalone:
+it doesn't need Token Action HUD Core. If you run Token Action HUD too, turn one of them off.
 
 ## Biomon Link
 

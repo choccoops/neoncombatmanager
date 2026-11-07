@@ -823,6 +823,104 @@
   .nd-body h1 { font-size: 28px; }
 }
 
+/* ==========================================================================
+   Action HUD
+   ========================================================================== */
+#ncm-action-hud {
+  position: fixed; left: 110px; bottom: 120px; z-index: 60;
+  pointer-events: all; font-family: "Signika", sans-serif; color: var(--ncm-text);
+}
+#ncm-action-hud.is-placed { bottom: auto; }
+#ncm-action-hud.is-dragging { opacity: 0.85; }
+#ncm-action-hud .ncm-ah-bar { position: relative; display: flex; align-items: stretch; gap: 4px; padding: 4px; }
+/* The notched plate sits behind the bar, so the panels can open past its edge. */
+#ncm-action-hud .ncm-ah-bar::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, rgba(26, 7, 18, 0.94), rgba(13, 13, 22, 0.94) 55%, rgba(6, 20, 25, 0.94));
+  border: 1px solid var(--ncm-line-2); border-bottom-color: var(--ncm-pink);
+  box-shadow: 0 0 18px rgba(255, 42, 109, 0.18), 0 6px 16px rgba(0, 0, 0, 0.6);
+  clip-path: var(--ncm-notch);
+}
+#ncm-action-hud .ncm-ah-grip { padding: 4px 3px; background: transparent; border-color: transparent; color: var(--ncm-dim); cursor: grab; touch-action: none; }
+#ncm-action-hud.is-dragging .ncm-ah-grip { cursor: grabbing; }
+#ncm-action-hud .ncm-ah-who { gap: 6px; padding: 2px 8px 2px 2px; text-transform: none; letter-spacing: 0; justify-content: flex-start; background: rgba(0, 0, 0, 0.35); }
+#ncm-action-hud .ncm-ah-who img { width: 34px; height: 34px; object-fit: cover; object-position: top; border: 1px solid var(--ncm-line-2); clip-path: var(--ncm-notch-sm); }
+#ncm-action-hud .ncm-ah-who > span { display: grid; gap: 2px; min-width: 118px; text-align: left; }
+#ncm-action-hud .ncm-ah-who b { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ncm-display); font-weight: 400; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; }
+#ncm-action-hud .ncm-ah-hp { position: relative; display: block; height: 14px; background: #000; border: 1px solid var(--ncm-line); --tone: var(--ncm-green); }
+#ncm-action-hud .wound-lightlyWounded .ncm-ah-hp { --tone: var(--ncm-yellow); }
+#ncm-action-hud .wound-seriouslyWounded .ncm-ah-hp { --tone: var(--ncm-orange); }
+#ncm-action-hud .wound-mortallyWounded .ncm-ah-hp { --tone: var(--ncm-red); }
+#ncm-action-hud .ncm-ah-hp i { position: absolute; inset: 0 auto 0 0; width: var(--pct, 100%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tone) 50%, transparent)); border-right: 2px solid var(--tone); }
+#ncm-action-hud .ncm-ah-hp small { position: relative; display: block; padding: 0 4px; font-family: var(--ncm-display); font-size: 9px; line-height: 12px; letter-spacing: 0.08em; color: #fff; text-shadow: 0 0 3px #000; white-space: nowrap; }
+#ncm-action-hud .ncm-ah-groups { display: flex; gap: 3px; align-items: stretch; }
+#ncm-action-hud .ncm-ah-group { position: relative; display: flex; }
+#ncm-action-hud .ncm-ah-tab { flex-direction: column; gap: 2px; min-width: 52px; padding: 4px 8px; font-size: 9px; }
+#ncm-action-hud .ncm-ah-tab i { font-size: 15px; color: var(--ncm-pink); text-shadow: 0 0 8px rgba(255, 42, 109, 0.6); }
+#ncm-action-hud .ncm-ah-group:hover .ncm-ah-tab, #ncm-action-hud .ncm-ah-group.is-open .ncm-ah-tab { border-color: var(--ncm-pink); color: var(--ncm-yellow); background: rgba(255, 42, 109, 0.14); }
+#ncm-action-hud .ncm-ah-group:hover .ncm-ah-tab i, #ncm-action-hud .ncm-ah-group.is-open .ncm-ah-tab i { color: var(--ncm-yellow); }
+#ncm-action-hud .ncm-ah-tools { display: flex; flex-direction: column; gap: 3px; margin-left: 2px; }
+#ncm-action-hud .ncm-ah-tools button { flex: 1; padding: 2px 7px; background: transparent; color: var(--ncm-dim); }
+/* A group's panel: on hover, or pinned by a click (a hover elsewhere shows that one instead). */
+#ncm-action-hud .ncm-ah-panel {
+  display: none; position: absolute; left: 0; bottom: calc(100% + 8px); z-index: 2;
+  width: max-content; min-width: 180px; max-width: min(560px, 80vw); max-height: 52vh; overflow-y: auto;
+  padding: 6px 8px 8px; background: rgba(7, 7, 11, 0.96);
+  border: 1px solid var(--ncm-line-2); border-left: 2px solid var(--ncm-pink);
+  box-shadow: 0 0 16px rgba(255, 42, 109, 0.22), 0 8px 18px rgba(0, 0, 0, 0.7);
+  clip-path: var(--ncm-notch);
+}
+#ncm-action-hud.opens-down .ncm-ah-panel { bottom: auto; top: calc(100% + 8px); }
+#ncm-action-hud .ncm-ah-group:hover > .ncm-ah-panel,
+#ncm-action-hud .ncm-ah-group.is-open > .ncm-ah-panel { display: block; }
+#ncm-action-hud .ncm-ah-groups:hover .ncm-ah-group.is-open:not(:hover) > .ncm-ah-panel { display: none; }
+#ncm-action-hud .ncm-ah-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 3px; margin-top: 4px; min-width: 300px; }
+#ncm-action-hud .ncm-ah-act { justify-content: flex-start; gap: 6px; padding: 4px 8px; font-family: "Signika", sans-serif; font-size: 12px; letter-spacing: 0; text-transform: none; text-align: left; }
+#ncm-action-hud .ncm-ah-act i { width: 14px; color: var(--ncm-cyan); }
+#ncm-action-hud .ncm-ah-act img { width: 20px; height: 20px; border: 0; }
+#ncm-action-hud .ncm-ah-act span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#ncm-action-hud .ncm-ah-act small { font-family: var(--ncm-display); font-size: 10px; color: var(--ncm-yellow); }
+#ncm-action-hud .ncm-ah-act.is-on { border-color: var(--ncm-pink); background: rgba(255, 42, 109, 0.2); color: #fff; }
+#ncm-action-hud .ncm-ah-act.is-alert { border-color: var(--ncm-yellow); color: var(--ncm-yellow); box-shadow: inset 0 0 10px rgba(243, 230, 0, 0.2); }
+#ncm-action-hud .ncm-ah-act.is-off { opacity: 0.5; }
+#ncm-action-hud .ncm-ah-weapon {
+  grid-column: 1 / -1; display: grid; grid-template-columns: 30px minmax(110px, 1fr) auto; align-items: center; gap: 6px;
+  padding: 3px 4px; background: rgba(13, 13, 21, 0.9); border: 1px solid var(--ncm-line);
+}
+#ncm-action-hud .ncm-ah-weapon img { width: 30px; height: 30px; object-fit: contain; border: 0; }
+#ncm-action-hud .ncm-ah-wname { display: grid; min-width: 0; }
+#ncm-action-hud .ncm-ah-wname b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; color: #fff; }
+#ncm-action-hud .ncm-ah-wname small { font-family: var(--ncm-display); font-size: 10px; letter-spacing: 0.08em; color: var(--ncm-cyan); }
+#ncm-action-hud .ncm-ah-weapon.is-alert .ncm-ah-wname small { color: var(--ncm-red); }
+#ncm-action-hud .ncm-ah-modes { display: flex; gap: 2px; }
+#ncm-action-hud .ncm-ah-modes button { width: 28px; height: 26px; padding: 0; font-size: 12px; }
+#ncm-action-hud .ncm-ah-modes button.is-on { border-color: var(--ncm-pink); color: var(--ncm-yellow); background: rgba(255, 42, 109, 0.22); }
+
+/* Customize Action HUD */
+.ncm-ah-editor .window-content { padding: 8px; }
+.ncm-ahe { display: flex; flex-direction: column; gap: 6px; height: 100%; min-height: 0; }
+.ncm-ahe-head { display: flex; align-items: center; gap: 8px; }
+.ncm-ahe-head img { width: 36px; height: 36px; object-fit: cover; object-position: top; border: 1px solid var(--ncm-line-2); }
+.ncm-ahe-scope { flex: 1; display: grid; gap: 2px; }
+.ncm-ahe-groups { flex: 1; min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 4px; }
+.ncm-ahe-group { padding: 5px 6px; background: var(--ncm-bg-2); border: 1px solid var(--ncm-line); border-left: 2px solid var(--ncm-pink); }
+.ncm-ahe-group.is-hidden { opacity: 0.55; border-left-color: var(--ncm-line-2); }
+.ncm-ahe-row { display: flex; align-items: center; gap: 6px; }
+.ncm-ahe-icon { width: 16px; color: var(--ncm-pink); text-align: center; }
+.ncm-ahe-row input[type=text] { flex: 1; min-width: 0; }
+.ncm-ahe-auto { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--ncm-dim); white-space: nowrap; }
+.ncm-ahe-tools { display: flex; gap: 2px; }
+.ncm-ahe-tools button { padding: 3px 6px; }
+.ncm-ahe-autolist { margin: 4px 0 0 22px; font-size: 11px; color: var(--ncm-dim); }
+.ncm-ahe-chips { display: flex; flex-wrap: wrap; gap: 3px; margin: 5px 0 0 22px; }
+.ncm-ahe-chip { display: inline-flex; align-items: center; gap: 1px; padding: 0 2px; background: rgba(5, 217, 232, 0.08); border: 1px solid rgba(5, 217, 232, 0.35); font-size: 12px; }
+.ncm-ahe-chip span { padding: 0 3px; }
+.ncm-ahe-chip.is-missing { border-style: dashed; opacity: 0.6; }
+.neon-combat .ncm-ahe-chip button { padding: 1px 3px; background: transparent; border-color: transparent; font-size: 10px; color: var(--ncm-dim); clip-path: none; }
+.ncm-ahe-add select { height: 24px; font-size: 12px; }
+.ncm-ahe-foot { display: flex; gap: 4px; justify-content: flex-end; padding-top: 4px; border-top: 1px dashed var(--ncm-line-2); }
+.ncm-ahe-foot button:first-child { margin-right: auto; }
+
 /* Less motion, when asked for */
 @media (prefers-reduced-motion: reduce) {
   #ncm-hub, #ncm-hub *, .ncm-dossier, .ncm-dossier * { animation: none !important; transition: none !important; }

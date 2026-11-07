@@ -16,6 +16,7 @@ import { TrackerHooks } from "./combat/tracker.js";
 import { Comms } from "./comms/comms.js";
 import { Links } from "./comms/links.js";
 import { Phone } from "./comms/phone.js";
+import { Hud } from "./hud/hud.js";
 import { Environment } from "./environment/environment.js";
 import { Sources } from "./environment/sources.js";
 import { Stakes } from "./stakes/stakes.js";
@@ -65,6 +66,16 @@ const api = {
   },
   ui: {
     renderCarousel: () => Carousel.render()
+  },
+  /** The Action HUD: the controlled token's actions, laid out by each player. */
+  hud: {
+    render: () => Hud.render(),
+    /** The layout a character gets for this user (theirs, else the user's, else the template). */
+    layoutFor: (actor) => Hud.layoutFor(actor),
+    saveLayout: (layout, actor) => Hud.saveLayout(layout, actor),
+    clearLayout: (actor) => Hud.clearLayout(actor),
+    customize: async (actor) => (await import("./hud/hud-editor.js")).HudEditor.open(actor),
+    resetPosition: () => Hud.resetPosition()
   },
   /** Biomon Link: linked characters' vitals. */
   biomon: {
@@ -144,6 +155,8 @@ Hooks.once("init", () => {
   Settings.register(SettingsMenu);
   Compat.loadTemplates([
     `${TEMPLATE_PATH}/carousel.hbs`,
+    `${TEMPLATE_PATH}/action-hud.hbs`,
+    `${TEMPLATE_PATH}/action-hud-editor.hbs`,
     `${TEMPLATE_PATH}/biomon.hbs`,
     `${TEMPLATE_PATH}/chat-card.hbs`,
     `${TEMPLATE_PATH}/lab.hbs`,
@@ -207,6 +220,7 @@ Hooks.once("init", () => {
   Turns.init();
   Environment.init();
   Carousel.init();
+  Hud.init();
   Comms.init();
   Stakes.init();
   Awareness.init();
@@ -234,6 +248,7 @@ Hooks.once("setup", () => {
 Hooks.once("ready", async () => {
   CombatTime.apply();
   Carousel.render();
+  Hud.render();
   if (Compat.isActiveGM) {
     try {
       // Wound States for everyone who might be on screen.

@@ -890,6 +890,10 @@
       "awarenessLadder": {
         "name": "Awareness Ladder",
         "hint": "The GM sees the encounter's enemies' awareness (Unaware to Spotted) and the Stealth DV on the carousel."
+      },
+      "actionHud": {
+        "name": "Action HUD",
+        "hint": "A bar of the controlled token's actions: Initiative, attacks, skills, role abilities and more, laid out your way (the sliders button customizes it)."
       }
     },
     "SceneWeather": {
@@ -1599,6 +1603,60 @@
       "NewMissionHint": "A new job: three Flashes of Luck each again.",
       "NewBeatDone": "A new beat: one Flash of Luck each.",
       "NewMissionDone": "A new mission: three Flashes of Luck each."
+    },
+    "Hud": {
+      "Title": "Action HUD",
+      "KeyHint": "Show or hide the Action HUD.",
+      "Drag": "Drag to move",
+      "Sheet": "Open the sheet",
+      "Luck": "LUCK",
+      "Customize": "Customize Action HUD",
+      "Collapse": "Collapse / expand",
+      "Initiative": "Initiative",
+      "EndTurn": "End Turn",
+      "DeathSave": "Death Save",
+      "Facedown": "Facedown",
+      "Attack": "Attack",
+      "Aimed": "Aimed Shot",
+      "Autofire": "Autofire",
+      "Suppressive": "Suppressive Fire",
+      "Damage": "Damage",
+      "Reload": "Reload",
+      "NoCombat": "There's no encounter to roll Initiative in.",
+      "NotInCombat": "{name} isn't in the encounter: select their token and roll again.",
+      "NotYourTurn": "It isn't this character's turn.",
+      "NoNetRole": "Pick the Netrunner role that runs the deck on the character sheet first.",
+      "Group": {
+        "turn": "Turn",
+        "weapons": "Weapons",
+        "skills": "Skills",
+        "role": "Role",
+        "net": "Netrunning",
+        "status": "Status",
+        "utility": "Utility",
+        "stats": "STATs",
+        "gear": "Gear",
+        "own": "My group"
+      },
+      "LayoutFor": "Layout for",
+      "ScopeMe": "All my characters",
+      "ScopeActor": "{name} only",
+      "ClearOwn": "Use my layout",
+      "ClearOwnHint": "Drop this character's own layout: they get the one for all your characters.",
+      "EditorHint": "Each player has their own HUD. Rename, reorder and hide groups; Auto shows everything a group has (every equipped weapon, every role ability), or pick the actions and their order yourself. Your own groups can mix actions from anywhere. Ctrl-click an action in the HUD to skip its roll dialog.",
+      "Auto": "Auto",
+      "AutoHint": "Show everything this group has for the character. Untick to choose.",
+      "Show": "Show this group",
+      "Hide": "Hide this group",
+      "RemoveGroup": "Remove this group",
+      "Nothing": "Nothing for this character.",
+      "Missing": "This character doesn't have it: it's skipped.",
+      "AddAction": "Add an action",
+      "AddGroup": "Add a group",
+      "Reset": "Template",
+      "ResetHint": "Start over from the template (combat basics). Nothing is kept until you save.",
+      "Save": "Save",
+      "Saved": "Action HUD layout saved."
     }
   }
 }
