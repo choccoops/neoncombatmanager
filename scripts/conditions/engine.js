@@ -98,6 +98,15 @@ export const Conditions = {
 
   async _addOne(actor, c, options) {
     if (!actor.isOwner) return Socket.request("addCondition", { actor: actor.uuid, id: c.id, options });
+    // Already On Fire (2070): a fire that wouldn't raise the stage still pushes it up one.
+    if (c.fire && Settings.get("fireEscalates") && !options.managed) {
+      const burning = this.active(actor).find((x) => x.fire);
+      if (burning && burning.fire >= c.fire) {
+        const next = Registry.all().find((x) => x.fire === Math.min(3, burning.fire + 1) && x.group === c.group);
+        if (!next || next.id === burning.id) return this.effects(actor, burning.id)[0] ?? null;
+        c = next;
+      }
+    }
     if (!options.force && c.immune?.items?.length && CPR.hasGear(actor, c.immune.items)) {
       ui.notifications?.info(L(`${LANG}.Notify.Immune`, { name: actor.name, condition: c.name }));
       return null;
@@ -271,6 +280,20 @@ export const Conditions = {
     if (needsRepair({ changes: next, flags: { [SYSTEM_ID]: { changes: flags } } })) {
       foundry.utils.setProperty(changes, `flags.${SYSTEM_ID}.changes`, repairFlags(next, flags));
     }
+  },
+
+  /**
+   * Someone took damage (active GM): Unconscious ends, and so does anything else that breaks on
+   * a hit (System Reset), unless they're drugged asleep or being choked out.
+   */
+  async onDamaged(actor) {
+    if (!Settings.get("wakeOnDamage")) return;
+    const active = this.active(actor);
+    if (active.some((c) => ["sleep", "choking1", "choking2"].includes(c.id))) return;
+    const wake = active.filter((c) => c.wakeOnDamage).map((c) => c.id);
+    if (!wake.length) return;
+    await this.remove(wake, actor);
+    await Cards.note(actor, L(`${LANG}.Card.WokeUp`, { name: esc(actor.name) }), { tone: "yellow" });
   },
 
   /* ---------------------------------------- */

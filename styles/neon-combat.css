@@ -985,3 +985,51 @@ textarea#chat-message.ncm-holo-route {
 .nd-body footer button.nd-go:hover { background: var(--ncm-green); color: #000; }
 .ncm-hub-scene.ncm-check { display: flex; align-items: center; gap: 6px; color: var(--ncm-text); }
 .ncm-hub-scene input[type=text] { flex: 1; }
+
+/* ==========================================================================
+   The 2070 roller: the roll dialog's bar, roll-card edges, chains, Tarot
+   ========================================================================== */
+.ncm-roll-bar { display: grid; gap: 4px; margin: 4px 0 8px; padding: 6px 8px; background: linear-gradient(90deg, rgba(243, 230, 0, 0.08), transparent); border-left: 3px solid var(--ncm-yellow); }
+.ncm-roll-bar .ncm-roll-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ncm-roll-bar .ncm-kicker { flex: 0 0 100%; font-family: var(--ncm-display); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ncm-dim); }
+.ncm-roll-bar button { width: auto; flex: 0 0 auto; padding: 2px 8px; line-height: 1.6; font-size: 11px; }
+.ncm-roll-bar .ncm-roll-push { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.ncm-roll-bar .ncm-roll-push.is-off { opacity: 0.5; }
+.ncm-roll-bar small { color: var(--ncm-dim); font-size: 10px; }
+.ncm-roll-plot { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; }
+.ncm-roll-plot b { display: inline-grid; place-items: center; min-width: 20px; height: 20px; font-family: var(--ncm-display); color: #000; background: var(--ncm-yellow); }
+.ncm-roll-plot.kind-complication b { background: var(--ncm-pink); color: #fff; }
+.ncm-roll-plot.kind-opportunity b { background: var(--ncm-cyan); }
+li.dialog-item.ncm-hide-luck { display: none !important; }
+/* under a Cyberpunk RED roll card */
+.ncm-edge { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.ncm-edge button { flex: 1 1 auto; width: auto; margin: 0; padding: 2px 6px; font-size: 10px; line-height: 1.6; text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid #b8a100; background: rgba(243, 230, 0, 0.12); }
+.ncm-edge button:hover:not(:disabled) { background: rgba(243, 230, 0, 0.3); }
+.ncm-edge-used { font-size: 10px; font-style: italic; opacity: 0.7; }
+/* chain and Tarot cards */
+.neon-combat-chat .ncm-chain-pay { margin: 4px 0; padding-left: 16px; font-size: 12px; }
+.neon-combat-chat .ncm-tarot-card {
+  float: right; display: grid; justify-items: center; width: 54px; height: 82px; margin: 0 0 6px 8px; padding-top: 10px;
+  border: 2px solid var(--ncm-yellow); background: #14101f; box-shadow: 0 0 12px rgba(243, 230, 0, 0.35);
+}
+.neon-combat-chat .ncm-tarot-card b { font-family: var(--ncm-display); font-weight: 400; font-size: 18px; color: var(--ncm-yellow); }
+.neon-combat-chat .ncm-tarot-card span { padding: 0 2px; text-align: center; font-family: var(--ncm-display); font-size: 7px; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; }
+/* the carousel's Awareness Ladder (GM) */
+#ncm-carousel .ncm-car-ladder { display: flex; align-items: center; gap: 2px; padding: 0 4px; border: 1px solid var(--lvl, var(--ncm-line-2)); background: rgba(7, 7, 11, 0.8); }
+#ncm-carousel .ncm-car-ladder span { display: grid; justify-items: center; min-width: 64px; line-height: 1.1; }
+#ncm-carousel .ncm-car-ladder small { font-family: var(--ncm-display); font-size: 7px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ncm-dim); }
+#ncm-carousel .ncm-car-ladder b { font-family: var(--ncm-display); font-weight: 400; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lvl, #fff); }
+#ncm-carousel .ncm-car-ladder em { font-style: normal; font-size: 9px; color: var(--ncm-text); }
+#ncm-carousel .ncm-car-ladder button { padding: 1px 4px; font-size: 11px; background: transparent; border: 0; color: var(--ncm-dim); clip-path: none; }
+#ncm-carousel .ncm-car-ladder button:hover:not(:disabled) { color: var(--lvl, #fff); }
+#ncm-carousel .ncm-car-ladder.lvl-unaware { --lvl: var(--ncm-green); }
+#ncm-carousel .ncm-car-ladder.lvl-suspicious { --lvl: var(--ncm-yellow); }
+#ncm-carousel .ncm-car-ladder.lvl-searching { --lvl: var(--ncm-orange); }
+#ncm-carousel .ncm-car-ladder.lvl-alert { --lvl: var(--ncm-pink); }
+#ncm-carousel .ncm-car-ladder.lvl-spotted { --lvl: var(--ncm-red); animation: ncm-blink 1s steps(2) infinite; }
+/* Flash of Luck in the Plot Die window */
+.ncm-stakes .ncm-flash-types button { display: grid; gap: 1px; line-height: 1.2; padding: 4px 6px; }
+.ncm-stakes .ncm-flash-types small { font-size: 9px; color: var(--ncm-dim); }
+.ncm-stakes textarea[name=flashText] { width: 100%; resize: vertical; }
+.ncm-stakes .ncm-sub small { margin-left: auto; font-family: inherit; letter-spacing: 0; text-transform: none; }
+@media (prefers-reduced-motion: reduce) { #ncm-carousel .ncm-car-ladder.lvl-spotted { animation: none; } }

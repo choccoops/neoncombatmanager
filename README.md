@@ -19,6 +19,9 @@ Cyberpunk RED's own rolls.
   hands out the bonus, the Opportunity or the Complication (2070 Core Rules).
 - **Combat Awareness**: Solos split their Rank across the six abilities in a small window,
   free before Initiative and as their Action once the fight is on.
+- **The 2070 roller**: hooked into Cyberpunk RED's own rolls: the Plot Die in the roll dialog,
+  Riding the Edge (Push the Limit, Second Chance, Close Call), Chain Reactions, Tarot Criticals,
+  Flash of Luck, and the Awareness Ladder on the carousel.
 - **Neon Conditions**: the full Cyberpunk RED condition set, wired into the system's roll
   modifiers, with a Condition Lab, a Triggler and a drop-in stand-in for Condition Lab &
   Triggler (which stopped at Foundry v12).
@@ -225,6 +228,36 @@ token controls, `/stakes`, or a keybinding (unassigned) opens the Plot Die windo
 - **Crits**: the GM's **Crit: Opportunity** and **Crit: Complication** buttons hand out a twist
   for an exploding 10 or an imploding 1, without the Plot Die.
 
+## The 2070 roller
+
+The 2070 Core Rules' dice rules, inside Cyberpunk RED's own roller (it imports the system's roll
+classes and checks they're the system's own before touching anything; with another build of the
+system, these features simply stay off). Each one can be switched off under **Roller & rules**.
+
+- **Raise the Stakes in the roll dialog**: every Check's dialog gets a Plot Die bar. The GM rolls
+  the Plot Die right there; a player can when the GM has Raised the Stakes on their character
+  (or Force Fate, at LUCK 7+), or ask for it at LUCK 5+. A Complication's +2/+4 goes straight onto
+  that roll, and the result card offers the Opportunity or Complication.
+- **Riding the Edge** (LUCK no longer buys +1s): **Push the Limit** in the dialog (2 LUCK: add
+  your LUCK STAT); under the roll card, **Second Chance** (1 LUCK: reroll with the same modifiers,
+  not on a natural 1) and **Close Call** (3 LUCK: a natural 1 doesn't implode). One per roll.
+- **Chain Reactions**: an explosion whose extra die is another 10 (or an implosion's another 1)
+  keeps rolling. Chain dice don't change the total; a card pays out by the table: Opportunities,
+  +d6 damage and an automatic Critical Injury on attacks, Complications, malfunctions.
+- **Crits feed the Plot Die**: the GM gets Opportunity / Complication buttons under any roll that
+  exploded or imploded without chaining.
+- **Tarot Criticals**: three or more 6s on a damage roll offer the GM a card from the 22 Major
+  Arcana instead of the normal Critical Injury. One card a session (the Plot Die's New session);
+  the deck goes round once before it's shuffled. The card's injuries and conditions apply to the
+  target in one click (Fated, Winded, No Pain and Chrome Shutdown are new conditions for it).
+- **Flash of Luck** (in the Plot Die window): a player describes something they already did and
+  picks Simple, Unlikely or Improbable (2/4/8 LUCK); the GM approves or vetoes. One a Beat, three
+  a Mission; the GM's New beat / New mission reset them.
+- **The Awareness Ladder** (GM, on the carousel): the encounter's enemies' awareness from Unaware
+  to Spotted, with the Stealth DV to beat (10 or 11 + enemies, sleepers count half). A failed
+  Stealth roll steps it up, something obvious jumps to Alert, and a fight that starts puts them at
+  Alert.
+
 ## Combat Awareness
 
 A Solo's Role Ability, from the Solo's carousel card (the crosshair; yellow, or pink once this
@@ -252,7 +285,7 @@ with their source, situational ones as toggles.
 | Wound States (p.186) | Lightly / Seriously / Mortally Wounded (shown automatically; CPR applies their penalties itself), Dead, Unconscious, Stabilized |
 | Critical Injuries (p.187-188) | All 22. Placing one gives the actor **CPR's own Critical Injury item** from the system compendium (its effect carries the penalty and the Death Save increase); a Critical Injury rolled or dropped onto a sheet shows on the token. **2070**: Broken Leg also costs -2 Evasion, per leg (both: -4) |
 | Combat (p.168-185, p.345-347) | Prone (**2070**: -4 Evasion vs melee and Grapples, as roll-dialog toggles), Grappled, Grappling, Iron Grip, Choked, Human Shield, In Cover, Hidden, **Into the Wall** (2070: Spinal Injury for one Round), Holding Action, Suppressed, Netrunning, Blinded, Deafened, Flashbanged, Teargassed, Knocked Out (Sleep), EMP'd |
-| Hazards (p.180-181) | On Fire (Mild/Strong/Deadly), Drowning, Asphyxiating, Electrocuted, Radiation (Low/High), Falling, Exposure, Acid |
+| Hazards (p.180-181) | On Fire (Mild/Strong/Deadly; **2070**: a fire that wouldn't raise the stage pushes it up one), Drowning, Asphyxiating, Electrocuted, Radiation (Low/High), Falling, Exposure, Acid |
 | Situational (p.129) | Exhausted, Fatigued / Slept Badly, Extreme Stress, Drunk or Sedated, In Smoke; the Plot Die's one-Check Bonus, Aided and Hindered |
 | Quickhacks (2070 ch.10) | Comms Jam (no holocalls), Vitals Spoof (the Biomon Link shows calm vitals; the GM sees SPOOFED), PopUp-geddon, Impair Movement, Slow (MOVE -1d6, rolled), Short Circuit, Cyberware Malfunction, Reboot Optics, Cripple Movement, Weapon Glitch, Limb Seize, Speedware Crash, Sonic Shock (Damaged Ear), Frame Lock, Q-KRASH, System Reset (Unconscious and Prone), Puppet, Cyberpsychosis. Each runs its 3 or 20 Rounds. Overheat is On Fire (Strong) |
 | Drugs (p.150, p.227-229) | Antibiotics, Rapidetox, Speedheal, Stim, Surge, Black Lace, Blue Glass, Boost, Smash, Synthcoke and their addictions |
@@ -278,6 +311,9 @@ What they do on their own:
   penalty back to base.
 - **Immunity**: Anti-Dazzle stops flashbangs.
 - **Dead** marks the combatant defeated (and Foundry's "defeated" toggle sets Dead).
+- **2070 rulings**: Mortally Wounded is also -6 MOVE; a hit wakes the Unconscious (and ends a
+  System Reset), unless drugged asleep or choked; a flashbang is a Damaged Eye and a Damaged Ear
+  for a minute.
 
 Every effect created on an actor with changes but without Cyberpunk RED's bookkeeping flags
 (from any module or macro) gets them, so the character sheet keeps opening.

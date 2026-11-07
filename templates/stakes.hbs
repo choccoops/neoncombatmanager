@@ -36,6 +36,22 @@
   <p class="ncm-empty">{{localize "NEONCOMBAT.Stakes.NoOne"}}</p>
   {{/if}}
 
+  {{#if flash}}
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Flash.Kicker"}} <small>{{localize "NEONCOMBAT.Flash.Limits" beat=flash.used.beat mission=flash.used.mission maxBeat=flash.limits.beat maxMission=flash.limits.mission}}</small></h4>
+  <textarea name="flashText" rows="2" placeholder="{{localize 'NEONCOMBAT.Flash.Placeholder'}}"></textarea>
+  <div class="ncm-stakes-actions ncm-flash-types">
+    {{#each flash.types}}<button type="button" data-action="flashLuck" data-type="{{id}}" {{#unless ok}}disabled{{/unless}} data-tooltip="{{#if why}}{{why}}{{else}}{{hint}}{{/if}}"><b>{{label}}</b> <small>{{luck}} LUCK · ≤{{spend}}eb</small></button>{{/each}}
+  </div>
+  {{#if gm}}<div class="ncm-stakes-actions">
+    <button type="button" data-action="newBeat" data-tooltip="{{localize 'NEONCOMBAT.Flash.NewBeatHint'}}"><i class="fa-solid fa-forward"></i> {{localize "NEONCOMBAT.Flash.NewBeat"}}</button>
+    <button type="button" data-action="newMission" data-tooltip="{{localize 'NEONCOMBAT.Flash.NewMissionHint'}}"><i class="fa-solid fa-flag-checkered"></i> {{localize "NEONCOMBAT.Flash.NewMission"}}</button>
+  </div>{{/if}}
+  {{/if}}
+  {{#if tarot}}
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Tarot.Kicker"}} <small>{{localize "NEONCOMBAT.Tarot.Status" seen=tarot.seen total=tarot.total}}{{#if tarot.drawn}} · {{localize "NEONCOMBAT.Tarot.DrawnThisSession"}}{{/if}}</small></h4>
+  <div class="ncm-stakes-actions"><button type="button" data-action="drawTarot" data-tooltip="{{localize 'NEONCOMBAT.Tarot.DrawHint'}}"><i class="fa-solid fa-clone"></i> {{localize "NEONCOMBAT.Tarot.Draw"}}</button></div>
+  {{/if}}
+
   <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Stakes.TableTitle"}}</h4>
   <ol class="ncm-stakes-faces">
     {{#each faces}}<li class="kind-{{kind}}"><b>{{face}}</b><span>{{label}}</span></li>{{/each}}

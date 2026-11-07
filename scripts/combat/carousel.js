@@ -8,6 +8,7 @@ import { CombatTime } from "./time.js";
 import { Sources } from "../environment/sources.js";
 import { WEATHER_CONDITION } from "../environment/weather-data.js";
 import { Awareness } from "../awareness/awareness.js";
+import { Ladder } from "../roller/ladder.js";
 import { debounce, formatElapsed, L } from "../util.js";
 
 const WOUND_TONE = { notWounded: "ok", lightlyWounded: "light", seriouslyWounded: "serious", mortallyWounded: "mortal" };
@@ -185,7 +186,9 @@ export const Carousel = {
       cards,
       myTurn,
       weather,
-      count: combat.combatants.size
+      count: combat.combatants.size,
+      // The GM's Awareness Ladder for this encounter's enemies.
+      ladder: gm && Settings.get("awarenessLadder") ? Ladder.context(combat) : null
     };
   },
 
@@ -316,6 +319,12 @@ export const Carousel = {
         const { Stakes } = await import("../stakes/stakes.js");
         return Stakes.open(cb?.actor ?? null);
       }
+      case "ladderUp":
+        return Ladder.step(combat, 1);
+      case "ladderDown":
+        return Ladder.step(combat, -1);
+      case "ladderObvious":
+        return Ladder.obvious(combat);
       case "hub": {
         const { Hub } = await import("../hub/hub.js");
         return Hub.open();

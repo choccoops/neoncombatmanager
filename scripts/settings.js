@@ -5,8 +5,9 @@ const K = (key) => `${LANG}.Settings.${key}`;
 /** World settings grouped into submenus; everything else shows in Foundry's own list. */
 export const MENUS = {
   combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement"],
-  conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCriticals", "critItems", "cltShim"],
+  conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim"],
   comms: ["linkNeedsImplant", "linkImplants", "callNeedsAgent", "ringSeconds", "missedCallMessages", "callLogs", "busySignal"],
+  rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones"],
   environment: [
     "weatherSource", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
@@ -63,6 +64,18 @@ const DEFS = [
   ["mirrorWounds", "world", Boolean, true, {}],
   ["mirrorCriticals", "world", Boolean, true, {}],
   ["critItems", "world", Boolean, true, {}],
+  ["fireEscalates", "world", Boolean, true, {}],
+  // The 2070 roller and table rules
+  ["rollerHooks", "world", Boolean, true, { requiresReload: true }],
+  ["rideEdge", "world", Boolean, true, {}],
+  ["chainReactions", "world", Boolean, true, {}],
+  ["tarotCriticals", "world", Boolean, true, {}],
+  ["tarotDeck", "world", Object, {}, { config: false }],
+  ["flashOfLuck", "world", Boolean, true, {}],
+  ["flashBeat", "world", Number, 0, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.stakesChanged`) }],
+  ["flashMission", "world", Number, 0, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.stakesChanged`) }],
+  ["awarenessLadder", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
+  ["wakeOnDamage", "world", Boolean, true, {}],
   ["cltShim", "world", Boolean, true, { requiresReload: true }],
   ["conditionOverrides", "world", Object, {}, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.conditionsChanged`) }],
   ["customConditions", "world", Array, [], { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.conditionsChanged`) }],
@@ -112,7 +125,7 @@ export const Settings = {
           name: K(`Menu.${id}.name`),
           label: K(`Menu.${id}.label`),
           hint: K(`Menu.${id}.hint`),
-          icon: { combat: "fa-solid fa-hourglass-half", conditions: "fa-solid fa-heart-pulse", comms: "fa-solid fa-phone-volume", hub: "fa-solid fa-map-location-dot", environment: "fa-solid fa-cloud-moon-rain" }[id],
+          icon: { combat: "fa-solid fa-hourglass-half", conditions: "fa-solid fa-heart-pulse", rules: "fa-solid fa-dice-d10", comms: "fa-solid fa-phone-volume", hub: "fa-solid fa-map-location-dot", environment: "fa-solid fa-cloud-moon-rain" }[id],
           type: menuClass.for(id, keys),
           restricted: true
         });

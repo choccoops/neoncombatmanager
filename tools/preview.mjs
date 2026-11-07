@@ -4,7 +4,7 @@
 // (CPR_SOURCE=/path/to/fvtt-cyberpunk-red-core/src).
 import { mkdir, writeFile, readFile, cp, access } from "node:fs/promises";
 import path from "node:path";
-import { makeActor, makeCombat, registerSettings, root } from "../tests/helpers/foundry.mjs";
+import { makeActor, makeCombat, registerSettings, root, chat } from "../tests/helpers/foundry.mjs";
 
 const Settings = await registerSettings();
 const { Registry } = await import("../scripts/conditions/registry.js");
@@ -105,6 +105,27 @@ const plot2 = await plotCard("opportunity", 6, "Opportunity for Velvet", "Pick o
 const caCard = await T("chat-card", { kicker: "Action", title: "Velvet reassigns Combat Awareness", img: vee.img, tone: "pink",
   body: `<ul class="ncm-ca-list">${Awareness.lines({ precisionAttack: 3, spotWeakness: 1 }).map((l) => `<li><b>${l.name}</b> <span>${l.points}</span> <em>${l.effect}</em></li>`).join("")}</ul>` });
 
+// The 2070 roller: the bar in CPR's roll dialog, the edge buttons under a roll card, a chain and a Tarot card.
+const { Roller } = await import("../scripts/roller/roller.js");
+const { Tarot } = await import("../scripts/roller/tarot.js");
+const { ARCANA } = await import("../scripts/roller/rules.js");
+const dialog = `<div class="app window-app dialog" style="width:380px;background:#e6e1d2;color:#191813;font-size:13px">
+  <header class="window-header" style="background:#191813;color:#eee;padding:4px 8px">Persuasion</header>
+  <section class="window-content" style="padding:8px"><form class="dialog-sheet">
+    <div class="dialog-header">Rolling for Persuasion</div><hr>
+    <div class="neon-combat ncm-roll-bar">${Roller._barHtml(vee, { plot: { face: 2, kind: "complication", bonus: 4 }, stakesBonus: 4 })}</div>
+    <div class="dialog-grid"><ol class="dialog-list" style="list-style:none;padding:0">
+      <li class="dialog-item flexrow">STAT (COOL): <input value="6" style="width:40px"></li>
+      <li class="dialog-item flexrow">Skill (Persuasion): <input value="5" style="width:40px"></li>
+      <li class="dialog-item flexrow">Additional mods: <input value="" style="width:80px"></li>
+    </ol></div><button type="button">Roll</button></form></section></div>`;
+const rollcard = `<li class="chat-message message" style="width:300px"><div class="message-content"><div class="rollcard" style="padding:6px;border:1px solid #999">Library Search (1d10) · <b>27</b></div>
+  <div class="ncm-edge"><button type="button"><i class="fa-solid fa-rotate-right"></i> Second Chance (1 LUCK)</button><button type="button"><i class="fa-solid fa-star"></i> Crit: Opportunity</button></div></div></li>`;
+chat.length = 0;
+await Roller.chainCard({ kind: "attack", title: "Shoulder Arms", crit: 10, chain: { kind: "explode", links: 3, dice: [10, 4] }, actorId: vee.id });
+await Tarot.post(ARCANA.find((c) => c.id === "hanged"), "");
+const rollerCards = chat.map((m) => m.content).join("");
+
 const icons = Registry.all().map((c) => `<figure><img src="${c.img}" alt=""><figcaption>${c.name}</figcaption></figure>`).join("");
 const html = `<!doctype html><html><head><meta charset="utf-8"><title>Neon Combat Manager preview</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -153,6 +174,10 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
   <div class="neon-combat ncm-window ncm-stakes application win" style="width:520px"><header class="window-header">Plot Die</header><section class="window-content">${stakesWin}</section></div>
   <div class="neon-combat ncm-window ncm-awareness application win" style="width:440px"><header class="window-header">Combat Awareness</header><section class="window-content">${awareWin}</section></div>
   <div class="chat">${plot1}${plot2}${caCard}</div>
+</div>
+<div class="row">
+  ${dialog}
+  <div class="chat">${rollcard}${rollerCards}</div>
 </div>
 <div class="icons">${icons}</div>
 </body></html>`;

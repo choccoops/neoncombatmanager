@@ -1,0 +1,4 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Neon Combat Manager: Chrome Shutdown (The Fool). Sized like CPR's status icons. -->
+  <rect x="126" y="56" width="260" height="400" rx="22" fill="#14101f" stroke="#f9c80e" stroke-width="18"/><rect x="152" y="82" width="208" height="348" rx="12" fill="none" stroke="#ff3864" stroke-width="6" opacity=".7"/><circle cx="256" cy="230" r="70" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><path d="M256 160V230" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><path d="M196 330H316M216 370H296" fill="none" stroke="#ff3864" stroke-width="20" stroke-linecap="round"/>
+</svg>

@@ -16,6 +16,14 @@
     <span>{{weather.label}}</span>
   </button>
   {{/if}}
+  {{#if ladder}}
+  <div class="ncm-car-ladder lvl-{{ladder.level}}" data-tooltip="{{ladder.hint}}">
+    <button type="button" data-ncm="ladderDown" {{#if ladder.bottom}}disabled{{/if}} aria-label="−"><i class="fa-solid fa-caret-down"></i></button>
+    <span><small>{{localize "NEONCOMBAT.Ladder.Title"}}</small><b>{{ladder.label}}</b>{{#if ladder.dv}}<em>DV {{ladder.dv}}</em>{{/if}}</span>
+    <button type="button" data-ncm="ladderUp" {{#if ladder.top}}disabled{{/if}} data-tooltip="{{localize 'NEONCOMBAT.Ladder.Up'}}" aria-label="+"><i class="fa-solid fa-caret-up"></i></button>
+    <button type="button" data-ncm="ladderObvious" data-tooltip="{{localize 'NEONCOMBAT.Ladder.Obvious'}}"><i class="fa-solid fa-bullhorn"></i></button>
+  </div>
+  {{/if}}
   <div class="ncm-car-controls">
     {{#if gm}}
       {{#if started}}

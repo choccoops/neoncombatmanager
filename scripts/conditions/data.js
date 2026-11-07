@@ -34,7 +34,9 @@
  *   addiction   an addiction (Rapidetox doesn't purge it)
  *   secondary   { dv, adds }: when the drug wears off, a Resist Torture/Drugs Check against dv or gain `adds`
  *   hud         false to keep it out of the token HUD (added automatically instead)
- *   mirror      "wound": follows CPR's Wound State, which already applies its own penalties
+ *   mirror      "wound": follows CPR's Wound State, which applies its roll penalties itself
+ *   fire        a fire's stage (1 Mild, 2 Strong, 3 Deadly): "Already On Fire" pushes a repeat up a stage
+ *   wakeOnDamage  ends when the bearer takes damage (unless drugged asleep or choked out)
  *   consume     "check": gone once the bearer's next Cyberpunk RED roll card is posted (the Plot Die)
  *
  * A change's value may be a dice formula ("-1d6"): it is rolled when the condition is added.
@@ -59,9 +61,11 @@ export const CONDITIONS = [
   /* ------------------------------------------------------------------ */
   { id: "lightlyWounded", category: "wound", img: `${S}/wounded_lightly.svg`, page: 186, mirror: "wound", group: "wound", hud: false },
   { id: "seriouslyWounded", category: "wound", img: `${S}/wounded_seriously.svg`, page: 186, mirror: "wound", group: "wound", hud: false },
-  { id: "mortallyWounded", category: "wound", img: `${S}/wounded_mortally.svg`, page: 186, mirror: "wound", group: "wound", hud: false },
+  // CPR takes the -4 off rolls itself; the book's -6 MOVE (min 1) is ours.
+  { id: "mortallyWounded", category: "wound", img: `${S}/wounded_mortally.svg`, page: "186 · 2070", mirror: "wound", group: "wound", hud: false,
+    changes: [{ key: "system.stats.move.value", value: -6 }] },
   { id: "dead", category: "wound", img: "icons/svg/skull.svg", page: 188, overlay: true, defeated: true },
-  { id: "unconscious", category: "wound", img: `${S}/unconcious.svg`, page: 177, overlay: true },
+  { id: "unconscious", category: "wound", img: `${S}/unconcious.svg`, page: "177 · 2070", overlay: true, wakeOnDamage: true },
   { id: "stabilized", category: "wound", img: "icons/svg/regen.svg", page: 186, stabilize: true },
 
   /* ------------------------------------------------------------------ */
@@ -113,18 +117,28 @@ export const CONDITIONS = [
   { id: "netrunning", category: "combat", img: `${S}/netrunning.svg`, page: 197 },
   { id: "blind", category: "combat", img: `${S}/blinded.svg`, page: 130, sight: -4 },
   { id: "deaf", category: "combat", img: `${S}/deafened.svg`, page: 130, changes: [{ key: "bonuses.perceptionHearing", value: -4 }] },
-  { id: "flashbanged", category: "combat", img: `${A}/flashbang.svg`, page: 346, duration: 60, immune: { items: ["Anti-Dazzle"] },
-    changes: [{ key: "bonuses.ranged", value: -2 }, { key: "bonuses.perceptionSight", value: -2 }, { key: "bonuses.perceptionHearing", value: -2 }], moveLock: true },
+  // 2070: a flashbang is a Damaged Eye and a Damaged Ear for a minute (no Bonus Damage).
+  { id: "flashbanged", category: "combat", img: `${A}/flashbang.svg`, page: "346 · 2070", duration: 60, immune: { items: ["Anti-Dazzle"] }, also: ["damagedEye", "damagedEar"] },
   { id: "teargassed", category: "combat", img: `${A}/teargas.svg`, page: 347, duration: 60, changes: [{ key: "bonuses.ranged", value: -2 }, { key: "bonuses.perceptionSight", value: -2 }] },
   { id: "sleep", category: "combat", img: `${S}/sedative.svg`, page: 346, duration: 60, overlay: true, also: ["prone"] },
   { id: "emp", category: "combat", img: `${S}/emp.svg`, page: 345, duration: 60 },
 
   /* ------------------------------------------------------------------ */
+  /*  Tarot Criticals (2070, Night City Tarot DLC): what the cards leave */
+  /* ------------------------------------------------------------------ */
+  { id: "tarotWinded", category: "combat", img: `${A}/tarot-justice.svg`, page: "2070", duration: 60,
+    changes: [{ key: "bonuses.evasion", value: -5, situational: true, onByDefault: true }] },
+  { id: "tarotNoPain", category: "combat", img: `${A}/tarot-tower.svg`, page: "2070", duration: HOUR,
+    changes: [{ key: "bonuses.hasPainSuppression", value: 1 }] },
+  { id: "tarotChromeShutdown", category: "combat", img: `${A}/tarot-fool.svg`, page: "2070", duration: HOUR },
+  { id: "tarotFated", category: "combat", img: `${A}/tarot-empress.svg`, page: "2070" },
+
+  /* ------------------------------------------------------------------ */
   /*  Other ways to get hurt (p.180-181)                                */
   /* ------------------------------------------------------------------ */
-  { id: "onFireMild", category: "hazard", img: `${S}/on_fire_mild.svg`, page: 180, group: "fire", turnEnd: { damage: 2 } },
-  { id: "onFireStrong", category: "hazard", img: `${S}/on_fire_strong.svg`, page: 180, group: "fire", turnEnd: { damage: 4 } },
-  { id: "onFireDeadly", category: "hazard", img: `${S}/on_fire_deadly.svg`, page: 180, group: "fire", turnEnd: { damage: 6 } },
+  { id: "onFireMild", category: "hazard", img: `${S}/on_fire_mild.svg`, page: 180, group: "fire", fire: 1, turnEnd: { damage: 2 } },
+  { id: "onFireStrong", category: "hazard", img: `${S}/on_fire_strong.svg`, page: 180, group: "fire", fire: 2, turnEnd: { damage: 4 } },
+  { id: "onFireDeadly", category: "hazard", img: `${S}/on_fire_deadly.svg`, page: 180, group: "fire", fire: 3, turnEnd: { damage: 6 } },
   { id: "drowning", category: "hazard", img: `${S}/drowning.svg`, page: 180, turnStart: { damage: "@body" } },
   { id: "asphyxiating", category: "hazard", img: `${S}/asphyxiating.svg`, page: 180, turnStart: { damage: "@body" } },
   { id: "electrocuted", category: "hazard", img: `${A}/electrocuted.svg`, page: 180, turnEnd: { damage: "6d6", armor: true } },
@@ -174,7 +188,7 @@ export const CONDITIONS = [
   { id: "qhFrameLock", category: "quickhack", img: `${A}/qh-frame-lock.svg`, page: "2070", duration: R3,
     changes: [{ key: "bonuses.allActions", value: -4, situational: true, onByDefault: true }] },
   { id: "qhQKrash", category: "quickhack", img: `${A}/qh-qkrash.svg`, page: "2070", duration: R20 },
-  { id: "qhSystemReset", category: "quickhack", img: `${A}/qh-system-reset.svg`, page: "2070", duration: R20, also: ["unconscious", "prone"] },
+  { id: "qhSystemReset", category: "quickhack", img: `${A}/qh-system-reset.svg`, page: "2070", duration: R20, also: ["unconscious", "prone"], wakeOnDamage: true },
   { id: "qhPuppet", category: "quickhack", img: `${A}/qh-puppet.svg`, page: "2070", duration: 3, remindOnce: true },
   { id: "qhCyberpsychosis", category: "quickhack", img: `${A}/qh-cyberpsychosis.svg`, page: "2070", duration: R3, remindOnce: true },
 
