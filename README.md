@@ -95,6 +95,9 @@ their own character. Each group opens on hover, or click a group to keep it open
   - **Status**: Prone, In Cover, Hidden, Holding Action, Grappled and Suppressed, toggled on and
     off
   - **Utility**: the Plot Die, Holocall, Biomon Link, Night City Map and the sheet
+  - **Macros**: any macro the player can run, for this character and token. Drop one on the HUD
+    (from the hotbar, the Macros sidebar or a compendium, such as this module's Holocall macro or
+    Neon At Home's window macros) to add it, or pick them in Customize. Hidden until it has one.
 
   STATs and Gear (drugs) are there too, hidden until you show them.
 - **Everything rolls the way the sheet does**: Cyberpunk RED's roll dialog (Ctrl-click skips
@@ -204,9 +207,13 @@ Calls are [Night City Messenger](https://github.com/christinophrappuccino/night-
 and dead zones, payphones and the rest. This module gives it more ways in, and stays out of the
 call itself.
 
-- **Holocall** in the Actors directory's right-click menu and in the sheet header: the GM gets
-  *Holocall as* an NPC (that NPC's phone opens, at its Calls tab); a player's own character opens
-  their phone; anyone else is called.
+- **Holocall** in the Actors directory's right-click menu: the GM gets *Holocall as* an NPC (that
+  NPC's phone opens, at its Calls tab); a player's own character opens their phone; anyone else is
+  called. The sheet header can have it too (**Holocall button on character sheets** in the Comms
+  settings), off by default because sheet headers get crowded.
+- The **Holocall macro** (the *Neon Combat Manager: Macros* compendium) opens the phone of the
+  selected token's character, or your own. Drag it to the hotbar, or drop it on the Action HUD to
+  put it in its Macros group.
 - **Calling someone** dials their number in Night City Messenger, as the token you have selected
   (if it's yours), else your character. The GM with nothing selected calls as the messenger's
   operator. An NPC without a number of its own answers on the number of the directory contact
@@ -572,6 +579,18 @@ with an Infrared Nightvision Scope can untick it for that shot. **Low Light/Infr
 cybereyes** cancel it entirely (p.360). Conditions the GM places by hand win over the
 automatic ones.
 
+## Macros
+
+The *Neon Combat Manager: Macros* compendium (in the Neon Combat Manager folder) has one macro per
+window, for the hotbar, the Action HUD's Macros group, a Neon Hub page button or an active tile:
+
+- **Holocall**: the phone of the selected token's character (or your own), at its Calls tab
+- **Biomon Link**, **Night City Map**
+- **Plot Die**: Raising the Stakes for the selected token's character (or your own)
+- **Condition Lab** (GM)
+
+Drop one on the Action HUD to add it to the HUD's Macros group.
+
 ## For other modules
 
 Everything is in `game.modules.get("cpr-neon-combat-manager").api` (and the conditions also at
@@ -584,6 +603,7 @@ See [docs/API.md](docs/API.md).
 npm ci
 npm test          # rules, conditions engine, CLT import, Turn automation, templates
 npm run check     # scripts parse, JSON and localization complete, icons exist, v13 guard
+npm run build:packs  # the Macros compendium: writes packs/_source/macros, compiles packs/macros
 npm run preview   # renders the carousel, Biomon, Lab and cards to preview/index.html,
                   # and the live Night City Map to preview/hub.html (serve the repo, open /preview/hub.html)
 ```

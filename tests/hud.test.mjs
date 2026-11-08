@@ -37,7 +37,7 @@ function solo() {
 
 test("the template is the combat basics; a layout shows its visible groups, picks in order, empty groups left out", () => {
   const t = Lay.template();
-  assert.deepEqual(t.groups.filter((g) => !g.hidden).map((g) => g.id), ["turn", "weapons", "skills", "role", "net", "status", "utility"]);
+  assert.deepEqual(t.groups.filter((g) => !g.hidden).map((g) => g.id), ["turn", "weapons", "skills", "role", "net", "status", "utility", "macros"]);
   const cat = {
     turn: [{ key: "turn:initiative" }],
     weapons: [{ key: "weapon:a" }, { key: "weapon:b" }],
@@ -219,6 +219,50 @@ test("each player keeps their own layout, and can give one character a layout of
   assert.equal(Hud.layoutFor(vee).groups[0].id, "turn");
   assert.equal(testUsers.gm.flags["cpr-neon-combat-manager"], undefined, "the GM's layout is untouched");
   asGM(true);
+});
+
+test("macros: the ones the player can run, run for the character; one dropped on the HUD joins its Macros group", async () => {
+  asGM(false);
+  const vee = solo();
+  const ran = [];
+  const mk = (id, name, canExecute = true, pack = null) => ({
+    id, name, img: "icons/svg/dice-target.svg", canExecute, pack, uuid: pack ? `Compendium.${pack}.Macro.${id}` : `Macro.${id}`,
+    execute: async (scope) => ran.push([name, scope.actor?.name, scope.token ?? null]),
+    toObject: () => ({ _id: id, name, type: "script", command: "" })
+  });
+  const world = [mk("m1", "Neon At Home: Spend IP"), mk("m2", "GM Only", false)];
+  const fromPack = mk("p1", "Neon At Home: Biomonitor", true, "cpr-neon-at-home.macros");
+  const prior = { macros: game.macros, fromUuid: globalThis.fromUuid, gdc: globalThis.getDocumentClass };
+  game.macros = Object.assign(world, { get: (id) => world.find((m) => m.id === id) });
+  globalThis.fromUuid = async (uuid) => [...world, fromPack].find((m) => m.uuid === uuid) ?? null;
+  globalThis.getDocumentClass = () => ({ create: async (data) => {
+    const m = mk(`w${world.length}`, data.name);
+    m.author = { id: game.user.id };
+    world.push(m);
+    return m;
+  } });
+  try {
+    const cat = catalog(vee);
+    assert.deepEqual(cat.macros.map((e) => e.label), ["Neon At Home: Spend IP"], "only what the player can run");
+    assert.equal(cat.macros[0].key, "macro:neonathomespendip");
+    assert.equal(Lay.resolve(Hud.layoutFor(vee), cat).some((g) => g.id === "macros"), false, "nothing picked: no group");
+    await Run.action(vee, "macro:m1", { token: "tok" });
+    assert.deepEqual(ran.at(-1), ["Neon At Home: Spend IP", "Velvet", "tok"]);
+    assert.equal(await Run.action(vee, "macro:m2"), null, "one they can't run doesn't");
+    Hud.current = { actor: vee, token: null };
+    await Hud.dropMacro({ type: "Macro", uuid: "Macro.m1" });
+    await Hud.dropMacro({ type: "Macro", uuid: "Compendium.cpr-neon-at-home.macros.Macro.p1" });
+    assert.ok(world.some((m) => m.name === "Neon At Home: Biomonitor"), "imported from the compendium");
+    const shown = Lay.resolve(Hud.layoutFor(vee), catalog(vee)).find((g) => g.id === "macros");
+    assert.deepEqual(shown.entries.map((e) => e.label), ["Neon At Home: Spend IP", "Neon At Home: Biomonitor"]);
+  } finally {
+    Hud.current = null;
+    await Hud.saveLayout(Lay.template());
+    game.macros = prior.macros;
+    globalThis.fromUuid = prior.fromUuid;
+    globalThis.getDocumentClass = prior.gdc;
+    asGM(true);
+  }
 });
 
 test("the Action HUD and its editor render with every string", async () => {

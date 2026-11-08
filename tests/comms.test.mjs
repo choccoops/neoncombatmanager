@@ -174,7 +174,10 @@ test("Holocall buttons: the GM opens an NPC's phone, a player their own, and any
   assert.equal(ncm.placed[0][0], "555-0142");
   asGM(false);
   assert.equal(Comms.holoFor(hazel).label, "Holocall", "a player's own character: their phone");
+  assert.equal(Comms.sheetButton(hazel), null, "no sheet-header button unless the GM turns it on");
+  await game.settings.set("cpr-neon-combat-manager", "holocallSheetButton", true);
   assert.equal(Comms.sheetButton(hazel).label, "Holocall");
+  await game.settings.set("cpr-neon-combat-manager", "holocallSheetButton", false);
   assert.equal(Comms.holoFor(makeActor({ name: "Car", type: "vehicle" })), null);
   const options = [];
   Comms.actorMenu(options);

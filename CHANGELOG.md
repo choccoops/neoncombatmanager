@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.15.0
+
+- **Macros in the Action HUD.** A new **Macros** group runs any macro the player can use, for the
+  HUD's character and token (the script's `actor` and `token`).
+  - Drop a macro on the HUD (from the hotbar, the Macros sidebar or a compendium) to add it.
+    A compendium macro is imported first, as the hotbar does.
+  - Or pick macros in **Customize** like any other action. A group of your own can mix them in.
+  - The group stays out of sight until it has a macro. Layouts from before it have it hidden:
+    show it in Customize.
+  - Made for Neon At Home's window macros (Home, Biomonitor, Perk Tree, Spend IP...), but any
+    macro works.
+- **A Macros compendium.** *Neon Combat Manager: Macros*, in its own Neon Combat Manager folder,
+  has one macro per window: **Holocall**, **Biomon Link**, **Night City Map**, **Plot Die** and
+  **Condition Lab** (GM).
+  - Holocall and the Plot Die open for the selected token's character, or your own.
+  - Tip: drop the Holocall macro on the Action HUD to keep it in the Macros group.
+- **The Holocall sheet button is now off by default.** Character sheet headers got crowded (the
+  sheet's Close button was pushed off). Turn it back on with **Holocall button on character
+  sheets** in the Comms settings.
+  - Holocall stays in the Actors directory's right-click menu, the Action HUD's Utility group, the
+    Biomon Link and the Night City Map.
+
 ## 1.14.0
 
 **Weather you can see.**

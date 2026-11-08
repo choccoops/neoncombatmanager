@@ -26,6 +26,12 @@ export function combatantOf(actor, token = null, combat = game.combat) {
   return (token && list.find((c) => c.tokenId === token.id)) ?? list.find((c) => c.actorId === actor.id || c.actor?.id === actor.id) ?? null;
 }
 
+/** Macros the user can run, as HUD entries: keyed by name (layouts carry over), run by id. */
+export function macrosFor(user = game.user) {
+  const list = [...(game.macros ?? [])].filter((m) => m && (m.canExecute ?? m.testUserPermission?.(user, "LIMITED")));
+  return list.sort((a, b) => a.name.localeCompare(b.name)).map((m) => ({ key: `macro:${slug(m.name)}`, run: `macro:${m.id}`, label: m.name, img: m.img }));
+}
+
 /** Equipped weapons, cyberweapons that are installed, and weapon upgrades, as CPR's Fight tab lists them. */
 export function weaponsOf(actor) {
   try {
@@ -47,7 +53,7 @@ export function weaponsOf(actor) {
  * @param {object} [ctx] - { token, combat }
  */
 export function catalog(actor, { token = null, combat = game.combat } = {}) {
-  const out = Object.fromEntries(["turn", "weapons", "skills", "role", "net", "status", "utility", "stats", "gear"].map((s) => [s, []]));
+  const out = Object.fromEntries(["turn", "weapons", "skills", "role", "net", "status", "utility", "macros", "stats", "gear"].map((s) => [s, []]));
   if (!actor) return out;
   const items = [...(actor.items ?? [])];
 
@@ -117,6 +123,9 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   out.utility.push({ key: "util:biomon", label: L(`${LANG}.Biomon.Title`), icon: "fa-solid fa-heart-pulse" });
   if (Hub.playersMayOpen()) out.utility.push({ key: "util:map", label: L(`${LANG}.Hub.Title`), icon: "fa-solid fa-map-location-dot" });
   out.utility.push({ key: "util:sheet", label: L(`${LANG}.Hud.Sheet`), icon: "fa-solid fa-id-card" });
+
+  // Macros: every macro the user can run (Neon At Home's windows, a GM's handouts...), by name.
+  out.macros.push(...macrosFor());
 
   // STATs.
   for (const s of STATS) {

@@ -75,6 +75,12 @@ export const Run = {
         return Conditions.toggle(id, actor);
       case "util":
         return this.utility(actor, id);
+      case "macro": {
+        // A macro runs for this character and token (its actor and token in the script).
+        const macro = game.macros?.get(id);
+        if (!macro?.canExecute) return null;
+        return macro.execute({ actor, token });
+      }
       default:
         return null;
     }

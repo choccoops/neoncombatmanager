@@ -4,8 +4,8 @@ import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { catalog } from "./catalog.js";
 import { Run } from "./run.js";
-import { normalize, resolve, TEMPLATE } from "./layout.js";
-import { debounce, L } from "../util.js";
+import { normalize, resolve, TEMPLATE, addPick, setGroup } from "./layout.js";
+import { debounce, L, slug } from "../util.js";
 
 /** Each built-in group's icon; a player's own groups carry theirs. */
 export const GROUP_ICONS = {
@@ -16,6 +16,7 @@ export const GROUP_ICONS = {
   net: "fa-solid fa-network-wired",
   status: "fa-solid fa-person-falling",
   utility: "fa-solid fa-toolbox",
+  macros: "fa-solid fa-terminal",
   stats: "fa-solid fa-chart-simple",
   gear: "fa-solid fa-capsules"
 };
@@ -50,6 +51,7 @@ export const Hud = {
       });
     }
     Hooks.on("updateUser", (user) => user?.id === game.user?.id && soon());
+    for (const h of ["createMacro", "updateMacro", "deleteMacro"]) Hooks.on(h, () => soon());
     game.keybindings.register(MODULE_ID, "toggleActionHud", {
       name: `${LANG}.Hud.Title`,
       hint: `${LANG}.Hud.KeyHint`,
@@ -185,6 +187,25 @@ export const Hud = {
         this.render();
       }
     });
+    // A macro dropped on the HUD (from the hotbar, the sidebar or a compendium) joins its Macros group.
+    el.addEventListener("dragover", (ev) => {
+      ev.preventDefault();
+      el.classList.add("is-drop");
+    });
+    el.addEventListener("dragleave", (ev) => {
+      if (!el.contains(ev.relatedTarget)) el.classList.remove("is-drop");
+    });
+    el.addEventListener("drop", (ev) => {
+      ev.preventDefault();
+      el.classList.remove("is-drop");
+      let data = null;
+      try {
+        data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+      } catch {
+        return;
+      }
+      if (data?.type === "Macro") this.dropMacro(data).catch((err) => ui.notifications.error(err.message));
+    });
     el.addEventListener("pointerdown", (ev) => {
       if (ev.button === 0 && ev.target.closest("[data-ah=drag]")) this._drag(ev);
     });
@@ -223,6 +244,32 @@ export const Hud = {
       default:
         return null;
     }
+  },
+
+  /**
+   * Add a dropped macro to the Macros group of the layout in use (this character's own, else the
+   * player's), shown. One from a compendium is imported first, as the hotbar does.
+   */
+  async dropMacro(data) {
+    let macro = await fromUuid(data.uuid);
+    if (!macro) return null;
+    if (macro.pack) {
+      const Cls = getDocumentClass("Macro");
+      const existing = game.macros.find((m) => m.name === macro.name && m.author?.id === game.user.id);
+      macro = existing ?? await Cls.create({ ...macro.toObject(), _id: undefined, folder: null, ownership: { default: 0, [game.user.id]: 3 } });
+    }
+    if (!macro?.canExecute) {
+      ui.notifications.warn(L(`${LANG}.Hud.MacroNoRun`, { name: macro?.name ?? "" }));
+      return null;
+    }
+    const actor = this.current?.actor ?? null;
+    const own = actor && this.hasOwn(actor);
+    let layout = this.layoutFor(own ? actor : null);
+    layout = addPick(layout, "macros", `macro:${slug(macro.name)}`);
+    layout = setGroup(layout, "macros", { hidden: false });
+    await this.saveLayout(layout, own ? actor : null);
+    ui.notifications.info(L(`${LANG}.Hud.MacroAdded`, { name: macro.name }));
+    return this.render();
   },
 
   /** Drag by the grip; where it lands is kept (per browser). */

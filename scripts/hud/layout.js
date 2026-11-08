@@ -11,7 +11,7 @@
  * Keys are names, not ids, so a layout carries over to a player's other characters.
  */
 
-export const SOURCES = ["turn", "weapons", "skills", "role", "net", "status", "utility", "stats", "gear"];
+export const SOURCES = ["turn", "weapons", "skills", "role", "net", "status", "utility", "macros", "stats", "gear"];
 
 /** The template every player starts from: what a character reaches for in a fight. */
 export const TEMPLATE = {
@@ -24,6 +24,8 @@ export const TEMPLATE = {
     { id: "net", source: "net", picks: null },
     { id: "status", source: "status", picks: ["cond:prone", "cond:cover", "cond:hidden", "cond:readiedAction", "cond:grappled", "cond:suppressed"] },
     { id: "utility", source: "utility", picks: null },
+    // macros the player picks (or drops on the HUD); empty, it doesn't show
+    { id: "macros", source: "macros", picks: [] },
     { id: "stats", source: "stats", picks: null, hidden: true },
     { id: "gear", source: "gear", picks: null, hidden: true }
   ]
