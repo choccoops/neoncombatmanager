@@ -588,7 +588,7 @@ on the scene. A damage roll for an area draws no Tarot card.
 | | |
 | --- | --- |
 | Power | a Critical Injury's Bonus Damage +5 (on the damage card). **Ricochet**: a switch on the HUD's weapon (and the *Weapon Rebuilds* macro) for the next shot: −4, can't be dodged (an Aimed Shot ricochet only takes the −8); a Ricochet Compensator makes it −3. A ricochet whines. |
-| Smart | +1 to ranged attacks with a Neuroport, Personal Link or Subdermal Grip. With Improved Smart Ammunition, a miss by 5 or less gets an *Improved Smart retry* button: 14 + 1d10 against the same DV. |
+| Smart | +1 to ranged attacks with a Neuroport, Personal Link or Subdermal Grip (Neon Hub's Smart guns have the +1 in their attack modifier already, so without a link it comes off). With Improved Smart Ammunition, a miss by 5 or less gets an *Improved Smart retry* button: 14 + 1d10 against the same DV. |
 | Tech | **Charge**: a switch (it's the Move Action) that holds 20 Rounds or until fired, crackling on the token. The next non-explosive attack is ROF1 through Thin cover (noted on its card) and its damage ignores half the target's SP; a charged slug knocks the target Prone. |
 
 **Rebuilds that are always on** apply on every attack: Neon At Home registers the Melee Rebuilds

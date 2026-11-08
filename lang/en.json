@@ -2023,7 +2023,8 @@
       },
       "Mod": {
         "smart": "Smart weapon",
-        "ricochet": "Ricochet"
+        "ricochet": "Ricochet",
+        "noLink": "Smart weapon without a link"
       },
       "Ricochet": "Ricochet",
       "Charge": "Charge",

@@ -7,7 +7,7 @@ import { makeActor, registerSettings, settle, root, asGM, missingKeys, chat, tes
 
 const M = "cpr-neon-combat-manager";
 const Settings = await registerSettings();
-const { classify, flavorOf, areaOf, profileKeys, autofireTable, LABEL_PREFIX } = await import("../scripts/arsenal/kinds.js");
+const { classify, flavorOf, areaOf, profileKeys, autofireTable, smartBaked, LABEL_PREFIX } = await import("../scripts/arsenal/kinds.js");
 const { ROWS, rowLabel, buildMenu, entryFor, mergeSection, isOurs, soundPlan, soundFiles, SOUNDS, AUTOREC_VERSION } = await import("../scripts/arsenal/profile.js");
 const { templateData, contains, tokenInside, centerOf, blownBack, blowBackMetres, ammoEffect } = await import("../scripts/arsenal/area.js");
 const { dvFromResults, dvLines, Dv } = await import("../scripts/arsenal/dv.js");
@@ -307,6 +307,12 @@ test("attack modifiers: Smart +1 with a link, a ricochet -4 (-3 compensated, non
   const smart = traitsOf("smart");
   assert.deepEqual(attackMods(smart, { linked: true }).map((m) => m.value), [1]);
   assert.deepEqual(attackMods(smart, { linked: false }), [], "no Neuroport, no +1");
+  // Neon Hub's Smart guns have the +1 in their attack modifier: without a link it comes off.
+  assert.deepEqual(attackMods(smart, { linked: true, baked: true }), []);
+  assert.deepEqual(attackMods(smart, { linked: false, baked: true }).map((m) => m.value), [-1]);
+  assert.ok(smartBaked(weapon("SMG (Smart)", {}, { "cpr-neon-hub": { weaponType2070: "smart" } })));
+  assert.ok(smartBaked(weapon("Old gun"), [{ name: "Smart Rebuild", attack: 1 }]));
+  assert.ok(!smartBaked(weapon("Old gun"), [{ name: "Smart Rebuild", attack: 0 }]));
   const power = traitsOf("power", [{ name: "Ricochet Compensator" }], [RebuildRegistry.register(COMPENSATOR)]);
   assert.deepEqual(attackMods(power, { ricochet: true }).map((m) => m.value), [-3]);
   assert.deepEqual(attackMods(traitsOf("power"), { ricochet: true }).map((m) => m.value), [-4]);
@@ -358,13 +364,17 @@ test("roll kinds without the roller bridge", () => {
   assert.ok(smartRetry(14, 17) && smartRetry(12, 17) && !smartRetry(11, 17) && !smartRetry(18, 17));
 });
 
-test("a Smart gun's attack gets +1 with a Neuroport", async () => {
+test("a Smart gun's attack gets +1 with a Neuroport; Neon Hub's, which has it built in, loses it without one", async () => {
   const { actor, item } = armed(weapon("Assault Rifle (Smart)", { weaponType: "assaultRifle" }), [{ name: "Neuroport", type: "cyberware", system: { isInstalled: true } }]);
   const roll = new CPRAttackRoll();
   await Arsenal.preRoll(item, roll);
   assert.deepEqual(roll.mods.map((m) => m.value), [1]);
   assert.equal(Arsenal.pending.tag.flavor, "smart");
   assert.equal(Arsenal.pending.tag.actorId, actor.id);
+  const hub = armed(weapon("Assault Rifle (Smart)", { weaponType: "assaultRifle", attackmod: 1 }, { "cpr-neon-hub": { weaponType2070: "smart" } }));
+  const r2 = new CPRAttackRoll();
+  await Arsenal.preRoll(hub.item, r2);
+  assert.deepEqual(r2.mods.map((m) => m.value), [-1], "no link: the built-in +1 comes off");
 });
 
 test("a ricochet is armed for one shot: -4, then off", async () => {

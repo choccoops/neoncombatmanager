@@ -69,6 +69,16 @@ export function flavorOf(weapon, upgrades = []) {
   return card ? card[1].toLowerCase() : null;
 }
 
+/**
+ * Does the weapon's own attack modifier already hold Smart's +1? Neon Hub's Smart guns have it in
+ * their attack modifier (an Excellent one +2), and so may a Smart Rebuild item's modifiers.
+ * @param {object[]} upgrades - { name, attack } (attack: the upgrade's attack modifier)
+ */
+export function smartBaked(weapon, upgrades = []) {
+  if (weapon?.flags?.[NEON_HUB]?.weaponType2070 === "smart") return true;
+  return upgrades.some((u) => /\bSmart Rebuild\b/i.test(String(u?.name ?? "")) && Number(u?.attack) >= 1);
+}
+
 /** A melee weapon's kind from its type and name. */
 function meleeKind(type, name) {
   if (MONOWIRE.test(name)) return "monowire";

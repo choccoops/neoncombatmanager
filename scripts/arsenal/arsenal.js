@@ -7,7 +7,7 @@ import { Cards } from "../combat/cards.js";
 import { Conditions } from "../conditions/engine.js";
 import { Core } from "../neonfx/core.js";
 import { Bridge } from "../roller/bridge.js";
-import { classify, profileKeys } from "./kinds.js";
+import { classify, profileKeys, smartBaked } from "./kinds.js";
 import { soundPlan } from "./profile.js";
 import { Rebuilds, RebuildRegistry, REBUILD_HOOK, traitsOf, attackMods, damageArgs } from "./rebuilds.js";
 import { AA, loadedAmmo } from "./aa.js";
@@ -115,7 +115,7 @@ export const Arsenal = {
       const aimed = mode === "aimed" || (Bridge.rolls?.CPRAimedAttackRoll && roll instanceof Bridge.rolls.CPRAimedAttackRoll);
       if (rebuilds) {
         const ricochet = !!state.ricochet && info.ranged && !info.explosive;
-        const mods = attackMods(traits, { ranged: info.ranged, aimed, ricochet, linked: Rebuilds.linked(actor) });
+        const mods = attackMods(traits, { ranged: info.ranged, aimed, ricochet, linked: Rebuilds.linked(actor), baked: smartBaked(item, upgrades) });
         if (mods.length && typeof roll.addMod === "function") roll.addMod(mods);
         tag.ricochet = ricochet;
         if (state.ricochet) await Rebuilds.setState(actor, item, { ricochet: false });

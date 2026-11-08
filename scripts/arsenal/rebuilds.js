@@ -15,7 +15,8 @@ import { L } from "../util.js";
  * A rebuild definition: { id, label, match (RegExp or source string, against the upgrade's name),
  *   tiers?: { Basic: traits, ... }, traits?, page? }
  * Traits:
- *   attackMod      - added to ranged attack rolls (Smart: +1, with a link to fire it)
+ *   attackMod      - added to ranged attack rolls (Smart: +1, with a link to fire it; a gun whose
+ *                    attack modifier already holds it loses it without the link)
  *   needsLink      - the attackMod needs a Neuroport, Personal Link or Subdermal Grip
  *   critBonus      - added to a Critical Injury's Bonus Damage (Power: +5)
  *   ignoreBelowSP  - the damage ignores armor below this SP (Mono-edge Blading)
@@ -110,11 +111,15 @@ export function traitsOf(flavor, upgrades = [], list = RebuildRegistry.all()) {
 /**
  * Modifiers for an attack roll: [{ id, value, source }].
  * @param {object} t - traitsOf
- * @param {object} ctx - { ranged, aimed, ricochet, linked }
+ * @param {object} ctx - { ranged, aimed, ricochet, linked, baked }; baked: the weapon's own
+ *   attack modifier already holds the bonus (Neon Hub's Smart guns), so without a link it comes off
  */
-export function attackMods(t, { ranged = true, aimed = false, ricochet = false, linked = true } = {}, localize = L) {
+export function attackMods(t, { ranged = true, aimed = false, ricochet = false, linked = true, baked = false } = {}, localize = L) {
   const out = [];
-  if (ranged && t.attackMod && (!t.needsLink || linked)) out.push({ id: `${MODULE_ID}-smart`, value: t.attackMod, source: localize(`${LANG}.Arsenal.Mod.smart`) });
+  if (ranged && t.attackMod) {
+    if (baked && t.needsLink && !linked) out.push({ id: `${MODULE_ID}-smart`, value: -t.attackMod, source: localize(`${LANG}.Arsenal.Mod.noLink`) });
+    else if (!baked && (!t.needsLink || linked)) out.push({ id: `${MODULE_ID}-smart`, value: t.attackMod, source: localize(`${LANG}.Arsenal.Mod.smart`) });
+  }
   if (ricochet && !aimed) out.push({ id: `${MODULE_ID}-ricochet`, value: RICOCHET_PENALTY + (t.ricochetBonus || 0), source: localize(`${LANG}.Arsenal.Mod.ricochet`) });
   return out;
 }
@@ -151,7 +156,7 @@ export const Rebuilds = {
       const ids = weapon?.system?.installedItems?.list ?? [];
       list = ids.map((id) => actor?.items?.get(id)).filter((i) => i?.type === "itemUpgrade");
     }
-    return list.map((u) => ({ name: u.name, tier: u.flags?.["cpr-neon-at-home"]?.rebuildTier ?? null }));
+    return list.map((u) => ({ name: u.name, tier: u.flags?.["cpr-neon-at-home"]?.rebuildTier ?? null, attack: Number(u.system?.modifiers?.attackmod?.value) || 0 }));
   },
 
   /** Does the character have what a Smart gun needs (2070: a Neuroport/Personal Link or Subdermal Grip)? */

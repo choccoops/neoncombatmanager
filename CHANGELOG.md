@@ -27,7 +27,7 @@
   Cyberpunk RED's own damage application, with Blown back (HOUSE RULE), and the ammo's effects:
   fire, gas and EMP saves for each target's player, grappling webs, CO2, smoke that stays.
 - **Weapon traits** (2070 Core Rules Ch07): Power's +5 crit Bonus Damage and a **Ricochet**
-  switch (−4, can't be dodged); Smart's +1 with a link and the Improved Smart retry; Tech's
+  switch (−4, can't be dodged); Smart's +1 needs a link (Neon Hub's Smart guns lose their built-in +1 without one) and the Improved Smart retry; Tech's
   **Charge** switch (Move Action; ROF1 through Thin cover, half SP; a charged slug knocks Prone).
   The switches are on the Action HUD's weapons and in the new **Weapon Rebuilds** macro.
 - **Rebuilds that are always on apply on every attack**: Neon At Home 1.13 registers the Melee
