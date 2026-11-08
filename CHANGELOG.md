@@ -29,6 +29,16 @@ character, with a +2 the GM can switch on in the roll, and a reminder of the LUC
 the Move Action or the Action. With "Extreme Cyberpsychosis follows Humanity" (on by default) it
 starts when Humanity drops below 0 and ends once Humanity is positive again.
 
+## 1.12.1
+
+- **Stage mode hides windows too.** Other modules' floating panels (SmallTime's clock, a Token
+  Action HUD) and any window open when stage mode starts now step out with the rest of the
+  interface.
+  - A panel without a title bar stays hidden even if it redraws itself.
+  - What stays visible: the stage director, the chat popout, dialogs, file pickers, and any window
+    you open during stage mode.
+  - Everything comes back when stage mode ends.
+
 ## 1.12.0
 
 - **"No signal" screen**: when a player's view lands in a Night City Messenger dead zone, a short

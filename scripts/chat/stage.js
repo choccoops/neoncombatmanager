@@ -56,6 +56,9 @@ export function castChange(cast, change) {
   }
 }
 
+/** Windows stage mode leaves alone: the director, the chat, dialogs, file pickers. */
+export const STAGE_KEEP = ".ncm-st-director, #chat-popout, .chat-popout, .dialog, dialog, .filepicker, .file-picker, #notifications";
+
 /** How long a line stays up, in ms: enough to read it. */
 export const readTime = (text) => Math.min(20000, Math.max(5000, String(text ?? "").length * 70));
 
@@ -333,6 +336,8 @@ export const Stage = {
    */
   renderFocus(on) {
     document.body.classList.toggle("ncm-stage-focus", on);
+    if (on !== !!this._focused) this.stowWindows(on);
+    this._focused = on;
     let veil = document.getElementById("ncm-stage-veil");
     if (!on) {
       document.body.classList.remove("ncm-stage-z");
@@ -353,6 +358,21 @@ export const Stage = {
     if (!Number.isFinite(z)) document.body.classList.add("ncm-stage-z");
     veil.style.zIndex = Number.isFinite(z) ? String(Math.max(1, z - 1)) : "1";
     if (this.el) this.el.style.zIndex = String(Math.max(35, (Number.isFinite(z) ? z : 2) + 1));
+  },
+
+  /**
+   * Windows step out too: those open as stage mode starts (sheets, journals, and other modules'
+   * floating panels like SmallTime's clock), and any window without a title bar for as long as it
+   * lasts (the CSS: a HUD that redraws itself stays out). The director, the chat popout, dialogs
+   * and file pickers stay, and a window opened during stage mode shows: someone wanted it. They
+   * all come back after.
+   */
+  stowWindows(on) {
+    const windows = document.querySelectorAll("body > :is(.app, .application, .window-app)");
+    for (const el of windows) {
+      if (!on) delete el.dataset.ncmStageHidden;
+      else if (!el.matches(STAGE_KEEP)) el.dataset.ncmStageHidden = "";
+    }
   },
 
   /**
