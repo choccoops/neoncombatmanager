@@ -14,6 +14,7 @@ import { AA, loadedAmmo } from "./aa.js";
 import { Blast, damageFromHtml } from "./blast.js";
 import { Dv } from "./dv.js";
 import { Sound } from "./sound.js";
+import { Defense } from "./defense.js";
 import { L, esc } from "../util.js";
 
 /** How long a roll waits for its card. */
@@ -36,15 +37,15 @@ export function rollKind(roll) {
 /**
  * Does a shot hit each target, pure: [{ name, dv, hit, by, dodge, mult }]. A Check must beat the
  * DV (a tie misses). Autofire's damage is 2d6 times what it beat the DV by, up to the weapon's
- * number (Ch07, Firing Modes). Someone with REF 8+ can dodge bullets: their Evasion roll counts too.
+ * number (Ch07, Firing Modes). Someone who can dodge bullets (REF 8+, or chrome) may roll Evasion instead.
  * @param {number} total
- * @param {object[]} targets - { name, dv, ref }
+ * @param {object[]} targets - { name, dv, ref, dodge? }
  */
 export function hitLines(total, targets, { autofire = false, cap = 0 } = {}) {
   return (targets ?? []).filter((t) => Number.isFinite(Number(t.dv)) && t.dv !== null).map((t) => {
     const by = Number(total) - Number(t.dv);
     const hit = by > 0;
-    return { name: t.name, dv: Number(t.dv), hit, by: hit ? by : 1 - by, dodge: Number(t.ref) >= 8, mult: autofire && hit ? Math.min(by, Number(cap) || by) : 0 };
+    return { name: t.name, dv: Number(t.dv), hit, by: hit ? by : 1 - by, dodge: t.dodge ?? Number(t.ref) >= 8, mult: autofire && hit ? Math.min(by, Number(cap) || by) : 0 };
   });
 }
 
@@ -63,6 +64,7 @@ export const Arsenal = {
 
   init() {
     Sound.init();
+    Defense.init();
     AA.init();
     Blast.init();
     Hooks.on("preCreateChatMessage", (message, data, options, userId) => {
@@ -150,7 +152,7 @@ export const Arsenal = {
         tag.hits = [];
         for (const t of targets) {
           const dv = await Dv.forWeapon(item, Dv.distance(token, t), { autofire: mode === "autofire" });
-          tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref") });
+          tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref"), dodge: Defense.ability(t.actor, { attacker: actor, ricochet: tag.ricochet }).can });
         }
         tag.dv = tag.hits[0]?.dv ?? null;
         tag.cap = Number(item.system?.fireModes?.autoFire) || 0;
@@ -202,7 +204,7 @@ export const Arsenal = {
       if (a.area) {
         const doc = Blast.find(a.actorId, a.itemId, { states: ["placed"] });
         if (doc) await Blast.onAttack({ ...a, messageId: message.id }, doc);
-      }
+      } else await Defense.afterAttack(a, message);
     }
     if (a.kind === "damage") {
       const scene = canvas?.scene?.id;
@@ -227,7 +229,7 @@ export const Arsenal = {
       for (const h of hitLines(a.total, a.hits, { autofire: a.mode === "autofire", cap: a.cap })) {
         let line = L(`${LANG}.Arsenal.HitCheck.${h.hit ? "hit" : "miss"}`, { name: esc(h.name), dv: h.dv, by: h.by });
         if (h.mult) line += ` ${L(`${LANG}.Arsenal.HitCheck.autofire`, { mult: h.mult })}`;
-        if (h.dodge && !a.ricochet) line += ` ${L(`${LANG}.Arsenal.HitCheck.dodge`)}`;
+        if (h.dodge) line += ` ${L(`${LANG}.Arsenal.HitCheck.dodge`)}`;
         notes.push(`<span class="ncm-hit ${h.hit ? "is-hit" : "is-miss"}">${line}</span>`);
       }
     }
@@ -285,6 +287,13 @@ export const Arsenal = {
       case "arsenal-apply":
         if (!game.user.isGM) return null;
         return Blast.askAndApply(d.template);
+      case "arsenal-evade":
+      case "arsenal-tank":
+        return Defense.click(message, btn, event, actor);
+      case "arsenal-scatter":
+        if (!game.user.isGM) return null;
+        btn.disabled = true;
+        return Blast.scatter(d.template);
       case "arsenal-save": {
         if (!actor?.isOwner) return ui.notifications?.warn(L(`${LANG}.Error.NotOwner`));
         const skill = CPR.skill(actor, d.skill);

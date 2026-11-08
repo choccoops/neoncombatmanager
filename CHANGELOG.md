@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.19.0
+
+- **Scatter a missed blast.** A grenade, rocket or missile that misses gets a **Scatter** button on
+  its card for the GM (HOUSE RULE): the template jumps to a random square in the 10×10 m/yds area
+  around the aimed square (never the aimed one) and goes off there, with a line saying how far it
+  went. Dragging it by hand, as the rules have it, works as before.
+- **Defense: Evade or Tank**, the flow of Vec's Cyberpunk RED Evasion Workflow, built in. After a
+  ranged attack, each target who can dodge bullets picks Evade (CPR's Evasion roll against the
+  attack; ties to the defender) or Tank (the range DV stands); a melee attack is an opposed
+  Evasion roll, rolled at once or by the target's player. Dodging bullets takes REF 8+ or chrome
+  that says so: the Reflex Co-Processor, Corgo's Kerenzikov, and the Militech 'Apogee' and
+  'Falcon' Sandevistan OS while switched on. No dodging a ricochet, a Hidden shooter, or blind.
+  In an area, whoever dodges out leaves it: their token moves to the nearest open square outside
+  the area, straight away from its centre (round walls), so the blast passes them by. "Does it hit?" now
+  notes who can dodge by their chrome too.
+
 ## 1.18.0
 
 **A movement ruler in place of Drag Ruler.**

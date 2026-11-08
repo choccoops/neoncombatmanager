@@ -572,14 +572,32 @@ keeps it out of the chat while its own check is on (a setting). Diwako's hit sou
 animations are its own settings: with Neon Arsenal, switch them off, since AA's hit and miss
 animations and Neon Arsenal's impact sounds already play.
 
+**Defense: Evade or Tank.** After an attack, each target who can dodge bullets gets a card for
+their player (and the GM): **Evade** rolls DEX + Evasion + 1d10 with Cyberpunk RED's own roll, and
+the attack must beat it (a tie goes to the defender; a setting); **Tank** lets the range DV stand.
+Dodging bullets takes REF 8+, or chrome whose card says so: a Reflex Co-Processor, Corgo's
+Kerenzikov, or a Militech 'Apogee' or 'Falcon' Sandevistan OS while its "(active)" effect is on.
+Nobody can dodge a ricochet, a shooter they don't know is there (the attacker is Hidden), or
+bullets with their eyes shut down (Blind, Reboot Optics). A melee attack is always an opposed
+Evasion roll: rolled for the target at once, or from a card their player rolls (a setting). In
+an area, everyone caught who can dodge gets the same choice, and whoever dodges out leaves it (Ch07;
+Core p.174): their token goes to the nearest open square outside the area, straight away from its
+centre (round a wall if one's in the way), so the blast passes them by. Walled in with no way out,
+they stay put and start unticked in the GM's apply window. A result card says who dodged and who's hit (for everyone, or
+the GM and the target's players). It follows the flow of Vec's
+[Cyberpunk RED – Evasion Workflow](https://github.com/Vec97/cpred-evasion-workflow), built in.
+
 **Area attacks.** A grenade, rocket or missile (launched or thrown) places a 10×10 m/yds area, or
 the size its ammo card names (a Laser Grenade's 6×6m, a Wall-Piercing Grenade's cone); a Shotgun
 Shell or a flamethrower a 6 m/yds cone in front of the shooter. When the attack is rolled (from
 the sheet, the HUD, a macro), the template follows the mouse; left-click places it centred on the
 square you aim at, right-click or Escape makes it a normal attack. Everyone inside is targeted.
 The roll says where it lands, by the weapon's range table at that distance (a Shotgun Shell is
-DV13): a hit goes off there, with the shot and the blast drawn and heard; on a miss the GM drags
-the template where it lands, and it goes off there. A card says which, and who is in it.
+DV13): a hit goes off there, with the shot and the blast drawn and heard. On a miss the GM decides
+where it lands, as the rules have it (Core p.174, 2070 Ch07): drag the template there (within the
+10×10 area around the aimed square), or press **Scatter** on the card (GM only, HOUSE RULE) to drop
+it on a random square of that area, never the aimed one. Either way it goes off there. A card says
+which, and who is in it.
 
 The GM applies it from that card or the damage card's *Apply to the area*, the way the 2070
 Core Rules have it (Ch07, Firing Modes): one damage roll for everyone, through Cyberpunk RED's own
@@ -606,8 +624,9 @@ Impact pushes whoever it hits 2 m/yds, under BODY 13, or 4 m/yds, stopping at wa
 Ricochet Compensator. Other modules can add their own (see [docs/API.md](docs/API.md)).
 
 World settings (Neon Arsenal menu): the animations, keeping the profile in AA, the sounds, the
-areas, Blown back, the weapon traits, Does it hit? (and hiding Diwako's), Diwako's DV display
-tables and players' muzzle flashes.
+areas, Blown back, the weapon traits, Does it hit? (and hiding Diwako's), the defense step (melee
+rolled at once or by the player, ties, who sees the result), Diwako's DV display tables and
+players' muzzle flashes.
 
 ## Combat time
 
@@ -778,5 +797,7 @@ code: [Automated Animations](https://github.com/theripper93/autoanimations) and 
 fork ([rhlowe/autoanimations-foundry12](https://github.com/rhlowe/autoanimations-foundry12)), whose
 menu format and workflow hook the profile follows, and
 [Diwako's Cyberpunk Red - Core Additions](https://github.com/diwako/foundry-cyberpunk-red-core-additions),
-whose muzzle flash and DV display it feeds. The JB2A animations are JB2A's (installed separately).
+whose muzzle flash and DV display it feeds. Its defense step follows the flow of Vec's
+[Cyberpunk RED – Evasion Workflow](https://github.com/Vec97/cpred-evasion-workflow) (MIT), also
+without its code. The JB2A animations are JB2A's (installed separately).
 The weapon sounds were made with ElevenLabs for this module.
