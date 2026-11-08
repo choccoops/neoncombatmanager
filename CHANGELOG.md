@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.19.0
+
+- **Scatter a missed blast.** A grenade, rocket or missile that misses gets a **Scatter** button on
+  its card for the GM (HOUSE RULE): the template jumps to a random square in the 10×10 m/yds area
+  around the aimed square (never the aimed one) and goes off there, with a line saying how far it
+  went. Dragging it by hand, as the rules have it, works as before.
+
 ## 1.18.0
 
 **A movement ruler in place of Drag Ruler.**

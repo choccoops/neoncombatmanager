@@ -9,7 +9,7 @@ const M = "cpr-neon-combat-manager";
 const Settings = await registerSettings();
 const { classify, flavorOf, areaOf, profileKeys, autofireTable, smartBaked, LABEL_PREFIX } = await import("../scripts/arsenal/kinds.js");
 const { ROWS, rowLabel, buildMenu, entryFor, mergeSection, isOurs, soundPlan, soundFiles, SOUNDS, AUTOREC_VERSION } = await import("../scripts/arsenal/profile.js");
-const { templateData, contains, tokenInside, centerOf, blownBack, blowBackMetres, ammoEffect } = await import("../scripts/arsenal/area.js");
+const { templateData, contains, tokenInside, centerOf, blownBack, blowBackMetres, ammoEffect, scatter } = await import("../scripts/arsenal/area.js");
 const { dvFromResults, dvLines, Dv } = await import("../scripts/arsenal/dv.js");
 const { RebuildRegistry, traitsFromDef, traitsOf, attackMods, damageArgs, chargeHolds, Rebuilds } = await import("../scripts/arsenal/rebuilds.js");
 const { Blast, damageFromHtml, tokensIn, SHELL_DV } = await import("../scripts/arsenal/blast.js");
@@ -216,6 +216,20 @@ test("blown back: straight away from the centre, 2m from a grenade and 4m from a
   assert.equal(blowBackMetres("rocketLauncher"), 4);
   assert.deepEqual(blownBack({ x: 600, y: 500, width: 1, height: 1 }, { x: 550, y: 550 }, 2, GRID), { x: 700, y: 500 });
   assert.deepEqual(blownBack({ x: 500, y: 500, width: 1, height: 1 }, { x: 550, y: 550 }, 4, GRID, 90), { x: 500, y: 700 }, "the centre square goes the GM's way");
+});
+
+test("a scattered miss lands on a random square in the area, never the aimed one", () => {
+  const aim = { x: 550, y: 550 };
+  const seen = new Set();
+  for (let n = 0; n < 24; n++) {
+    const p = scatter(aim, 10, GRID, () => n / 24);
+    assert.ok(Math.abs(p.x - aim.x) <= 200 && Math.abs(p.y - aim.y) <= 200, "within the 5×5 squares");
+    assert.ok(p.x !== aim.x || p.y !== aim.y, "not the aimed square");
+    seen.add(`${p.x},${p.y}`);
+  }
+  assert.equal(seen.size, 24, "every other square can come up");
+  assert.deepEqual(scatter(aim, 10, GRID, () => 0), { x: 350, y: 350, metres: 4 });
+  assert.equal(scatter(aim, 10, GRID, () => 0.5).metres, 2);
 });
 
 test("ammo effects follow the 2070 Item Compendium", () => {
@@ -616,6 +630,17 @@ test("gas asks each target for a save instead of dealing damage", async () => {
   assert.ok(card, "a save card for the target's player");
   assert.match(card.content, /data-dv="13"/);
   assert.match(card.content, /data-adds="teargassed"/);
+});
+
+test("the GM's Scatter moves a missed blast to a random square around the aimed one", async () => {
+  const { doc } = await sceneWith([], { actorId: "x", itemId: "y", tokenId: "tz", kind: "grenadeLauncher", area: { shape: "rect", size: 10 }, ammoType: "basic", ammoVariety: "grenade", ammoName: "Grenade", explosive: true, at: Date.now(), state: "miss", aim: { x: 550, y: 550 } });
+  const before = chat.length;
+  const to = await Blast.scatter(doc.uuid, () => 0.99);
+  assert.deepEqual([to.x, to.y], [750, 750]);
+  assert.deepEqual(centerOf(doc, GRID), { x: 750, y: 750 }, "the template went with it");
+  assert.ok(chat.slice(before).some((m) => /scatters 4 m/.test(m.content)));
+  doc.flags[M].blast.state = "landed";
+  assert.equal(await Blast.scatter(doc.uuid), null, "only a miss scatters");
 });
 
 test("a shell's spread is one attack against DV13", () => {

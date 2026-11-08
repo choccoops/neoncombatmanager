@@ -578,8 +578,11 @@ Shell or a flamethrower a 6 m/yds cone in front of the shooter. When the attack 
 the sheet, the HUD, a macro), the template follows the mouse; left-click places it centred on the
 square you aim at, right-click or Escape makes it a normal attack. Everyone inside is targeted.
 The roll says where it lands, by the weapon's range table at that distance (a Shotgun Shell is
-DV13): a hit goes off there, with the shot and the blast drawn and heard; on a miss the GM drags
-the template where it lands, and it goes off there. A card says which, and who is in it.
+DV13): a hit goes off there, with the shot and the blast drawn and heard. On a miss the GM decides
+where it lands, as the rules have it (Core p.174, 2070 Ch07): drag the template there (within the
+10×10 area around the aimed square), or press **Scatter** on the card (GM only, HOUSE RULE) to drop
+it on a random square of that area, never the aimed one. Either way it goes off there. A card says
+which, and who is in it.
 
 The GM applies it from that card or the damage card's *Apply to the area*, the way the 2070
 Core Rules have it (Ch07, Firing Modes): one damage roll for everyone, through Cyberpunk RED's own

@@ -2066,7 +2066,7 @@
       "Hit": "{total} vs DV{dv}: on target.",
       "Miss": "{total} vs DV{dv}: missed.",
       "NoDv": "{total}: no range table for this distance; the GM decides.",
-      "MissMoves": "On a miss the GM moves the blast: drag the template where it lands, and it goes off there.",
+      "MissMoves": "On a miss the GM moves the blast: drag the template where it lands (within the area around the aimed square), or Scatter it at random, and it goes off there.",
       "Inside": "In the area ({count}): {names}.",
       "AreaRules": "One damage roll for everyone in it, body armor only, and it ablates. Cover in the area takes it first; anyone who can dodge bullets and beats the roll gets out (2070 Core Rules, Ch07, Firing Modes).",
       "BlastTitle": "{name}'s {weapon}: the blast",
@@ -2100,7 +2100,10 @@
         "miss": "<b>{name}</b>: missed DV{dv} by {by}.",
         "autofire": "Autofire: damage ×{mult}.",
         "dodge": "REF 8+: they can dodge, and their Evasion roll counts if they do."
-      }
+      },
+      "Scatter": "Scatter (random)",
+      "Scattered": "The blast scatters {metres} m/yds from the aimed square",
+      "Landed": "That blast has already landed."
     },
     "Ruler": {
       "move": "Move",

@@ -285,6 +285,10 @@ export const Arsenal = {
       case "arsenal-apply":
         if (!game.user.isGM) return null;
         return Blast.askAndApply(d.template);
+      case "arsenal-scatter":
+        if (!game.user.isGM) return null;
+        btn.disabled = true;
+        return Blast.scatter(d.template);
       case "arsenal-save": {
         if (!actor?.isOwner) return ui.notifications?.warn(L(`${LANG}.Error.NotOwner`));
         const skill = CPR.skill(actor, d.skill);

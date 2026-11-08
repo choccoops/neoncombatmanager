@@ -91,6 +91,21 @@ export function blownBack(token, center, metres, grid, fallbackAngle = 0) {
   return { x: snap(c.x + (dx / len) * d - w / 2), y: snap(c.y + (dy / len) * d - h / 2) };
 }
 
+/**
+ * Where a missed explosive lands, at random (HOUSE RULE: the rules leave it to the GM, Core p.174
+ * and 2070 Ch07): the centre of a square within the area around the aimed square (a 10×10m area is
+ * 5×5 squares), never the aimed square itself. Returns { x, y, metres } (metres: how far it went).
+ * @param {object} aim - the aimed square's centre
+ * @param {() => number} rand - 0 ≤ n < 1
+ */
+export function scatter(aim, size, grid, rand = Math.random) {
+  const reach = Math.floor(Math.max(1, Math.round(size / grid.distance)) / 2) || 1;
+  const options = [];
+  for (let i = -reach; i <= reach; i++) for (let j = -reach; j <= reach; j++) if (i || j) options.push([i, j]);
+  const [i, j] = options[Math.min(options.length - 1, Math.floor(rand() * options.length))];
+  return { x: aim.x + i * grid.size, y: aim.y + j * grid.size, metres: Math.max(Math.abs(i), Math.abs(j)) * grid.distance };
+}
+
 /** How far a blast throws (Blown back, HOUSE RULE): 4m for rockets and missiles, else 2m. */
 export const blowBackMetres = (kind) => (kind === "rocketLauncher" || kind === "missileLauncher" ? 4 : 2);
 
