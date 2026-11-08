@@ -1017,7 +1017,9 @@ body.ncm-stage-focus > :not(#board, #interface, #ncm-stage, #ncm-stage-veil, .ap
 body.ncm-stage-focus #interface > :not(#ui-right, #ui-middle, #context-menu),
 body.ncm-stage-focus #ui-middle > :not(#ui-top),
 body.ncm-stage-focus #ui-top > :not(#notifications, #loading),
-body.ncm-stage-focus #ui-right > :not(#sidebar, [id*=notification]) { visibility: hidden !important; pointer-events: none !important; }
+body.ncm-stage-focus #ui-right > :not(#sidebar, [id*=notification]),
+body.ncm-stage-focus [data-ncm-stage-hidden],
+body.ncm-stage-focus > :is(.app, .application, .window-app):not(:has(> .window-header), .ncm-st-director, #chat-popout, .chat-popout, .dialog, .filepicker, .file-picker) { visibility: hidden !important; pointer-events: none !important; }
 
 /* The stage */
 #ncm-stage { position: fixed; left: 0; right: var(--ncm-stage-right, 310px); bottom: 0; height: 0; z-index: 35; pointer-events: none; }
