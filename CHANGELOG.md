@@ -12,7 +12,8 @@
   Evasion roll, rolled at once or by the target's player. Dodging bullets takes REF 8+ or chrome
   that says so: the Reflex Co-Processor, Corgo's Kerenzikov, and the Militech 'Apogee' and
   'Falcon' Sandevistan OS while switched on. No dodging a ricochet, a Hidden shooter, or blind.
-  In an area, whoever dodges out is left unticked when the GM applies it. "Does it hit?" now
+  In an area, whoever dodges out leaves it: their token moves to the nearest open square outside
+  the area, straight away from its centre (round walls), so the blast passes them by. "Does it hit?" now
   notes who can dodge by their chrome too.
 
 ## 1.18.0

@@ -5,6 +5,7 @@ import { Socket } from "../socket.js";
 import { CPR } from "../cpr.js";
 import { Cards } from "../combat/cards.js";
 import { Conditions } from "../conditions/engine.js";
+import { escapeSquare } from "./area.js";
 import { L, esc } from "../util.js";
 
 /**
@@ -196,14 +197,24 @@ export const Defense = {
     return outcome;
   },
 
-  /** Remember who dodged out of an area (the GM; the template is the attacker's). */
+  /**
+   * Someone dodged out of an area (the GM; the template is the attacker's): they're remembered for
+   * the apply window, and their token goes to the nearest open square outside it.
+   */
   async dodgedAsGM({ template, token }) {
     const doc = await fromUuid(template);
     const b = doc?.flags?.[MODULE_ID]?.blast;
     if (!b || !token) return false;
     const dodged = [...new Set([...(b.dodged ?? []), token])];
     await doc.update({ [`flags.${MODULE_ID}.blast.dodged`]: dodged });
-    return true;
+    const tok = doc.parent?.tokens?.get(token);
+    if (!tok) return true;
+    const size = Number(doc.parent?.grid?.size ?? canvas?.grid?.size) || 100;
+    const distance = Number(doc.parent?.grid?.distance ?? canvas?.dimensions?.distance) || 2;
+    const t = { t: doc.t, x: doc.x, y: doc.y, distance: doc.distance, direction: doc.direction, angle: doc.angle };
+    const to = escapeSquare(t, tok, { size, distance }, (a, c) => !!Compat.moveBlocked(a, c));
+    if (to) await tok.update({ x: to.x, y: to.y });
+    return to ?? true;
   },
 
   /** Route a card button (Arsenal.click). */

@@ -106,6 +106,34 @@ export function scatter(aim, size, grid, rand = Math.random) {
   return { x: aim.x + i * grid.size, y: aim.y + j * grid.size, metres: Math.max(Math.abs(i), Math.abs(j)) * grid.distance };
 }
 
+/**
+ * Where a token that dodged out of an area ends up: the nearest square just outside it, straight
+ * away from its centre, else the next closest direction (2070 Ch07: they leave the blast; Core
+ * p.174: outside the blast area). `blocked(from, to)` says a wall is in the way (that direction is
+ * then out). Returns the token's new top-left corner, or null when there's no way out.
+ */
+export function escapeSquare(t, token, grid, blocked = () => false, max = 12) {
+  const w = (Number(token.width) || 1) * grid.size;
+  const h = (Number(token.height) || 1) * grid.size;
+  const from = { x: token.x + w / 2, y: token.y + h / 2 };
+  const centre = centerOf(t, grid);
+  const away = Math.atan2(from.y - centre.y, from.x - centre.x);
+  const turn = (a) => Math.abs(((a - away + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+  const dirs = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => (i * Math.PI) / 4).sort((a, b) => turn(a) - turn(b));
+  if (Math.hypot(from.x - centre.x, from.y - centre.y) > 1) dirs.unshift(away);
+  for (const a of dirs) {
+    for (let k = 1; k <= max; k++) {
+      const x = Math.round((token.x + Math.cos(a) * k * grid.size) / grid.size) * grid.size;
+      const y = Math.round((token.y + Math.sin(a) * k * grid.size) / grid.size) * grid.size;
+      if (x === token.x && y === token.y) continue;
+      if (tokenInside(t, { ...token, x, y }, grid)) continue;
+      if (blocked(from, { x: x + w / 2, y: y + h / 2 })) break;
+      return { x, y };
+    }
+  }
+  return null;
+}
+
 /** How far a blast throws (Blown back, HOUSE RULE): 4m for rockets and missiles, else 2m. */
 export const blowBackMetres = (kind) => (kind === "rocketLauncher" || kind === "missileLauncher" ? 4 : 2);
 

@@ -9,7 +9,7 @@ const M = "cpr-neon-combat-manager";
 const Settings = await registerSettings();
 const { classify, flavorOf, areaOf, profileKeys, autofireTable, smartBaked, LABEL_PREFIX } = await import("../scripts/arsenal/kinds.js");
 const { ROWS, rowLabel, buildMenu, entryFor, mergeSection, isOurs, soundPlan, soundFiles, SOUNDS, AUTOREC_VERSION } = await import("../scripts/arsenal/profile.js");
-const { templateData, contains, tokenInside, centerOf, blownBack, blowBackMetres, ammoEffect, scatter } = await import("../scripts/arsenal/area.js");
+const { templateData, contains, tokenInside, centerOf, blownBack, blowBackMetres, ammoEffect, scatter, escapeSquare } = await import("../scripts/arsenal/area.js");
 const { dvFromResults, dvLines, Dv } = await import("../scripts/arsenal/dv.js");
 const { RebuildRegistry, traitsFromDef, traitsOf, attackMods, damageArgs, chargeHolds, Rebuilds } = await import("../scripts/arsenal/rebuilds.js");
 const { Blast, damageFromHtml, tokensIn, SHELL_DV } = await import("../scripts/arsenal/blast.js");
@@ -233,6 +233,18 @@ test("a scattered miss lands on a random square in the area, never the aimed one
   assert.equal(seen.size, 24, "every other square can come up");
   assert.deepEqual(scatter(aim, 10, GRID, () => 0), { x: 350, y: 350, metres: 4 });
   assert.equal(scatter(aim, 10, GRID, () => 0.5).metres, 2);
+});
+
+test("a dodger leaves the area by the nearest open square, straight away from the centre", () => {
+  const t = templateData({ shape: "rect", size: 10 }, { center: { x: 550, y: 550 } }, GRID);
+  const out = escapeSquare(t, { x: 600, y: 400, width: 1, height: 1 }, GRID);
+  assert.ok(!tokenInside(t, { x: out.x, y: out.y, width: 1, height: 1 }, GRID));
+  assert.deepEqual(out, { x: 800, y: 200 }, "up and right, the way they were from the centre");
+  assert.deepEqual(escapeSquare(t, { x: 300, y: 500, width: 1, height: 1 }, GRID), { x: 200, y: 500 }, "one square from the edge");
+  // A wall to the west: the next closest way out.
+  const walled = escapeSquare(t, { x: 300, y: 500, width: 1, height: 1 }, GRID, (a, b) => b.x < a.x && Math.abs(b.y - a.y) < 1);
+  assert.ok(walled && !tokenInside(t, { ...walled, width: 1, height: 1 }, GRID) && !(walled.x < 300 && walled.y === 500));
+  assert.equal(escapeSquare(t, { x: 500, y: 500, width: 1, height: 1 }, GRID, () => true), null, "walled in");
 });
 
 test("ammo effects follow the 2070 Item Compendium", () => {
@@ -714,21 +726,22 @@ test("Evade, Tank and a melee defense resolve against the attack", async () => {
   CPR.skillCheck = real;
 });
 
-test("whoever dodges out of an area is left unticked when the GM applies it", async () => {
+test("whoever dodges out of an area leaves it: moved out, and not in the GM's apply window", async () => {
   const quick = makeActor({ name: "Quick" });
   const { doc } = await sceneWith([{ id: "q", name: "Quick", x: 500, y: 500, actor: quick, uuid: "Scene.s1.Token.q" }],
     { actorId: "x", itemId: "y", tokenId: "tz", kind: "grenadeLauncher", area: { shape: "rect", size: 10 }, ammoType: "basic", ammoVariety: "grenade", ammoName: "Grenade", explosive: true, at: Date.now(), state: "landed", total: 16 });
   (await import("./helpers/foundry.mjs")).registry.set("Scene.s1.Token.q", doc.parent.tokens.get("q"));
-  assert.equal(await Defense.resolve(null, { target: "Scene.s1.Token.q", attack: 16, evasion: 17, template: doc.uuid }), "dodged");
+  assert.equal(await Defense.resolve(null, { target: "Scene.s1.Token.q", attack: 16, evasion: 16, template: doc.uuid }), "dodged", "a tie goes to the dodger");
   assert.deepEqual(doc.flags[M].blast.dodged, ["q"]);
+  const q = doc.parent.tokens.get("q");
+  assert.ok(!tokenInside(doc, q, GRID), "and their token is out of the blast");
   let content = "";
   foundry.applications.api.DialogV2.prompt = async (opts) => {
     content = opts.content;
     return null;
   };
   await Blast.askAndApply(doc.uuid, { total: 20, bonus: 0, ablation: 1, ammoVariety: "grenade", ignoreArmorPercent: 0, ignoreBelowSP: 0, lethal: true });
-  assert.match(content, /name="t-q">/, "unticked");
-  assert.match(content, /dodged out/);
+  assert.doesNotMatch(content, /name="t-q"/, "out of the area, so not in the apply window");
 });
 
 test("a shell's spread is one attack against DV13", () => {

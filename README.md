@@ -580,8 +580,10 @@ Kerenzikov, or a Militech 'Apogee' or 'Falcon' Sandevistan OS while its "(active
 Nobody can dodge a ricochet, a shooter they don't know is there (the attacker is Hidden), or
 bullets with their eyes shut down (Blind, Reboot Optics). A melee attack is always an opposed
 Evasion roll: rolled for the target at once, or from a card their player rolls (a setting). In
-an area, everyone caught who can dodge gets the same choice, and whoever dodges out is left
-unticked in the GM's apply window. A result card says who dodged and who's hit (for everyone, or
+an area, everyone caught who can dodge gets the same choice, and whoever dodges out leaves it (Ch07;
+Core p.174): their token goes to the nearest open square outside the area, straight away from its
+centre (round a wall if one's in the way), so the blast passes them by. Walled in with no way out,
+they stay put and start unticked in the GM's apply window. A result card says who dodged and who's hit (for everyone, or
 the GM and the target's players). It follows the flow of Vec's
 [Cyberpunk RED – Evasion Workflow](https://github.com/Vec97/cpred-evasion-workflow), built in.
 
