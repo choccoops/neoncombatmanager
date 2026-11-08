@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.14.0
+
+**Weather you can see.**
+
+- The day's Night City weather now shows on Outdoors scenes as Foundry's own scene weather.
+  Presets are built from Foundry's rain, storm, snow and fog and tinted for the city: acid rain
+  green, blood rain red, ash grey, dust brown, smog yellow, radioactive wind green, plus a Cold
+  Snap, a Heat Wave haze and the Deadly Thunderstorm.
+- The weather follows the calendar as it changes, including strange weather that starts and
+  stops mid-scene. A weather you set on a scene by hand is never replaced.
+- Quiet ambience on each client: rain, wind, and a Geiger counter in radioactive wind. A
+  thunderstorm adds soft lightning flashes and distant thunder. It plays on the Environment
+  slider, scaled by the Neon FX volume, and has its own client setting.
+- **The weather reaches everyone on the scene**: every character token out in it gets the
+  weather's conditions, in combat or not, unless their gear protects them. This is a setting,
+  on by default. Visibility and timed hazard cards stay with the encounter.
+- **Shelters**: roof tiles with Foundry's Restrict Weather and regions with a Suppress Weather
+  behavior now keep characters out of the weather, as well as the visuals. A new "Shelters from
+  weather" checkbox on tiles covers awnings and bus shelters drawn on the map. Keyword-named
+  regions still work.
+- **Scene weather modes** are clearer: Outdoors, Indoors (no weather), and Off for HUB, title
+  and menu screens. An Off scene gets no weather and its own weather is never touched.
+
 ## 1.13.0
 
 **Neon FX**: Sequencer visuals for the table (needs the Sequencer module; uses JB2A where it's

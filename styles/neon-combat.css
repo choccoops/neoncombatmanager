@@ -1167,3 +1167,23 @@ li.dialog-item.ncm-hide-luck { display: none !important; }
   #ncm-no-signal .ncm-ns-bars i { background: rgba(255, 42, 109, 0.25); box-shadow: none; }
   #ncm-no-signal .ncm-ns-title, #ncm-no-signal .ncm-ns-sub { animation: none; opacity: 1; }
 }
+
+/* Lightning in a Deadly Thunderstorm: a soft double flash over the canvas, never on the UI's clicks. */
+.ncm-lightning {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 20%, rgba(225, 235, 255, 0.55), rgba(180, 200, 255, 0.18) 70%);
+  opacity: 0;
+  animation: ncm-lightning 1.1s ease-out forwards;
+}
+
+@keyframes ncm-lightning {
+  0% { opacity: 0; }
+  6% { opacity: 0.32; }
+  12% { opacity: 0.05; }
+  20% { opacity: 0.22; }
+  100% { opacity: 0; }
+}
+

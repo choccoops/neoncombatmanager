@@ -674,7 +674,7 @@
       },
       "sceneWeatherDefault": {
         "name": "Scenes are",
-        "hint": "Whether weather reaches scenes that don't say. Set each scene in its configuration; regions named like a shelter keyword are indoors."
+        "hint": "Whether weather reaches scenes that don't say. Set each scene in its configuration (Ambience tab); roof tiles that restrict weather or are ticked \"Shelters from weather\", Suppress Weather regions and regions named like a shelter keyword keep characters out of it."
       },
       "shelterKeywords": {
         "name": "Shelter region keywords",
@@ -1024,15 +1024,27 @@
         "interface": "Interface",
         "environment": "Environment",
         "music": "Music"
+      },
+      "weatherFx": {
+        "name": "Weather you can see",
+        "hint": "The day's weather shows on Outdoors scenes as Foundry scene weather: rain, storms, acid and blood rain, ash, dust, smog, radioactive wind, snow and heat haze, tinted for Night City. It stays off under weather-restricting roof tiles and in Suppress Weather regions. A weather you set on a scene by hand is left alone."
+      },
+      "weatherEveryone": {
+        "name": "Weather reaches everyone on the scene",
+        "hint": "Every character token out in the weather gets its conditions, in combat or not (gear still protects). Off: only the encounter (and player tokens, with \"Environment outside combat\"). Visibility stays with the encounter either way."
+      },
+      "weatherAmbience": {
+        "name": "Weather sounds and lightning",
+        "hint": "Quiet rain, wind and Geiger ambience on Outdoors scenes, and soft lightning flashes with thunder in a thunderstorm (no flashes with token motion off or reduced motion). Plays on the Environment volume slider, scaled by your Neon FX volume."
       }
     },
     "SceneWeather": {
       "Label": "Weather (Neon Combat Manager)",
-      "Hint": "Does Night City weather reach the characters here? Default follows the module setting.",
+      "Hint": "Outdoors: Night City's weather shows here and hits characters out in it (not under shelters). Indoors: no weather here. Off: for HUB, title and menu screens: no weather at all, and the scene's own weather is never touched. Default follows the module setting.",
       "default": "Default",
       "outdoor": "Outdoors",
-      "indoor": "Indoors",
-      "off": "Off"
+      "indoor": "Indoors (no weather)",
+      "off": "Off (HUB, title and menu screens)"
     },
     "Card": {
       "Gains": "{name}: {condition}",
@@ -1912,6 +1924,23 @@
         "Extreme": "Extreme Cyberpsychosis",
         "Clear": "Clear Neon FX"
       }
+    },
+    "Shelter": {
+      "Label": "Shelters from weather (Neon Combat Manager)",
+      "Hint": "Characters under this tile are out of Night City's weather: no weather conditions. Tiles with Foundry's \"Restrict Weather\" already count, and hide the weather visuals too."
+    },
+    "WeatherFx": {
+      "ncmThunderstorm": "Night City: Deadly Thunderstorm",
+      "ncmAcidRain": "Night City: Acid Rain",
+      "ncmBloodRain": "Night City: Blood Rain",
+      "ncmHeavyRain": "Night City: Heavy Rain",
+      "ncmLightRain": "Night City: Light Rain",
+      "ncmAshStorm": "Night City: Ash Storm",
+      "ncmDustStorm": "Night City: Dust Storm",
+      "ncmRadioactiveWind": "Night City: Radioactive Windstorm",
+      "ncmSmog": "Night City: Inversion Smog",
+      "ncmColdSnap": "Night City: Cold Snap",
+      "ncmHeatWave": "Night City: Heat Wave"
     }
   }
 }

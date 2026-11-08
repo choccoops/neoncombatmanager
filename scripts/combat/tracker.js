@@ -15,6 +15,7 @@ export const TrackerHooks = {
   init() {
     Hooks.on("renderCombatTracker", (app, html) => this.tracker(app, html));
     Hooks.on("renderSceneConfig", (app, html) => this.sceneConfig(app, html));
+    Hooks.on("renderTileConfig", (app, html) => this.tileConfig(app, html));
     Hooks.on("renderTokenHUD", (hud, html) => this.tokenHud(hud, html));
   },
 
@@ -58,6 +59,20 @@ export const TrackerHooks = {
     const group = document.createElement("div");
     group.className = "form-group ncm-scene-weather";
     group.innerHTML = `<label>${L(`${LANG}.SceneWeather.Label`)}</label><div class="form-fields"><select name="flags.${MODULE_ID}.${FLAGS.weather}">${opts}</select></div><p class="hint">${L(`${LANG}.SceneWeather.Hint`)}</p>`;
+    tab.append(group);
+    app.setPosition?.({ height: "auto" });
+  },
+
+  /** "Shelters from weather" on a tile: characters under it are out of Night City's weather. */
+  tileConfig(app, html) {
+    const root = Compat.element(html);
+    const tile = app.document ?? app.object;
+    if (!root || !tile || root.querySelector(".ncm-tile-shelter")) return;
+    const tab = root.querySelector('.tab[data-tab="overhead"]') ?? root.querySelector('.tab[data-tab="appearance"]') ?? root.querySelector('.tab[data-tab="basic"]') ?? root.querySelector("form") ?? root;
+    const on = !!tile.flags?.[MODULE_ID]?.shelter;
+    const group = document.createElement("div");
+    group.className = "form-group ncm-tile-shelter";
+    group.innerHTML = `<label>${L(`${LANG}.Shelter.Label`)}</label><div class="form-fields"><input type="checkbox" name="flags.${MODULE_ID}.shelter" ${on ? "checked" : ""}></div><p class="hint">${L(`${LANG}.Shelter.Hint`)}</p>`;
     tab.append(group);
     app.setPosition?.({ height: "auto" });
   },

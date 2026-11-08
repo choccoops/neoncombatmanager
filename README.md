@@ -511,11 +511,44 @@ out in it:
 - Strange weather that lasts minutes (a dust storm from 14:05 for 30 minutes) starts and stops
   with the clock, including mid-fight.
 
-Weather reaches **outdoor** scenes. Each scene has a weather setting in its configuration
-(Default / Outdoors / Indoors / Off); **regions** named with a shelter keyword ("Interior",
-"Bar - inside", "Roof"...) keep the tokens in them out of it. Protective gear is matched by
-name (settings): Nasal Filters, Anti-Smog Breathing Mask, Radiation Suit, umbrellas and the
-jacket linings from the Night City Weather pack the system ships.
+**Who it reaches**: every character token out in it on the scene, in combat or not (setting
+"Weather reaches everyone on the scene"); visibility stays with the encounter. Protective gear is
+matched by name (settings): Nasal Filters, Anti-Smog Breathing Mask, Radiation Suit, umbrellas and
+the jacket linings from the Night City Weather pack the system ships.
+
+**Where it reaches.** Each scene has a weather setting in its configuration (Ambience tab):
+
+| | |
+| --- | --- |
+| Outdoors | the weather shows and hits the characters out in it |
+| Indoors | no weather here |
+| Off | for HUB, title and menu screens: no weather at all, and the scene's own weather is never touched |
+| Default | follows the module setting (Outdoors unless you change it) |
+
+On an Outdoors scene, these keep characters out of the weather (no conditions), and the first
+two keep the visuals off too:
+
+- **roof and awning tiles** with Foundry's *Restrict Weather*;
+- **regions** with a *Suppress Weather* behavior;
+- any tile ticked **Shelters from weather** (a checkbox this module adds to the tile's
+  configuration, for an awning or bus shelter drawn on the map);
+- **regions named** with a shelter keyword ("Interior", "Bar - inside", "Roof"...).
+
+### Weather you can see
+
+The day's weather shows on Outdoors scenes as Foundry's own scene weather, so everyone sees the
+same sky. Presets built from Foundry's rain, storm, snow and fog are tinted for the city: Light
+and Heavy Rain, **Acid Rain** (green), **Blood Rain** (red), **Ash Storm** (grey), **Dust Storm**
+(brown), **Inversion Smog** (yellow haze), **Radioactive Windstorm** (green), Cold Snap snow, a
+Heat Wave haze, and the **Deadly Thunderstorm**. When several are in effect, the most dramatic
+shows. They're in the scene weather list as "Night City: ..." too.
+
+- A weather you set on a scene yourself is left alone; the module only changes what it put there.
+- Each player hears quiet ambience on the Environment slider (rain, wind, a Geiger counter in
+  radioactive wind), scaled by their Neon FX volume. A thunderstorm adds soft lightning flashes
+  with thunder (no flashes with token motion off or reduced motion). Client setting "Weather
+  sounds and lightning".
+- World setting "Weather you can see" turns the visuals off (the conditions carry on).
 
 ## Visibility
 
