@@ -155,6 +155,10 @@ export const CONDITIONS = [
   { id: "badSleep", category: "situation", img: `${A}/bad-sleep.svg`, page: "129 · 2070", group: "rest", changes: [{ key: "bonuses.allActions", value: -2 }] },
   { id: "extremeStress", category: "situation", img: `${A}/stress.svg`, page: 129, changes: [{ key: "bonuses.allActions", value: -2 }] },
   { id: "drunk", category: "situation", img: `${S}/drugged.svg`, page: 129, changes: [{ key: "bonuses.allActions", value: -4 }] },
+  // The psychotic break below 0 Humanity (2070 Ch09): the GM plays the character, sometimes with a
+  // bonus (off until the GM switches it on in the roll). Follows Humanity when mirrorCyberpsychosis is on.
+  { id: "extremeCyberpsychosis", category: "situation", img: `${A}/extreme-cyberpsychosis.svg`, page: "2070", remindOnce: true,
+    changes: [{ key: "bonuses.allActions", value: 2, situational: true }] },
   { id: "smoke", category: "situation", img: `${A}/smoke.svg`, page: 347, duration: 60, sight: -4 },
 
   /* ------------------------------------------------------------------ */

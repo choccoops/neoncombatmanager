@@ -5,9 +5,10 @@ const K = (key) => `${LANG}.Settings.${key}`;
 /** World settings grouped into submenus; everything else shows in Foundry's own list. */
 export const MENUS = {
   combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement"],
-  conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim"],
+  conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim"],
   comms: ["linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
+  fx: ["fxEnabled", "fxConditions", "fxMacros"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -76,9 +77,18 @@ const DEFS = [
   ["replaceStatuses", "world", Boolean, true, { requiresReload: true }],
   ["conditionChat", "world", String, "gm", { choices: { off: K("ConditionChat.off"), gm: K("ConditionChat.gm"), all: K("ConditionChat.all") } }],
   ["mirrorWounds", "world", Boolean, true, {}],
+  ["mirrorCyberpsychosis", "world", Boolean, true, {}],
   ["mirrorCriticals", "world", Boolean, true, {}],
   ["critItems", "world", Boolean, true, {}],
   ["fireEscalates", "world", Boolean, true, {}],
+  // Neon FX (Sequencer): condition visuals, Cyberpsychosis glitch, Sandevistan
+  ["fxEnabled", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  ["fxConditions", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  ["fxMacros", "world", Boolean, true, {}],
+  ["fxMacrosInstalled", "world", Boolean, false, { config: false }],
+  ["fxVolume", "client", Number, 0.4, { config: true, range: { min: 0, max: 1, step: 0.05 } }],
+  ["fxChannel", "client", String, "interface", { config: true, choices: { interface: K("FxChannel.interface"), environment: K("FxChannel.environment"), music: K("FxChannel.music") } }],
+  ["fxMotion", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // The 2070 roller and table rules
   ["rollerHooks", "world", Boolean, true, { requiresReload: true }],
   ["rideEdge", "world", Boolean, true, {}],
@@ -139,7 +149,7 @@ export const Settings = {
           name: K(`Menu.${id}.name`),
           label: K(`Menu.${id}.label`),
           hint: K(`Menu.${id}.hint`),
-          icon: { combat: "fa-solid fa-hourglass-half", conditions: "fa-solid fa-heart-pulse", rules: "fa-solid fa-dice-d10", comms: "fa-solid fa-heart-pulse", chat: "fa-solid fa-comments", hub: "fa-solid fa-map-location-dot", environment: "fa-solid fa-cloud-moon-rain" }[id],
+          icon: { fx: "fa-solid fa-bolt", combat: "fa-solid fa-hourglass-half", conditions: "fa-solid fa-heart-pulse", rules: "fa-solid fa-dice-d10", comms: "fa-solid fa-heart-pulse", chat: "fa-solid fa-comments", hub: "fa-solid fa-map-location-dot", environment: "fa-solid fa-cloud-moon-rain" }[id],
           type: menuClass.for(id, keys),
           restricted: true
         });

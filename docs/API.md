@@ -275,3 +275,19 @@ Calls are Night City Messenger's (2.1+); these are the module's ways in.
 
 1.6's `place`, `say`, `hangUp`, `end`, `saveLog`, `dial` and `calls`, the `/holo` chat command and
 the `callsChanged` hook are gone with the module's own calls.
+
+## Neon FX: `ncm.fx`
+
+Needs Sequencer. Tokens default to the selected ones; only tokens you own are switched.
+
+| | |
+| --- | --- |
+| `sandevistan(tokens?, on?)` | flip the Sandevistan (the afterimage trail as the token moves); `on: true/false` forces it |
+| `psycho(tokens?, on?)` | flip the Cyberpsychosis glitch (a look only; the condition is `extremeCyberpsychosis`) |
+| `clear(tokens?)` | switch both off |
+| `refresh()` | redraw every token on the scene |
+| `installMacros()` | GM: add the Neon FX macros to the "Neon FX" macro folder (skips ones already there) |
+| `report()` | which JB2A files (or Neon FX fallbacks) the looks use here |
+
+The switches are the token flags `flags.cpr-neon-combat-manager.fx.sandevistan` and `.psycho`.
+Persistent looks are Sequencer effects named `ncm-fx-<condition or switch>-<tokenId>`.

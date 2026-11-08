@@ -30,6 +30,9 @@ Cyberpunk RED's own rolls.
 - **Neon Conditions**: the full Cyberpunk RED condition set, wired into the system's roll
   modifiers, with a Condition Lab, a Triggler and a drop-in stand-in for Condition Lab &
   Triggler (which stopped at Foundry v12).
+- **Neon FX** (with Sequencer): conditions show on the tokens (fire, electricity, glitching
+  quickhacks, Mortally Wounded's heartbeat...), plus a Cyberpsychosis glitch and a Sandevistan
+  afterimage trail you switch on with a macro. Uses JB2A when it's installed.
 - **Combat time**: each Round moves world time 3 seconds, so SmallTime, Neon Hub's calendar and
   every timed effect keep pace with the fight.
 - **Night City weather**: the day's weather from Neon Hub's calendar becomes conditions on the
@@ -369,7 +372,7 @@ with their source, situational ones as toggles.
 | Critical Injuries (p.187-188) | All 22. Placing one gives the actor **CPR's own Critical Injury item** from the system compendium (its effect carries the penalty and the Death Save increase); a Critical Injury rolled or dropped onto a sheet shows on the token. **2070**: Broken Leg also costs -2 Evasion, per leg (both: -4) |
 | Combat (p.168-185, p.345-347) | Prone (**2070**: -4 Evasion vs melee and Grapples, as roll-dialog toggles), Grappled, Grappling, Iron Grip, Choked, Human Shield, In Cover, Hidden, **Into the Wall** (2070: Spinal Injury for one Round), Holding Action, Suppressed, Netrunning, Blinded, Deafened, Flashbanged, Teargassed, Knocked Out (Sleep), EMP'd |
 | Hazards (p.180-181) | On Fire (Mild/Strong/Deadly; **2070**: a fire that wouldn't raise the stage pushes it up one), Drowning, Asphyxiating, Electrocuted, Radiation (Low/High), Falling, Exposure, Acid |
-| Situational (p.129) | Exhausted, Fatigued / Slept Badly, Extreme Stress, Drunk or Sedated, In Smoke; the Plot Die's one-Check Bonus, Aided and Hindered |
+| Situational (p.129) | Exhausted, Fatigued / Slept Badly, Extreme Stress, Drunk or Sedated, In Smoke; **Extreme Cyberpsychosis** (2070 ch.09: Humanity below 0, the GM plays the character; a +2 the GM can switch on in the roll); the Plot Die's one-Check Bonus, Aided and Hindered |
 | Quickhacks (2070 ch.10) | Comms Jam (no holocalls out), Vitals Spoof (the Biomon Link shows calm vitals; the GM sees SPOOFED), PopUp-geddon, Impair Movement, Slow (MOVE -1d6, rolled), Short Circuit, Cyberware Malfunction, Reboot Optics, Cripple Movement, Weapon Glitch, Limb Seize, Speedware Crash, Sonic Shock (Damaged Ear), Frame Lock, Q-KRASH, System Reset (Unconscious and Prone), Puppet, Cyberpsychosis. Each runs its 3 or 20 Rounds. Overheat is On Fire (Strong) |
 | Drugs (p.150, p.227-229) | Antibiotics, Rapidetox, Speedheal, Stim, Surge, Black Lace, Blue Glass, Boost, Smash, Synthcoke and their addictions |
 | Weather (Night City Weather) | Light/Heavy Rain, Acid Rain, Blood Rain, Ash Storm, Dust Storm, Inversion Smog, Deadly Thunderstorm, Radioactive Windstorm, Cold Snap, Heat Wave, Hot, Cold, Flooding, Blackout |
@@ -394,6 +397,9 @@ What they do on their own:
   penalty back to base.
 - **Immunity**: Anti-Dazzle stops flashbangs.
 - **Dead** marks the combatant defeated (and Foundry's "defeated" toggle sets Dead).
+- **Extreme Cyberpsychosis follows Humanity** (setting): below 0 a character gets it, and it goes
+  once Humanity is positive again (Immunoblockers, Prime Time). A reminder on their next Turn
+  covers the LUCK roll to retake the Move Action or the Action. One the GM placed by hand stays.
 - **2070 rulings**: Mortally Wounded is also -6 MOVE; a hit wakes the Unconscious (and ends a
   System Reset), unless drugged asleep or choked; a flashbang is a Damaged Eye and a Damaged Ear
   for a minute.
@@ -429,6 +435,46 @@ Condition Lab & Triggler (CLT) stopped development at Foundry v12. Neon Conditio
    `game.clt.neon` tells it's the stand-in.
 
 New code should use Neon Conditions' API directly: see [docs/API.md](docs/API.md).
+
+## Neon FX
+
+Visual effects through [Sequencer](https://foundryvtt.com/packages/sequencer) (needed for Neon
+FX; the rest of the module doesn't use it). JB2A, free or Patreon, is used where it has the right
+animation; everything else is Neon FX's own art, so nothing needs JB2A.
+
+**Conditions on the tokens.** While a condition lasts, its token shows it, for everyone:
+
+| | |
+| --- | --- |
+| Wounds | Seriously Wounded: a faint red outline. Mortally Wounded: a pulsing red outline, a heartbeat line over the token and a tremble. Unconscious and Knocked Out: drifting z's. Stabilized and Speedheal: a heal flash |
+| Critical Injuries | a hit flash when one lands (JB2A impact) |
+| Hazards | On Fire grows with the stage (JB2A flames); Electrocuted crackles (JB2A static electricity) with a zap; Radiation, Acid, Drowning and Asphyxiating glow and tremble |
+| Combat | Netrunning: a turning data ring. Suppressed: an amber target reticle. Hidden: an optical-camo ripple. Grappled, Choked, Flashbanged, Teargassed, In Smoke (JB2A fog), EMP'd |
+| Quickhacks | each lands with an upload burst and chirp; most leave a cyan glitch while they run (Short Circuit sparks, Sonic Shock pulses, Puppet's ring) |
+| Drugs | a coloured glow per drug; Blue Glass sways, Synthcoke jitters |
+| Extreme Cyberpsychosis | the full glitch below, a red target-lock reticle under the token, and a sting |
+
+**The switches** (macros in the "Neon FX" macro folder, added for the GM once; or the API):
+
+- **Sandevistan**: switch it on, and every move the token makes (drag, ruler, arrow keys) leaves
+  fading green, magenta and cyan afterimages, with a green and magenta fringe on the token and a
+  slow-time hum. Run it again to switch it off.
+- **Cyberpsychosis Glitch**: the token itself shakes and jerks, with red and cyan copies tearing
+  off it, red scanlines and flickering corrupted-signal bands. A look only; the condition is
+  Extreme Cyberpsychosis. Run it again to switch it off.
+- **Clear Neon FX**: switches both off on the selected tokens.
+
+Players can switch their own tokens. The switches are saved on the token, so they survive a
+reload and show for everyone.
+
+**Sound and motion are each player's own** (client settings): *Neon FX volume* (0.4 by default,
+0 silences it) on top of the channel slider they pick (Interface by default); the sounds are
+levelled quiet and fade in, so nothing jumps out at the table. *Neon FX token motion* turns off
+shaking and swaying (so does the system's reduced-motion setting); it only ever moves the art,
+never the token, and the token is never hidden.
+
+World settings (Neon FX menu): Neon FX on or off, condition visuals on or off, and the macros.
+`api.fx.report()` in the console shows which JB2A files are in use.
 
 ## Combat time
 

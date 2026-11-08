@@ -31,6 +31,7 @@ import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
 import { Roller } from "./roller/roller.js";
 import { Ladder } from "./roller/ladder.js";
+import { NeonFX } from "./neonfx/neonfx.js";
 import { debounce, L } from "./util.js";
 
 /** Neon Combat Manager's public API: game.modules.get("cpr-neon-combat-manager").api */
@@ -49,6 +50,21 @@ const api = {
     /** Register a condition from another module (during init/setup or the registerConditions hook). */
     register: (def) => Registry.register(def),
     openLab: async () => (await import("./conditions/lab-app.js")).ConditionLab.open()
+  },
+  /** Neon FX (needs Sequencer): condition visuals, and the Cyberpsychosis and Sandevistan switches. */
+  fx: {
+    /** Flip the Cyberpsychosis glitch on tokens (default: selected); on: true/false forces it. */
+    psycho: (tokens, on = null) => NeonFX.toggle("psycho", tokens, on),
+    /** Flip the Sandevistan (afterimage trail while the token moves) on tokens (default: selected). */
+    sandevistan: (tokens, on = null) => NeonFX.toggle("sandevistan", tokens, on),
+    /** Switch both off on tokens (default: selected). Conditions stay. */
+    clear: (tokens) => NeonFX.clear(tokens),
+    /** Redraw every token on the scene. */
+    refresh: () => NeonFX.refreshScene(),
+    /** GM: put the Neon FX macros in a "Neon FX" macro folder. */
+    installMacros: () => NeonFX.installMacros(),
+    /** Which JB2A files (or fallbacks) the looks use here. */
+    report: () => NeonFX.report()
   },
   /** Combat time: a Round is 3 seconds by default. */
   time: {
@@ -268,6 +284,7 @@ Hooks.once("init", () => {
   Roller.init();
   Ladder.init();
   TrackerHooks.init();
+  NeonFX.init();
 
   game.modules.get(MODULE_ID).api = api;
 });
@@ -296,7 +313,10 @@ Hooks.once("ready", async () => {
       // Wound States for everyone who might be on screen.
       const players = game.actors.filter((a) => a.type === "character" && a.hasPlayerOwner);
       const actors = new Set([...players, ...(game.combat?.combatants ?? []).map((c) => c.actor).filter(Boolean)]);
-      for (const actor of actors) await Triggers.syncWound(actor);
+      for (const actor of actors) {
+        await Triggers.syncWound(actor);
+        await Triggers.syncPsychosis(actor);
+      }
       for (const combat of game.combats ?? []) await CombatTime.stampStart(combat);
       await Conditions.expire();
       await Hub.migratePins();
@@ -310,6 +330,7 @@ Hooks.once("ready", async () => {
   NcmSpam.apply().catch((err) => console.error(`${MODULE_ID} | spam`, err));
   SceneSignal.sync().catch((err) => console.error(`${MODULE_ID} | dead zones`, err));
   await Roller.ready().catch((err) => console.error(`${MODULE_ID} | roller`, err));
+  await NeonFX.ready().catch((err) => console.error(`${MODULE_ID} | Neon FX`, err));
   Hooks.callAll(HOOKS.ready, api);
 });
 

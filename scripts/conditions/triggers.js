@@ -41,6 +41,7 @@ export const Triggers = {
   async evaluate(actor) {
     if (!actor) return;
     await this.syncWound(actor);
+    await this.syncPsychosis(actor);
     for (const t of this.list()) {
       if (t.disabled) continue;
       if (t.types?.length && !t.types.includes(actor.type)) continue;
@@ -68,6 +69,23 @@ export const Triggers = {
     if (stale.length) await actor.deleteEmbeddedDocuments("ActiveEffect", stale.map((e) => e.id), { [MODULE_ID]: { quiet: true } });
     if (want && !have.some((e) => Registry.ofEffect(e).id === want) && !Registry.get(want)?.disabled) {
       await Conditions.add(want, actor, { managed: "wound" });
+    }
+  },
+
+  /**
+   * Extreme Cyberpsychosis follows Humanity (2070 Ch09): below 0 it starts, and it lasts until
+   * Humanity is positive again (0 itself changes nothing). Only the one this mirror added is
+   * taken away; a GM's own stays.
+   */
+  async syncPsychosis(actor) {
+    if (!Settings.get("mirrorCyberpsychosis") || !actor.isOwner || Registry.get("extremeCyberpsychosis")?.disabled) return;
+    const humanity = Number(actor.system?.derivedStats?.humanity?.value);
+    if (!Number.isFinite(humanity)) return;
+    const mine = Conditions.effects(actor, "extremeCyberpsychosis").filter((e) => e.getFlag(MODULE_ID, FLAGS.managed) === "humanity");
+    if (humanity < 0 && !Conditions.has("extremeCyberpsychosis", actor)) {
+      await Conditions.add("extremeCyberpsychosis", actor, { managed: "humanity" });
+    } else if (humanity > 0 && mine.length) {
+      await actor.deleteEmbeddedDocuments("ActiveEffect", mine.map((e) => e.id));
     }
   },
 

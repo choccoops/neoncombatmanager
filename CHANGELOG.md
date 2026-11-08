@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.13.0
+
+**Neon FX**: Sequencer visuals for the table (needs the Sequencer module; uses JB2A where it's
+installed).
+
+- **Conditions show on the tokens**: fire by stage, crackling electricity, glitching quickhacks
+  with an upload burst, Mortally Wounded's heartbeat line, drifting z's, a netrunner's data ring,
+  a Suppressed reticle, drug glows and more. The GM's client draws them through Sequencer, so
+  everyone sees the same thing and they come back after a reload.
+- **Sandevistan**: a switch (macro) that leaves green, magenta and cyan afterimages behind the
+  token on every move, with a fringe and a slow-time hum while it's on. Every client draws the
+  trail itself as the token moves.
+- **Cyberpsychosis Glitch**: a switch (macro) that shakes the token itself, with an RGB split,
+  scanlines and corrupted-signal bands. Unlike the first standalone macro, it never hides the
+  token.
+- **Quiet sound**: Neon FX volume (a client setting, 0.4 by default) and a choice of channel; the
+  sounds are levelled about 20 dB below the first macros and fade in.
+- **Token motion** (shake, tremble, sway, jolt) moves only the art, on each client, and each
+  player can turn it off.
+- A "Neon FX" macro folder (Sandevistan, Cyberpsychosis Glitch, Extreme Cyberpsychosis, Clear
+  Neon FX) is added once for the GM; `api.fx` has the same.
+- Art and sounds ship in `assets/fx` (sounds and some textures made with ElevenLabs; the rest
+  drawn for the module).
+
+**Extreme Cyberpsychosis** (2070 Core Rules, Chapter 09) is a new condition: the GM plays the
+character, with a +2 the GM can switch on in the roll, and a reminder of the LUCK roll to retake
+the Move Action or the Action. With "Extreme Cyberpsychosis follows Humanity" (on by default) it
+starts when Humanity drops below 0 and ends once Humanity is positive again.
+
 ## 1.12.0
 
 - **"No signal" screen**: when a player's view lands in a Night City Messenger dead zone, a short
