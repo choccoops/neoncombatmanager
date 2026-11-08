@@ -46,6 +46,12 @@ export const Run = {
           return r;
         }, { event, token });
       }
+      case "rico":
+      case "chg": {
+        if (!item) return null;
+        const { Arsenal } = await import("../arsenal/arsenal.js");
+        return Arsenal.toggle(actor, item, kind === "rico" ? "ricochet" : "charge", { token });
+      }
       case "rld":
         if (!item?.doAction) return null;
         // As the sheet's reload button: loaded ammo tops up, none opens the load dialog.

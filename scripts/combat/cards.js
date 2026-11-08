@@ -170,6 +170,10 @@ export const Cards = {
       const { Stakes } = await import("../stakes/stakes.js");
       return Stakes.click(message, btn, event, actor);
     }
+    if (String(d.ncmAction).startsWith("arsenal-")) {
+      const { Arsenal } = await import("../arsenal/arsenal.js");
+      return Arsenal.click(message, btn, event, actor);
+    }
     if (String(d.ncmAction).startsWith("roller-")) {
       const { Roller } = await import("../roller/roller.js");
       return Roller.click(message, btn, event, actor);

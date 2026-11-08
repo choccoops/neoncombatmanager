@@ -29,6 +29,8 @@ async function d10() {
  */
 export const Roller = {
   active: false,
+  /** Does a roll hit an area (no Tarot card for it)? Neon Arsenal answers for its weapons. */
+  isArea: () => false,
   /** The CPRRoll whose card is being posted (RenderRollCard to preCreateChatMessage). */
   pending: null,
 
@@ -137,7 +139,7 @@ export const Roller = {
     const r = message.flags?.[MODULE_ID]?.roll;
     if (!r) return;
     if (r.chain) await this.chainCard(r);
-    if (r.kind === "damage" && Settings.get("tarotCriticals") && drawsTarot(r.faces, { area: r.autofire })) {
+    if (r.kind === "damage" && Settings.get("tarotCriticals") && drawsTarot(r.faces, { area: r.autofire || this.isArea(r) })) {
       const { Tarot } = await import("./tarot.js");
       await Tarot.offer(r);
     }

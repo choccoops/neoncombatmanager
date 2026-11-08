@@ -18,7 +18,9 @@ const GLYPHS = {
   biomon: `<path d="M256 384 132 262a72 72 0 0 1 124-82 72 72 0 0 1 124 82L256 384zM112 262h86l26-46 40 92 26-46h110"/>`,
   hub: `<path d="M256 400s-112-118-112-198a112 112 0 0 1 224 0c0 80-112 198-112 198z"/><circle cx="256" cy="204" r="40"/>`,
   stakes: `<path d="M256 108l128 74v148l-128 74-128-74V182z"/><path d="M128 182l128 74 128-74M256 256v148"/><circle cx="196" cy="290" r="10"/><circle cx="316" cy="290" r="10"/><circle cx="256" cy="176" r="10"/>`,
-  lab: `<path d="M212 112h88M228 112v110l-90 140a28 28 0 0 0 24 44h188a28 28 0 0 0 24-44l-90-140V112M170 312h172"/>`
+  lab: `<path d="M212 112h88M228 112v110l-90 140a28 28 0 0 0 24 44h188a28 28 0 0 0 24-44l-90-140V112M170 312h172"/>`,
+  rebuilds: `<path d="M108 220h232l36-36h40v72h-48l-20 28H244l-28 108h-64l20-108h-64z"/><path d="M380 300l-34 60h44l-34 60"/>`,
+  arsenal: `<circle cx="256" cy="256" r="120"/><path d="M256 100v86M256 326v86M100 256h86M326 256h86"/><circle cx="256" cy="256" r="18"/>`
 };
 
 function icon(key) {
@@ -36,14 +38,16 @@ const MACROS = [
   { key: "biomon", name: "Biomon Link", call: "ncm.biomon.open()", what: "the Biomon Link" },
   { key: "hub", name: "Night City Map", call: "ncm.hub.open()", what: "the Night City Map" },
   { key: "stakes", name: "Plot Die", call: "ncm.stakes.open(who)", what: "the Plot Die (Raising the Stakes)" },
-  { key: "lab", name: "Condition Lab", call: "ncm.conditions.openLab()", what: "the Condition Lab", gm: true }
+  { key: "lab", name: "Condition Lab", call: "ncm.conditions.openLab()", what: "the Condition Lab", gm: true },
+  { key: "rebuilds", name: "Weapon Rebuilds", call: "ncm.arsenal.menu(who)", what: "the weapon switches (a Power gun's ricochet, a Tech gun's charge)" },
+  { key: "arsenal", name: "Install Weapon Animations", call: "ncm.arsenal.install()", what: "", doing: "put Neon Arsenal's weapon animations into Automated Animations (or bring them up to date)", gm: true, gmWhat: "Installing the weapon animations" }
 ];
 
-const command = (m) => `// Neon Combat Manager: open ${m.what}${m.gm ? "" : " for the selected token's character (or your own)"}.
+const command = (m) => `// Neon Combat Manager: ${m.doing ?? `open ${m.what}`}${m.gm ? "" : " for the selected token's character (or your own)"}.
 // Works from the hotbar, the Action HUD's Macros group, a Neon Hub page button or an active tile.
 const ncm = game.modules.get("${MODULE_ID}")?.api;
 if (!ncm) return ui.notifications.warn("Neon Combat Manager isn't active in this world.");
-${m.gm ? 'if (!game.user.isGM) return ui.notifications.warn("The Condition Lab is for the GM.");\n' : ""}const who = (typeof actor !== "undefined" && actor) || (typeof character !== "undefined" && character) || null;
+${m.gm ? `if (!game.user.isGM) return ui.notifications.warn("${m.gmWhat ?? "The Condition Lab"} is for the GM.");\n` : ""}const who = (typeof actor !== "undefined" && actor) || (typeof character !== "undefined" && character) || null;
 return ${m.call};
 `;
 
