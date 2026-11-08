@@ -1090,6 +1090,18 @@
       "arsenalHideDiwakoHit": {
         "name": "Hide Diwako's \"Does it hit?\" message",
         "hint": "Diwako's module posts its own hit message, read off \"<table> (Autofire)\" tables the 2070 guns don't have, and it has no setting of its own. With Does it hit? above on, this keeps that message out of the chat. Diwako's hit sounds and animations are its own settings."
+      },
+      "movementRuler": {
+        "name": "Movement ruler",
+        "hint": "While a token is dragged, its path in Cyberpunk RED's bands: within the Move Action (MOVE × 2 m/yds, cyan), with a Run (yellow), out of reach (red), from MOVE now and counting what was walked this Turn. Space or right-click drops a waypoint, Backspace takes it back. On Foundry v13 it colours Foundry's own ruler; with Drag Ruler running, Drag Ruler gets the bands. Reload to change."
+      },
+      "MovementRuler": {
+        "auto": "On",
+        "off": "Off"
+      },
+      "movementRulerWaypoints": {
+        "name": "Tokens walk their waypoints",
+        "hint": "With waypoints dropped while dragging, the token walks them one leg at a time on release (a wall stops a player's token), rather than straight to the end (Foundry v12)."
       }
     },
     "SceneWeather": {
@@ -2089,6 +2101,19 @@
         "autofire": "Autofire: damage ×{mult}.",
         "dodge": "REF 8+: they can dodge, and their Evasion roll counts if they do."
       }
+    },
+    "Ruler": {
+      "move": "Move",
+      "run": "Run",
+      "over": "out of reach",
+      "why": {
+        "prone": "Prone: Get Up before you can move.",
+        "grappled": "Grappled: no Move Action.",
+        "noMove": "No Move Action this Turn: a Run (your Action) only."
+      },
+      "walked": "{metres} {unit} already walked this Turn",
+      "Blocked": "A wall is in the way: the token stopped at the last waypoint it could reach.",
+      "DragRulerNotice": "Neon Combat Manager has its own movement ruler, with Cyberpunk RED's Move and Run (and what was already walked this Turn). Drag Ruler is running, so for now Drag Ruler shows those bands instead. To use Neon Combat Manager's ruler, disable Drag Ruler."
     }
   }
 }
