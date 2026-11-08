@@ -814,6 +814,10 @@
         "top": "Top of the screen",
         "belowNav": "Under the scene tabs"
       },
+      "noSignalFx": {
+        "name": "\"No signal\" screen",
+        "hint": "A short glitch and fade when your view lands in a Night City Messenger dead zone (players only)."
+      },
       "biomonAlerts": {
         "name": "Biomon Link alarms",
         "hint": "When someone on your link goes critical, drops or flatlines: a notice, the Biomon window pops open, or nothing."
@@ -1213,7 +1217,12 @@
       "SheetButton": "Holocall",
       "MenuEntry": "Holocall",
       "NoNumber": "{name} has no number in Night City Messenger. The GM gives numbers in its Phone settings.",
-      "Failed": "The call to {name} didn't go through."
+      "Failed": "The call to {name} didn't go through.",
+      "NoSignalFx": {
+        "Title": "No signal",
+        "Sub": "Carrier lost. Messages and calls won't get through here.",
+        "SubAt": "Carrier lost in {place}. Messages and calls won't get through here."
+      }
     },
     "Stakes": {
       "Title": "Plot Die",

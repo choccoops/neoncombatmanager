@@ -43,6 +43,7 @@ const DEFS = [
   ["stageEnabled", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.stageChanged`) }],
   ["stageCast", "world", Object, { cast: [], focus: true }, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.stageChanged`) }],
 
+  ["noSignalFx", "client", Boolean, true, { config: true }],
   ["biomonAlerts", "client", String, "toast", { config: true, choices: { toast: K("BiomonAlerts.toast"), open: K("BiomonAlerts.open"), off: K("BiomonAlerts.off") } }],
 
   // Biomon Link

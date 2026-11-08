@@ -17,6 +17,7 @@ import { Comms } from "./comms/comms.js";
 import { Links } from "./comms/links.js";
 import { Phone } from "./comms/phone.js";
 import { NcmSpam, SceneSignal } from "./comms/ncm-world.js";
+import { NoSignal } from "./comms/no-signal.js";
 import { Hud } from "./hud/hud.js";
 import { Chat } from "./chat/chat.js";
 import { Commands } from "./chat/commands.js";
@@ -130,7 +131,9 @@ const api = {
     open: (actor) => Phone.open(actor),
     numberOf: (actor) => Phone.numberOf(actor),
     /** Why a character can't call out (Comms Jam, dead ground on the map), or "". */
-    blocked: (actor) => Phone.blocked(actor)
+    blocked: (actor) => Phone.blocked(actor),
+    /** Play the "No signal" screen (players see it on entering a dead zone). */
+    noSignal: () => NoSignal.play()
   },
   /** The City & NCART hub: Night City 2070. */
   hub: {
@@ -257,6 +260,7 @@ Hooks.once("init", () => {
   Chat.init();
   Comms.init();
   SceneSignal.init();
+  NoSignal.init();
   Hooks.on(`${MODULE_ID}.spamChanged`, () => NcmSpam.apply());
   Stakes.init();
   Awareness.init();

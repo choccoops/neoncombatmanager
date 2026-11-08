@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.12.0
+
+- **"No signal" screen**: when a player's view lands in a Night City Messenger dead zone, a short
+  animation plays (about three seconds). This happens on changing scene, or when the GM kills the
+  signal where they are.
+  - The screen flickers with static, the signal bars drop one by one, and "NO SIGNAL" glitches in
+    with the scene's name.
+  - It fades out alongside NCM's own dead-zone sound.
+  - It plays once per entry: moving from one dead zone to another doesn't replay it, and the GM
+    never sees it.
+  - Each player can turn it off (the "No signal" screen client setting), and reduced motion gets a
+    plain fade.
+  - `game.modules.get("cpr-neon-combat-manager").api.holocall.noSignal()` plays it on demand.
+
 ## 1.11.0
 
 **Night City Messenger in the 2070s.**

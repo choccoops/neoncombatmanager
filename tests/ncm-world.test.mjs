@@ -102,3 +102,27 @@ test("syncing dead zones: the map's dead ground goes dead in Night City Messenge
   }
   assert.equal(missingKeys.size, 0, [...missingKeys].join(", "));
 });
+
+test("no signal: plays for a player whose view lands in a dead zone, once, not for the GM", async () => {
+  const { NoSignal } = await import("../scripts/comms/no-signal.js");
+  const { asGM } = await import("./helpers/foundry.mjs");
+  const ncm = fakeMessenger();
+  const live = { id: "a", flags: {} };
+  const dead = { id: "b", flags: { "night-city-messenger": { deadZone: true } } };
+  const dead2 = { id: "c", flags: { "night-city-messenger": { deadZone: true } } };
+  try {
+    asGM(false);
+    NoSignal.dead = undefined;
+    assert.equal(NoSignal.check(live), false);
+    assert.equal(NoSignal.check(dead), true, "into a dead zone");
+    assert.equal(NoSignal.check(dead2), false, "dead to dead: still no signal, no replay");
+    NoSignal.check(live);
+    asGM(true);
+    NoSignal.dead = false;
+    assert.equal(NoSignal.isDead(dead), true);
+  } finally {
+    asGM(true);
+    ncm.off();
+  }
+  assert.equal(NoSignal.isDead(dead), false, "without Night City Messenger, nothing is dead");
+});
