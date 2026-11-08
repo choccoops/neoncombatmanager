@@ -4,6 +4,8 @@ import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
 import { Phone } from "../comms/phone.js";
 import { Hub } from "../hub/hub.js";
+import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
+import { flavorOf } from "../arsenal/kinds.js";
 import { L, slug } from "../util.js";
 
 const { getProperty } = foundry.utils;
@@ -79,6 +81,9 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     if (s.fireModes?.suppressiveFire) buttons.push({ key: `supp:${w.id}`, label: L(`${LANG}.Hud.Suppressive`), icon: "fa-solid fa-wind", on: mode === "suppressive" });
     if (mode !== "suppressive") buttons.push({ key: `dmg:${w.id}`, label: L(`${LANG}.Hud.Damage`), icon: "fa-solid fa-droplet" });
     if (ranged) buttons.push({ key: `rld:${w.id}`, label: L(`${LANG}.Hud.Reload`), icon: "fa-solid fa-rotate" });
+    // Neon Arsenal's switches: a Power gun's ricochet, a Tech gun's charge.
+    const upgrades = Rebuilds.upgradesOf(w, actor);
+    buttons.push(...Rebuilds.buttons(actor, w, traitsOf(ranged ? flavorOf(w, upgrades) : null, upgrades)));
     const mag = s.magazine;
     out.weapons.push({
       key: `weapon:${slug(w.name)}`, label: w.name, img: w.img,

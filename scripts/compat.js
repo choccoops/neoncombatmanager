@@ -18,7 +18,8 @@ const V12 = {
   TextEditor: () => (typeof TextEditor === "undefined" ? undefined : TextEditor),
   renderTemplate: () => (typeof renderTemplate === "undefined" ? undefined : renderTemplate),
   loadTemplates: () => (typeof loadTemplates === "undefined" ? undefined : loadTemplates),
-  CombatTracker: () => (typeof CombatTracker === "undefined" ? undefined : CombatTracker)
+  CombatTracker: () => (typeof CombatTracker === "undefined" ? undefined : CombatTracker),
+  PreciseText: () => (typeof PreciseText === "undefined" ? undefined : PreciseText)
 };
 const v12 = (name) => globalThis[name] ?? V12[name]?.();
 
@@ -60,6 +61,11 @@ export const Compat = {
   loadTemplates(paths) {
     const fn = ns("foundry.applications.handlebars.loadTemplates") ?? v12("loadTemplates");
     return fn(paths);
+  },
+
+  /** Canvas text that stays sharp (v13 moved it under foundry.canvas.containers). */
+  get PreciseText() {
+    return ns("foundry.canvas.containers.PreciseText") ?? v12("PreciseText");
   },
 
   /** Hooks hand AppV1 apps a jQuery object and AppV2 apps an HTMLElement: always get the element. */
@@ -155,6 +161,51 @@ export const Compat = {
     const size = canvas?.dimensions?.size || 100;
     const per = canvas?.dimensions?.distance || 2;
     return (Math.hypot(b.x - a.x, b.y - a.y) / size) * per;
+  },
+
+  /** The middle of the grid square under a canvas point. */
+  snapCenter(point) {
+    const grid = canvas?.grid;
+    try {
+      if (typeof grid?.getSnappedPoint === "function") return grid.getSnappedPoint(point, { mode: CONST.GRID_SNAPPING_MODES.CENTER });
+      if (typeof grid?.getCenter === "function") {
+        const [x, y] = grid.getCenter(point.x, point.y);
+        return { x, y };
+      }
+    } catch {
+      /* fall through */
+    }
+    const size = canvas?.dimensions?.size || 100;
+    return { x: (Math.floor(point.x / size) + 0.5) * size, y: (Math.floor(point.y / size) + 0.5) * size };
+  },
+
+  /** Where the mouse is on the canvas. */
+  get mousePosition() {
+    const p = canvas?.mousePosition ?? canvas?.app?.renderer?.events?.pointer?.getLocalPosition?.(canvas.stage);
+    return p ? { x: p.x, y: p.y } : null;
+  },
+
+  /**
+   * Would a token moving in a straight line from `a` to `b` hit a wall? Returns the point it
+   * stops at (just short of the wall), or null when the way is clear.
+   */
+  moveBlocked(a, b) {
+    try {
+      const backend = CONFIG.Canvas?.polygonBackends?.move;
+      const hit = backend?.testCollision?.(a, b, { type: "move", mode: "closest" });
+      if (!hit) return null;
+      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const back = Math.min(len, (canvas?.dimensions?.size || 100) / 2);
+      return { x: hit.x - ((b.x - a.x) / len) * back, y: hit.y - ((b.y - a.y) / len) * back };
+    } catch {
+      return null;
+    }
+  },
+
+  /** Target these tokens (by id) for this user, replacing the targets they had. */
+  setTargets(ids) {
+    if (typeof canvas?.tokens?.setTargets === "function") return canvas.tokens.setTargets(ids, { mode: "replace" });
+    return game.user?.updateTokenTargets?.(ids);
   },
 
   /* ---------------------------------------- */

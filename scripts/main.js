@@ -34,6 +34,11 @@ import { Hub } from "./hub/hub.js";
 import { Roller } from "./roller/roller.js";
 import { Ladder } from "./roller/ladder.js";
 import { NeonFX } from "./neonfx/neonfx.js";
+import { Arsenal } from "./arsenal/arsenal.js";
+import { AA } from "./arsenal/aa.js";
+import { Blast } from "./arsenal/blast.js";
+import { Dv } from "./arsenal/dv.js";
+import { RebuildRegistry } from "./arsenal/rebuilds.js";
 import { debounce, L } from "./util.js";
 
 /** Neon Combat Manager's public API: game.modules.get("cpr-neon-combat-manager").api */
@@ -74,6 +79,31 @@ const api = {
     installMacros: () => NeonFX.installMacros(),
     /** Which JB2A files (or fallbacks) the looks use here. */
     report: () => NeonFX.report()
+  },
+  /** Neon Arsenal: Automated Animations for 2070 weapons, their sounds, area attacks and weapon traits. */
+  arsenal: {
+    /** GM: put the profile into Automated Animations' menus (or bring it up to date). */
+    install: () => AA.install(),
+    /** GM: take the profile out of Automated Animations' menus. */
+    uninstall: () => AA.uninstall(),
+    /** Download the profile as Automated Animations' menu JSON (for a world without this module). */
+    exportProfile: () => AA.exportJson(),
+    /** What Neon Arsenal reads off a weapon: its kind, flavor, ammo, area, traits and AA entry. */
+    explain: (item) => AA.explain(item),
+    /** A weapon's traits (flavor and Rebuilds). */
+    traits: (item) => Arsenal.traitsFor(item),
+    /** Register a Rebuild that is an item (see scripts/arsenal/rebuilds.js), during init/setup or the registerRebuilds hook. */
+    registerRebuild: (def) => RebuildRegistry.register(def),
+    rebuilds: () => RebuildRegistry.all(),
+    /** Flip a Power gun's ricochet or a Tech gun's charge for a character. */
+    ricochet: (actor, item) => Arsenal.toggle(actor, item, "ricochet"),
+    charge: (actor, item) => Arsenal.toggle(actor, item, "charge"),
+    /** The Weapon Rebuilds window: the switches for a character's weapons. */
+    menu: (actor) => Arsenal.menu(actor),
+    /** The DV a weapon faces at a distance in m/yds (the 2070 range tables). */
+    dv: (item, distance, options) => Dv.forWeapon(item, distance, options),
+    /** GM: apply an area (a template Neon Arsenal placed) to everyone in it. */
+    applyArea: (templateUuid) => Blast.askAndApply(templateUuid)
   },
   /** Combat time: a Round is 3 seconds by default. */
   time: {
@@ -301,6 +331,8 @@ Hooks.once("init", () => {
   Ladder.init();
   TrackerHooks.init();
   NeonFX.init();
+  Arsenal.init();
+  Roller.isArea = (r) => Arsenal.isArea(r);
 
   game.modules.get(MODULE_ID).api = api;
 });
@@ -317,6 +349,7 @@ Hooks.once("setup", () => {
   Stakes.registerSocket();
   Hub.registerSocket();
   Chat.registerSocket();
+  Arsenal.setup(api.arsenal);
 });
 
 Hooks.once("ready", async () => {
@@ -347,6 +380,7 @@ Hooks.once("ready", async () => {
   SceneSignal.sync().catch((err) => console.error(`${MODULE_ID} | dead zones`, err));
   await Roller.ready().catch((err) => console.error(`${MODULE_ID} | roller`, err));
   await NeonFX.ready().catch((err) => console.error(`${MODULE_ID} | Neon FX`, err));
+  await Arsenal.ready().catch((err) => console.error(`${MODULE_ID} | Neon Arsenal`, err));
   WeatherFx.syncAll().catch((err) => console.error(`${MODULE_ID} | scene weather`, err));
   WeatherFx.ambience();
   Hooks.callAll(HOOKS.ready, api);

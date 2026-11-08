@@ -3,7 +3,8 @@
     "Title": "Neon Combat Manager",
     "Common": {
       "Save": "Save",
-      "Cancel": "Cancel"
+      "Cancel": "Cancel",
+      "Close": "Close"
     },
     "Error": {
       "NoGM": "A GM needs to be connected for that.",
@@ -817,6 +818,11 @@
           "name": "Neon FX",
           "label": "Neon FX",
           "hint": "Sequencer visuals for conditions, the Cyberpsychosis glitch and the Sandevistan, and their macros."
+        },
+        "arsenal": {
+          "name": "Neon Arsenal",
+          "label": "Neon Arsenal",
+          "hint": "Automated Animations for 2070 weapons and ammo (JB2A), weapon sounds, area attacks that place their template, Diwako's DV display and muzzle flashes, and the weapon traits of Power, Smart and Tech guns and Rebuilds."
         }
       },
       "Placement": {
@@ -1044,6 +1050,46 @@
       "conditionSheetNotes": {
         "name": "Condition notes on character sheets",
         "hint": "Each condition on the Effects tab of a character sheet gets a line saying what it does and its page, including conditions Cyberpunk RED can't automate."
+      },
+      "arsenalAnimations": {
+        "name": "Automated Animations for 2070 weapons",
+        "hint": "Each attack gets Neon Arsenal's animation for what the weapon is (its kind, its Power, Smart or Tech flavor, its ammo, its Melee Rebuild), whatever it's called. Needs Automated Animations and JB2A."
+      },
+      "arsenalAutoInstall": {
+        "name": "Keep the animations in Automated Animations",
+        "hint": "When the GM loads the world (and after an update), Neon Arsenal's entries go into Automated Animations' Global Automatic Recognition menu, for the JB2A pack installed. Your own entries stay as they are."
+      },
+      "arsenalSounds": {
+        "name": "Weapon sounds",
+        "hint": "Gunshots, bursts, ricochets, impacts, charge-ups and explosions, played by Neon Combat Manager on each player's client at their own Neon FX volume, quiet by default."
+      },
+      "arsenalAreas": {
+        "name": "Area attacks place their template",
+        "hint": "Grenades, rockets and other explosives place a 10×10 m/yds area (or the size on the ammo's card), and Shotgun Shells and flamethrowers a 6 m/yds cone, before the dice. Everyone inside is targeted, and the GM applies the damage and the ammo's effects to all of them at once."
+      },
+      "arsenalBlowBack": {
+        "name": "Blown back",
+        "hint": "HOUSE RULE (2070 Core Rules, Ch07): whoever takes damage from an explosion is thrown 2 m/yds (4 from a rocket or missile) away from its centre, and stops at a wall (Into the Wall). Offered in the GM's apply window."
+      },
+      "arsenalRebuilds": {
+        "name": "Weapon traits",
+        "hint": "Power guns add 5 to a Critical Injury's Bonus Damage and can ricochet; Smart guns get +1 to hit (with a Neuroport, Personal Link or Subdermal Grip), and Improved Smart rounds a retry; Tech guns charge. Rebuilds other modules register (Neon At Home's Melee Rebuilds) apply on every attack."
+      },
+      "arsenalDvDisplay": {
+        "name": "Diwako's DV display: 2070 tables",
+        "hint": "Diwako's DV display shows the 2070 range tables (Neon Hub's, or whichever CPR is set to), and each gun's own Autofire table as its card names it. Reload to change."
+      },
+      "arsenalPlayerFlashes": {
+        "name": "Muzzle flashes for players' shots",
+        "hint": "Diwako's muzzle flash (with DF Active Lights) only lights the GM's own shots; this sends players' shots to the GM's client so theirs flash too. The GM must be viewing the scene."
+      },
+      "arsenalHitCheck": {
+        "name": "Does it hit?",
+        "hint": "Under each ranged attack card: for each target, the DV at that range (the 2070 tables, Autofire on the gun's own table), hit or miss and by how much, Autofire's damage multiplier, and whether they can dodge (REF 8+)."
+      },
+      "arsenalHideDiwakoHit": {
+        "name": "Hide Diwako's \"Does it hit?\" message",
+        "hint": "Diwako's module posts its own hit message, read off \"<table> (Autofire)\" tables the 2070 guns don't have, and it has no setting of its own. With Does it hit? above on, this keeps that message out of the chat. Diwako's hit sounds and animations are its own settings."
       }
     },
     "SceneWeather": {
@@ -1975,6 +2021,74 @@
       "Secondary": "asks for the DV{dv} Check when it wears off",
       "Consume": "gone once their next Check is rolled",
       "Defeated": "marks them defeated in combat"
+    },
+    "Arsenal": {
+      "Kicker": "Neon Arsenal",
+      "Flavor": {
+        "power": "Power: Critical Injury +5 Bonus Damage",
+        "smart": "Smart: +1 to hit",
+        "tech": "Tech"
+      },
+      "Mod": {
+        "smart": "Smart weapon",
+        "ricochet": "Ricochet",
+        "noLink": "Smart weapon without a link"
+      },
+      "Ricochet": "Ricochet",
+      "Charge": "Charge",
+      "Charged": "Charged",
+      "RicochetOn": "{weapon}: the next shot ricochets (−4, can't be dodged).",
+      "RicochetOff": "{weapon}: no ricochet.",
+      "ChargeTitle": "{name} charges the {weapon}",
+      "ChargeBody": "That's the Move Action. It holds for 20 Rounds or until fired: the next non-explosive attack is ROF1, goes through Thin cover without damaging it, and ignores half the target's SP (2070 Core Rules, Ch07).",
+      "Note": {
+        "ricochet": "Ricochet (−4): bounced off cover at a target the shooter knows is there. It can't be dodged unless the GM allows it (2070 Core Rules, Ch07, Ricochets in Play).",
+        "chargedAttack": "Charged Tech shot: ROF1, through Thin cover without damaging it.",
+        "chargedDamage": "Charged Tech shot: ignores half the target's SP (on the Apply Damage button).",
+        "traits": "Weapon traits on this roll: {list}.",
+        "push": "Propulsion Impact: whoever this hits is pushed {metres} m/yds away (done)."
+      },
+      "SmartRetry": "Improved Smart retry (vs DV{dv})",
+      "SmartRetryFlavor": "Improved Smart Ammunition: 14 + 1d10 (apply the first shot's penalties)",
+      "PlaceHint": "Place the {size} m/yds area: left-click to place it, right-click or Escape for a normal attack.",
+      "Hit": "{total} vs DV{dv}: on target.",
+      "Miss": "{total} vs DV{dv}: missed.",
+      "NoDv": "{total}: no range table for this distance; the GM decides.",
+      "MissMoves": "On a miss the GM moves the blast: drag the template where it lands, and it goes off there.",
+      "Inside": "In the area ({count}): {names}.",
+      "AreaRules": "One damage roll for everyone in it, body armor only, and it ablates. Cover in the area takes it first; anyone who can dodge bullets and beats the roll gets out (2070 Core Rules, Ch07, Firing Modes).",
+      "BlastTitle": "{name}'s {weapon}: the blast",
+      "ConeTitle": "{name}'s {weapon}: the spread",
+      "ApplyArea": "Apply to the area",
+      "ApplyEffects": "Apply the effects",
+      "ApplyTitle": "Apply to the area",
+      "Apply": "Apply",
+      "UntickHint": "Untick anyone who dodged out, or whose cover took the hit.",
+      "Damage": "{total} damage, armor ablates by {ablation}.",
+      "BlowBack": "Blown back {metres} m/yds (whoever takes damage)",
+      "BlownBack": "Blown back",
+      "KeepArea": "Keep the template on the scene",
+      "Nobody": "Nobody in the area.",
+      "Gone": "That area is gone.",
+      "Done": "That area has been applied.",
+      "RollDamageFirst": "Roll the damage first: the area takes the damage roll's numbers.",
+      "Applied": "The area: {count} caught",
+      "HpLine": "HP {before} → {after}",
+      "Doused": "Fire put out",
+      "Save": "{name}: {skill} vs DV{dv}",
+      "SaveBody": "Caught by {ammo}. Beat the DV to shrug it off.",
+      "RollSave": "Roll {skill}",
+      "Direct": "{name}: damage straight to HP",
+      "Installed": "Neon Arsenal: {count} animations put into Automated Animations ({pack}).",
+      "MenuTitle": "Weapon Rebuilds: {name}",
+      "NoActor": "Select a token of yours (or have a character).",
+      "NoSwitches": "{name} has no weapon with a switch (a Power gun's ricochet, a Tech gun's charge).",
+      "HitCheck": {
+        "hit": "<b>{name}</b>: beats DV{dv} by {by}, a hit.",
+        "miss": "<b>{name}</b>: missed DV{dv} by {by}.",
+        "autofire": "Autofire: damage ×{mult}.",
+        "dodge": "REF 8+: they can dodge, and their Evasion roll counts if they do."
+      }
     }
   }
 }

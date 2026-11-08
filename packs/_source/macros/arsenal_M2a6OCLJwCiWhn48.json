@@ -1,0 +1,19 @@
+{
+  "_id": "M2a6OCLJwCiWhn48",
+  "_key": "!macros!M2a6OCLJwCiWhn48",
+  "name": "Neon Combat: Install Weapon Animations",
+  "type": "script",
+  "scope": "global",
+  "img": "modules/cpr-neon-combat-manager/assets/macros/arsenal.svg",
+  "command": "// Neon Combat Manager: put Neon Arsenal's weapon animations into Automated Animations (or bring them up to date).\n// Works from the hotbar, the Action HUD's Macros group, a Neon Hub page button or an active tile.\nconst ncm = game.modules.get(\"cpr-neon-combat-manager\")?.api;\nif (!ncm) return ui.notifications.warn(\"Neon Combat Manager isn't active in this world.\");\nif (!game.user.isGM) return ui.notifications.warn(\"Installing the weapon animations is for the GM.\");\nconst who = (typeof actor !== \"undefined\" && actor) || (typeof character !== \"undefined\" && character) || null;\nreturn ncm.arsenal.install();\n",
+  "folder": null,
+  "sort": 700,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "cpr-neon-combat-manager": {
+      "macro": "arsenal"
+    }
+  }
+}

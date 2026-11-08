@@ -9,6 +9,7 @@ export const MENUS = {
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxMacros"],
+  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDvDisplay", "arsenalPlayerFlashes"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -93,6 +94,18 @@ const DEFS = [
   ["fxVolume", "client", Number, 0.4, { config: true, range: { min: 0, max: 1, step: 0.05 }, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxChannel", "client", String, "interface", { config: true, choices: { interface: K("FxChannel.interface"), environment: K("FxChannel.environment"), music: K("FxChannel.music") } }],
   ["fxMotion", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  // Neon Arsenal: Automated Animations profile, weapon sounds, area attacks, weapon traits
+  ["arsenalAnimations", "world", Boolean, true, {}],
+  ["arsenalAutoInstall", "world", Boolean, true, {}],
+  ["arsenalProfile", "world", String, "", { config: false }],
+  ["arsenalSounds", "world", Boolean, true, {}],
+  ["arsenalAreas", "world", Boolean, true, {}],
+  ["arsenalBlowBack", "world", Boolean, true, {}],
+  ["arsenalRebuilds", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
+  ["arsenalHitCheck", "world", Boolean, true, {}],
+  ["arsenalHideDiwakoHit", "world", Boolean, true, {}],
+  ["arsenalDvDisplay", "world", Boolean, true, { requiresReload: true }],
+  ["arsenalPlayerFlashes", "world", Boolean, true, {}],
   // The 2070 roller and table rules
   ["rollerHooks", "world", Boolean, true, { requiresReload: true }],
   ["rideEdge", "world", Boolean, true, {}],
@@ -156,7 +169,7 @@ export const Settings = {
           name: K(`Menu.${id}.name`),
           label: K(`Menu.${id}.label`),
           hint: K(`Menu.${id}.hint`),
-          icon: { fx: "fa-solid fa-bolt", combat: "fa-solid fa-hourglass-half", conditions: "fa-solid fa-heart-pulse", rules: "fa-solid fa-dice-d10", comms: "fa-solid fa-heart-pulse", chat: "fa-solid fa-comments", hub: "fa-solid fa-map-location-dot", environment: "fa-solid fa-cloud-moon-rain" }[id],
+          icon: { fx: "fa-solid fa-bolt", arsenal: "fa-solid fa-gun", combat: "fa-solid fa-hourglass-half", conditions: "fa-solid fa-heart-pulse", rules: "fa-solid fa-dice-d10", comms: "fa-solid fa-heart-pulse", chat: "fa-solid fa-comments", hub: "fa-solid fa-map-location-dot", environment: "fa-solid fa-cloud-moon-rain" }[id],
           type: menuClass.for(id, keys),
           restricted: true
         });
