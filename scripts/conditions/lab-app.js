@@ -7,31 +7,11 @@ import { CATEGORIES } from "./data.js";
 import { CLT, fromClt } from "./clt.js";
 import { OPS } from "./triggers.js";
 import { ADD } from "./cpr-flags.js";
+import { keyLabel, modeLabel, changeText, isAutomated, MODES } from "./describe.js";
 import { L, esc, shortDuration, slug, pageLabel } from "../util.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { deepClone } = foundry.utils;
-
-/** A change key in words: "All Actions", "REF", "Perception (sight)". */
-export function keyLabel(key) {
-  const k = String(key ?? "");
-  const stat = k.match(/^system\.stats\.(\w+)\.(value|max)$/);
-  if (stat) return stat[1].toUpperCase();
-  const bonus = k.replace(/^bonuses\./, "");
-  const own = `${LANG}.Key.${bonus}`;
-  if (game.i18n.has(own)) return game.i18n.localize(own);
-  const skill = `CPR.global.itemType.skill.${bonus}`;
-  if (game.i18n.has(skill)) return game.i18n.localize(skill);
-  return bonus.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
-}
-
-/** Foundry's name for a change mode other than ADD ("Custom", "Override"...), or "" for ADD. */
-export function modeLabel(mode) {
-  const m = mode ?? ADD;
-  if (m === ADD) return "";
-  const name = Object.entries(CONST.ACTIVE_EFFECT_MODES ?? {}).find(([, v]) => v === m)?.[0] ?? String(m);
-  return name.charAt(0) + name.slice(1).toLowerCase();
-}
 
 /**
  * A change as the editor's row holds it. Changes from other modules can be CUSTOM (resolved by
@@ -55,17 +35,14 @@ export function changeFromRow(field) {
 
 /** A condition's mechanics in a line: "-2 All Actions · -4 MOVE · 1 min". */
 export function summary(c) {
-  const parts = (c.rawChanges ?? []).map((ch) => {
-    const v = Number(ch.value);
-    if ((ch.mode ?? ADD) !== ADD || !Number.isFinite(v)) return `${keyLabel(ch.key)}: ${ch.value}${(ch.mode ?? ADD) !== ADD ? ` (${modeLabel(ch.mode)})` : ""}`;
-    return `${v > 0 ? "+" : ""}${v} ${keyLabel(ch.key)}${ch.situational ? "*" : ""}`;
-  });
+  const parts = (c.rawChanges ?? []).map((ch) => changeText(ch));
   if (c.duration) parts.push(shortDuration(c.duration));
   if (c.turnStart?.damage) parts.push(L(`${LANG}.Lab.TurnStartDamage`, { damage: c.turnStart.damage }));
   if (c.turnEnd?.damage) parts.push(L(`${LANG}.Lab.TurnEndDamage`, { damage: c.turnEnd.damage }));
   if (c.moveDamage) parts.push(L(`${LANG}.Lab.MoveDamage`, { damage: c.moveDamage }));
   if (c.critical) parts.push(L(`${LANG}.Lab.CriticalItem`));
   if (c.mirror === "wound") parts.push(L(`${LANG}.Lab.WoundMirror`));
+  if (!isAutomated(c)) parts.unshift(L(`${LANG}.Lab.Manual`));
   return parts.join(" · ");
 }
 
@@ -191,6 +168,7 @@ export class ConditionLab extends HandlebarsApplicationMixin(ApplicationV2) {
     delete overrides[id];
     await Settings.set("conditionOverrides", overrides);
     Registry.refresh();
+    await Conditions.resync(id);
     this.render();
   }
 
@@ -343,7 +321,8 @@ export class ConditionEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       ...this._draft,
       builtIn: !custom,
       categories: [...CATEGORIES, "custom"].map((cat) => ({ value: cat, label: L(`${LANG}.Category.${cat}`), selected: cat === this._draft.category })),
-      changes: this._draft.changes.map((ch, i) => ({ ...ch, index: i, label: keyLabel(ch.key), priority: ch.priority ?? "", modeLabel: modeLabel(ch.mode) })),
+      changes: this._draft.changes.map((ch, i) => ({ ...ch, index: i, label: keyLabel(ch.key), priority: ch.priority ?? "", modeLabel: modeLabel(ch.mode),
+        modeHint: [MODES.UPGRADE, MODES.DOWNGRADE].includes(ch.mode) ? `${LANG}.Lab.LimitHint` : `${LANG}.Lab.ModeHint` })),
       keys: [...new Set([...keys, ...fallbackKeys])].sort()
     };
   }
@@ -418,6 +397,8 @@ export class ConditionEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     } else {
       await saveOverride(existing.id, def);
     }
+    // Conditions already on characters follow the edit.
+    if (existing) await Conditions.resync(existing.id);
     ConditionLab.instance?.render();
     this.close();
   }
@@ -497,4 +478,4 @@ export class TriggerApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 }
 
-export { fromClt };
+export { fromClt, keyLabel, modeLabel };

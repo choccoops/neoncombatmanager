@@ -11,7 +11,8 @@
  *   category    wound | critical | combat | hazard | situation | drug | quickhack | weather | visibility
  *   img         icon (Cyberpunk RED's own status icons where it has one)
  *   page        rulebook reference shown in the Condition Lab
- *   changes     [{ key, value, situational?, onByDefault? }] in CPR roll keys (see cpr-flags.js)
+ *   changes     [{ key, value, situational?, onByDefault?, mode? }] in CPR roll keys (see cpr-flags.js);
+ *               a "minimum 1" MOVE is a second change in UPGRADE mode (4), which Foundry applies last
  *   sight       a penalty to "tasks that need sight", expanded at runtime into the keys set in
  *               the module settings (default Perception (sight), ranged and melee attacks)
  *   duration    seconds of world time (a Round is 3 s, so 60 s is 20 Rounds)
@@ -49,6 +50,9 @@ const DAY = 86400;
 const HOUR = 3600;
 
 const ds = (n = 1) => ({ key: "bonuses.deathSavePenalty", value: n });
+/** MOVE down by n, but not below 1 (an UPGRADE change, applied after every ADD). */
+const move = (n) => [{ key: "system.stats.move.value", value: n }, MOVE_MIN];
+const MOVE_MIN = { key: "system.stats.move.value", value: 1, mode: 4 };
 
 export const CATEGORIES = ["wound", "critical", "combat", "hazard", "situation", "drug", "quickhack", "weather", "visibility"];
 
@@ -63,7 +67,7 @@ export const CONDITIONS = [
   { id: "seriouslyWounded", category: "wound", img: `${S}/wounded_seriously.svg`, page: 186, mirror: "wound", group: "wound", hud: false },
   // CPR takes the -4 off rolls itself; the book's -6 MOVE (min 1) is ours.
   { id: "mortallyWounded", category: "wound", img: `${S}/wounded_mortally.svg`, page: "186 · 2070", mirror: "wound", group: "wound", hud: false,
-    changes: [{ key: "system.stats.move.value", value: -6 }] },
+    changes: move(-6) },
   { id: "dead", category: "wound", img: "icons/svg/skull.svg", page: 188, overlay: true, defeated: true },
   { id: "unconscious", category: "wound", img: `${S}/unconcious.svg`, page: "177 · 2070", overlay: true, wakeOnDamage: true },
   { id: "stabilized", category: "wound", img: "icons/svg/regen.svg", page: 186, stabilize: true },
@@ -73,17 +77,17 @@ export const CONDITIONS = [
   /* ------------------------------------------------------------------ */
   { id: "dismemberedArm", category: "critical", img: `${S}/dismembered_arm.svg`, page: 187, critical: { location: "body", name: "Dismembered Arm" }, changes: [ds()] },
   { id: "dismemberedHand", category: "critical", img: `${S}/dismembered_hand.svg`, page: 187, critical: { location: "body", name: "Dismembered Hand" }, changes: [ds()] },
-  { id: "collapsedLung", category: "critical", img: `${S}/collapsed_lung.svg`, page: 187, critical: { location: "body", name: "Collapsed Lung" }, changes: [{ key: "system.stats.move.value", value: -2 }, ds()] },
+  { id: "collapsedLung", category: "critical", img: `${S}/collapsed_lung.svg`, page: 187, critical: { location: "body", name: "Collapsed Lung" }, changes: [...move(-2), ds()], extra: [MOVE_MIN] },
   { id: "brokenRibs", category: "critical", img: `${S}/broken_ribs.svg`, page: 187, critical: { location: "body", name: "Broken Ribs" }, moveDamage: 5 },
   { id: "brokenArm", category: "critical", img: `${S}/broken_arm.svg`, page: 187, critical: { location: "body", name: "Broken Arm" } },
   { id: "foreignObject", category: "critical", img: `${S}/foreign_object_body.svg`, page: 187, critical: { location: "body", name: "Foreign Object" }, moveDamage: 5 },
   // 2070: a Broken Leg also costs -2 Evasion; each leg is its own injury, so two make -4.
   { id: "brokenLeg", category: "critical", img: `${S}/broken_leg.svg`, page: "187 · 2070", critical: { location: "body", name: "Broken Leg" },
-    changes: [{ key: "system.stats.move.value", value: -4 }, { key: "bonuses.evasion", value: -2 }], extra: [{ key: "bonuses.evasion", value: -2 }] },
+    changes: [...move(-4), { key: "bonuses.evasion", value: -2 }], extra: [{ key: "bonuses.evasion", value: -2 }, MOVE_MIN] },
   { id: "tornMuscle", category: "critical", img: `${S}/torn_muscle.svg`, page: 187, critical: { location: "body", name: "Torn Muscle" }, changes: [{ key: "bonuses.melee", value: -2 }] },
   { id: "spinalInjury", category: "critical", img: `${S}/spinal_injury.svg`, page: 187, critical: { location: "body", name: "Spinal Injury" }, changes: [ds()], remindOnce: true },
   { id: "crushedFingers", category: "critical", img: `${S}/crushed_fingers.svg`, page: 187, critical: { location: "body", name: "Crushed Fingers" }, changes: [{ key: "bonuses.allActionsHands", value: -4 }] },
-  { id: "dismemberedLeg", category: "critical", img: `${S}/dismembered_leg.svg`, page: 187, critical: { location: "body", name: "Dismembered Leg" }, changes: [{ key: "system.stats.move.value", value: -6 }, ds()] },
+  { id: "dismemberedLeg", category: "critical", img: `${S}/dismembered_leg.svg`, page: 187, critical: { location: "body", name: "Dismembered Leg" }, changes: [...move(-6), ds()], extra: [MOVE_MIN] },
   { id: "lostEye", category: "critical", img: `${S}/lost_eye.svg`, page: 188, critical: { location: "head", name: "Lost Eye" }, changes: [{ key: "bonuses.ranged", value: -4 }, { key: "bonuses.perceptionSight", value: -4 }, ds()] },
   { id: "brainInjury", category: "critical", img: `${S}/brain_injury.svg`, page: 188, critical: { location: "head", name: "Brain Injury" }, changes: [{ key: "bonuses.allActions", value: -2 }, ds()] },
   { id: "damagedEye", category: "critical", img: `${S}/damaged_eye.svg`, page: 188, critical: { location: "head", name: "Damaged Eye" }, changes: [{ key: "bonuses.ranged", value: -2 }, { key: "bonuses.perceptionSight", value: -2 }] },
@@ -130,7 +134,9 @@ export const CONDITIONS = [
     changes: [{ key: "bonuses.evasion", value: -5, situational: true, onByDefault: true }] },
   { id: "tarotNoPain", category: "combat", img: `${A}/tarot-tower.svg`, page: "2070", duration: HOUR,
     changes: [{ key: "bonuses.hasPainSuppression", value: 1 }] },
-  { id: "tarotChromeShutdown", category: "combat", img: `${A}/tarot-fool.svg`, page: "2070", duration: HOUR },
+  // The extra -4 is only for someone left with no other way to sense the enemy: a toggle, off.
+  { id: "tarotChromeShutdown", category: "combat", img: `${A}/tarot-fool.svg`, page: "2070", duration: HOUR,
+    changes: [{ key: "bonuses.allActions", value: -4, situational: true, onByDefault: false }] },
   { id: "tarotFated", category: "combat", img: `${A}/tarot-empress.svg`, page: "2070" },
 
   /* ------------------------------------------------------------------ */

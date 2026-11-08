@@ -5,7 +5,7 @@ const K = (key) => `${LANG}.Settings.${key}`;
 /** World settings grouped into submenus; everything else shows in Foundry's own list. */
 export const MENUS = {
   combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement"],
-  conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim"],
+  conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim", "conditionSheetNotes"],
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxMacros"],
@@ -83,6 +83,7 @@ const DEFS = [
   ["mirrorCyberpsychosis", "world", Boolean, true, {}],
   ["mirrorCriticals", "world", Boolean, true, {}],
   ["critItems", "world", Boolean, true, {}],
+  ["conditionSheetNotes", "world", Boolean, true, {}],
   ["fireEscalates", "world", Boolean, true, {}],
   // Neon FX (Sequencer): condition visuals, Cyberpsychosis glitch, Sandevistan
   ["fxEnabled", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],

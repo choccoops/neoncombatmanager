@@ -23,6 +23,8 @@ export const FLAGS = {
   managed: "managed",
   /** ActiveEffect: the criticalInjury item it mirrors. */
   item: "item",
+  /** ActiveEffect: the id of the condition effect that brought this one along (`also`). */
+  alsoOf: "alsoOf",
   /** Combat: world time when it started. */
   started: "started",
   /** Combatant: metres moved on foot this Turn. */
