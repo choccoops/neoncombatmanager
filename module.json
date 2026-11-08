@@ -1,8 +1,8 @@
 {
   "id": "cpr-neon-combat-manager",
   "title": "Neon Combat Manager: Initiative Carousel, Action HUD, Neon Chat, Conditions, Biomon Link, Combat Time, Weather & Visibility for Cyberpunk RED",
-  "description": "An encounter overhaul for Cyberpunk RED - CORE: the Initiative Queue as a neon carousel; an Action HUD of the controlled token's attacks, skills and turn actions that each player lays out their way; Neon Chat (Discord-style formatting, portraits, merged and editable messages, chat commands with completion, an Adventure Log, and a visual novel stage); Neon Conditions, the full Cyberpunk RED condition set wired into the system's roll modifiers, with a Condition Lab, triggers and a stand-in for Condition Lab & Triggler; a Biomon Link popout of linked characters' vitals; Holocall buttons on actors, the Biomon Link and the Night City Map that ring through Night City Messenger's phone; Rounds that move world time 3 seconds (SmallTime and Neon Hub's calendar follow); Night City weather from Neon Hub's calendar as conditions; and visibility penalties from darkness, light sources and the gear that cuts through them.",
-  "version": "1.12.1",
+  "description": "An encounter overhaul for Cyberpunk RED - CORE: the Initiative Queue as a neon carousel; an Action HUD of the controlled token's attacks, skills and turn actions that each player lays out their way; Neon Chat (Discord-style formatting, portraits, merged and editable messages, chat commands with completion, an Adventure Log, and a visual novel stage); Neon Conditions, the full Cyberpunk RED condition set (Extreme Cyberpsychosis included) wired into the system's roll modifiers, with a Condition Lab, triggers and a stand-in for Condition Lab & Triggler; a Biomon Link popout of linked characters' vitals; Holocall buttons on actors, the Biomon Link and the Night City Map that ring through Night City Messenger's phone; Rounds that move world time 3 seconds (SmallTime and Neon Hub's calendar follow); Night City weather from Neon Hub's calendar as conditions; visibility penalties from darkness, light sources and the gear that cuts through them; and Neon FX, Sequencer visuals for conditions with a Sandevistan afterimage trail and a Cyberpsychosis glitch.",
+  "version": "1.13.0",
   "authors": [
     {
       "name": "Neon Combat Manager contributors"
@@ -24,6 +24,16 @@
       }
     ],
     "recommends": [
+      {
+        "id": "sequencer",
+        "type": "module",
+        "reason": "Neon FX draws with Sequencer: condition visuals on the tokens, the Sandevistan's afterimage trail and the Cyberpsychosis glitch. Without it, Neon FX stays off and the rest of the module works as before."
+      },
+      {
+        "id": "JB2A_DnD5e",
+        "type": "module",
+        "reason": "Neon FX uses JB2A's flames, static electricity, fog, impacts and healing where they're installed (the free pack or Patreon's jb2a_patreon); without JB2A it uses its own art."
+      },
       {
         "id": "cpr-neon-hub",
         "type": "module",

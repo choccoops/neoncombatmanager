@@ -513,6 +513,10 @@
       "tarotFated": {
         "name": "Fated (The Empress)",
         "hint": "The next three successful attacks against them this combat each cause a Critical Injury, whatever the dice say."
+      },
+      "extremeCyberpsychosis": {
+        "name": "Extreme Cyberpsychosis",
+        "hint": "Humanity below 0: a complete psychotic break. The GM plays the character until Humanity is positive again (Immunoblockers can bring them back). Each Round, 1 LUCK buys a try at retaking the Move Action or the Action. The +2 is the GM's call."
       }
     },
     "Key": {
@@ -808,6 +812,11 @@
           "name": "Neon Chat",
           "hint": "Formatting, merged messages, editing, the Adventure Log and the visual novel stage.",
           "label": "Chat & stage"
+        },
+        "fx": {
+          "name": "Neon FX",
+          "label": "Neon FX",
+          "hint": "Sequencer visuals for conditions, the Cyberpsychosis glitch and the Sandevistan, and their macros."
         }
       },
       "Placement": {
@@ -982,6 +991,39 @@
         "2070": "2070 (this module's)",
         "mix": "Both",
         "off": "Night City Messenger's own (2045)"
+      },
+      "mirrorCyberpsychosis": {
+        "name": "Extreme Cyberpsychosis follows Humanity",
+        "hint": "Below 0 Humanity a character gets Extreme Cyberpsychosis; it goes once Humanity is positive again (2070 Core Rules, Chapter 09). One the GM placed by hand stays."
+      },
+      "fxEnabled": {
+        "name": "Neon FX",
+        "hint": "Sequencer visuals for conditions, the Cyberpsychosis glitch and the Sandevistan. Needs the Sequencer module; uses JB2A when it's installed."
+      },
+      "fxConditions": {
+        "name": "Condition visuals",
+        "hint": "Tokens show their conditions: fire, electricity, glitching quickhacks, Mortally Wounded's heartbeat and more."
+      },
+      "fxMacros": {
+        "name": "Neon FX macros",
+        "hint": "Put the Sandevistan, Cyberpsychosis and Clear Neon FX macros in a \"Neon FX\" macro folder (once; delete or move them freely)."
+      },
+      "fxVolume": {
+        "name": "Neon FX volume",
+        "hint": "How loud Neon FX's sounds are for you, on top of the channel's own slider. 0 silences them."
+      },
+      "fxChannel": {
+        "name": "Neon FX sound channel",
+        "hint": "Which of Foundry's volume sliders Neon FX's sounds follow."
+      },
+      "fxMotion": {
+        "name": "Neon FX token motion",
+        "hint": "Tokens shake, tremble or sway with some conditions (Cyberpsychosis, Drunk...). Off for a still table; your system's reduced-motion setting switches it off too."
+      },
+      "FxChannel": {
+        "interface": "Interface",
+        "environment": "Environment",
+        "music": "Music"
       }
     },
     "SceneWeather": {
@@ -1024,7 +1066,8 @@
       "reopened": "{condition} reopens (moved {metres} m/yds)",
       "qhCrippleMovement": "Cripple Movement: cyberlegs locked, no Move Action this Turn or next (one cyberleg: MOVE halved instead).",
       "qhPuppet": "Puppet: the Netrunner takes this Turn's Action and Move Action, with this character's STATs and Skills.",
-      "qhCyberpsychosis": "Cyberpsychosis (quickhack): attack the nearest person with whatever's in hand. After 3 Rounds, 2d6 Humanity Loss."
+      "qhCyberpsychosis": "Cyberpsychosis (quickhack): attack the nearest person with whatever's in hand. After 3 Rounds, 2d6 Humanity Loss.",
+      "extremeCyberpsychosis": "Extreme Cyberpsychosis: the GM has the sheet. Each Round the player may spend 1 LUCK to try to retake the Move Action (Endurance) or the Action (Concentration), at a DV the GM sets."
     },
     "Hazard": {
       "Kicker": "Weather hazard",
@@ -1857,6 +1900,18 @@
       "Left": "Left",
       "Right": "Right",
       "Empty": "No one on stage"
+    },
+    "FX": {
+      "NoSequencer": "Neon FX needs the Sequencer module.",
+      "SelectToken": "Select a token you own first.",
+      "Folder": "Neon FX",
+      "Installed": "Neon FX: {count} macro(s) added to the \"{folder}\" folder.",
+      "Macro": {
+        "Sandevistan": "Sandevistan",
+        "Psycho": "Cyberpsychosis Glitch",
+        "Extreme": "Extreme Cyberpsychosis",
+        "Clear": "Clear Neon FX"
+      }
     }
   }
 }
