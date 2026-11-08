@@ -112,8 +112,8 @@ export const Blast = {
     return new Promise((resolve) => {
       let done = false;
       const refresh = () => {
-        if (typeof preview.renderFlags?.set === "function") preview.renderFlags.set({ refreshShape: true, refreshPosition: true, refreshTemplate: true });
-        else preview.refresh?.();
+        if (typeof preview.refresh === "function") preview.refresh();
+        else preview.renderFlags?.set?.({ refreshShape: true, refreshPosition: true });
       };
       const move = () => {
         const p = Compat.mousePosition;
