@@ -26,6 +26,7 @@ import { Stage } from "./chat/stage.js";
 import { AdventureLog } from "./chat/log.js";
 import { Environment } from "./environment/environment.js";
 import { Sources } from "./environment/sources.js";
+import { WeatherFx, presetFor } from "./environment/weather-fx.js";
 import { Stakes } from "./stakes/stakes.js";
 import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
@@ -83,6 +84,10 @@ const api = {
       return Environment.state;
     },
     refresh: () => Environment.refresh(),
+    /** GM: put the right Night City weather on the scenes in use now. */
+    syncWeather: () => WeatherFx.syncAll(),
+    /** The Night City weather preset (ncmAcidRain...) for weather keys, default: the weather now. */
+    weatherPreset: (keys = Sources.weather().keys) => presetFor(keys),
     lightAt: (token) => Sources.lightAt(token?.document ?? token),
     gear: (actor) => Sources.gear(actor),
     open: async () => (await import("./environment/environment-app.js")).EnvironmentApp.open()
@@ -271,6 +276,8 @@ Hooks.once("init", () => {
   CombatTime.init();
   Turns.init();
   Environment.init();
+  WeatherFx.registerPresets();
+  WeatherFx.init();
   Carousel.init();
   Hud.init();
   Chat.init();
@@ -331,6 +338,8 @@ Hooks.once("ready", async () => {
   SceneSignal.sync().catch((err) => console.error(`${MODULE_ID} | dead zones`, err));
   await Roller.ready().catch((err) => console.error(`${MODULE_ID} | roller`, err));
   await NeonFX.ready().catch((err) => console.error(`${MODULE_ID} | Neon FX`, err));
+  WeatherFx.syncAll().catch((err) => console.error(`${MODULE_ID} | scene weather`, err));
+  WeatherFx.ambience();
   Hooks.callAll(HOOKS.ready, api);
 });
 

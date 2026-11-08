@@ -12,7 +12,7 @@ export const MENUS = {
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
-    "weatherSource", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
+    "weatherSource", "weatherFx", "weatherEveryone", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
     "lowLightAt", "darkAt", "sightKeys", "visibilityCap", "visibilityFrom", "envOutsideCombat",
     "gearBreathing", "gearRadiation", "gearRain", "gearCold", "gearHeat", "gearVision"
   ]
@@ -86,7 +86,7 @@ const DEFS = [
   ["fxConditions", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxMacros", "world", Boolean, true, {}],
   ["fxMacrosInstalled", "world", Boolean, false, { config: false }],
-  ["fxVolume", "client", Number, 0.4, { config: true, range: { min: 0, max: 1, step: 0.05 } }],
+  ["fxVolume", "client", Number, 0.4, { config: true, range: { min: 0, max: 1, step: 0.05 }, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxChannel", "client", String, "interface", { config: true, choices: { interface: K("FxChannel.interface"), environment: K("FxChannel.environment"), music: K("FxChannel.music") } }],
   ["fxMotion", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // The 2070 roller and table rules
@@ -109,6 +109,9 @@ const DEFS = [
   ["weatherSource", "world", String, "neonhub", { choices: { neonhub: K("WeatherSource.neonhub"), manual: K("WeatherSource.manual"), off: K("WeatherSource.off") }, onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
   ["weatherCalendar", "world", String, "", { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
   ["manualWeather", "world", Object, { cond: "clear", band: "warm", strange: "" }, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
+  ["weatherFx", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
+  ["weatherEveryone", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
+  ["weatherAmbience", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["sceneWeatherDefault", "world", String, "outdoor", { choices: { outdoor: K("SceneWeather.outdoor"), indoor: K("SceneWeather.indoor") }, onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
   ["shelterKeywords", "world", String, "indoor, inside, interior, shelter, roof", { onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
   ["weatherOnByDefault", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],

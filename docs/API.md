@@ -135,6 +135,15 @@ SmallTime and Neon Hub all move world time.
 | `lightAt(token)` | `"bright"`, `"dim"` or `"dark"` at a token |
 | `gear(actor)` | `{ breathing, radiation, rain, cold, heat, vision }` |
 | `open()` | the Environment window |
+| `syncWeather()` | GM: put the right Night City weather on the scenes in use now |
+| `weatherPreset(keys?)` | the Night City weather preset (`ncmAcidRain`...) for weather keys, default the weather now; `""` for clear skies |
+
+Scene flags: `flags.cpr-neon-combat-manager.weather` is the scene's mode (`outdoor`, `indoor`,
+`off`, `default`); `.weatherFx` is `{ weather, preset }`, what the module last put on the scene.
+Tile flag `.shelter` (true) shelters what's under the tile. The presets are in
+`CONFIG.weatherEffects` under `ncmThunderstorm`, `ncmAcidRain`, `ncmBloodRain`, `ncmHeavyRain`,
+`ncmLightRain`, `ncmAshStorm`, `ncmDustStorm`, `ncmRadioactiveWind`, `ncmSmog`, `ncmColdSnap`
+and `ncmHeatWave`.
 
 Hook: `cpr-neon-combat-manager.environmentChanged` (state), on the GM's client.
 

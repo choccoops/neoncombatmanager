@@ -41,7 +41,7 @@ export const Environment = {
       if (Object.keys(changed).some((k) => tokenKeys.includes(k))) soon();
     });
     for (const h of ["createToken", "deleteToken", "createCombatant", "deleteCombatant", "createCombat", "targetToken", "controlToken",
-      "createAmbientLight", "updateAmbientLight", "deleteAmbientLight", "createRegion", "updateRegion", "deleteRegion",
+      "createAmbientLight", "updateAmbientLight", "deleteAmbientLight", "createRegion", "updateRegion", "deleteRegion", "createTile", "updateTile", "deleteTile",
       "lightingRefresh", `${MODULE_ID}.environmentConfig`, `${NEON_HUB_ID}.weatherChanged`, `${NEON_HUB_ID}.calendarChanged`]) {
       Hooks.on(h, () => soon());
     }
@@ -79,6 +79,19 @@ export const Environment = {
     return [...docs.values()].filter((d) => d.actor && CPR.isMeat(d.actor));
   },
 
+  /**
+   * Tokens the weather reaches: every character on the scene (setting "Weather reaches everyone
+   * on the scene"), else the same tokens as visibility.
+   */
+  weatherScope() {
+    const scene = canvas?.scene;
+    const docs = new Map(this.scope().map((d) => [d.id, d]));
+    if (scene && Settings.get("weatherEveryone")) {
+      for (const t of scene.tokens) if (t.actor && CPR.isMeat(t.actor)) docs.set(t.id, t);
+    }
+    return [...docs.values()];
+  },
+
   /** The tokens a token's controller is looking at: their targets. */
   targetsOf(doc) {
     const actor = doc.actor;
@@ -102,14 +115,15 @@ export const Environment = {
    * What the environment does to one token's character.
    * @returns {{ desired: Map<string, {changes, name}>, row: object, hazards: string[] }}
    */
-  evaluate(doc, weather) {
+  evaluate(doc, weather, { visibility = true } = {}) {
     const actor = doc.actor;
     const mode = Sources.sceneMode(doc.parent);
     const outdoors = mode === "outdoor" && !Sources.sheltered(doc);
     const gear = Sources.gear(actor);
     const w = outdoors && weather.keys.length ? weatherFor(weather.keys, gear, { armorPenalty: CPR.armorPenalty(actor) }) : { conditions: [], sight: 0, extra: [], hazards: [] };
-    const level = Settings.get("visibilityEnabled") && canvas?.ready ? this.levelFor(doc) : "bright";
-    const sp = sightPenalty({ level, weather: w.sight, vision: gear.vision, cap: Number(Settings.get("visibilityCap")) || 0 });
+    // Visibility (light and the weather's obscurement) is for the encounter only.
+    const level = visibility && Settings.get("visibilityEnabled") && canvas?.ready ? this.levelFor(doc) : "bright";
+    const sp = sightPenalty({ level, weather: visibility ? w.sight : 0, vision: gear.vision, cap: Number(Settings.get("visibilityCap")) || 0 });
 
     const desired = new Map();
     for (const c of w.conditions) desired.set(c.id, { changes: c.changes });
@@ -149,11 +163,12 @@ export const Environment = {
       const inScope = new Set();
       const hazards = new Map();
       const write = Compat.isActiveGM;
-      for (const doc of this.scope()) {
+      const encounter = new Set(this.scope().map((d) => d.id));
+      for (const doc of this.weatherScope()) {
         const actor = doc.actor;
-        const { desired, row, hazards: hz } = this.evaluate(doc, weather);
+        const { desired, row, hazards: hz } = this.evaluate(doc, weather, { visibility: encounter.has(doc.id) });
         rows.push(row);
-        hazards.set(actor.uuid, hz);
+        hazards.set(actor.uuid, encounter.has(doc.id) ? hz : []);
         inScope.add(actor.uuid);
         if (write) await this.apply(actor, desired);
       }
@@ -200,7 +215,7 @@ export const Environment = {
   /** On load: remove environment effects from anyone outside the encounter (active GM). */
   async sweep() {
     if (!Compat.isActiveGM) return;
-    const scope = new Set(this.scope().map((d) => d.actor.uuid));
+    const scope = new Set(this.weatherScope().map((d) => d.actor.uuid));
     for (const actor of Conditions._actorsInPlay()) {
       if (scope.has(actor.uuid)) {
         this.touched.add(actor.uuid);

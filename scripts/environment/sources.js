@@ -64,14 +64,21 @@ export const Sources = {
     return mode === "default" || !mode ? Settings.get("sceneWeatherDefault") : mode;
   },
 
-  /** Is a token under a roof: inside a region whose name has one of the shelter keywords? */
+  /**
+   * Is a token out of the weather? Under a roof or awning tile that restricts weather (Foundry's
+   * "Restrict Weather") or is ticked "Shelters from weather"; inside a region with a Suppress
+   * Weather behavior; or inside a region whose name has a shelter keyword.
+   */
   sheltered(token) {
     const doc = token?.document ?? token;
     const scene = doc?.parent;
-    const words = Settings.list("shelterKeywords").map(slug).filter(Boolean);
-    if (!scene || !words.length) return false;
+    if (!scene) return false;
     const center = this.center(doc);
-    return Compat.regions(scene).some((r) => words.some((w) => slug(r.name).includes(w)) && Compat.inRegion(r, center, doc.elevation ?? 0));
+    const elevation = doc.elevation ?? 0;
+    const words = Settings.list("shelterKeywords").map(slug).filter(Boolean);
+    const regions = Compat.regions(scene);
+    if (regions.some((r) => (words.some((w) => slug(r.name).includes(w)) || suppressesWeather(r)) && Compat.inRegion(r, center, elevation))) return true;
+    return [...(scene.tiles ?? [])].some((t) => sheltersTile(t) && (t.elevation ?? 0) >= elevation && inTile(t, center));
   },
 
   center(doc) {
@@ -112,3 +119,28 @@ export const Sources = {
     };
   }
 };
+
+/** Does a region carry an active Suppress Weather behavior? */
+export function suppressesWeather(region) {
+  return [...(region?.behaviors ?? [])].some((b) => !b.disabled && /suppressWeather/i.test(String(b.type ?? "")));
+}
+
+/** Does a tile keep weather off what's under it: Foundry's Restrict Weather, or ticked as a shelter here? */
+export function sheltersTile(tile) {
+  return !!(tile?.restrictions?.weather || tile?.flags?.[MODULE_ID]?.shelter);
+}
+
+/** Is a point inside a tile's rectangle (its rotation taken into account)? */
+export function inTile(tile, { x, y }) {
+  const w = Math.abs(tile.width ?? 0);
+  const h = Math.abs(tile.height ?? 0);
+  if (!w || !h) return false;
+  const cx = (tile.x ?? 0) + w / 2;
+  const cy = (tile.y ?? 0) + h / 2;
+  const a = -((tile.rotation ?? 0) * Math.PI) / 180;
+  const dx = x - cx;
+  const dy = y - cy;
+  const rx = dx * Math.cos(a) - dy * Math.sin(a);
+  const ry = dx * Math.sin(a) + dy * Math.cos(a);
+  return Math.abs(rx) <= w / 2 && Math.abs(ry) <= h / 2;
+}
