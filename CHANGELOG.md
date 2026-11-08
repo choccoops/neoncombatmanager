@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.11.0
+
+**Night City Messenger in the 2070s.**
+
+- **2070 spam**: Night City Messenger's built-in junk mail is set in 2045 (the red sky, the crater,
+  the Reconstruction), and it has no setting to change that. This version replaces it with 40
+  messages written for the 2070s, across NCM's seven categories:
+  - Night City a free city after the Unification War, and Arasaka back in town
+  - braindance, cyberpsychosis warnings and Trauma Team plans
+  - fixers, ripperdocs and the black market
+
+  `{{randomDistrict}}` and `{{randomCorpo}}` now pick from the 2070s districts and corporations.
+  The new Comms setting "Night City Messenger spam" chooses 2070, Both, or NCM's own. Your own
+  templates stay in every mode.
+- **Dead ground mutes its scenes**: when a place on the city map stands on dead ground (Utility
+  Code 9 or worse, or a district listed in "More dead zones"), the scene its doorway opens into
+  becomes a Night City Messenger dead zone. No messages or calls go in or out while you're there.
+  Dead zones you set in NCM yourself are never touched. A scene you switch back on by hand stays
+  on until its place changes. The new City Map setting is "Dead ground mutes its scenes in Night
+  City Messenger".
+
 ## 1.10.0
 
 **Neon Chat: speak as, and the stage director.**
