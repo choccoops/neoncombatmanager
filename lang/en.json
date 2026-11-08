@@ -848,6 +848,10 @@
         "name": "Implants that link",
         "hint": "Installed cyberware (comma-separated names) that broadcasts vitals: the CEMK Neuroport (and Neuroport (Free)) and Biomonitor cyberware by default."
       },
+      "holocallSheetButton": {
+        "name": "Holocall button on character sheets",
+        "hint": "Adds Holocall to the character sheet's header. Off by default, since sheet headers get crowded. Without it, use the Holocall macro (Neon Combat Manager: Macros compendium; drop it on the hotbar or the Action HUD), the Action HUD's Utility group, or Holocall in the Actors directory's right-click menu."
+      },
       "ncmSpam": {
         "name": "Night City Messenger spam",
         "hint": "Night City Messenger's built-in junk mail is set in 2045 (the red sky, the crater). 2070 swaps it for 2070s spam: a free city after the Unification War, Arasaka back in town, braindance, Trauma Team plans. The districts and corps its {{randomDistrict}} and {{randomCorpo}} draw from change too. Your own templates stay either way."

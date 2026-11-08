@@ -1,0 +1,19 @@
+{
+  "_id": "PIL3iBHdfwdWvyFF",
+  "_key": "!macros!PIL3iBHdfwdWvyFF",
+  "name": "Neon Combat: Night City Map",
+  "type": "script",
+  "scope": "global",
+  "img": "modules/cpr-neon-combat-manager/assets/macros/hub.svg",
+  "command": "// Neon Combat Manager: open the Night City Map for the selected token's character (or your own).\n// Works from the hotbar, the Action HUD's Macros group, a Neon Hub page button or an active tile.\nconst ncm = game.modules.get(\"cpr-neon-combat-manager\")?.api;\nif (!ncm) return ui.notifications.warn(\"Neon Combat Manager isn't active in this world.\");\nconst who = (typeof actor !== \"undefined\" && actor) || (typeof character !== \"undefined\" && character) || null;\nreturn ncm.hub.open();\n",
+  "folder": null,
+  "sort": 300,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "cpr-neon-combat-manager": {
+      "macro": "hub"
+    }
+  }
+}

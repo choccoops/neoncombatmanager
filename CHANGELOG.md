@@ -11,6 +11,16 @@
     show it in Customize.
   - Made for Neon At Home's window macros (Home, Biomonitor, Perk Tree, Spend IP...), but any
     macro works.
+- **A Macros compendium.** *Neon Combat Manager: Macros*, in its own Neon Combat Manager folder,
+  has one macro per window: **Holocall**, **Biomon Link**, **Night City Map**, **Plot Die** and
+  **Condition Lab** (GM).
+  - Holocall and the Plot Die open for the selected token's character, or your own.
+  - Tip: drop the Holocall macro on the Action HUD to keep it in the Macros group.
+- **The Holocall sheet button is now off by default.** Character sheet headers got crowded (the
+  sheet's Close button was pushed off). Turn it back on with **Holocall button on character
+  sheets** in the Comms settings.
+  - Holocall stays in the Actors directory's right-click menu, the Action HUD's Utility group, the
+    Biomon Link and the Night City Map.
 
 ## 1.14.0
 

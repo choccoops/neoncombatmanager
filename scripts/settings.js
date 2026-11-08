@@ -6,7 +6,7 @@ const K = (key) => `${LANG}.Settings.${key}`;
 export const MENUS = {
   combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim"],
-  comms: ["linkNeedsImplant", "linkImplants", "ncmSpam"],
+  comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxMacros"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder"],
@@ -46,6 +46,9 @@ const DEFS = [
 
   ["noSignalFx", "client", Boolean, true, { config: true }],
   ["biomonAlerts", "client", String, "toast", { config: true, choices: { toast: K("BiomonAlerts.toast"), open: K("BiomonAlerts.open"), off: K("BiomonAlerts.off") } }],
+
+  // Holocall: the sheet-header button (off: headers stay clear; the macro and the Actors menu remain)
+  ["holocallSheetButton", "world", Boolean, false, {}],
 
   // Biomon Link
   ["linkNeedsImplant", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.linksChanged`) }],

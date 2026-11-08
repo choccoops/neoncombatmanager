@@ -82,6 +82,28 @@
       "path": "lang/en.json"
     }
   ],
+  "packs": [
+    {
+      "name": "macros",
+      "label": "Neon Combat Manager: Macros",
+      "path": "packs/macros",
+      "type": "Macro",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    }
+  ],
+  "packFolders": [
+    {
+      "name": "Neon Combat Manager",
+      "sorting": "m",
+      "color": "#05d9e8",
+      "packs": [
+        "macros"
+      ]
+    }
+  ],
   "socket": true,
   "url": "",
   "manifest": "",

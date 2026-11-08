@@ -26,7 +26,8 @@ export const Comms = {
       }
     });
 
-    // Holocall straight from an actor: the Actors directory's menu and the sheet header.
+    // Holocall straight from an actor: the Actors directory's menu, and the sheet header when the
+    // GM turns that on (off by default: sheet headers get crowded; the Holocall macro does the same).
     for (const hook of ["getActorDirectoryEntryContext", "getActorContextOptions"]) {
       Hooks.on(hook, (html, options) => this.actorMenu(options));
     }
@@ -78,6 +79,7 @@ export const Comms = {
   },
 
   sheetButton(actor) {
+    if (!Settings.get("holocallSheetButton")) return null;
     const b = this.holoFor(actor);
     return b ? { ...b, label: L(`${LANG}.Holocall.SheetButton`) } : null;
   },

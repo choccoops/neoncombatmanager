@@ -1,0 +1,19 @@
+{
+  "_id": "ViY2KLIda0IyRYwE",
+  "_key": "!macros!ViY2KLIda0IyRYwE",
+  "name": "Neon Combat: Condition Lab",
+  "type": "script",
+  "scope": "global",
+  "img": "modules/cpr-neon-combat-manager/assets/macros/lab.svg",
+  "command": "// Neon Combat Manager: open the Condition Lab.\n// Works from the hotbar, the Action HUD's Macros group, a Neon Hub page button or an active tile.\nconst ncm = game.modules.get(\"cpr-neon-combat-manager\")?.api;\nif (!ncm) return ui.notifications.warn(\"Neon Combat Manager isn't active in this world.\");\nif (!game.user.isGM) return ui.notifications.warn(\"The Condition Lab is for the GM.\");\nconst who = (typeof actor !== \"undefined\" && actor) || (typeof character !== \"undefined\" && character) || null;\nreturn ncm.conditions.openLab();\n",
+  "folder": null,
+  "sort": 500,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "cpr-neon-combat-manager": {
+      "macro": "lab"
+    }
+  }
+}
