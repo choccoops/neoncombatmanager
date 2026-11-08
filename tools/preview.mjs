@@ -77,8 +77,8 @@ const biomon = await T("biomon", { gm: false, links: [{ id: "l1", name: "Crew", 
 const { Hud } = await import("../scripts/hud/hud.js");
 const { HudEditor } = await import("../scripts/hud/hud-editor.js");
 const kade = makeActor({ name: "Kade Ryder", img: portrait(280), system: { derivedStats: { hp: { value: 22, max: 40 }, seriouslyWounded: 20 } } }, [
-  { _id: "w1", name: "Militech Viper SMG", type: "weapon", system: { equipped: "equipped", isRanged: true, magazine: { value: 22, max: 30 }, fireModes: { autoFire: 3, suppressiveFire: true } } },
-  { _id: "w2", name: "Constitution Arms Hurricane", type: "weapon", system: { equipped: "equipped", isRanged: true, magazine: { value: 0, max: 4 } } },
+  { _id: "w1", name: "Militech Viper SMG", type: "weapon", system: { equipped: "equipped", isRanged: true, weaponType: "smg", magazine: { value: 22, max: 30 }, fireModes: { autoFire: 3, suppressiveFire: true } }, flags: { "cpr-neon-hub": { weaponType2070: "tech" } } },
+  { _id: "w2", name: "Constitution Arms Hurricane", type: "weapon", system: { equipped: "equipped", isRanged: true, weaponType: "shotgun", magazine: { value: 0, max: 4 } }, flags: { "cpr-neon-hub": { weaponType2070: "power" } } },
   { _id: "w3", name: "Kendachi Mono-Katana", type: "weapon", system: { equipped: "equipped", isRanged: false, damage: "3d6" } },
   ...["Evasion", "Perception", "Brawling", "Athletics", "Stealth", "First Aid", "Handgun"].map((name, i) => ({ _id: `s${i}`, name, type: "skill", system: { stat: "dex", level: 4 + (i % 3) } })),
   { _id: "r1", name: "Solo", type: "role", system: { hasRoll: true, mainRoleAbility: "Combat Awareness", abilities: [{ name: "Threat Detection", hasRoll: true }] } }

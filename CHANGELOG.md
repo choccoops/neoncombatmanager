@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.17.0
+
+**Neon Arsenal: 2070 weapons at the table, with Automated Animations, sounds, areas and Rebuilds.**
+
+- **An Automated Animations profile for every kind of weapon**: pistols to sniper rifles,
+  shotguns (slugs and shells), bows, grenade, rocket and missile launchers, thrown grenades,
+  flamethrowers, knives, blades, blunt weapons, monowire and fists, with Tech and Smart looks,
+  Incendiary and EMP rounds, mono-edged blades and Propulsion Impact. JB2A free or Patreon (the
+  better grenades and coloured bullets with Patreon). Neon Arsenal picks the entry from what the
+  weapon is (kind, 2070 flavor, ammo, Melee Rebuild), so it covers Neon Hub's Item Compendium
+  (2070s) whatever its guns are called. Put into AA's menu when the GM loads the world and kept
+  up to date; your own entries stay. Also shipped as AA menu exports in `assets/arsenal` for a
+  world without this module.
+- **For the CPR fork of AA**: the ammo handed to AA the way the fork reads it, fire modes
+  (Autofire bursts, Suppressive Fire), and hits and misses by the 2070 range tables.
+- **Weapon sounds**, made with ElevenLabs: 24 of them, two takes each, played on each client at
+  its own Neon FX volume (quiet by default, with a fade-in).
+- **Diwako's muzzle flashes** for players' shots too (Diwako's only light the GM's own), blue for
+  Tech guns; none for arrows, grenades and rockets.
+- **Diwako's DV display shows the 2070 range tables**, and each gun's own Autofire table as its
+  card names it.
+- **Area attacks place their template**: 10×10 m/yds for explosives (or the ammo card's size), a
+  6 m/yds cone for Shotgun Shells and flamethrowers. Everyone inside is targeted; the roll says
+  if it lands (a miss is the GM's to move); the GM applies one damage roll to everyone through
+  Cyberpunk RED's own damage application, with Blown back (HOUSE RULE), and the ammo's effects:
+  fire, gas and EMP saves for each target's player, grappling webs, CO2, smoke that stays.
+- **Weapon traits** (2070 Core Rules Ch07): Power's +5 crit Bonus Damage and a **Ricochet**
+  switch (−4, can't be dodged); Smart's +1 with a link and the Improved Smart retry; Tech's
+  **Charge** switch (Move Action; ROF1 through Thin cover, half SP; a charged slug knocks Prone).
+  The switches are on the Action HUD's weapons and in the new **Weapon Rebuilds** macro.
+- **Rebuilds that are always on apply on every attack**: Neon At Home 1.13 registers the Melee
+  Rebuilds (Mono-edge Blading and Monoblade Rebuild ignore armor below their SP; Propulsion
+  Impact pushes the target, stopping at walls) and the Ricochet Compensator. API:
+  `arsenal.registerRebuild` and the `registerRebuilds` hook.
+- Macros: **Weapon Rebuilds**, **Install Weapon Animations** (GM). API: `ncm.arsenal`.
+- A damage roll for an area draws no Tarot card.
+
 ## 1.16.0
 
 **Conditions that explain themselves on the character sheet.**

@@ -509,6 +509,96 @@ never the token, and the token is never hidden.
 World settings (Neon FX menu): Neon FX on or off, condition visuals on or off, and the macros.
 `api.fx.report()` in the console shows which JB2A files are in use.
 
+## Neon Arsenal
+
+Cyberpunk RED's weapons in the 2070s, at the table: animations through
+[Automated Animations](https://foundryvtt.com/packages/autoanimations) (AA) and JB2A, weapon
+sounds, area attacks that place their own template, and the traits a 2070 gun or a Rebuild gives
+it. It covers the weapons and ammo in Neon Hub's *Item Compendium (2070s)*, Cyberpunk RED's own
+compendiums and anything you make, because it reads what a weapon *is*, not what it's called.
+
+**What a weapon is.** Its kind (Pistol to Very Heavy Pistol, SMG, Heavy SMG, Assault Rifle,
+Sniper Rifle, Shotgun with slugs or shells, Bow, Grenade, Rocket and Missile Launchers, thrown
+grenades, flamethrowers, knives, blades, blunt weapons, monowire and fists), its 2070 flavor
+(Power, Smart or Tech: Neon Hub's flag, "(Power)" in a generic gun's name, "Built-in: Power
+Rebuild" on an Iconic's card, or a Power, Smart or Tech Rebuild installed on a RED-era gun), the
+ammo loaded in it, and its Melee Rebuilds. `api.arsenal.explain(item)` shows the reading.
+
+**Automated Animations.** The profile has an entry for every kind, its Tech and Smart looks,
+Incendiary and EMP rounds, and mono-edged blades and Propulsion Impact hammers, all JB2A. With
+JB2A Patreon it uses Patreon's grenades, launcher rounds and coloured bullets; with the free pack,
+the nearest it has. When the GM loads the world (and after each update), the entries go into
+AA's Global Automatic Recognition menu, labelled *Neon Arsenal · ...*; your own entries stay as
+they are. At each attack Neon Arsenal hands AA its entry for what the weapon is, the ammo the way
+the CPR fork of AA reads it (Cyberpunk RED 0.92 keeps it among the weapon's installed items), the
+fire mode (Autofire bursts, Suppressive Fire sprays and misses), and, when AA is set to show
+misses, a hit or a miss by the 2070 range tables. The *Install Weapon Animations* macro (GM) puts
+the profile in by hand; `api.arsenal.uninstall()` takes it out.
+
+*Why a module and not a fork of AA, or only a JSON file:* a JSON profile can only match items by
+name, and the 2070 catalog names its guns, not their kinds; a fork of AA would have to be kept in
+step with AA itself. Registering the profile from this module lets it match on the weapon's data,
+keep up to date with each release, and still work with the CPR fork the table runs (or AA
+itself). For a world without this module, `assets/arsenal/neon-arsenal-autorec.json` (and
+`-patreon.json`) are the same profile as AA menu exports to merge in AA's Menu Manager, sounds
+included.
+
+**Sounds.** Gunshots for each kind, bursts, Smart and Tech shots, a Tech charge-up, ricochets,
+impacts, launcher thumps, rocket launches, grenade and rocket blasts, EMP and smoke, blades and
+blunt hits, a monoblade and a flamethrower (made with ElevenLabs for this module). Each client
+plays them at its own *Neon FX volume* and channel, quiet by default, with a short fade-in. AA's
+entries are silent in a world with this module.
+
+**Muzzle flashes** come from
+[Diwako's Cyberpunk Red - Core Additions](https://github.com/diwako/foundry-cyberpunk-red-core-additions)
+with DF Active Lights: it lights a flash when AA plays a ranged attack, reading the ammo Neon
+Arsenal hands AA. Diwako's flash only lights for attacks the GM rolls; Neon Arsenal sends the
+players' shots to the GM's client so theirs flash too (the GM must be viewing the scene), and a
+Tech gun flashes blue. Arrows, paintballs, grenades and rockets don't flash.
+
+**Diwako's DV display, with the 2070 tables.** Hovering a token shows the DV for each of your
+ranged weapons; Neon Arsenal hands Diwako's display the numbers from the 2070 range tables (Neon
+Hub's *DV Tables (2070s)*, or whichever compendium Cyberpunk RED is set to, a world table of the
+same name first), and each gun's own Autofire table as its card names it ("Autofire (Machine
+Pistol 4)"), where Diwako's own looks for "<table> (Autofire)". Diwako's settings (in combat only,
+names or types, left or right) still apply.
+
+**Area attacks.** A grenade, rocket or missile (launched or thrown) places a 10×10 m/yds area, or
+the size its ammo card names (a Laser Grenade's 6×6m, a Wall-Piercing Grenade's cone); a Shotgun
+Shell or a flamethrower a 6 m/yds cone in front of the shooter. When the attack is rolled (from
+the sheet, the HUD, a macro), the template follows the mouse; left-click places it centred on the
+square you aim at, right-click or Escape makes it a normal attack. Everyone inside is targeted.
+The roll says where it lands, by the weapon's range table at that distance (a Shotgun Shell is
+DV13): a hit goes off there, with the shot and the blast drawn and heard; on a miss the GM drags
+the template where it lands, and it goes off there. A card says which, and who is in it.
+
+The GM applies it from that card or the damage card's *Apply to the area*, the way the 2070
+Core Rules have it (Ch07, Firing Modes): one damage roll for everyone, through Cyberpunk RED's own
+damage application (body armor, ablation, shields, damage reduction, its card for each). The GM
+unticks anyone who dodged out or whose cover took it. **Blown back** (HOUSE RULE) throws whoever
+took damage 2 m/yds (4 from a rocket or missile) away from the centre, stopping at a wall with
+Into the Wall. The ammo does the rest: Incendiary sets whoever took damage On Fire (a flamethrower,
+Strongly); Teargas, Flashbang, Sleep, Poison, Biotoxin, EMP and the Sonic Grenade post a save for
+each target's player to roll with Cyberpunk RED's own roll (a failure gets the condition, or the
+damage straight to HP); an Arachnid Grenade grapples; a CO2 Grenade puts fires out; smoke stays
+on the scene. A damage roll for an area draws no Tarot card.
+
+**Weapon traits** (2070 Core Rules Ch07, The Three Flavors of 2070 Firearms):
+
+| | |
+| --- | --- |
+| Power | a Critical Injury's Bonus Damage +5 (on the damage card). **Ricochet**: a switch on the HUD's weapon (and the *Weapon Rebuilds* macro) for the next shot: −4, can't be dodged (an Aimed Shot ricochet only takes the −8); a Ricochet Compensator makes it −3. A ricochet whines. |
+| Smart | +1 to ranged attacks with a Neuroport, Personal Link or Subdermal Grip. With Improved Smart Ammunition, a miss by 5 or less gets an *Improved Smart retry* button: 14 + 1d10 against the same DV. |
+| Tech | **Charge**: a switch (it's the Move Action) that holds 20 Rounds or until fired, crackling on the token. The next non-explosive attack is ROF1 through Thin cover (noted on its card) and its damage ignores half the target's SP; a charged slug knocks the target Prone. |
+
+**Rebuilds that are always on** apply on every attack: Neon At Home registers the Melee Rebuilds
+(Mono-edge Blading and the Monoblade Rebuild ignore armor below SP7, 11 or 13 by tier; Propulsion
+Impact pushes whoever it hits 2 m/yds, under BODY 13, or 4 m/yds, stopping at walls) and the
+Ricochet Compensator. Other modules can add their own (see [docs/API.md](docs/API.md)).
+
+World settings (Neon Arsenal menu): the animations, keeping the profile in AA, the sounds, the
+areas, Blown back, the weapon traits, Diwako's DV display tables and players' muzzle flashes.
+
 ## Combat time
 
 A Cyberpunk RED Round is about 3 seconds (p.126, p.168): one minute is 20 Rounds. The module
@@ -614,6 +704,9 @@ window, for the hotbar, the Action HUD's Macros group, a Neon Hub page button or
 - **Biomon Link**, **Night City Map**
 - **Plot Die**: Raising the Stakes for the selected token's character (or your own)
 - **Condition Lab** (GM)
+- **Weapon Rebuilds**: the switches for the selected token's weapons (a Power gun's Ricochet, a
+  Tech gun's Charge)
+- **Install Weapon Animations** (GM): Neon Arsenal's profile into Automated Animations
 
 Drop one on the Action HUD to add it to the HUD's Macros group.
 
@@ -641,3 +734,11 @@ module's own wording, with page references. Releases: [PUBLISHING.md](PUBLISHING
 
 MIT. The Tektur font is under the SIL Open Font License (fonts/Tektur-OFL.txt). Cyberpunk RED
 is a trademark of R. Talsorian Games; this is unofficial fan content.
+
+Neon Arsenal works alongside, and learned from, two MIT-licensed projects without including their
+code: [Automated Animations](https://github.com/theripper93/autoanimations) and its Cyberpunk RED
+fork ([rhlowe/autoanimations-foundry12](https://github.com/rhlowe/autoanimations-foundry12)), whose
+menu format and workflow hook the profile follows, and
+[Diwako's Cyberpunk Red - Core Additions](https://github.com/diwako/foundry-cyberpunk-red-core-additions),
+whose muzzle flash and DV display it feeds. The JB2A animations are JB2A's (installed separately).
+The weapon sounds were made with ElevenLabs for this module.

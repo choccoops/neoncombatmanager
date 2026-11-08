@@ -310,3 +310,52 @@ Needs Sequencer. Tokens default to the selected ones; only tokens you own are sw
 
 The switches are the token flags `flags.cpr-neon-combat-manager.fx.sandevistan` and `.psycho`.
 Persistent looks are Sequencer effects named `ncm-fx-<condition or switch>-<tokenId>`.
+
+## Neon Arsenal: `ncm.arsenal`
+
+| | |
+| --- | --- |
+| `install()` / `uninstall()` | GM: put Neon Arsenal's entries into Automated Animations' Global Automatic Recognition menu (replacing older ones of ours, keeping the world's), or take them out |
+| `exportProfile()` | download the profile as an AA menu export (sounds included), for a world without this module |
+| `explain(item)` | what Neon Arsenal reads off a weapon: `{ kind, flavor, ammoVariety, ammoType, ranged, explosive, area, traits, keys, entry, dvTable }` |
+| `traits(item)` | the weapon's traits (flavor and Rebuilds), merged |
+| `registerRebuild(def)` / `rebuilds()` | add a Rebuild that is an item (below), list them |
+| `ricochet(actor, item)` / `charge(actor, item)` | flip a Power gun's ricochet or a Tech gun's charge |
+| `menu(actor?)` | the Weapon Rebuilds window |
+| `dv(item, metres, { autofire })` | the DV the weapon faces at a distance, by the 2070 range tables |
+| `applyArea(templateUuid)` | GM: the apply window for an area Neon Arsenal placed |
+
+### Registering a Rebuild
+
+In the `cpr-neon-combat-manager.registerRebuilds` hook (called at setup with `ncm.arsenal`), or
+with `registerRebuild` during init or setup:
+
+```js
+Hooks.on("cpr-neon-combat-manager.registerRebuilds", (arsenal) => {
+  arsenal.registerRebuild({
+    id: "monoEdgeBlading",
+    label: "Mono-edge Blading",
+    match: "^Mono-edge Blading\\b",          // a RegExp or its source, against the upgrade's name
+    tiers: {                                 // optional; the tier named in the item's name wins,
+      Basic: { ignoreBelowSP: 7, tag: "Monoblade" },   // else flags.cpr-neon-at-home.rebuildTier,
+      Upgraded: { ignoreBelowSP: 11, tag: "Monoblade" } // else the first
+    }
+  });
+});
+```
+
+Traits: `attackMod` (+N to ranged attacks), `needsLink` (only with a Neuroport, Personal Link or
+Subdermal Grip), `critBonus` (added to a Critical Injury's Bonus Damage), `ignoreBelowSP`,
+`push: { metres, maxBody? }` (a target hit is pushed away from the attacker), `ricochetBonus`,
+`active: ["ricochet" | "charge"]` (a switch on the HUD), `tag` (the AA look: `Monoblade`,
+`Propulsion`). The switches live on the actor: `flags.cpr-neon-combat-manager.arsenal.<itemId>`
+(`ricochet`, `chargedUntil` in world time, `fired`).
+
+### On the cards and templates
+
+A roll card Neon Arsenal saw carries `flags.cpr-neon-combat-manager.arsenal`: `{ kind ("attack"
+| "damage"), actorId, itemId, tokenId, mode, weapon, flavor, ammoType, ammoVariety, explosive,
+area, targets, ricochet, charged, dv, total }`. An area's template carries
+`flags.cpr-neon-combat-manager.blast`: `{ actorId, itemId, tokenId, userId, kind, area, ammoType,
+ammoName, explosive, state ("placed" | "hit" | "miss" | "landed" | "resolved"), dv, total }`.
+Automated Animations entries are labelled `Neon Arsenal · <Kind>[ · <Flavor>][ · <Ammo or tag>]`.
