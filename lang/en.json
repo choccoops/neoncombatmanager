@@ -1040,6 +1040,10 @@
       "weatherAmbience": {
         "name": "Weather sounds and lightning",
         "hint": "Quiet rain, wind and Geiger ambience on Outdoors scenes, and soft lightning flashes with thunder in a thunderstorm (no flashes with token motion off or reduced motion). Plays on the Environment volume slider, scaled by your Neon FX volume."
+      },
+      "conditionSheetNotes": {
+        "name": "Condition notes on character sheets",
+        "hint": "Each condition on the Effects tab of a character sheet gets a line saying what it does and its page, including conditions Cyberpunk RED can't automate."
       }
     },
     "SceneWeather": {
@@ -1174,7 +1178,9 @@
       "Behaviour": "Behaviour",
       "NeedName": "Give it a name.",
       "Exists": "There's already a condition called {name}.",
-      "ModeHint": "Another module's change, worked out by its own code. Its value is kept as it is."
+      "ModeHint": "Another module's change, worked out by its own code. Its value is kept as it is.",
+      "Manual": "not automated",
+      "LimitHint": "A floor or ceiling, applied after every other change (MOVE can't drop below 1)."
     },
     "Triggers": {
       "Title": "Triggler",
@@ -1948,6 +1954,27 @@
       "ncmSmog": "Night City: Inversion Smog",
       "ncmColdSnap": "Night City: Cold Snap",
       "ncmHeatWave": "Night City: Heat Wave"
+    },
+    "Effect": {
+      "Automated": "Automated:",
+      "Manual": "Not automated: play it out at the table.",
+      "Source": "Neon Conditions",
+      "CriticalItem": "Cyberpunk RED's Critical Injury item carries its penalties and Death Save increase",
+      "WoundMirror": "Cyberpunk RED applies the Wound State's roll penalties itself",
+      "Minimum": "{key} minimum {value}",
+      "Maximum": "{key} maximum {value}",
+      "ToggleOn": "{change} (a roll dialog toggle, ticked)",
+      "ToggleOff": "{change} (a roll dialog toggle, off until ticked)",
+      "Environment": "its numbers are worked out per character from the weather, light, gear and shelter",
+      "Reminder": "a reminder at the start of their Turn",
+      "Wakes": "ends when they take damage",
+      "Also": "brings {names} with it, and takes them off when it goes",
+      "Heal": "heals at once when added",
+      "Stabilize": "a Mortally Wounded character goes to 1 HP",
+      "Purges": "removes their other drugs",
+      "Secondary": "asks for the DV{dv} Check when it wears off",
+      "Consume": "gone once their next Check is rolled",
+      "Defeated": "marks them defeated in combat"
     }
   }
 }

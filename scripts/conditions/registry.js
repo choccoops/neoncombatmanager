@@ -2,6 +2,7 @@ import { MODULE_ID, SYSTEM_ID, LANG, FLAGS } from "../constants.js";
 import { Settings } from "../settings.js";
 import { CONDITIONS, CORE_STATUS_IDS } from "./data.js";
 import { cprChanges } from "./cpr-flags.js";
+import { describe } from "./describe.js";
 import { slug } from "../util.js";
 
 const { deepClone } = foundry.utils;
@@ -98,16 +99,17 @@ export const Registry = {
    * ActiveEffect data for a condition: its statuses, changes in CPR's shape and CPR's flags.
    * @param {object} c - resolved condition
    * @param {object} [options] - changes: replace the condition's own changes (weather and
-   *   visibility work theirs out per character); duration: seconds; name: shown name; flags: merged in
+   *   visibility work theirs out per character); duration: seconds; name: shown name; flags: merged in;
+   *   item: a Critical Injury marker beside Cyberpunk RED's item (the description says so)
    */
-  effectData(c, { changes = null, duration = null, name = null, flags = {}, origin = null } = {}) {
+  effectData(c, { changes = null, duration = null, name = null, flags = {}, origin = null, item = false } = {}) {
     const raw = changes ?? c.rawChanges ?? [];
     const { changes: list, flags: cprFlags } = cprChanges(raw);
     const seconds = duration ?? c.duration ?? null;
     const data = {
       name: name ?? c.name,
       img: c.img,
-      description: c.hint ?? "",
+      description: describe(c, { changes: raw, item }),
       statuses: [c.id],
       changes: list,
       disabled: false,

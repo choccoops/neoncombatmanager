@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.16.0
+
+**Conditions that explain themselves on the character sheet.**
+
+- **Every condition says what it does.** Its Active Effect's description has the condition's
+  text, an *Automated:* line (its STAT and skill changes in words, roll-dialog toggles, damage at
+  Turn start or end, reminders, waking on damage, the conditions it brings along) or *Not
+  automated: play it out at the table*, and its page.
+- **On the Effects tab** of a character sheet, each condition shows a line with its text and
+  page under its name, so EMP, Human Shield, Suppressed and the rest that Cyberpunk RED can't
+  automate still explain themselves. Setting: **Condition notes on character sheets**
+  (Conditions), on by default.
+- **MOVE penalties stop at 1**: Mortally Wounded, Collapsed Lung, Broken Leg and Dismembered Leg
+  (with or without CPR's Critical Injury item). Quickhacks can still take MOVE to 0.
+- **Tarot: Chrome Shutdown** carries its extra -4 to every Check as a roll-dialog toggle, off
+  until ticked.
+- **Removing a condition takes off what it brought along**: a flashbang's Damaged Eye and Ear,
+  Sleep's Prone, System Reset's Unconscious and Prone, Into the Wall's Spinal Injury, Sonic
+  Shock's Damaged Ear (and any Critical Injury item they added). One that another condition
+  still brings, or that was there first, stays.
+- **Condition Lab**: saving or resetting a condition updates the effects already on
+  characters (text and icon, and the modifiers where they're the condition's own). Conditions
+  with nothing automated are marked *not automated*; a floor like MOVE's shows as "MOVE minimum 1".
+- API: `conditions.describe(idOrName)` and `conditions.resync(idOrName)`.
+- Audited every condition against Cyberpunk RED 0.92.4's effect keys; none double-counts
+  what the system applies itself (Wound State penalties, Critical Injury items, the Plot Die).
+
 ## 1.15.0
 
 - **Macros in the Action HUD.** A new **Macros** group runs any macro the player can use, for the

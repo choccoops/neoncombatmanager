@@ -275,7 +275,7 @@ test("Broken Leg costs Evasion too; Prone's Evasion and Grapple penalties are ro
   const actor = makeActor({ name: "Legs" });
   await Conditions.add("brokenLeg", actor);
   await settle();
-  assert.deepEqual(Conditions.effects(actor, "brokenLeg")[0].changes.map((c) => [c.key, c.value]), [["system.stats.move.value", "-4"], ["bonuses.evasion", "-2"]], "without CPR's item it carries both");
+  assert.deepEqual(Conditions.effects(actor, "brokenLeg")[0].changes.map((c) => [c.key, c.value]), [["system.stats.move.value", "-4"], ["system.stats.move.value", "1"], ["bonuses.evasion", "-2"]], "without CPR's item it carries both (and MOVE's floor)");
   await Conditions.add("prone", actor);
   const prone = Conditions.effects(actor, "prone")[0];
   assert.deepEqual(prone.changes.map((c) => [c.key, c.value]), [["bonuses.evasion", "-4"], ["bonuses.brawling", "-4"]]);

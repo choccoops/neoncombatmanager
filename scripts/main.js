@@ -8,6 +8,7 @@ import { Registry } from "./conditions/registry.js";
 import { Conditions } from "./conditions/engine.js";
 import { Triggers } from "./conditions/triggers.js";
 import { CLT } from "./conditions/clt.js";
+import { SheetNotes } from "./conditions/sheet.js";
 import { Cards } from "./combat/cards.js";
 import { CombatTime } from "./combat/time.js";
 import { Turns } from "./combat/turns.js";
@@ -50,6 +51,13 @@ const api = {
     removeAll: (entities, options) => Conditions.removeAll(entities, options),
     /** Register a condition from another module (during init/setup or the registerConditions hook). */
     register: (def) => Registry.register(def),
+    /** What a condition's Active Effect says it does (HTML), as it would be placed now. */
+    describe: (idOrName) => {
+      const c = Registry.get(idOrName);
+      return c ? Registry.effectData(c).description : "";
+    },
+    /** Bring the effects already placed up to date after a condition changed (GM). */
+    resync: (idOrName) => Conditions.resync(idOrName),
     openLab: async () => (await import("./conditions/lab-app.js")).ConditionLab.open()
   },
   /** Neon FX (needs Sequencer): condition visuals, and the Cyberpsychosis and Sandevistan switches. */
@@ -282,6 +290,7 @@ Hooks.once("init", () => {
   Hud.init();
   Chat.init();
   Comms.init();
+  SheetNotes.init();
   SceneSignal.init();
   NoSignal.init();
   Hooks.on(`${MODULE_ID}.spamChanged`, () => NcmSpam.apply());

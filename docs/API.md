@@ -28,6 +28,8 @@ the user's character. Non-owners' requests go through the GM.
 | `toggle(idOrName, entities, { active? })` | toggle, or force on/off |
 | `removeAll(entities, { category? })` | remove all (of a category) |
 | `register(def)` | add your own condition (see below) |
+| `describe(idOrName)` | the HTML description its Active Effect carries: text, what's automated, page |
+| `resync(idOrName)` | GM: bring the effects already placed up to date after the condition changed; resolves to how many |
 | `openLab()` | open the Condition Lab |
 
 `add` options: `duration` (seconds of world time), `changes` (replace the condition's
@@ -57,6 +59,7 @@ Hooks.on("cpr-neon-combat-manager.registerConditions", (conditions) => {
     name: "MYMODULE.Overloaded",          // a localization key or plain text
     hint: "MYMODULE.OverloadedHint",
     img: "modules/my-module/overloaded.svg",
+    page: "My Book p.12",                  // shown in the Lab and the effect's description
     category: "situation",                 // wound | critical | combat | hazard | situation | drug | quickhack | weather | visibility | custom
     changes: [{ key: "system.stats.move.value", value: -2 }],
     duration: null,                        // seconds
@@ -66,7 +69,7 @@ Hooks.on("cpr-neon-combat-manager.registerConditions", (conditions) => {
 });
 ```
 
-Changes use Cyberpunk RED's roll keys, all added (ADD mode):
+Changes use Cyberpunk RED's roll keys, added (ADD mode) unless they say otherwise:
 
 | Key | Counts on |
 | --- | --- |
@@ -77,12 +80,19 @@ Changes use Cyberpunk RED's roll keys, all added (ADD mode):
 | `system.stats.<stat>.value` | the STAT itself |
 
 Add `situational: true` (and `onByDefault: false` to leave it unticked) to show a modifier as
-a toggle in CPR's roll dialog. A value can be a dice formula (`"-1d6"`): it's rolled when the
+a toggle in CPR's roll dialog. A STAT floor is a second change with `mode: 4` (UPGRADE), which
+Foundry applies after every ADD: `{ key: "system.stats.move.value", value: 1, mode: 4 }` keeps
+MOVE at 1 or more. Roll keys (`bonuses.*`) only count in ADD mode. A value can be a dice formula (`"-1d6"`): it's rolled when the
 condition lands and shown in its name. `consume: "check"` takes the condition off once the
 bearer's next Cyberpunk RED roll card is posted. On a Critical Injury condition, `extra` lists
 changes CPR's own item doesn't carry; the token marker keeps them while the item applies the rest. The module writes Cyberpunk RED's bookkeeping flags
 (`flags["cyberpunk-red-core"].changes.cats` and `.situational`) for you; any ActiveEffect with
 changes created without them gets them too.
+
+Each condition's Active Effect carries a `description` (HTML) written from the condition: its
+`hint`, an *Automated:* line (its changes in words and what the module runs for it) or *Not
+automated*, and its `page`. A condition brought along by another (`also`) is flagged
+`flags["cpr-neon-combat-manager"].alsoOf` with that effect's id and goes when it does.
 
 ### Hooks
 

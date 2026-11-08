@@ -70,6 +70,7 @@ test("saving an ordinary condition unchanged keeps its numbers, situational flag
   await saveUnchanged("brokenLeg");
   assert.deepEqual(Registry.effectData(Registry.get("brokenLeg")).changes, [
     { key: "system.stats.move.value", mode: 2, value: "-4", priority: null },
+    { key: "system.stats.move.value", mode: 4, value: "1", priority: null },
     { key: "bonuses.evasion", mode: 2, value: "-2", priority: null }
   ]);
 });

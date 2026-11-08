@@ -411,6 +411,29 @@ What they do on their own:
   System Reset), unless drugged asleep or choked; a flashbang is a Damaged Eye and a Damaged Ear
   for a minute.
 
+### On the character sheet
+
+Every condition is a real Active Effect on the character for as long as it lasts:
+
+- **STATs and skills change by themselves.** Its changes are on Cyberpunk RED's own keys
+  (`system.stats.move.value`, `bonuses.evasion`, `bonuses.allActions`...), so the sheet's numbers
+  and the roll dialog follow. Nothing CPR already applies is counted twice: Wound State
+  penalties, a Critical Injury item's own penalties and Death Save increase, and the Plot Die's
+  bonus stay with the system or the roller.
+- **MOVE penalties stop at 1** (Mortally Wounded, Collapsed Lung, Broken and Dismembered Legs),
+  as the book says. Quickhacks can still take MOVE to 0.
+- **Each effect says what it does.** Its description has the condition's text, what Neon
+  Conditions automates (the changes, roll-dialog toggles, damage at Turn start or end, reminders,
+  the conditions it brings along) or *Not automated: play it out at the table*, and the page.
+  On the sheet's Effects tab, each condition gets a line with its text and page under its name,
+  so ones Cyberpunk RED can't automate (EMP, Human Shield, Suppressed) still explain themselves
+  there. **Condition notes on character sheets** (Conditions settings) turns that line off.
+- **Removing a condition removes its effects**: its changes, the Critical Injury item it added,
+  and the conditions it brought along (a flashbang's Damaged Eye and Ear, Sleep's Prone, System
+  Reset's Unconscious), unless another condition on the character still brings them.
+- **Tarot: Chrome Shutdown**'s extra -4 is a roll-dialog toggle, off until the GM ticks it (for
+  someone with no other way to sense the enemy).
+
 Every effect created on an actor with changes but without Cyberpunk RED's bookkeeping flags
 (from any module or macro) gets them, so the character sheet keeps opening.
 
@@ -420,6 +443,9 @@ Every effect created on an actor with changes but without Cyberpunk RED's bookke
 Every condition with what it does in roll terms, by category, with search. The GM can edit any
 condition (name, icon, text, modifiers, duration, exclusive group, damage at Turn start/end),
 switch it off, reset it to the original, make custom ones, and export/import the lot as JSON.
+Conditions with nothing automated are marked *not automated*. Saving or resetting a condition
+updates the effects already on characters: their text and icon, and their modifiers where
+they're the condition's own (weather, visibility and rolled ones keep their numbers).
 Click a condition's icon to toggle it on the selected tokens.
 
 ### The Triggler

@@ -10,6 +10,18 @@ import { L, esc } from "../util.js";
 
 const { getProperty } = foundry.utils;
 
+/** An effect's changes back in a condition's shape, with CPR's situational flags. */
+export function effectChanges(effect) {
+  const sit = effect?.flags?.[SYSTEM_ID]?.changes?.situational ?? {};
+  return (effect?.changes ?? []).map((ch, i) => {
+    const n = Number(ch.value);
+    const out = { key: ch.key, value: ch.value !== "" && Number.isFinite(n) ? n : ch.value, situational: !!sit[i]?.isSituational, onByDefault: sit[i]?.onByDefault !== false };
+    if (ch.mode !== undefined && ch.mode !== null) out.mode = ch.mode;
+    if (ch.priority !== undefined && ch.priority !== null) out.priority = ch.priority;
+    return out;
+  });
+}
+
 /** Options marking our own writes, so the hooks don't run their side effects twice. */
 const QUIET = { [MODULE_ID]: { quiet: true } };
 
@@ -120,7 +132,8 @@ export const Conditions = {
     const flags = options.managed ? { [MODULE_ID]: { [FLAGS.managed]: options.managed } } : {};
     const rolled = options.changes ? null : this._rolled(c, actor);
     const name = options.name ?? (rolled ? `${c.name} (${rolled.shown})` : null);
-    const data = Registry.effectData(c, { changes: options.changes ?? rolled?.changes, duration: options.duration, name, flags: { ...flags, ...(options.flags ?? {}) } });
+    const item = !!options.flags?.[MODULE_ID]?.[FLAGS.item];
+    const data = Registry.effectData(c, { changes: options.changes ?? rolled?.changes, duration: options.duration, name, item, flags: { ...flags, ...(options.flags ?? {}) } });
     const [effect] = await actor.createEmbeddedDocuments("ActiveEffect", [data], { [MODULE_ID]: { source: options.managed ?? "api" } });
     return effect ?? null;
   },
@@ -142,11 +155,11 @@ export const Conditions = {
   /** Update an automated condition's numbers (weather, visibility) when they changed. */
   async _refresh(effect, c, { changes = null, name = null } = {}) {
     const data = Registry.effectData(c, { changes, name });
-    const same = effect.name === data.name
+    const same = effect.name === data.name && (effect.description ?? "") === data.description
       && JSON.stringify(effect.changes.map((x) => [x.key, String(x.value)])) === JSON.stringify(data.changes.map((x) => [x.key, String(x.value)]))
       && JSON.stringify(getProperty(effect, `flags.${SYSTEM_ID}.changes.situational`) ?? {}) === JSON.stringify(data.flags[SYSTEM_ID].changes.situational);
     if (same) return effect;
-    await effect.update({ name: data.name, changes: data.changes, [`flags.${SYSTEM_ID}.changes`]: data.flags[SYSTEM_ID].changes }, QUIET);
+    await effect.update({ name: data.name, description: data.description, changes: data.changes, [`flags.${SYSTEM_ID}.changes`]: data.flags[SYSTEM_ID].changes }, QUIET);
     return effect;
   },
 
@@ -165,6 +178,33 @@ export const Conditions = {
         .map((e) => e.id);
       if (remove.length) await actor.deleteEmbeddedDocuments("ActiveEffect", [...new Set(remove)]);
     }
+  },
+
+  /**
+   * The Condition Lab changed a condition (GM): bring the effects already placed up to date.
+   * Effects that are the condition's own take its new name, icon, description and changes.
+   * Automation's (weather, visibility), rolled ones (Slow), Critical Injury markers and suppressed
+   * addictions keep their numbers and take the new icon and description only.
+   * @returns {Promise<number>} effects updated
+   */
+  async resync(idOrName) {
+    const c = Registry.get(idOrName);
+    if (!c || !game.user.isGM) return 0;
+    const dice = (c.rawChanges ?? []).some((ch) => typeof ch.value === "string" && /d/i.test(ch.value));
+    let n = 0;
+    for (const actor of this._actorsInPlay()) {
+      for (const e of this.effects(actor, c.id)) {
+        const item = !!e.getFlag(MODULE_ID, FLAGS.item);
+        const own = !item && !dice && !e.getFlag(MODULE_ID, FLAGS.managed) && !e.getFlag(MODULE_ID, "suppressed");
+        const data = Registry.effectData(c, { changes: own ? null : effectChanges(e), item });
+        const update = own
+          ? { name: data.name, img: data.img, description: data.description, changes: data.changes, [`flags.${SYSTEM_ID}.changes`]: data.flags[SYSTEM_ID].changes }
+          : { img: data.img, description: data.description };
+        await e.update(update, QUIET);
+        n++;
+      }
+    }
+    return n;
   },
 
   async toggle(idOrName, entities = null, { active = null, ...options } = {}) {
@@ -235,7 +275,11 @@ export const Conditions = {
     }
     if (c.critical && !effect.getFlag(MODULE_ID, FLAGS.item)) await this._linkCritical(actor, c, effect, options);
     // Brought along for as long as this lasts, unless they have a clock of their own.
-    for (const id of c.also ?? []) if (!this.has(id, actor)) await this.add(id, actor, { duration: Registry.get(id)?.duration ?? c.duration });
+    // Tagged with this effect, so removing it takes them off too.
+    for (const id of c.also ?? []) {
+      if (this.has(id, actor)) continue;
+      await this.add(id, actor, { duration: Registry.get(id)?.duration ?? c.duration, flags: { [MODULE_ID]: { [FLAGS.alsoOf]: effect.id } } });
+    }
     if (c.purges?.length) {
       const purge = this.active(actor).filter((x) => x.id !== c.id && c.purges.includes(x.category) && !x.addiction).map((x) => x.id);
       if (purge.length) await this.remove(purge, actor);
@@ -269,7 +313,25 @@ export const Conditions = {
       await actor.deleteEmbeddedDocuments("Item", [itemId], { [MODULE_ID]: { fromCondition: true } });
     }
     if (c.defeated && !this.has(c.id, actor)) await this._setDefeated(actor, false);
+    await this._removeBroughtAlong(actor, effect);
     await this.syncSuppressed(actor);
+  },
+
+  /**
+   * A condition went: the ones it brought along go with it (a Flashbang's Damaged Eye and Ear,
+   * Sleep's Prone), unless another condition still on the actor brings the same one: then that
+   * one keeps it.
+   */
+  async _removeBroughtAlong(actor, effect) {
+    const brought = actor.effects.filter((e) => e.getFlag(MODULE_ID, FLAGS.alsoOf) === effect.id);
+    const remove = [];
+    for (const e of brought) {
+      const id = Registry.ofEffect(e)?.id;
+      const keeper = actor.effects.find((x) => x.id !== effect.id && x.id !== e.id && Registry.ofEffect(x)?.also?.includes(id));
+      if (keeper) await e.update({ [`flags.${MODULE_ID}.${FLAGS.alsoOf}`]: keeper.id }, QUIET);
+      else remove.push(e.id);
+    }
+    if (remove.length) await actor.deleteEmbeddedDocuments("ActiveEffect", remove);
   },
 
   /** Effects that change (repair CPR's flags if another module dropped them). */
@@ -314,9 +376,10 @@ export const Conditions = {
       if (data) [item] = await actor.createEmbeddedDocuments("Item", [data], { [MODULE_ID]: { fromCondition: true } });
     }
     if (!item) return;
-    const marker = Registry.effectData(c, { changes: c.extraChanges ?? [] });
+    const marker = Registry.effectData(c, { changes: c.extraChanges ?? [], item: true });
     await effect.update({
       changes: marker.changes,
+      description: marker.description,
       [`flags.${MODULE_ID}.${FLAGS.item}`]: item.id,
       [`flags.${SYSTEM_ID}.changes`]: marker.flags[SYSTEM_ID].changes
     }, QUIET);
