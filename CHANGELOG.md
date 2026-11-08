@@ -21,6 +21,10 @@
   Tech guns; none for arrows, grenades and rockets.
 - **Diwako's DV display shows the 2070 range tables**, and each gun's own Autofire table as its
   card names it.
+- **Does it hit?** under each ranged attack card: each target's DV at their range (2070
+  tables, Autofire on the gun's own table), hit or miss and by how much, Autofire's multiplier,
+  and whether they can dodge (REF 8+). Diwako's own hit message, which reads the wrong Autofire
+  tables and has no switch, is kept out of the chat while this is on.
 - **Area attacks place their template**: 10×10 m/yds for explosives (or the ammo card's size), a
   6 m/yds cone for Shotgun Shells and flamethrowers. Everyone inside is targeted; the roll says
   if it lands (a miss is the GM's to move); the GM applies one damage roll to everyone through

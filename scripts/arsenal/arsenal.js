@@ -33,6 +33,21 @@ export function rollKind(roll) {
   return null;
 }
 
+/**
+ * Does a shot hit each target, pure: [{ name, dv, hit, by, dodge, mult }]. A Check must beat the
+ * DV (a tie misses). Autofire's damage is 2d6 times what it beat the DV by, up to the weapon's
+ * number (Ch07, Firing Modes). Someone with REF 8+ can dodge bullets: their Evasion roll counts too.
+ * @param {number} total
+ * @param {object[]} targets - { name, dv, ref }
+ */
+export function hitLines(total, targets, { autofire = false, cap = 0 } = {}) {
+  return (targets ?? []).filter((t) => Number.isFinite(Number(t.dv)) && t.dv !== null).map((t) => {
+    const by = Number(total) - Number(t.dv);
+    const hit = by > 0;
+    return { name: t.name, dv: Number(t.dv), hit, by: hit ? by : 1 - by, dodge: Number(t.ref) >= 8, mult: autofire && hit ? Math.min(by, Number(cap) || by) : 0 };
+  });
+}
+
 /** Can an Improved Smart round try again (a miss by 5 or less)? */
 export const smartRetry = (total, dv) => Number.isFinite(Number(dv)) && Number(total) <= Number(dv) && Number(dv) - Number(total) <= SMART_RETRY.within;
 
@@ -50,7 +65,10 @@ export const Arsenal = {
     Sound.init();
     AA.init();
     Blast.init();
-    Hooks.on("preCreateChatMessage", (message, data, options, userId) => this.tag(message, userId));
+    Hooks.on("preCreateChatMessage", (message, data, options, userId) => {
+      this.tag(message, userId);
+      return this.diwakoHit(message, userId);
+    });
     Hooks.on("createChatMessage", (message, options, userId) => this.onCard(message, userId).catch((err) => console.error(`${MODULE_ID} | arsenal`, err)));
     Hooks.on(Compat.chatRenderHook, (message, html) => this.decorate(message, html));
     Socket.on("arsenalPush", (data) => this.pushAsGM(data));
@@ -128,7 +146,14 @@ export const Arsenal = {
       if (info.area && Blast.on && mode !== "suppressive" && mode !== "aimed" && token) {
         await Blast.place({ area: info.area, actor, item, token, info, ammo });
       } else if (targets[0] && token && info.ranged) {
-        tag.dv = await Dv.forWeapon(item, Dv.distance(token, targets[0]), { autofire: mode === "autofire" });
+        // The DV each target stands at (a ROF 2 attack can split between two).
+        tag.hits = [];
+        for (const t of targets) {
+          const dv = await Dv.forWeapon(item, Dv.distance(token, t), { autofire: mode === "autofire" });
+          tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref") });
+        }
+        tag.dv = tag.hits[0]?.dv ?? null;
+        tag.cap = Number(item.system?.fireModes?.autoFire) || 0;
       }
     }
     if (kind === "damage" && rebuilds) {
@@ -151,6 +176,15 @@ export const Arsenal = {
     if (!p || userId !== game.user.id || Date.now() - p.at > PENDING_MS || !String(message.content ?? "").includes('class="rollcard"')) return;
     this.pending = null;
     message.updateSource({ [`flags.${MODULE_ID}.arsenal`]: { ...p.tag, total: Number(p.roll.resultTotal) || 0, at: Date.now() } });
+  },
+
+  /**
+   * Diwako's "Does it hit?" message reads "<table> (Autofire)", which the 2070 guns don't have;
+   * with Neon Arsenal's own check on the card, it's kept out of the chat (it has no setting).
+   */
+  diwakoHit(message, userId) {
+    if (userId !== game.user.id || !Settings.get("arsenalHitCheck") || !Settings.get("arsenalHideDiwakoHit") || !game.modules.get("diwako-cpred-additions")?.active) return true;
+    return !/^<div class="cpr-block" style="padding:10px;background-color:/.test(String(message.content ?? ""));
   },
 
   /** The card is posted (the roller's client): sounds, the area, pushes. */
@@ -189,6 +223,14 @@ export const Arsenal = {
     if (!a || !card || root.querySelector(".ncm-arsenal")) return;
     const notes = [];
     const buttons = [];
+    if (a.kind === "attack" && a.mode !== "suppressive" && a.hits?.length && Settings.get("arsenalHitCheck")) {
+      for (const h of hitLines(a.total, a.hits, { autofire: a.mode === "autofire", cap: a.cap })) {
+        let line = L(`${LANG}.Arsenal.HitCheck.${h.hit ? "hit" : "miss"}`, { name: esc(h.name), dv: h.dv, by: h.by });
+        if (h.mult) line += ` ${L(`${LANG}.Arsenal.HitCheck.autofire`, { mult: h.mult })}`;
+        if (h.dodge && !a.ricochet) line += ` ${L(`${LANG}.Arsenal.HitCheck.dodge`)}`;
+        notes.push(`<span class="ncm-hit ${h.hit ? "is-hit" : "is-miss"}">${line}</span>`);
+      }
+    }
     if (a.kind === "attack" && a.ricochet) notes.push(L(`${LANG}.Arsenal.Note.ricochet`));
     if (a.kind === "attack" && a.charged) notes.push(L(`${LANG}.Arsenal.Note.chargedAttack`));
     if (a.kind === "damage" && a.charged) notes.push(L(`${LANG}.Arsenal.Note.chargedDamage`));

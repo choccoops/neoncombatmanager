@@ -1082,6 +1082,14 @@
       "arsenalPlayerFlashes": {
         "name": "Muzzle flashes for players' shots",
         "hint": "Diwako's muzzle flash (with DF Active Lights) only lights the GM's own shots; this sends players' shots to the GM's client so theirs flash too. The GM must be viewing the scene."
+      },
+      "arsenalHitCheck": {
+        "name": "Does it hit?",
+        "hint": "Under each ranged attack card: for each target, the DV at that range (the 2070 tables, Autofire on the gun's own table), hit or miss and by how much, Autofire's damage multiplier, and whether they can dodge (REF 8+)."
+      },
+      "arsenalHideDiwakoHit": {
+        "name": "Hide Diwako's \"Does it hit?\" message",
+        "hint": "Diwako's module posts its own hit message, read off \"<table> (Autofire)\" tables the 2070 guns don't have, and it has no setting of its own. With Does it hit? above on, this keeps that message out of the chat. Diwako's hit sounds and animations are its own settings."
       }
     },
     "SceneWeather": {
@@ -2074,7 +2082,13 @@
       "Installed": "Neon Arsenal: {count} animations put into Automated Animations ({pack}).",
       "MenuTitle": "Weapon Rebuilds: {name}",
       "NoActor": "Select a token of yours (or have a character).",
-      "NoSwitches": "{name} has no weapon with a switch (a Power gun's ricochet, a Tech gun's charge)."
+      "NoSwitches": "{name} has no weapon with a switch (a Power gun's ricochet, a Tech gun's charge).",
+      "HitCheck": {
+        "hit": "<b>{name}</b>: beats DV{dv} by {by}, a hit.",
+        "miss": "<b>{name}</b>: missed DV{dv} by {by}.",
+        "autofire": "Autofire: damage ×{mult}.",
+        "dodge": "REF 8+: they can dodge, and their Evasion roll counts if they do."
+      }
     }
   }
 }

@@ -563,6 +563,15 @@ same name first), and each gun's own Autofire table as its card names it ("Autof
 Pistol 4)"), where Diwako's own looks for "<table> (Autofire)". Diwako's settings (in combat only,
 names or types, left or right) still apply.
 
+**Does it hit?** Under each ranged attack card, for each target: the DV at their range (the
+2070 tables, an Autofire shot on the gun's own Autofire table), hit or miss and by how much (a
+Check must beat the DV), Autofire's damage multiplier (what it beat the DV by, up to the gun's
+number), and whether the target can dodge bullets (REF 8+). Diwako's own "Does it hit?" message
+reads tables the 2070 guns don't have and can't be switched off in its module, so Neon Arsenal
+keeps it out of the chat while its own check is on (a setting). Diwako's hit sounds and hit
+animations are its own settings: with Neon Arsenal, switch them off, since AA's hit and miss
+animations and Neon Arsenal's impact sounds already play.
+
 **Area attacks.** A grenade, rocket or missile (launched or thrown) places a 10×10 m/yds area, or
 the size its ammo card names (a Laser Grenade's 6×6m, a Wall-Piercing Grenade's cone); a Shotgun
 Shell or a flamethrower a 6 m/yds cone in front of the shooter. When the attack is rolled (from
@@ -597,7 +606,8 @@ Impact pushes whoever it hits 2 m/yds, under BODY 13, or 4 m/yds, stopping at wa
 Ricochet Compensator. Other modules can add their own (see [docs/API.md](docs/API.md)).
 
 World settings (Neon Arsenal menu): the animations, keeping the profile in AA, the sounds, the
-areas, Blown back, the weapon traits, Diwako's DV display tables and players' muzzle flashes.
+areas, Blown back, the weapon traits, Does it hit? (and hiding Diwako's), Diwako's DV display
+tables and players' muzzle flashes.
 
 ## Combat time
 

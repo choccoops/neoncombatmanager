@@ -14,7 +14,7 @@ const { dvFromResults, dvLines, Dv } = await import("../scripts/arsenal/dv.js");
 const { RebuildRegistry, traitsFromDef, traitsOf, attackMods, damageArgs, chargeHolds, Rebuilds } = await import("../scripts/arsenal/rebuilds.js");
 const { Blast, damageFromHtml, tokensIn, SHELL_DV } = await import("../scripts/arsenal/blast.js");
 const { AA, loadedAmmo } = await import("../scripts/arsenal/aa.js");
-const { Arsenal, rollKind, smartRetry } = await import("../scripts/arsenal/arsenal.js");
+const { Arsenal, rollKind, smartRetry, hitLines } = await import("../scripts/arsenal/arsenal.js");
 const { catalog } = await import("../scripts/hud/catalog.js");
 const { Registry } = await import("../scripts/conditions/registry.js");
 const { Conditions } = await import("../scripts/conditions/engine.js");
@@ -429,6 +429,44 @@ test("the roll's card carries what Neon Arsenal saw (the roller's client only)",
   Arsenal.tag(message, game.user.id);
   assert.equal(message.u[`flags.${M}.arsenal`].weapon, "assaultRifle");
   assert.equal(message.u[`flags.${M}.arsenal`].total, 17);
+});
+
+test("does it hit: beat the DV (a tie misses), Autofire's multiplier up to the gun's, REF 8+ can dodge", () => {
+  assert.deepEqual(hitLines(17, [{ name: "A", dv: 15, ref: 6 }, { name: "B", dv: 17, ref: 8 }]), [
+    { name: "A", dv: 15, hit: true, by: 2, dodge: false, mult: 0 },
+    { name: "B", dv: 17, hit: false, by: 1, dodge: true, mult: 0 }
+  ]);
+  assert.equal(hitLines(26, [{ name: "A", dv: 20 }], { autofire: true, cap: 4 })[0].mult, 4);
+  assert.equal(hitLines(22, [{ name: "A", dv: 20 }], { autofire: true, cap: 4 })[0].mult, 2);
+  assert.deepEqual(hitLines(10, [{ name: "A", dv: null }]), [], "no table at that range");
+});
+
+test("before the dice, each target's DV at its range goes on the card", async () => {
+  const table = [{ range: [0, 6], text: "13" }, { range: [7, 12], text: "15" }];
+  game.tables = { getName: (n) => (n === "DV Pistol" ? { results: table } : null) };
+  Dv.clear();
+  const { actor, item } = armed(weapon("Pistol", { weaponType: "medPistol", dvTable: "DV Pistol" }));
+  actor.getActiveTokens = () => [{ id: "t0", actor, center: { x: 0, y: 0 } }];
+  const near = makeActor({ name: "Near", system: { stats: { ref: { value: 8 } } } });
+  const far = makeActor({ name: "Far" });
+  game.user.targets = new Set([{ name: "Near", actor: near, center: { x: 200, y: 0 } }, { name: "Far", actor: far, center: { x: 500, y: 0 } }]);
+  await Arsenal.preRoll(item, new CPRAttackRoll());
+  assert.deepEqual(Arsenal.pending.tag.hits, [{ name: "Near", dv: 13, ref: 8 }, { name: "Far", dv: 15, ref: 7 }]);
+  assert.equal(Arsenal.pending.tag.dv, 13);
+  delete game.tables;
+  Dv.clear();
+});
+
+test("Diwako's own hit message is kept out of the chat while ours is on", async () => {
+  const diwako = { content: '<div class="cpr-block" style="padding:10px;background-color:var(--cpr-text-chat-success, #2d9f36)"><b>A hits B</b></div>' };
+  assert.equal(Arsenal.diwakoHit(diwako, game.user.id), true, "only with Diwako's module active");
+  game.modules.set("diwako-cpred-additions", { id: "diwako-cpred-additions", active: true });
+  assert.equal(Arsenal.diwakoHit(diwako, game.user.id), false);
+  assert.equal(Arsenal.diwakoHit({ content: '<div class="rollcard">…</div>' }, game.user.id), true);
+  await Settings.set("arsenalHideDiwakoHit", false);
+  assert.equal(Arsenal.diwakoHit(diwako, game.user.id), true);
+  await Settings.set("arsenalHideDiwakoHit", true);
+  game.modules.delete("diwako-cpred-additions");
 });
 
 /* ---------------------------------------- */

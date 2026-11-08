@@ -9,7 +9,7 @@ export const MENUS = {
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxMacros"],
-  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalDvDisplay", "arsenalPlayerFlashes"],
+  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDvDisplay", "arsenalPlayerFlashes"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -102,6 +102,8 @@ const DEFS = [
   ["arsenalAreas", "world", Boolean, true, {}],
   ["arsenalBlowBack", "world", Boolean, true, {}],
   ["arsenalRebuilds", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
+  ["arsenalHitCheck", "world", Boolean, true, {}],
+  ["arsenalHideDiwakoHit", "world", Boolean, true, {}],
   ["arsenalDvDisplay", "world", Boolean, true, { requiresReload: true }],
   ["arsenalPlayerFlashes", "world", Boolean, true, {}],
   // The 2070 roller and table rules
