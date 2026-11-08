@@ -624,6 +624,34 @@ The GM's client checks the clock really moved after each Round and moves it if n
 combat ends, a card says how many Rounds it ran, how long that was and the time of day.
 Seconds per Round (and per skipped Turn) are settings.
 
+## Movement ruler
+
+In place of [Drag Ruler](https://github.com/manuelVo/foundryvtt-drag-ruler) (which stops at
+Foundry v12), with Cyberpunk RED's own movement (2070 Core Rules, Ch07): while you drag a token,
+its path lights square by square in the band each square falls in:
+
+| | |
+| --- | --- |
+| cyan | within the Move Action: MOVE × 2 m/yds |
+| yellow | with a Run (a second Move Action, your Action): MOVE × 4 m/yds in all |
+| red | out of reach this Turn |
+
+MOVE is the character's MOVE now, so Neon Conditions, Critical Injuries, encumbrance and the rest
+count. Prone, nothing is in reach until they Get Up; Grappled, no Move Action; a lost Move Action
+(Damaged Ear, a flashbang) leaves only the Run. In combat, on their own Turn, what they've already
+walked shows faded and counts toward the bands, on every client (the path is kept on the
+combatant, and starts over each Turn). The label at the cursor says how far, and which band.
+
+**Waypoints**: Space or right-click drops one where the token is, Backspace takes the last one
+back. On release, the token walks them one leg at a time; a wall stops a player's token at the
+last waypoint it reached.
+
+**On Foundry v13**, Foundry measures token drags itself (with its own waypoints and history): Neon
+Combat Manager colours that ruler by the same bands. **With Drag Ruler running** (v12), Neon
+Combat Manager hands Drag Ruler the bands as its speed provider instead, and tells the GM once
+that its own ruler takes over when Drag Ruler is disabled. Settings (Combat & Time): the ruler on
+or off, and whether tokens walk their waypoints.
+
 ## Weather
 
 Weather comes from **Neon Hub's calendar** (the calendar that follows the clock, or one the GM

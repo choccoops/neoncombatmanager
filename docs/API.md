@@ -135,6 +135,16 @@ Turn automation, on the GM's client.
 Store timed things as world-time end points and check them on `updateWorldTime`; Rounds,
 SmallTime and Neon Hub all move world time.
 
+## Movement ruler: `ncm.ruler`
+
+| | |
+| --- | --- |
+| `reach(token)` | how far the token's character gets this Turn: `{ move, run, why }` in m/yds (`why`: `"prone"`, `"grappled"`, `"noMove"` or null) |
+| `history(token)` | what it walked this Turn, on its own Turn in combat: `{ points, metres }` |
+
+The path is the combatant flag `flags.cpr-neon-combat-manager.path` (`{ points: [{x, y}] centres,
+metres, noMove }`), written by the active GM as the token moves and reset at the start of its Turn.
+
 ## Weather and visibility: `ncm.environment`
 
 | | |

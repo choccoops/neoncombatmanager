@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.18.0
+
+**A movement ruler in place of Drag Ruler.**
+
+- **Drag a token and its path shows Cyberpunk RED's movement**: within the Move Action (MOVE × 2
+  m/yds, cyan), with a Run (yellow), out of reach (red), square by square, from the character's
+  MOVE now. Prone, Grappled and a lost Move Action count. In combat, what they've walked this
+  Turn shows faded and counts, on every client.
+- **Waypoints**: Space or right-click, Backspace to take one back; the token walks them on
+  release, and a wall stops a player's.
+- **Foundry v13**: its own token ruler is coloured by the same bands. **Drag Ruler** (v12 only),
+  while it's still running, gets the bands as its speed provider.
+- Settings (Combat & Time): **Movement ruler**, **Tokens walk their waypoints**. API: `ncm.ruler`.
+
 ## 1.17.0
 
 **Neon Arsenal: 2070 weapons at the table, with Automated Animations, sounds, areas and Rebuilds.**

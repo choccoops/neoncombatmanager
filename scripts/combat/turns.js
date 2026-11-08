@@ -79,7 +79,14 @@ export const Turns = {
       }
       if (c.id === "suppressed") await Cards.reminder(actor, c, L(`${LANG}.Reminder.suppressed`));
     }
-    if (this.lockNext.delete(combatant.id)) await Cards.reminder(actor, null, L(`${LANG}.Reminder.noMove`, { name: esc(actor.name) }));
+    if (this.lockNext.delete(combatant.id)) {
+      await Cards.reminder(actor, null, L(`${LANG}.Reminder.noMove`, { name: esc(actor.name) }));
+      // The movement ruler shows only the Run left this Turn.
+      if (Settings.get("trackMovement")) {
+        const t = combatant.token;
+        await combatant.setFlag?.(MODULE_ID, "path", { points: t ? [this.centre(t)] : [], metres: 0, noMove: true });
+      }
+    }
   },
 
   async turnEnd(combat, combatant) {
@@ -109,6 +116,16 @@ export const Turns = {
   resetMove(combatant) {
     const t = combatant.token;
     this.moved.set(combatant.id, { metres: 0, at: t ? { x: t.x, y: t.y } : null });
+    // The path walked this Turn, for every client's movement ruler (scripts/ruler/ruler.js).
+    if (Compat.isActiveGM && Settings.get("trackMovement")) {
+      const c = t ? this.centre(t) : null;
+      combatant.setFlag?.(MODULE_ID, "path", { points: c ? [c] : [], metres: 0, noMove: false })?.catch?.(() => null);
+    }
+  },
+
+  centre(token) {
+    const grid = token.parent?.grid?.size ?? canvas?.dimensions?.size ?? 100;
+    return { x: token.x + ((Number(token.width) || 1) * grid) / 2, y: token.y + ((Number(token.height) || 1) * grid) / 2 };
   },
 
   /** The current combatant's token moved: add up the distance (active GM). */
@@ -126,6 +143,11 @@ export const Turns = {
     }
     entry.at = now;
     this.moved.set(cb.id, entry);
+    if (Settings.get("trackMovement")) {
+      const path = cb.flags?.[MODULE_ID]?.path ?? {};
+      const points = [...(Array.isArray(path.points) ? path.points : []), this.centre(token)].slice(-60);
+      cb.setFlag?.(MODULE_ID, "path", { ...path, points, metres: entry.metres })?.catch?.(() => null);
+    }
   },
 
   /** Metres the current combatant has moved this Turn. */

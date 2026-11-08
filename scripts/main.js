@@ -39,6 +39,7 @@ import { AA } from "./arsenal/aa.js";
 import { Blast } from "./arsenal/blast.js";
 import { Dv } from "./arsenal/dv.js";
 import { RebuildRegistry } from "./arsenal/rebuilds.js";
+import { NeonRuler } from "./ruler/ruler.js";
 import { debounce, L } from "./util.js";
 
 /** Neon Combat Manager's public API: game.modules.get("cpr-neon-combat-manager").api */
@@ -104,6 +105,11 @@ const api = {
     dv: (item, distance, options) => Dv.forWeapon(item, distance, options),
     /** GM: apply an area (a template Neon Arsenal placed) to everyone in it. */
     applyArea: (templateUuid) => Blast.askAndApply(templateUuid)
+  },
+  /** The movement ruler: how far a token's character gets this Turn, and what it walked. */
+  ruler: {
+    reach: (token) => NeonRuler.reachFor(token),
+    history: (token) => NeonRuler.historyFor(token)
   },
   /** Combat time: a Round is 3 seconds by default. */
   time: {
@@ -332,6 +338,7 @@ Hooks.once("init", () => {
   TrackerHooks.init();
   NeonFX.init();
   Arsenal.init();
+  NeonRuler.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
 
   game.modules.get(MODULE_ID).api = api;
@@ -381,6 +388,11 @@ Hooks.once("ready", async () => {
   await Roller.ready().catch((err) => console.error(`${MODULE_ID} | roller`, err));
   await NeonFX.ready().catch((err) => console.error(`${MODULE_ID} | Neon FX`, err));
   await Arsenal.ready().catch((err) => console.error(`${MODULE_ID} | Neon Arsenal`, err));
+  try {
+    NeonRuler.ready();
+  } catch (err) {
+    console.error(`${MODULE_ID} | movement ruler`, err);
+  }
   WeatherFx.syncAll().catch((err) => console.error(`${MODULE_ID} | scene weather`, err));
   WeatherFx.ambience();
   Hooks.callAll(HOOKS.ready, api);
