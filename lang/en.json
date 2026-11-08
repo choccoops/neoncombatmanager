@@ -1102,6 +1102,26 @@
       "movementRulerWaypoints": {
         "name": "Tokens walk their waypoints",
         "hint": "With waypoints dropped while dragging, the token walks them one leg at a time on release (a wall stops a player's token), rather than straight to the end (Foundry v12)."
+      },
+      "arsenalDefense": {
+        "name": "Defense: Evade or Tank",
+        "hint": "After an attack, each target who can dodge bullets (REF 8+, or chrome that lets them: a Reflex Co-Processor, Corgo's Kerenzikov, a running Militech 'Apogee' or 'Falcon' OS) gets a card: Evade (DEX + Evasion + 1d10 against the attack) or Tank (the range DV stands). Nobody dodges a ricochet, a shooter they don't know is there (the attacker Hidden), or bullets with their eyes shut down. In an area, whoever dodges out is left out of it. Like Vec's Cyberpunk RED Evasion Workflow, built in."
+      },
+      "arsenalDefenseMelee": {
+        "name": "Defense: melee",
+        "hint": "A melee attack is always an opposed Evasion roll: rolled for the target at once, or a card their player rolls from."
+      },
+      "DefenseMelee": {
+        "auto": "Rolled at once",
+        "prompt": "The target's player rolls"
+      },
+      "arsenalDefenseTies": {
+        "name": "Defense: ties go to the defender",
+        "hint": "The attacker must beat the Evasion roll, as Cyberpunk RED has it; off, a tie is a hit."
+      },
+      "arsenalDefenseVisibility": {
+        "name": "Defense: who sees the result",
+        "hint": "Everyone, or the GM and the target's players."
       }
     },
     "SceneWeather": {
@@ -2099,11 +2119,36 @@
         "hit": "<b>{name}</b>: beats DV{dv} by {by}, a hit.",
         "miss": "<b>{name}</b>: missed DV{dv} by {by}.",
         "autofire": "Autofire: damage ×{mult}.",
-        "dodge": "REF 8+: they can dodge, and their Evasion roll counts if they do."
+        "dodge": "They can dodge bullets: if they Evade, their Evasion roll replaces the DV."
       },
       "Scatter": "Scatter (random)",
       "Scattered": "The blast scatters {metres} m/yds from the aimed square",
-      "Landed": "That blast has already landed."
+      "Landed": "That blast has already landed.",
+      "Defense": {
+        "Kicker": "Defense",
+        "Title": "{name}: {attacker} fires the {weapon}",
+        "AreaTitle": "{name}: caught in {attacker}'s {weapon}",
+        "MeleeTitle": "{name}: {attacker} swings the {weapon}",
+        "Body": "Evade: roll DEX + Evasion + 1d10 against the attack roll (you can dodge bullets). Tank: the range DV stands.",
+        "MeleeBody": "Melee is always an opposed roll: DEX + Evasion + 1d10 against the attack roll.",
+        "WhyChrome": "({chrome} lets you dodge bullets.)",
+        "Evade": "Evade",
+        "Tank": "Tank",
+        "DodgedOut": "dodged out",
+        "Result": {
+          "evade": {
+            "dodged": "{name} dodges {attacker}'s attack (Evasion {evasion} vs {attack}).",
+            "hit": "{name} doesn't get out of the way: Evasion {evasion} vs {attack}, a hit. Roll damage.",
+            "out": "{name} dives out of the area (Evasion {evasion} vs {attack})."
+          },
+          "tank": {
+            "hit": "{name} takes it: {attack} beats DV{dv}, a hit. Roll damage.",
+            "missed": "{name} stands there, and it misses anyway ({attack} vs DV{dv}).",
+            "tank": "{name} takes it: against the range DV (the GM's call at this range).",
+            "stays": "{name} stays in the area."
+          }
+        }
+      }
     },
     "Ruler": {
       "move": "Move",

@@ -8,6 +8,7 @@ import { Conditions } from "../conditions/engine.js";
 import { Registry } from "../conditions/registry.js";
 import { Core } from "../neonfx/core.js";
 import { Sound } from "./sound.js";
+import { Defense } from "./defense.js";
 import { Dv } from "./dv.js";
 import { templateData, tokenInside, centerOf, blownBack, blowBackMetres, ammoEffect, scatter } from "./area.js";
 import { L, esc } from "../util.js";
@@ -196,7 +197,10 @@ export const Blast = {
     const hit = known ? total > dv : true;
     const state = hit ? (b.area.shape === "cone" ? "hit" : "landed") : "miss";
     await doc.update({ [`flags.${MODULE_ID}.blast`]: { ...b, state, dv: known ? dv : null, total, attackId: r.messageId ?? null, aim: center } });
-    if (hit) this.detonate(doc, { launch: true });
+    if (hit) {
+      this.detonate(doc, { launch: true });
+      await Defense.promptArea(doc, total);
+    }
     else if (b.explosive) this.launchOnly(doc);
     const effect = ammoEffect({ kind: b.kind, ammoType: b.ammoType, ammoName: b.ammoName });
     const inside = tokensIn(doc, doc.parent, { exclude: b.area.shape === "cone" ? b.tokenId : null });
@@ -248,6 +252,7 @@ export const Blast = {
   async land(doc) {
     await doc.update({ [`flags.${MODULE_ID}.blast.state`]: "landed" });
     this.detonate(doc, { launch: false });
+    await Defense.promptArea(doc, doc.flags[MODULE_ID].blast.total);
   },
 
   /* ---------------------------------------- */
@@ -339,7 +344,8 @@ export const Blast = {
     const dmg = damage ?? (effect.noDamage ? null : this.damageFor(b));
     if (!effect.noDamage && !dmg) return ui.notifications.warn(L(`${LANG}.Arsenal.RollDamageFirst`));
     const inside = tokensIn(doc, doc.parent, { exclude: b.area.shape === "cone" ? b.tokenId : null }).filter((t) => t.actor);
-    const rows = inside.map((t) => `<label class="ncm-check"><input type="checkbox" name="t-${t.id}" checked> ${esc(t.name)}</label>`).join("") || `<p>${L(`${LANG}.Arsenal.Nobody`)}</p>`;
+    const dodged = new Set(b.dodged ?? []);
+    const rows = inside.map((t) => `<label class="ncm-check"><input type="checkbox" name="t-${t.id}"${dodged.has(t.id) ? "" : " checked"}> ${esc(t.name)}${dodged.has(t.id) ? ` <em>(${L(`${LANG}.Arsenal.Defense.DodgedOut`)})</em>` : ""}</label>`).join("") || `<p>${L(`${LANG}.Arsenal.Nobody`)}</p>`;
     const blow = b.explosive && Settings.get("arsenalBlowBack");
     const content = `<div class="ncm-grid">${dmg ? `<p>${L(`${LANG}.Arsenal.Damage`, { total: dmg.total, ablation: dmg.ablation })}</p>` : ""}`
       + `<p class="ncm-ref">${L(`${LANG}.Arsenal.UntickHint`)}</p>${rows}`

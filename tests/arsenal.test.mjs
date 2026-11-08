@@ -15,6 +15,9 @@ const { RebuildRegistry, traitsFromDef, traitsOf, attackMods, damageArgs, charge
 const { Blast, damageFromHtml, tokensIn, SHELL_DV } = await import("../scripts/arsenal/blast.js");
 const { AA, loadedAmmo } = await import("../scripts/arsenal/aa.js");
 const { Arsenal, rollKind, smartRetry, hitLines } = await import("../scripts/arsenal/arsenal.js");
+const { Defense, dodgeAbility, defenseOutcome } = await import("../scripts/arsenal/defense.js");
+const { CPR } = await import("../scripts/cpr.js");
+Defense.init();
 const { catalog } = await import("../scripts/hud/catalog.js");
 const { Registry } = await import("../scripts/conditions/registry.js");
 const { Conditions } = await import("../scripts/conditions/engine.js");
@@ -465,7 +468,7 @@ test("before the dice, each target's DV at its range goes on the card", async ()
   const far = makeActor({ name: "Far" });
   game.user.targets = new Set([{ name: "Near", actor: near, center: { x: 200, y: 0 } }, { name: "Far", actor: far, center: { x: 500, y: 0 } }]);
   await Arsenal.preRoll(item, new CPRAttackRoll());
-  assert.deepEqual(Arsenal.pending.tag.hits, [{ name: "Near", dv: 13, ref: 8 }, { name: "Far", dv: 15, ref: 7 }]);
+  assert.deepEqual(Arsenal.pending.tag.hits, [{ name: "Near", dv: 13, ref: 8, dodge: true }, { name: "Far", dv: 15, ref: 7, dodge: false }]);
   assert.equal(Arsenal.pending.tag.dv, 13);
   delete game.tables;
   Dv.clear();
@@ -641,6 +644,91 @@ test("the GM's Scatter moves a missed blast to a random square around the aimed 
   assert.ok(chat.slice(before).some((m) => /scatters 4 m/.test(m.content)));
   doc.flags[M].blast.state = "landed";
   assert.equal(await Blast.scatter(doc.uuid), null, "only a miss scatters");
+});
+
+/* ---------------------------------------- */
+/*  Defense: Evade or Tank                  */
+/* ---------------------------------------- */
+
+const chrome = (name, description, effects = []) => ({ name, installed: true, description, effects });
+
+test("who can dodge bullets: REF 8+, or chrome that says so (a Sandevistan OS only while it runs)", () => {
+  assert.deepEqual(dodgeAbility({ ref: 8 }), { can: true, why: "ref", blocked: null });
+  assert.equal(dodgeAbility({ ref: 6 }).can, false);
+  assert.equal(dodgeAbility({ ref: 5, items: [chrome("Reflex Co-Processor", "Neuralware option: dodge bullets regardless of REF.")] }).why, "Reflex Co-Processor");
+  assert.equal(dodgeAbility({ ref: 5, items: [chrome("Kerenzikov", "You can dodge ranged attacks whatever your REF, and get +2")] }).why, "Kerenzikov");
+  const falcon = (disabled) => chrome("Militech ‘Falcon’ OS", "+4 Initiative for 3 Rounds, and you can dodge bullets whatever your REF.", [{ name: "Militech ‘Falcon’ OS (active)", disabled }]);
+  assert.equal(dodgeAbility({ ref: 5, items: [falcon(true)] }).can, false, "switched off");
+  assert.equal(dodgeAbility({ ref: 5, items: [falcon(false)] }).why, "Militech ‘Falcon’ OS");
+  assert.equal(dodgeAbility({ ref: 5, items: [{ ...chrome("Reflex Co-Processor", "dodge bullets regardless of REF"), installed: false }] }).can, false, "not installed");
+  assert.deepEqual(dodgeAbility({ ref: 9, ricochet: true }), { can: false, why: "ref", blocked: "ricochet" });
+  assert.equal(dodgeAbility({ ref: 9, attackerHidden: true }).blocked, "hidden");
+  assert.equal(dodgeAbility({ ref: 9, blind: true }).blocked, "blind");
+});
+
+test("an Evasion roll against the attack: the attacker must beat it", () => {
+  assert.equal(defenseOutcome(16, 17), "dodged");
+  assert.equal(defenseOutcome(16, 16), "dodged");
+  assert.equal(defenseOutcome(16, 16, { tiesToDefender: false }), "hit");
+  assert.equal(defenseOutcome(16, 12), "hit");
+});
+
+test("after a ranged attack, a target who can dodge gets Evade or Tank; one who can't gets nothing", async () => {
+  const attacker = makeActor({ name: "Fury" }, [{ _id: "g1", ...weapon("Pistol", { weaponType: "medPistol" }) }]);
+  const quick = makeActor({ name: "Quick", owners: [testUsers.player.id] }, [{ name: "Reflex Co-Processor", type: "cyberware", system: { isInstalled: true, description: { value: "dodge bullets regardless of REF" } } }]);
+  quick.system.stats.ref.value = 5;
+  const slow = makeActor({ name: "Slow" });
+  slow.system.stats.ref.value = 5;
+  const toks = new Docs([["q", { id: "q", name: "Quick", uuid: "Scene.s.Token.q", actor: quick }], ["s", { id: "s", name: "Slow", uuid: "Scene.s.Token.s", actor: slow }]]);
+  globalThis.canvas = { scene: { tokens: toks } };
+  const before = chat.length;
+  await Defense.afterAttack({ kind: "attack", actorId: attacker.id, itemId: "g1", ranged: true, mode: "single", total: 17, dv: 15, targets: ["q", "s"], hits: [{ name: "Quick", dv: 15 }, { name: "Slow", dv: 15 }] }, { id: "m1" });
+  const cards = chat.slice(before);
+  assert.equal(cards.length, 1, "only the one who can dodge");
+  assert.match(cards[0].content, /arsenal-evade/);
+  assert.match(cards[0].content, /arsenal-tank/);
+  assert.match(cards[0].content, /Reflex Co-Processor lets you dodge bullets/);
+  assert.deepEqual(cards[0].whisper.sort(), ["gm1", "pl1"]);
+  // A ricochet: no choice.
+  const n = chat.length;
+  await Defense.afterAttack({ kind: "attack", actorId: attacker.id, itemId: "g1", ranged: true, mode: "single", total: 17, targets: ["q"], ricochet: true }, { id: "m2" });
+  assert.equal(chat.length, n);
+  globalThis.canvas = null;
+});
+
+test("Evade, Tank and a melee defense resolve against the attack", async () => {
+  const target = makeActor({ name: "Rico" });
+  const tok = { id: "r", name: "Rico", uuid: "Scene.s.Token.r", actor: target };
+  (await import("./helpers/foundry.mjs")).registry.set(tok.uuid, tok);
+  assert.equal(await Defense.resolve(null, { target: tok.uuid, attack: 16, evasion: 18 }), "dodged");
+  assert.equal(await Defense.resolve(null, { target: tok.uuid, attack: 16, evasion: 11 }), "hit");
+  assert.equal(await Defense.resolve(null, { target: tok.uuid, attack: 16, dv: 15, tank: true }), "hit");
+  assert.equal(await Defense.resolve(null, { target: tok.uuid, attack: 14, dv: 15, tank: true }), "missed");
+  const real = CPR.skillCheck;
+  CPR.skillCheck = async (actor, skill, opts) => {
+    assert.equal(skill, "Evasion");
+    assert.ok(opts.event.ctrlKey, "no dialog when rolled for them");
+    return { total: 20 };
+  };
+  assert.equal(await Defense.defendAsGM({ target: tok.uuid, attack: 15, melee: true }), "dodged");
+  CPR.skillCheck = real;
+});
+
+test("whoever dodges out of an area is left unticked when the GM applies it", async () => {
+  const quick = makeActor({ name: "Quick" });
+  const { doc } = await sceneWith([{ id: "q", name: "Quick", x: 500, y: 500, actor: quick, uuid: "Scene.s1.Token.q" }],
+    { actorId: "x", itemId: "y", tokenId: "tz", kind: "grenadeLauncher", area: { shape: "rect", size: 10 }, ammoType: "basic", ammoVariety: "grenade", ammoName: "Grenade", explosive: true, at: Date.now(), state: "landed", total: 16 });
+  (await import("./helpers/foundry.mjs")).registry.set("Scene.s1.Token.q", doc.parent.tokens.get("q"));
+  assert.equal(await Defense.resolve(null, { target: "Scene.s1.Token.q", attack: 16, evasion: 17, template: doc.uuid }), "dodged");
+  assert.deepEqual(doc.flags[M].blast.dodged, ["q"]);
+  let content = "";
+  foundry.applications.api.DialogV2.prompt = async (opts) => {
+    content = opts.content;
+    return null;
+  };
+  await Blast.askAndApply(doc.uuid, { total: 20, bonus: 0, ablation: 1, ammoVariety: "grenade", ignoreArmorPercent: 0, ignoreBelowSP: 0, lethal: true });
+  assert.match(content, /name="t-q">/, "unticked");
+  assert.match(content, /dodged out/);
 });
 
 test("a shell's spread is one attack against DV13", () => {
