@@ -835,6 +835,10 @@
         "name": "Implants that link",
         "hint": "Installed cyberware (comma-separated names) that broadcasts vitals: the CEMK Neuroport (and Neuroport (Free)) and Biomonitor cyberware by default."
       },
+      "ncmSpam": {
+        "name": "Night City Messenger spam",
+        "hint": "Night City Messenger's built-in junk mail is set in 2045 (the red sky, the crater). 2070 swaps it for 2070s spam: a free city after the Unification War, Arasaka back in town, braindance, Trauma Team plans. The districts and corps its {{randomDistrict}} and {{randomCorpo}} draw from change too. Your own templates stay either way."
+      },
       "hubPlayers": {
         "name": "Players can open the city map",
         "hint": "Players see the places, districts, NCART and the crew. Off: only the GM."
@@ -846,6 +850,10 @@
       "hubDeadZones": {
         "name": "More dead zones",
         "hint": "District codes or names with no signal on top of those, separated by commas (\"E, The Badlands\")."
+      },
+      "hubSignalScenes": {
+        "name": "Dead ground mutes its scenes in Night City Messenger",
+        "hint": "A scene a place opens into (its doorway) becomes a Night City Messenger dead zone when the place stands on dead ground: no messages or calls while you're there. Dead zones you set in Night City Messenger yourself are left alone. Needs \"Map position decides holocall signal\"."
       },
       "hubDiscovery": {
         "name": "Places are discovered",
@@ -965,6 +973,11 @@
       "stageCast": {
         "name": "Stage cast",
         "hint": ""
+      },
+      "NcmSpam": {
+        "2070": "2070 (this module's)",
+        "mix": "Both",
+        "off": "Night City Messenger's own (2045)"
       }
     },
     "SceneWeather": {

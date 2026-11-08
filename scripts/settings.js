@@ -6,10 +6,10 @@ const K = (key) => `${LANG}.Settings.${key}`;
 export const MENUS = {
   combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim"],
-  comms: ["linkNeedsImplant", "linkImplants"],
+  comms: ["linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder"],
-  hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones"],
+  hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
     "weatherSource", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
     "lowLightAt", "darkAt", "sightKeys", "visibilityCap", "visibilityFrom", "envOutsideCombat",
@@ -48,6 +48,7 @@ const DEFS = [
   // Biomon Link
   ["linkNeedsImplant", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.linksChanged`) }],
   ["linkImplants", "world", String, "Neuroport, Biomonitor", { onChange: () => Hooks.callAll(`${MODULE_ID}.linksChanged`) }],
+  ["ncmSpam", "world", String, "2070", { choices: { 2070: K("NcmSpam.2070"), mix: K("NcmSpam.mix"), off: K("NcmSpam.off") }, onChange: () => Hooks.callAll(`${MODULE_ID}.spamChanged`) }],
   ["vitalLinks", "world", Object, {}, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.linksChanged`) }],
 
   // City & NCART hub
@@ -55,8 +56,9 @@ const DEFS = [
   ["hubDiscovery", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.hubChanged`, null) }],
   ["hubRevealDossier", "world", Boolean, true, {}],
   ["hubTravel", "world", String, "always", { choices: { off: K("HubTravel.off"), session: K("HubTravel.session"), always: K("HubTravel.always") } }],
-  ["hubSignal", "world", Boolean, true, {}],
-  ["hubDeadZones", "world", String, "", {}],
+  ["hubSignal", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.signalChanged`) }],
+  ["hubDeadZones", "world", String, "", { onChange: () => Hooks.callAll(`${MODULE_ID}.signalChanged`) }],
+  ["hubSignalScenes", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.signalChanged`) }],
   ["cityHub", "world", Object, {}, { config: false, onChange: (v) => Hooks.callAll(`${MODULE_ID}.hubChanged`, v) }],
 
   // Combat & time
