@@ -95,6 +95,9 @@ their own character. Each group opens on hover, or click a group to keep it open
   - **Status**: Prone, In Cover, Hidden, Holding Action, Grappled and Suppressed, toggled on and
     off
   - **Utility**: the Plot Die, Holocall, Biomon Link, Night City Map and the sheet
+  - **Macros**: any macro the player can run, for this character and token. Drop one on the HUD
+    (from the hotbar, the Macros sidebar or a compendium, such as Neon At Home's window macros)
+    to add it, or pick them in Customize. Hidden until it has one.
 
   STATs and Gear (drugs) are there too, hidden until you show them.
 - **Everything rolls the way the sheet does**: Cyberpunk RED's roll dialog (Ctrl-click skips

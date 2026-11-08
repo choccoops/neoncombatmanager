@@ -833,6 +833,8 @@
 }
 #ncm-action-hud.is-placed { bottom: auto; }
 #ncm-action-hud.is-dragging { opacity: 0.85; }
+/* a macro dragged over it: drop to add it to the Macros group */
+#ncm-action-hud.is-drop .ncm-ah-bar { outline: 2px dashed var(--ncm-yellow, #f3e600); outline-offset: 2px; }
 #ncm-action-hud .ncm-ah-bar { position: relative; display: flex; align-items: stretch; gap: 4px; padding: 4px; }
 /* The notched plate sits behind the bar, so the panels can open past its edge. */
 #ncm-action-hud .ncm-ah-bar::before {

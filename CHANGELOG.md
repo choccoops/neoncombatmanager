@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.15.0
+
+- **Macros in the Action HUD.** A new **Macros** group runs any macro the player can use, for the
+  HUD's character and token (the script's `actor` and `token`).
+  - Drop a macro on the HUD (from the hotbar, the Macros sidebar or a compendium) to add it.
+    A compendium macro is imported first, as the hotbar does.
+  - Or pick macros in **Customize** like any other action. A group of your own can mix them in.
+  - The group stays out of sight until it has a macro. Layouts from before it have it hidden:
+    show it in Customize.
+  - Made for Neon At Home's window macros (Home, Biomonitor, Perk Tree, Spend IP...), but any
+    macro works.
+
 ## 1.14.0
 
 **Weather you can see.**

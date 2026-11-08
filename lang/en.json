@@ -1784,7 +1784,8 @@
         "utility": "Utility",
         "stats": "STATs",
         "gear": "Gear",
-        "own": "My group"
+        "own": "My group",
+        "macros": "Macros"
       },
       "LayoutFor": "Layout for",
       "ScopeMe": "All my characters",
@@ -1804,7 +1805,9 @@
       "Reset": "Template",
       "ResetHint": "Start over from the template (combat basics). Nothing is kept until you save.",
       "Save": "Save",
-      "Saved": "Action HUD layout saved."
+      "Saved": "Action HUD layout saved.",
+      "MacroAdded": "{name} is in the HUD's Macros now.",
+      "MacroNoRun": "You can't run {name} yet: the GM gives you Limited ownership of it (and Use Script Macros)."
     },
     "Chat": {
       "Loading": "Loading…",
