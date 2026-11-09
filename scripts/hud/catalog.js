@@ -6,6 +6,7 @@ import { Phone } from "../comms/phone.js";
 import { Hub } from "../hub/hub.js";
 import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
 import { flavorOf } from "../arsenal/kinds.js";
+import { Hands } from "./hands.js";
 import { L, slug } from "../util.js";
 
 const { getProperty } = foundry.utils;
@@ -49,7 +50,8 @@ export function weaponsOf(actor) {
 /**
  * Every action an actor has, by source. An entry is { key, label, img?, icon?, sub?, on?, alert?,
  * off?, buttons? }; a weapon has buttons (Attack, Aimed, Autofire, Suppressive, Damage, Reload),
- * each with its own key. Keys that run something carry the item's id ("atk:<id>"); the entry's
+ * each with its own key, Change Ammo with Reload. The Weapons group ends with Equip / Change Weapon
+ * (scripts/hud/hands.js). Keys that run something carry the item's id ("atk:<id>"); the entry's
  * key, which a layout picks, carries its name ("weapon:<name>").
  * @param {Actor} actor
  * @param {object} [ctx] - { token, combat }
@@ -80,7 +82,11 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     if (Number(s.fireModes?.autoFire) > 0) buttons.push({ key: `auto:${w.id}`, label: L(`${LANG}.Hud.Autofire`), icon: "fa-solid fa-burst", on: mode === "autofire" });
     if (s.fireModes?.suppressiveFire) buttons.push({ key: `supp:${w.id}`, label: L(`${LANG}.Hud.Suppressive`), icon: "fa-solid fa-wind", on: mode === "suppressive" });
     if (mode !== "suppressive") buttons.push({ key: `dmg:${w.id}`, label: L(`${LANG}.Hud.Damage`), icon: "fa-solid fa-droplet" });
-    if (ranged) buttons.push({ key: `rld:${w.id}`, label: L(`${LANG}.Hud.Reload`), icon: "fa-solid fa-rotate" });
+    if (ranged) {
+      buttons.push({ key: `rld:${w.id}`, label: L(`${LANG}.Hud.Reload`), icon: "fa-solid fa-rotate" });
+      // the sheet's Change Ammo: unload, or load another kind
+      buttons.push({ key: `ammo:${w.id}`, label: L(`${LANG}.Hud.ChangeAmmo`), icon: "fa-solid fa-arrow-right-arrow-left" });
+    }
     // Neon Arsenal's switches: a Power gun's ricochet, a Tech gun's charge.
     const upgrades = Rebuilds.upgradesOf(w, actor);
     buttons.push(...Rebuilds.buttons(actor, w, traitsOf(ranged ? flavorOf(w, upgrades) : null, upgrades)));
@@ -91,6 +97,10 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
       alert: ranged && mag && Number(mag.max) > 0 && !Number(mag.value), buttons
     });
   }
+
+  // Equip / Change Weapon: the hands, what's in them, and the Carried weapons to put in them.
+  const hands = Hands.state(actor);
+  out.weapons.push({ key: "hands:equip", run: "hands:open", label: L(`${LANG}.Hud.Equip`), icon: "fa-solid fa-hand-fist", sub: L(`${LANG}.Hud.HandsFree`, { free: hands.free, total: hands.total }), alert: !hands.held.length && !!hands.carried.length });
 
   // Skills: STAT + level, as the sheet shows them.
   for (const sk of items.filter((i) => i.type === "skill").sort((a, b) => a.name.localeCompare(b.name))) {

@@ -87,8 +87,9 @@ their own character. Each group opens on hover, or click a group to keep it open
   - **Turn**: Initiative (joins the encounter if needed), End Turn (lit on your turn), Death
     Save (lit when Mortally Wounded, with the penalty), Facedown
   - **Weapons**: every equipped weapon and installed cyberweapon, with Attack, Aimed Shot,
-    Autofire and Suppressive Fire where the weapon has them, Damage and Reload. Ammo is shown,
-    and red when the magazine is empty.
+    Autofire and Suppressive Fire where the weapon has them, Damage, Reload and Change Ammo
+    (Cyberpunk RED's load dialog). Ammo is shown, and red when the magazine is empty. The group
+    ends with **Equip / Change Weapon** (see below).
   - **Skills**: Evasion, Perception, Brawling, Melee Weapon, Athletics, Stealth and First Aid,
     with their base
   - **Role**: abilities that roll
@@ -115,6 +116,29 @@ their own character. Each group opens on hover, or click a group to keep it open
   - **Template** starts over.
 - Drag it by the grip; the chevron folds it to the portrait. A client setting turns it off, and
   a keybinding shows or hides it.
+
+### Equip / Change Weapon
+
+The last entry in the Weapons group shows how many hands are free and opens a small window:
+
+- **Hands**: two, plus Cyberpunk RED's Number of Hands effects (the system's Artificial Shoulder
+  Mount gives two more; the 2070 Item Compendium's Shoulder Mount, which has no effect, counts as
+  two more too). A Dismembered Arm or Hand takes one away.
+- **In hand**: each held weapon (or shield) and the hands it's in. **Free** puts it back to
+  Carried; **Drop** puts it on the ground.
+- **Carried**: weapons marked Carried on the sheet, with a button for each free hand. A
+  two-handed weapon takes the hand you pick and the next free one. With no hand free, it isn't
+  equipped and you're told to free one first.
+
+Dropping uses Neon At Home's drop when it's on (an Item Piles pile beside the token; the
+attachments go back on when it's picked up), else an Item Piles pile, else the weapon stays on the
+sheet as Owned. Anything picked up out of an Item Piles pile lands on the character as **Carried**
+(without Item Piles: an item dropped on a character's token or sheet). The **Picked-up items are
+Carried** setting (Combat) turns that off.
+
+Bare hands: Cyberpunk RED's own **Unarmed** weapon (its Core Weapons compendium, Brawling, damage
+by BODY, core rulebook p.176) is the item for a Brawling attack. Put it on the character and equip
+it like any weapon.
 
 Inspired by Token Action HUD and p4vl0-dev's
 [Cyberpunk style](https://github.com/p4vl0-dev/Token-Action-HUD-Cyberpunk-style), but standalone:
