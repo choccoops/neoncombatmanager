@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A Neon Hub mook's **Punknife** gets the light blade look (it was drawn as a blunt weapon).
+
 ## 1.19.3
 
 - **A repair asks everyone to reload.** The old entries' ids didn't just lose the gun entries:
