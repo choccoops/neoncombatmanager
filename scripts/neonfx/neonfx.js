@@ -8,9 +8,12 @@ import { Core, FX_FLAG } from "./core.js";
 import { RECIPES, recipeFor, LAYERED, JB2A } from "./recipes.js";
 import { Motion, MODES } from "./motion.js";
 import { Trail } from "./sandevistan.js";
+import { Landing } from "./landing.js";
 
 /** The effects a token can have switched on by hand (the macros), as token flags. */
 export const SWITCHES = ["psycho", "sandevistan"];
+/** The macros the first Neon FX (1.13.0) installed: a world that has those gets only the newer ones. */
+const FIRST_MACROS = ["Sandevistan", "Psycho", "Extreme", "Clear"];
 /** How long the switch loops (the cyberpsycho's static, the Sandevistan's hum) play before fading. */
 const LOOP_MS = 20000;
 /** Sequencer brings back saved effects when a scene loads; let it finish before we tidy up. */
@@ -57,12 +60,14 @@ export const NeonFX = {
       this._seen.clear();
     });
     Hooks.on(`${MODULE_ID}.fxChanged`, () => this.refreshScene());
+    Landing.init();
   },
 
   async ready() {
     if (canvas?.ready) this.refreshScene({ settle: true });
-    if (Core.sequencer && Settings.get("fxMacros") && !Settings.get("fxMacrosInstalled") && game.user.isGM) {
-      await this.installMacros({ quiet: true }).catch((err) => console.error(`${MODULE_ID} | Neon FX macros`, err));
+    const fresh = this._newMacros();
+    if (Core.sequencer && Settings.get("fxMacros") && fresh.length && game.user.isGM) {
+      await this.installMacros({ quiet: true, keys: fresh }).catch((err) => console.error(`${MODULE_ID} | Neon FX macros`, err));
     }
   },
 
@@ -203,6 +208,7 @@ export const NeonFX = {
     const token = doc?.object;
     const flags = changes?.flags;
     if (!token || !flags || !(MODULE_ID in flags || `-=${MODULE_ID}` in flags)) return;
+    Landing.onUpdate(doc, changes, userId);
     const state = Core.state(doc);
     const before = this._seen.get(token.id) ?? {};
     const flipped = SWITCHES.filter((k) => !!state[k] !== !!before[k]);
@@ -291,24 +297,35 @@ export const NeonFX = {
       { key: "Sandevistan", img: `modules/${MODULE_ID}/assets/icons/sandevistan.svg`, command: `${api}.fx.sandevistan();` },
       { key: "Psycho", img: `modules/${MODULE_ID}/assets/icons/qh-cyberpsychosis.svg`, command: `${api}.fx.psycho();` },
       { key: "Extreme", img: `modules/${MODULE_ID}/assets/icons/extreme-cyberpsychosis.svg`, command: `${api}.conditions.toggle("extremeCyberpsychosis");` },
-      { key: "Clear", img: "icons/svg/cancel.svg", command: `${api}.fx.clear();` }
+      { key: "Clear", img: "icons/svg/cancel.svg", command: `${api}.fx.clear();` },
+      { key: "LandingZone", img: `modules/${MODULE_ID}/assets/icons/av-landing-zone.svg`, command: `${api}.fx.landingZone();` },
+      { key: "Land", img: `modules/${MODULE_ID}/assets/icons/av-land.svg`, command: `${api}.fx.land();` }
     ];
   },
 
-  /** Put the Neon FX macros in a "Neon FX" macro folder (skipping any already there). GM. */
-  async installMacros({ quiet = false } = {}) {
+  /** Keys of the macros this world hasn't been given yet (once each: a deleted macro stays deleted). */
+  _newMacros() {
+    const known = new Set(Settings.get("fxMacrosKnown") ?? []);
+    if (Settings.get("fxMacrosInstalled")) for (const k of FIRST_MACROS) known.add(k);
+    return this.macros().map((m) => m.key).filter((k) => !known.has(k));
+  },
+
+  /** Put the Neon FX macros (or just `keys`) in a "Neon FX" macro folder, skipping any already there. GM. */
+  async installMacros({ quiet = false, keys = null } = {}) {
     if (!game.user.isGM) return [];
     const folderName = L(`${LANG}.FX.Folder`);
     let folder = game.folders?.find?.((f) => f.type === "Macro" && f.name === folderName);
     folder ??= await Folder.create({ name: folderName, type: "Macro", color: "#ff3864" });
     const made = [];
     for (const m of this.macros()) {
+      if (keys && !keys.includes(m.key)) continue;
       const name = L(`${LANG}.FX.Macro.${m.key}`);
       if (game.macros?.find?.((x) => x.name === name && x.folder?.id === folder?.id)) continue;
       made.push({ name, type: "script", img: m.img, command: m.command, folder: folder?.id ?? null });
     }
     const docs = made.length ? await Macro.createDocuments(made) : [];
     await Settings.set("fxMacrosInstalled", true);
+    await Settings.set("fxMacrosKnown", this.macros().map((m) => m.key));
     if (!quiet || docs.length) ui.notifications.info(L(`${LANG}.FX.Installed`, { count: docs.length, folder: folderName }));
     return docs;
   },

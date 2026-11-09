@@ -430,8 +430,8 @@ test("the Neon FX macros go in their folder once", async () => {
   game.folders = { find: (fn) => folders.find(fn) };
   game.macros = { find: (fn) => macros.find(fn) };
   const made = await NeonFX.installMacros();
-  assert.equal(made.length, 4);
-  assert.deepEqual(macros.map((m) => m.name), ["Sandevistan", "Cyberpsychosis Glitch", "Extreme Cyberpsychosis", "Clear Neon FX"]);
+  assert.equal(made.length, 6);
+  assert.deepEqual(macros.map((m) => m.name), ["Sandevistan", "Cyberpsychosis Glitch", "Extreme Cyberpsychosis", "Clear Neon FX", "AV Landing Zone", "AV Landing"]);
   assert.ok(macros.every((m) => m.type === "script" && m.command.includes(`game.modules.get("${M}").api`)));
   assert.equal((await NeonFX.installMacros()).length, 0);
   assert.equal(folders.length, 1);

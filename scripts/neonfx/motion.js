@@ -1,3 +1,5 @@
+import { Flight } from "./flight.js";
+
 /**
  * Token motion for Neon FX: the token's own art shakes, trembles, sways or jolts, drawn on each
  * client (nothing is saved, nothing goes over the network). Only the art moves; the token stays
@@ -105,6 +107,11 @@ export const Motion = {
       const mesh = token?.mesh;
       if (!mesh || mesh.destroyed) {
         this.active.delete(id);
+        continue;
+      }
+      if (Flight.isFlying(id)) {
+        // The flight has the art; pick up from wherever it leaves it.
+        s.last = null;
         continue;
       }
       const base = this._base(mesh, s);

@@ -315,11 +315,20 @@ Needs Sequencer. Tokens default to the selected ones; only tokens you own are sw
 | `psycho(tokens?, on?)` | flip the Cyberpsychosis glitch (a look only; the condition is `extremeCyberpsychosis`) |
 | `clear(tokens?)` | switch both off |
 | `refresh()` | redraw every token on the scene |
+| `landingZone({ at?, size?, token? })` | put an AV landing zone down: centre `at: { x, y }` (else picked on the map), `size: { w, h }` in grid squares (else fitted to `token` or the selected one). Resolves to `{ id, w, h, x, y }`, or `null` when the pick is cancelled |
+| `land(tokens?, { zone?, keepZone? })` | land an AV (the first of `tokens` you own, else the selected one) on the zone with id `zone`, else the nearest, else a spot picked on the map; `keepZone: true` leaves the zone lit. A hidden token flies in from off the map and is revealed (GM). Resolves to the landing, or `null` |
+| `landingZones(sceneId?)` | the AV landing zones on a scene (default: the one being viewed): `[{ id, w, h, x, y }]` |
+| `clearLandingZones(id?)` | take one zone away, or every zone on the viewed scene |
 | `installMacros()` | GM: add the Neon FX macros to the "Neon FX" macro folder (skips ones already there) |
 | `report()` | which JB2A files (or Neon FX fallbacks) the looks use here |
 
 The switches are the token flags `flags.cpr-neon-combat-manager.fx.sandevistan` and `.psycho`.
 Persistent looks are Sequencer effects named `ncm-fx-<condition or switch>-<tokenId>`.
+
+An AV landing zone is a set of persistent Sequencer effects named `ncm-fx-avzone-<id>-<w>x<h>` (the
+pad itself ends in `-pad`). A landing is one token update with `animate: false` and the flag
+`flags.cpr-neon-combat-manager.fx.landing` (`{ id, fx, fy, airborne, zone, w, h, keep }`: where it
+flew in from); every client draws the flight from that.
 
 ## Neon Arsenal: `ncm.arsenal`
 

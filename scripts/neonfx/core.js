@@ -29,7 +29,11 @@ export const SOUNDS = {
   sandeOff: { files: takes("sande-deactivate"), level: 0.55, fadeIn: 80 },
   sandeLoop: { files: takes("sande-loop"), level: 0.3, fadeIn: 2000 },
   upload: { files: takes("qh-upload"), level: 0.45, fadeIn: 40 },
-  zap: { files: takes("zap"), level: 0.45, fadeIn: 40 }
+  zap: { files: takes("zap"), level: 0.45, fadeIn: 40 },
+  avZoneOn: { files: takes("av-zone-on"), level: 0.5, fadeIn: 150 },
+  avZoneLoop: { files: takes("av-zone-loop"), level: 0.35, fadeIn: 1500 },
+  avApproach: { files: takes("av-approach"), level: 0.55, fadeIn: 1200 },
+  avTouchdown: { files: takes("av-touchdown"), level: 0.55, fadeIn: 60 }
 };
 
 const jb2aCache = new Map();
