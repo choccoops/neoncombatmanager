@@ -296,6 +296,11 @@ export const RECIPES = {
   choking1: { layers: [Layers.glow(C.violet, { min: 0.2, max: 0.45 })], motion: "tremble" },
   choking2: { layers: [Layers.glow(C.violet, { min: 0.4, max: 0.85, period: 600 })], motion: "tremble" },
   hidden: { layers: [Layers.camo()] },
+  // The 2070 gun in hand (Neon Arsenal puts these on): kept faint, they're on most of a crew.
+  powerRebuild: { layers: [Layers.aura(C.orange, { scale: 1.45, min: 0.06, max: 0.18, period: 2200 })] },
+  smartRebuild: { layers: [Layers.ring(img("reticle-white.webp"), { scale: 1.45, tint: C.pink, opacity: 0.22, spin: 16000 })] },
+  monoRebuild: { layers: [Layers.glow(C.cyan, { min: 0.08, max: 0.22, period: 1800, distance: 6 })] },
+  techRebuild: { layers: [Layers.ring(img("data-ring-white.webp"), { scale: 1.55, tint: C.blue, opacity: 0.25, spin: 12000 })] },
   intoTheWall: { once: [Once.hit()] },
   suppressed: { layers: [Layers.ring(img("reticle-white.webp"), { tint: C.amber, opacity: 0.55, spin: 9000, scale: 1.8 })] },
   netrunning: { layers: [Layers.ring(img("data-ring.webp"), { opacity: 0.9, spin: 14000, scale: 2 }), Layers.glow(C.cyan, { min: 0.2, max: 0.45 })] },

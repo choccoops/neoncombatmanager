@@ -35,7 +35,8 @@
  *   addiction   an addiction (Rapidetox doesn't purge it)
  *   secondary   { dv, adds }: when the drug wears off, a Resist Torture/Drugs Check against dv or gain `adds`
  *   hud         false to keep it out of the token HUD (added automatically instead)
- *   mirror      "wound": follows CPR's Wound State, which applies its roll penalties itself
+ *   mirror      "wound": follows CPR's Wound State, which applies its roll penalties itself;
+ *               "rebuild": follows the 2070 guns in hand (Neon Arsenal adds their numbers on the roll)
  *   fire        a fire's stage (1 Mild, 2 Strong, 3 Deadly): "Already On Fire" pushes a repeat up a stage
  *   wakeOnDamage  ends when the bearer takes damage (unless drugged asleep or choked out)
  *   consume     "check": gone once the bearer's next Cyberpunk RED roll card is posted (the Plot Die)
@@ -166,6 +167,12 @@ export const CONDITIONS = [
   { id: "extremeCyberpsychosis", category: "situation", img: `${A}/extreme-cyberpsychosis.svg`, page: "2070", remindOnce: true,
     changes: [{ key: "bonuses.allActions", value: 2, situational: true }] },
   { id: "smoke", category: "situation", img: `${A}/smoke.svg`, page: 347, duration: 60, sight: -4 },
+  // The 2070 gun in hand (2070 Ch07, The Three Flavors): put on and taken off by Neon Arsenal as
+  // weapons are equipped. No changes: Neon Arsenal adds the numbers on the roll itself.
+  { id: "powerRebuild", category: "combat", img: `${A}/power-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
+  { id: "smartRebuild", category: "combat", img: `${A}/smart-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
+  { id: "techRebuild", category: "combat", img: `${A}/tech-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
+  { id: "monoRebuild", category: "combat", img: `${A}/mono-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
 
   /* ------------------------------------------------------------------ */
   /*  Raising the Stakes (2070): the Plot Die. Each rides one Check.    */

@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.23.0
+
+**What the 2070 gun flavors look like** (Neon Arsenal, with Sequencer):
+
+- **Weapon conditions:** *Power Weapon*, *Smart Weapon* and *Tech Weapon* follow the gun in hand.
+  Equip one and its condition goes on; stow it and it comes off. They carry no numbers (the
+  weapon traits add those on the roll). On the token they show as a faint orange haze, a pink
+  reticle or a blue data ring.
+- **Tech scope:** the player of a selected Tech shooter sees glowing outlines of anyone behind thin
+  cover. Walls get a new *Thin cover* box in their settings, and closed doors count too (a setting).
+- **Ricochet:** the shot bounces off the nearest wall that gets it round to the target, with
+  sparks and the path left hanging for a moment.
+- **Smart rounds:** a lock-on reticle, then rounds that curve in to the target. Improved Smart
+  rounds are magenta, steer harder and paint the shooter with a data ring.
+- **Improved Smart retry:** the shooter is asked straight away on a miss by 5 or less. The retry
+  now keeps the first shot's penalties and can add LUCK (the rule's "+ LUCK"), and its round
+  loops back round from past the target.
+- **Improved Smart ignores obscurement** (the rule): penalties from Low Light, Darkness,
+  Obscured, smoke, pop-ups and weather's sight come off Improved Smart attacks.
+- **Following a ricochet:** a target with speedware that's on, or low-light, IR or UV optics in the
+  dark, can Evade a ricochet at −4 instead of not at all (a setting).
+- **Charged Tech shots** punch a ripple through each piece of thin cover they cross. The Weapon
+  Rebuilds macro can target whoever the Tech scope shows behind cover.
+- **Power Critical Injuries** hit with a shockwave. **Propulsion Impact** pushes leave a streak.
+  A **Smartgun Link** on a Power or Tech gun gets the lock-on reticle. **Mono-edge Weapon** is a
+  fourth weapon condition, with a faint cyan edge glow.
+- New quiet sounds made with ElevenLabs: lock-on, homing rounds, re-acquire.
+
 ## 1.22.0
 
 **Stealth segments.** Begin no longer puts the enemies at Alert: the carousel runs sneaking Turn

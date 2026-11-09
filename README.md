@@ -699,6 +699,46 @@ on the scene. A damage roll for an area draws no Tarot card.
 | Smart | +1 to ranged attacks with a Neuroport, Personal Link or Subdermal Grip (Neon Hub's Smart guns have the +1 in their attack modifier already, so without a link it comes off). With Improved Smart Ammunition, a miss by 5 or less gets an *Improved Smart retry* button: 14 + 1d10 against the same DV. |
 | Tech | **Charge**: a switch (it's the Move Action) that holds 20 Rounds or until fired, crackling on the token. The next non-explosive attack is ROF1 through Thin cover (noted on its card) and its damage ignores half the target's SP; a charged slug knocks the target Prone. |
 
+**What the flavors look like** (with Sequencer; each a world setting):
+
+- **Weapon conditions.** *Power Weapon*, *Smart Weapon* and *Tech Weapon* go on a character while
+  a gun of that flavor (or with that Rebuild) is equipped, and come off when it's stowed. They
+  carry no numbers, since the traits above are added on the roll. They show faintly on the token:
+  an orange heat haze for Power, a slow pink reticle for Smart, a blue data ring for Tech.
+- **Tech scope.** While a character with a Tech Weapon is selected, their player sees a glowing
+  cyan outline of anyone behind thin cover they can't otherwise see, within 50 m/yds. Thin cover
+  is a wall ticked *Thin cover* in its settings, and closed doors (a setting). Only that player
+  sees the outlines, and GM-hidden tokens never show.
+- **Ricochet.** A ricochet shot flies to a bounce point and on to the target. The bounce point is
+  on the nearest wall that faces both the shooter and the target with a clear line to each, or
+  off to one side when there's no such wall. Sparks fly at the bounce (JB2A's impact where it's
+  installed), and the path hangs in the air for a moment.
+- **Smart rounds.** A reticle locks onto each target with a beep, then the rounds launch wide and
+  curve in, trailing (four for Autofire). Improved Smart rounds glow magenta, steer harder and
+  paint the shooter with a data ring.
+- **Improved Smart retry.** On a miss by 5 or less, the shooter is asked at once whether to
+  re-acquire (the card's button stays too). The second try is 14 + 1d10, with the first shot's
+  penalties and any LUCK they choose to add. The round loops back from past the target.
+
+- **Improved Smart vs obscurement.** Improved Smart rounds ignore visual obscurement penalties
+  (2070 Ch07), so Low Light, Darkness, Obscured, smoke, pop-ups and weather's sight penalties come
+  off that roll. The card says how much.
+- **Following a ricochet.** A ricochet can't be dodged, unless the target can follow the bounce: a
+  Kerenzikov, a running Sandevistan or other speedware, or low-light, IR or UV optics while they're
+  in the dark. Then their Evade card takes −4 (Ch07, Ricochets in Play; a setting).
+- **Charged Tech shot.** A blue line runs to the target, with a ripple where it punches through
+  each piece of thin cover. The *Weapon Rebuilds* macro lists whoever the Tech scope shows behind
+  cover, so you can target them.
+- **Power Critical Injury.** A heavy hit and an orange shockwave on the target, and a note on the
+  card that the Bonus Damage is +5 more.
+- **Smartgun Link** on a Power or Tech gun: the lock-on reticle, over the gun's own shot.
+- **Mono-edge Weapon.** A faint cyan edge glow while a blade with Mono-edge Blading or the
+  Monoblade Rebuild is in hand (a weapon condition, like the three above).
+- **Propulsion Impact.** A shockwave and a streak along the push, with sparks if it ends in a wall.
+
+Ricochets and Smart shots replace Automated Animations' straight shot; the gunshot sounds stay.
+Smart bows get the homing look too, with Improved Smart Arrows steering like rounds.
+
 **Rebuilds that are always on** apply on every attack: Neon At Home registers the Melee Rebuilds
 (Mono-edge Blading and the Monoblade Rebuild ignore armor below SP7, 11 or 13 by tier; Propulsion
 Impact pushes whoever it hits 2 m/yds, under BODY 13, or 4 m/yds, stopping at walls) and the

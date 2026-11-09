@@ -518,6 +518,22 @@
       "extremeCyberpsychosis": {
         "name": "Extreme Cyberpsychosis",
         "hint": "Humanity below 0: a complete psychotic break. The GM plays the character until Humanity is positive again (Immunoblockers can bring them back). Each Round, 1 LUCK buys a try at retaking the Move Action or the Action. The +2 is the GM's call."
+      },
+      "powerRebuild": {
+        "name": "Power Weapon",
+        "hint": "A Power gun in hand: +5 Bonus Damage on its Critical Injuries, and ricochets at -4 off cover to hit a target you know is there but can't see (Aimed: only the -8)."
+      },
+      "smartRebuild": {
+        "name": "Smart Weapon",
+        "hint": "A Smart gun in hand: +1 to its attacks with a Personal Link or Subdermal Grip. Improved Smart Ammunition ignores visual obscurement, and a miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK), the first shot's penalties still applying."
+      },
+      "monoRebuild": {
+        "name": "Mono-edge Weapon",
+        "hint": "A blade with Mono-edge Blading or the Monoblade Rebuild in hand: its damage ignores armor below its SP (7, 11 or 13 by tier)."
+      },
+      "techRebuild": {
+        "name": "Tech Weapon",
+        "hint": "A Tech gun in hand: its scope shows outlines through thin cover. Charge it with the Move Action (20 Rounds or until fired): the next shot is ROF 1, goes through thin cover without damaging it and ignores half the target's SP."
       }
     },
     "Key": {
@@ -1098,6 +1114,30 @@
       "arsenalPlayerFlashes": {
         "name": "Muzzle flashes for players' shots",
         "hint": "Diwako's muzzle flash (with DF Active Lights) only lights the GM's own shots; this sends players' shots to the GM's client so theirs flash too. The GM must be viewing the scene."
+      },
+      "arsenalRebuildConditions": {
+        "name": "Weapon conditions",
+        "hint": "Power Weapon, Smart Weapon and Tech Weapon go on a character while a gun of that flavor (or with that Rebuild) is equipped, and come off when it isn't. They carry no numbers (the weapon traits add those on the roll); they show on the token and switch on the looks below."
+      },
+      "arsenalShotFx": {
+        "name": "Ricochet and smart shot looks",
+        "hint": "A Power ricochet is drawn bouncing off the nearest wall that gets it round to the target, with sparks at the bounce. A Smart gun's rounds lock on and curve in to the target (Improved Smart rounds glowing magenta), and an Improved Smart retry loops back round. Needs Sequencer; these shots replace Automated Animations' straight shot."
+      },
+      "arsenalXray": {
+        "name": "Tech scopes see through thin cover",
+        "hint": "While a character with a Tech Weapon is selected, their player sees a glowing outline of anyone behind thin cover (walls marked \"Thin cover\" in the wall's settings, and closed doors) who they can't otherwise see. Only on that player's screen. Hidden tokens are never shown."
+      },
+      "arsenalThinDoors": {
+        "name": "Closed doors are thin cover",
+        "hint": "Tech scopes see through closed doors. Off: only walls marked \"Thin cover\" count."
+      },
+      "arsenalRicochetDodge": {
+        "name": "Tracking a ricochet",
+        "hint": "A ricochet can't be dodged, unless the target can follow the bounce: a Kerenzikov or other speedware that's on, or low-light, infrared or UV optics while they're in the dark. Then they may Evade at -4 (2070 Core Rules, Ch07, Ricochets in Play). Off: no ricochet is ever dodged."
+      },
+      "arsenalSmartPrompt": {
+        "name": "Ask to retry Improved Smart misses",
+        "hint": "When an Improved Smart round misses by 5 or less, the shooter is asked straight away whether to take the second try (14 + 1d10, the first shot's penalties, and any LUCK they add). The button on the card stays either way."
       },
       "arsenalHitCheck": {
         "name": "Does it hit?",
@@ -2125,6 +2165,7 @@
       "Source": "Neon Conditions",
       "CriticalItem": "Cyberpunk RED's Critical Injury item carries its penalties and Death Save increase",
       "WoundMirror": "Cyberpunk RED applies the Wound State's roll penalties itself",
+      "RebuildMirror": "comes and goes with the weapon in hand; Neon Arsenal adds its numbers on the roll",
       "Minimum": "{key} minimum {value}",
       "Maximum": "{key} maximum {value}",
       "ToggleOn": "{change} (a roll dialog toggle, ticked)",
@@ -2160,14 +2201,28 @@
       "ChargeTitle": "{name} charges the {weapon}",
       "ChargeBody": "That's the Move Action. It holds for 20 Rounds or until fired: the next non-explosive attack is ROF1, goes through Thin cover without damaging it, and ignores half the target's SP (2070 Core Rules, Ch07).",
       "Note": {
-        "ricochet": "Ricochet (−4): bounced off cover at a target the shooter knows is there. It can't be dodged unless the GM allows it (2070 Core Rules, Ch07, Ricochets in Play).",
+        "ricochet": "Ricochet (−4): bounced off cover at a target the shooter knows is there. It can't be dodged, unless the target can follow the bounce (speedware that's on, or low-light, IR or UV optics in the dark): then at −4 (2070 Core Rules, Ch07, Ricochets in Play).",
+        "unobscured": "Improved Smart: ignores {value} from obscurement (darkness, smoke, fog).",
+        "powerCrit": "Power: the Critical Injury's Bonus Damage is +5 more.",
         "chargedAttack": "Charged Tech shot: ROF1, through Thin cover without damaging it.",
         "chargedDamage": "Charged Tech shot: ignores half the target's SP (on the Apply Damage button).",
         "traits": "Weapon traits on this roll: {list}.",
         "push": "Propulsion Impact: whoever this hits is pushed {metres} m/yds away (done)."
       },
       "SmartRetry": "Improved Smart retry (vs DV{dv})",
-      "SmartRetryFlavor": "Improved Smart Ammunition: 14 + 1d10 (apply the first shot's penalties)",
+      "SmartRetryFlavor": "Improved Smart Ammunition: 14 + 1d10, with the first shot's penalties",
+      "RetryLuck": "{luck} LUCK",
+      "RetryAsk": {
+        "Title": "Improved Smart Ammunition",
+        "Body": "Missed DV{dv} by {by}. The round can re-acquire: a second try at {formula}.",
+        "Luck": "LUCK to add (you have {luck})",
+        "Go": "Re-acquire",
+        "No": "Let it go"
+      },
+      "ThinCover": {
+        "Label": "Thin cover (Neon Arsenal)",
+        "Hint": "A thin wall, a car door, a shoji screen: Tech scopes show who's behind it as an outline, and a charged Tech shot goes through it. Closed doors count already (a world setting)."
+      },
       "PlaceHint": "Place the {size} m/yds area: left-click to place it, right-click or Escape for a normal attack.",
       "Hit": "{total} vs DV{dv}: on target.",
       "Miss": "{total} vs DV{dv}: missed.",
@@ -2201,6 +2256,7 @@
       "MenuTitle": "Weapon Rebuilds: {name}",
       "NoActor": "Select a token of yours (or have a character).",
       "NoSwitches": "{name} has no weapon with a switch (a Power gun's ricochet, a Tech gun's charge).",
+      "BehindCover": "Target behind cover (Tech scope)",
       "HitCheck": {
         "hit": "<b>{name}</b>: beats DV{dv} by {by}, a hit.",
         "miss": "<b>{name}</b>: missed DV{dv} by {by}.",
@@ -2218,6 +2274,7 @@
         "Body": "Evade: roll DEX + Evasion + 1d10 against the attack roll (you can dodge bullets). Tank: the range DV stands.",
         "MeleeBody": "Melee is always an opposed roll: DEX + Evasion + 1d10 against the attack roll.",
         "WhyChrome": "({chrome} lets you dodge bullets.)",
+        "RicochetDodge": "It's a ricochet you can follow: Evade takes {penalty}.",
         "Evade": "Evade",
         "Tank": "Tank",
         "DodgedOut": "dodged out",

@@ -6,6 +6,7 @@ import { classify, profileKeys, NO_FLASH } from "./kinds.js";
 import { ROWS, buildMenu, mergeSection, isOurs, isUuidv4, uuidv4, AUTOREC_VERSION } from "./profile.js";
 import { Rebuilds, traitsOf } from "./rebuilds.js";
 import { DIWAKO_ID } from "./dv.js";
+import { Shots } from "./shots.js";
 import { Blast } from "./blast.js";
 import { L } from "../util.js";
 
@@ -251,6 +252,12 @@ export const AA = {
     else if (data.ammoItem && NO_FLASH.includes(data.ammoItem.system?.variety)) data.ammoItem = null;
 
     if (info.explosive && Blast.find(actor.id, item.id)) {
+      data.stopWorkflow = true;
+      return;
+    }
+
+    // A ricochet or a Smart gun's rounds are drawn by Neon Arsenal itself (shots.js).
+    if (["ricochet", "smart"].includes(Shots.lookFor(data.workflow?.flags?.[MODULE_ID]?.arsenal))) {
       data.stopWorkflow = true;
       return;
     }
