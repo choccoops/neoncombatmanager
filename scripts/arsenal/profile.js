@@ -17,6 +17,29 @@ import { LABEL_PREFIX } from "./kinds.js";
 /** The AA Global Automatic Recognition menu version these entries are written for (AA 5.x). */
 export const AUTOREC_VERSION = 5;
 
+/**
+ * AA keeps each menu in a store that only takes UUIDv4 ids: one entry without one throws while the
+ * menu loads, the store keeps the entries before it, and the next time AA saves that menu the rest
+ * are gone. Every entry we write has one.
+ */
+const UUIDV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const isUuidv4 = (id) => typeof id === "string" && UUIDV4.test(id);
+
+/** A random UUIDv4, for the entries installed into a world. */
+export function uuidv4() {
+  if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID();
+  const b = new Uint8Array(16);
+  if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(b);
+  else for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256);
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+/** The same UUIDv4 each build, for the exported JSON (n-th entry, free or Patreon pack). */
+export const stableId = (n, patreon = false) => `4e0a75e1-0000-4000-8${patreon ? "001" : "000"}-${String(n).padStart(12, "0")}`;
+
 export const SFX_ROOT = "modules/cpr-neon-combat-manager/assets/arsenal/sfx";
 
 /**
@@ -135,7 +158,7 @@ const sideOf = () => ({
 /**
  * One AA entry from a row.
  * @param {object} row
- * @param {object} opts - { patreon: boolean, sounds: boolean, id: () => string, version: string }
+ * @param {object} opts - { patreon: boolean, sounds: boolean, id: () => string (a UUIDv4), version: string }
  */
 export function entryFor(row, { patreon = false, sounds = false, id = () => "", version = "" } = {}) {
   const look = (patreon && row.patreon) || row.free;
@@ -170,7 +193,7 @@ export function entryFor(row, { patreon = false, sounds = false, id = () => "", 
  */
 export function buildMenu(opts = {}) {
   let n = 0;
-  const id = opts.id ?? (() => `neon-arsenal-${String(++n).padStart(3, "0")}`);
+  const id = opts.id ?? (() => stableId(++n, !!opts.patreon));
   const entries = ROWS.map((row) => entryFor(row, { ...opts, id }));
   return {
     melee: entries.filter((e) => e.menu === "melee"),

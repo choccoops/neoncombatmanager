@@ -3,7 +3,7 @@ import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { Socket } from "../socket.js";
 import { classify, profileKeys, NO_FLASH } from "./kinds.js";
-import { buildMenu, mergeSection, isOurs, AUTOREC_VERSION } from "./profile.js";
+import { ROWS, buildMenu, mergeSection, isOurs, isUuidv4, uuidv4, AUTOREC_VERSION } from "./profile.js";
 import { Rebuilds, traitsOf } from "./rebuilds.js";
 import { DIWAKO_ID } from "./dv.js";
 import { Blast } from "./blast.js";
@@ -83,10 +83,14 @@ export const AA = {
     return out;
   },
 
-  /** Which of our entries AA has: { count, version } (version: our module's when installed). */
+  /**
+   * Which of our entries AA has: { count, version, whole } (version: our module's when installed;
+   * whole: every entry is there, each with an id AA's menu keeps).
+   */
   installed() {
     const ours = Object.values(this.menus()).flat().filter(isOurs);
-    return { count: ours.length, version: ours[0]?.metaData?.moduleVersion ?? null };
+    const whole = ours.length === ROWS.length && ours.every((e) => isUuidv4(e.id));
+    return { count: ours.length, version: ours[0]?.metaData?.moduleVersion ?? null, whole };
   },
 
   /**
@@ -96,7 +100,7 @@ export const AA = {
   async install({ quiet = false } = {}) {
     if (!this.active || !game.user.isGM) return false;
     const version = game.modules.get(MODULE_ID)?.version ?? "";
-    const menu = buildMenu({ patreon: this.patreon, sounds: false, id: () => foundry.utils.randomID(), version });
+    const menu = buildMenu({ patreon: this.patreon, sounds: false, id: uuidv4, version });
     const current = this.menus();
     for (const m of ["melee", "range"]) await game.settings.set(AA_ID, `aaAutorec-${m}`, mergeSection(current[m], menu[m]));
     try {
@@ -139,21 +143,22 @@ export const AA = {
     }), delay));
   },
 
-  /** Does AA's menu hold this version's profile? */
+  /** Does AA's menu hold this version's whole profile? */
   current() {
     const version = game.modules.get(MODULE_ID)?.version ?? "";
-    const { count, version: have } = this.installed();
-    return count > 0 && have === version;
+    const { whole, version: have } = this.installed();
+    return whole && have === version;
   },
 
   /** Ask the GM: Install now, Not now (asked again next time), Don't ask again. */
   async offer() {
     if (!this.active || !game.user.isGM || this.current()) return null;
-    const { count } = this.installed();
+    const { count, whole } = this.installed();
+    const why = !count ? "Missing" : whole ? "Outdated" : "Damaged";
     const choice = await Compat.DialogV2.wait({
       window: { title: L(`${LANG}.Arsenal.Offer.Title`) },
       classes: ["neon-combat", "ncm-dialog"],
-      content: `<p>${L(`${LANG}.Arsenal.Offer.${count ? "Outdated" : "Missing"}`)}</p><p class="ncm-ref">${L(`${LANG}.Arsenal.Offer.Later`)}</p>`,
+      content: `<p>${L(`${LANG}.Arsenal.Offer.${why}`)}</p><p class="ncm-ref">${L(`${LANG}.Arsenal.Offer.Later`)}</p>`,
       buttons: [
         { action: "install", label: L(`${LANG}.Arsenal.Offer.Install`), icon: "fa-solid fa-download", default: true },
         { action: "later", label: L(`${LANG}.Arsenal.Offer.NotNow`) },
