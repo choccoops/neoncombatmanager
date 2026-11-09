@@ -29,7 +29,9 @@ export class StakesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       flashLuck: StakesApp.#onFlash,
       newBeat: StakesApp.#onNewBeat,
       newMission: StakesApp.#onNewMission,
-      drawTarot: StakesApp.#onDrawTarot
+      drawTarot: StakesApp.#onDrawTarot,
+      doubleDown: StakesApp.#onDoubleDown,
+      forceFate: StakesApp.#onForceFate
     }
   };
 
@@ -82,6 +84,9 @@ export class StakesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       luck,
       opts,
       used,
+      // Spend them here too: Double Down on a result rolled from chat, Force Fate on a Raised Stake.
+      canDouble: !!actor?.isOwner && opts.doubleDown && !!Stakes.latestRolled(actor),
+      canForce: !!actor?.isOwner && opts.forceFate && !!Stakes.pendingRaise(actor),
       needs: LUCK_NEEDS,
       forceCost: FORCE_FATE_COST,
       faces: [1, 2, 3, 4, 5, 6].map((f) => {
@@ -174,6 +179,19 @@ export class StakesApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const target = [...(game.user.targets ?? [])][0]?.document?.uuid ?? "";
     await Tarot.draw(target).catch((err) => ui.notifications.warn(err.message));
     this.render();
+  }
+
+  static async #onDoubleDown() {
+    const actor = this._actor();
+    if (actor) await Stakes.doubleDown(actor);
+  }
+
+  static async #onForceFate() {
+    const actor = this._actor();
+    const raised = actor && Stakes.pendingRaise(actor);
+    if (!raised) return;
+    await Stakes.markDone(raised);
+    await Stakes.forceFate(actor);
   }
 
   static async #onNewSession() {

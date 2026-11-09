@@ -380,7 +380,8 @@ export const Roller = {
     const b = (bar, icon, label, extra = "") => `<button type="button" data-bar="${bar}"${extra}><i class="fa-solid ${icon}"></i> ${esc(label)}</button>`;
     let stakes;
     if (n.plot) {
-      stakes = `<span class="ncm-roll-plot kind-${n.plot.kind}"><b>${esc(String(n.plot.face || "★"))}</b> ${esc(L(`${LANG}.Stakes.Face.${n.plot.kind}`, { bonus: n.plot.bonus }))}</span>`;
+      stakes = `<span class="ncm-roll-plot kind-${n.plot.kind}"><b>${esc(String(n.plot.face || "★"))}</b> ${esc(L(`${LANG}.Stakes.Face.${n.plot.kind}`, { bonus: n.plot.bonus }))}</span>`
+        + (n.plotRolled && opts.doubleDown ? b("double", "fa-rotate", L(`${LANG}.Stakes.DoubleDown`)) : "");
     } else if (gm || raised) {
       stakes = b("plot", "fa-dice-six", L(`${LANG}.Roller.RollPlot`)) + (raised && opts.forceFate ? b("force", "fa-star", L(`${LANG}.Stakes.ForceFate`, { cost: 3 })) : "");
     } else if (opts.ask) {
@@ -400,6 +401,20 @@ export const Roller = {
       ui.notifications.info(L(`${LANG}.Stakes.Asked`));
       return;
     }
+    if (what === "double") {
+      // Double Down here, so the reroll's bonus replaces the one this roll carries.
+      if (!n.plotRolled || !Stakes.options(actor).doubleDown) throw new Error(L(`${LANG}.Stakes.CantDouble`));
+      n.plotRolled = false;
+      const card = game.messages?.get?.(n.plotCard);
+      if (card) await Stakes.markDone(card);
+      await Stakes.markUsed(actor, "doubleDown");
+      const r = await new Roll("1d6").evaluate();
+      await game.dice3d?.showForRoll?.(r, game.user, true);
+      n.plot = plotResult(r.total);
+      n.stakesBonus = n.plot.bonus;
+      await Stakes.result(actor, n.plot, { inline: true, doubleDown: true });
+      return this._refreshBar(app, actor, n);
+    }
     if (n.plot) return;
     if (what === "plot") {
       if (!game.user.isGM && !raised) throw new Error(L(`${LANG}.Roller.NotRaised`));
@@ -414,7 +429,10 @@ export const Roller = {
     }
     if (raised) await Stakes.markDone(raised);
     n.stakesBonus = n.plot.bonus;
-    if (what === "plot") await Stakes.result(actor, n.plot, { inline: true });
+    if (what === "plot") {
+      n.plotRolled = true;
+      n.plotCard = (await Stakes.result(actor, n.plot, { inline: true }))?.id ?? null;
+    }
     return this._refreshBar(app, actor, n);
   },
 

@@ -135,6 +135,45 @@ test("Double Down: a Complication on the reroll costs 2 LUCK, or two Complicatio
   assert.equal(lastCard().flags[M].stakes.count, 2);
 });
 
+test("Double Down and Force Fate from the Plot Die window: on a result rolled from chat, on a Raised Stake", async () => {
+  asGM(true);
+  const { StakesApp } = await import("../scripts/stakes/stakes-app.js");
+  const actor = makeActor({ name: "Window", hasPlayerOwner: true, system: { stats: { luck: { value: 8, max: 8 } } } });
+  const app = new StakesApp();
+  app._actorId = actor.id;
+  const ctx = async () => {
+    app._choices = () => [actor];
+    return app._prepareContext();
+  };
+  let c = await ctx();
+  assert.deepEqual([c.canDouble, c.canForce], [false, false], "nothing rolled, nothing raised");
+
+  dice.push(3);
+  await Stakes.roll(actor);
+  const first = lastCard();
+  assert.equal(Stakes.latestRolled(actor), first);
+  c = await ctx();
+  assert.equal(c.canDouble, true);
+  dice.push(5);
+  await Stakes.doubleDown(actor);
+  assert.equal(first.flags[M].done, true, "the rerolled card is settled");
+  assert.equal(Stakes.used(actor).doubleDown, true);
+  assert.equal(Stakes.latestRolled(actor), null, "a Double Down's result can't be doubled again");
+  await assert.rejects(Stakes.doubleDown(actor, first));
+
+  await Stakes.raise(actor);
+  const raised = lastCard();
+  c = await ctx();
+  assert.equal(c.canForce, true);
+  await StakesApp.DEFAULT_OPTIONS.actions.forceFate.call(app);
+  assert.equal(raised.flags[M].done, true, "the Raise is spent");
+  assert.equal(actor.system.stats.luck.value, 5);
+  assert.match(lastCard().content, /kind-opportunity/);
+  c = await ctx();
+  assert.deepEqual([c.canDouble, c.canForce], [false, false]);
+  await Stakes.newSession();
+});
+
 test("Opportunities and Complications that touch LUCK and Prone", async () => {
   const actor = makeActor({ name: "Spend", system: { stats: { luck: { value: 5, max: 6 } } } });
   await Stakes.opportunity(actor, "feelingLucky");

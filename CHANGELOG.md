@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.25.1
+
+- **Window close buttons show their icon again.** The module's button style gave the header's close
+  (and controls) button its display font, so Foundry showed a missing-glyph box instead of the ×.
+  Every Neon Combat Manager window had it; the Plot Die is where it was spotted.
+- **The Plot Die's six faces are all the same size.** The 6 came out taller than the others; each
+  face's box is now fixed so no outside rule can stretch one.
+- **Double Down in the roll dialog.** Roll the Plot Die from Cyberpunk RED's roll dialog and a
+  **Double Down** button now sits beside the result (LUCK 7+, once a session). The reroll's bonus
+  replaces the one on the roll, and its cost (2 LUCK on a Complication, or two Complications) applies
+  as on the card. The result card from the dialog no longer offers its own Double Down, which used
+  to leave the dialog holding the old bonus.
+- **Spend Double Down and Force Fate from the Plot Die window.** Their lines become buttons when the
+  character can use them: Double Down once a Plot Die result rolled from chat is waiting, Force Fate
+  once the GM has Raised the Stakes for them. Otherwise the line says what it's waiting for.
+
 ## 1.25.0
 
 **Your ride as cover** (HOUSE RULE, 2070 Core Rules Ch07), done in full:

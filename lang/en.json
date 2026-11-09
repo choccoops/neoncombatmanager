@@ -1470,6 +1470,8 @@
         "forceFate": "LUCK {luck}+: Force Fate, {cost} LUCK for an Opportunity (once a session)"
       },
       "UsedThisSession": "used this session",
+      "DoubleDownWhen": "once the Plot Die is rolled",
+      "ForceFateWhen": "once the GM Raises the Stakes",
       "ReasonGM": "What's riding on it (optional, shown on the card)",
       "ReasonPlayer": "Make your case: why does this Check matter?",
       "Raise": "Raise the Stakes",

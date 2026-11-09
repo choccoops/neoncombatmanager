@@ -376,7 +376,8 @@ token controls, `/stakes`, or a keybinding (unassigned) opens the Plot Die windo
 - **LUCK perks**: LUCK 5+ can **ask** the GM to Raise the Stakes (the GM gets a whispered card to
   approve or turn down). LUCK 7+ can **Double Down** (reroll; a Complication then costs 2 LUCK,
   or brings two Complications without it) and **Force Fate** (3 LUCK for an Opportunity), each
-  once a session. **New session** in the window gives them back.
+  once a session. Spend them from the result or Raise card, the roll dialog, or their line in the
+  Plot Die window (a button when they're ready). **New session** in the window gives them back.
 - **Crits**: the GM's **Crit: Opportunity** and **Crit: Complication** buttons hand out a twist
   for an exploding 10 or an imploding 1, without the Plot Die.
 

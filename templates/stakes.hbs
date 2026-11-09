@@ -18,8 +18,8 @@
   {{#if actor}}
   <ul class="ncm-stakes-perks">
     <li class="{{#if opts.ask}}on{{/if}}"><i class="fa-solid fa-hand"></i> {{localize "NEONCOMBAT.Stakes.Perk.ask" luck=needs.ask}}</li>
-    <li class="{{#if opts.doubleDown}}on{{/if}}"><i class="fa-solid fa-rotate"></i> {{localize "NEONCOMBAT.Stakes.Perk.doubleDown" luck=needs.doubleDown}}{{#if used.doubleDown}} · {{localize "NEONCOMBAT.Stakes.UsedThisSession"}}{{/if}}</li>
-    <li class="{{#if opts.forceFate}}on{{/if}}"><i class="fa-solid fa-star"></i> {{localize "NEONCOMBAT.Stakes.Perk.forceFate" luck=needs.forceFate cost=forceCost}}{{#if used.forceFate}} · {{localize "NEONCOMBAT.Stakes.UsedThisSession"}}{{/if}}</li>
+    <li class="{{#if opts.doubleDown}}on{{/if}}">{{#if canDouble}}<button type="button" class="ncm-stakes-perk" data-action="doubleDown"><i class="fa-solid fa-rotate"></i> {{localize "NEONCOMBAT.Stakes.Perk.doubleDown" luck=needs.doubleDown}}</button>{{else}}<i class="fa-solid fa-rotate"></i> {{localize "NEONCOMBAT.Stakes.Perk.doubleDown" luck=needs.doubleDown}}{{#if used.doubleDown}} · {{localize "NEONCOMBAT.Stakes.UsedThisSession"}}{{else if opts.doubleDown}} · {{localize "NEONCOMBAT.Stakes.DoubleDownWhen"}}{{/if}}{{/if}}</li>
+    <li class="{{#if opts.forceFate}}on{{/if}}">{{#if canForce}}<button type="button" class="ncm-stakes-perk" data-action="forceFate"><i class="fa-solid fa-star"></i> {{localize "NEONCOMBAT.Stakes.Perk.forceFate" luck=needs.forceFate cost=forceCost}}</button>{{else}}<i class="fa-solid fa-star"></i> {{localize "NEONCOMBAT.Stakes.Perk.forceFate" luck=needs.forceFate cost=forceCost}}{{#if used.forceFate}} · {{localize "NEONCOMBAT.Stakes.UsedThisSession"}}{{else if opts.forceFate}} · {{localize "NEONCOMBAT.Stakes.ForceFateWhen"}}{{/if}}{{/if}}</li>
   </ul>
   <textarea name="reason" rows="2" placeholder="{{#if gm}}{{localize 'NEONCOMBAT.Stakes.ReasonGM'}}{{else}}{{localize 'NEONCOMBAT.Stakes.ReasonPlayer'}}{{/if}}"></textarea>
   <div class="ncm-stakes-actions">

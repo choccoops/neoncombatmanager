@@ -203,6 +203,28 @@ test("the roll dialog's Plot Die: the bonus lands on the roll, no one-Check cond
   assert.match(chat.at(-1).content, /on the roll being made now/);
 });
 
+test("Double Down inside the roll dialog: the reroll's bonus replaces the roll's, once a session", async () => {
+  asGM(true);
+  const vee = pc("Doubler", 8);
+  const n = { actorId: vee.id };
+  const app = { rollData: { rollTitle: "Handgun" }, element: null };
+  dice.push(3);
+  await Roller._barAction(app, vee, n, "plot");
+  const first = chat.at(-1);
+  assert.equal(n.plotRolled, true);
+  assert.doesNotMatch(first.content, /stakes-double/, "the dialog offers it, not the card");
+  assert.match(Roller._barHtml(vee, n), /data-bar="double"/);
+  dice.push(2);
+  await Roller._barAction(app, vee, n, "double");
+  assert.deepEqual([n.plot.kind, n.stakesBonus], ["complication", 4]);
+  assert.equal(first.getFlag("cpr-neon-combat-manager", "done"), true, "the first result is settled");
+  assert.equal(vee.system.stats.luck.value, 6, "a Complication on the reroll costs 2 LUCK");
+  assert.equal(Conditions.has("stakesBonus", vee), false, "the bonus is on the roll, not a condition");
+  assert.doesNotMatch(Roller._barHtml(vee, n), /data-bar="double"/, "once");
+  await assert.rejects(Roller._barAction(app, vee, n, "double"));
+  await Stakes.newSession();
+});
+
 /* ---------------------------------------- */
 /*  Flash of Luck, Tarot, the Ladder        */
 /* ---------------------------------------- */
