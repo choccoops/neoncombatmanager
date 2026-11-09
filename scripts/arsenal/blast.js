@@ -86,7 +86,7 @@ export const Blast = {
    * Let the attacker place an area for an attack. Resolves to the template, or null if they
    * cancel (right-click or Escape): the attack then goes ahead at its targets as usual.
    */
-  async place({ area, actor, item, token, info, ammo = null }) {
+  async place({ area, actor, item, token, info, ammo = null, dodge = 0 }) {
     if (!canvas?.scene || !token || !area) return null;
     const grid = this.grid();
     const origin = token.center;
@@ -97,6 +97,8 @@ export const Blast = {
         blast: {
           actorId: actor.id, tokenId: token.id, itemId: item.id, userId: game.user.id, kind: info.kind, area,
           ammoType: info.ammoType, ammoVariety: info.ammoVariety, ammoName: ammo?.name ?? "", explosive: info.explosive,
+          // The control group's shell attack: dodging it takes this (Neon Hub's Shotgun Automatic Control Group).
+          ...(dodge ? { dodge } : {}),
           at: Date.now(), state: "placed"
         }
       }
@@ -208,6 +210,7 @@ export const Blast = {
     const body = [`<p>${result}</p>`];
     if (!hit && b.explosive) body.push(`<p>${L(`${LANG}.Arsenal.MissMoves`)}</p>`);
     if (hit || b.explosive) body.push(`<p>${L(`${LANG}.Arsenal.Inside`, { count: inside.length, names: esc(inside.map((t) => t.name).join(", ")) || "—" })}</p>`);
+    if (b.dodge) body.push(`<p>${L(`${LANG}.Arsenal.ShellAutofire`, { penalty: b.dodge })}</p>`);
     body.push(`<p class="ncm-ref">${L(`${LANG}.Arsenal.AreaRules`)}</p>`);
     const buttons = [];
     if (!hit && b.explosive) buttons.push({ action: "arsenal-scatter", label: L(`${LANG}.Arsenal.Scatter`), icon: "fa-solid fa-shuffle", gm: true, data: { template: doc.uuid } });

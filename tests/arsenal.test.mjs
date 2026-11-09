@@ -7,7 +7,7 @@ import { makeActor, registerSettings, settle, root, asGM, missingKeys, chat, tes
 
 const M = "cpr-neon-combat-manager";
 const Settings = await registerSettings();
-const { classify, flavorOf, areaOf, profileKeys, autofireTable, smartBaked, LABEL_PREFIX } = await import("../scripts/arsenal/kinds.js");
+const { classify, flavorOf, areaOf, profileKeys, autofireTable, smartBaked, shellAutofire, LABEL_PREFIX } = await import("../scripts/arsenal/kinds.js");
 const { ROWS, rowLabel, buildMenu, entryFor, mergeSection, isOurs, isUuidv4, uuidv4, soundPlan, soundFiles, SOUNDS, AUTOREC_VERSION } = await import("../scripts/arsenal/profile.js");
 const { templateData, contains, tokenInside, centerOf, blownBack, blowBackMetres, ammoEffect, scatter, escapeSquare } = await import("../scripts/arsenal/area.js");
 const { dvFromResults, dvLines, Dv } = await import("../scripts/arsenal/dv.js");
@@ -440,6 +440,29 @@ test("a Smart gun's attack gets +1 with a Neuroport; Neon Hub's, which has it bu
   const r2 = new CPRAttackRoll();
   await Arsenal.preRoll(hub.item, r2);
   assert.deepEqual(r2.mods.map((m) => m.value), [-1], "no link: the built-in +1 comes off");
+});
+
+test("Neon Hub's control group with shells: Autofire is the shell attack, shell damage, dodged at -3", async () => {
+  const group = { _id: "acg", name: "Shotgun Automatic Control Group", type: "itemUpgrade", system: {}, flags: { "cpr-neon-hub": { burstMod: { slugs: 4, shells: 4, shellDodge: -3 } } } };
+  assert.deepEqual(shellAutofire([group], "shotgunShell"), { shells: 4, dodge: -3 });
+  assert.equal(shellAutofire([group], "shotgunSlug"), null, "slugs: a real burst");
+  assert.deepEqual(shellAutofire([{ name: "Shotgun Automatic Control Group", type: "itemUpgrade", flags: {} }], "shotgunShell"), { shells: 4, dodge: -3 }, "an older copy, by name");
+  const shells = { _id: "sh", name: "Basic Shells", type: "ammo", system: { variety: "shotgunShell", type: "basic" } };
+  const { actor, item } = armed(weapon("HomeSafe", { weaponType: "shotgun", fireModes: { autoFire: 3, suppressiveFire: false }, installedItems: { list: ["acg", "sh"] } }), [group, shells]);
+  item.getWeaponDamage = () => "3d6";
+  actor.flags["cyberpunk-red-core"] = { "firetype-w1": "autofire" };
+  await Arsenal.preRoll(item, new CPRAttackRoll());
+  assert.deepEqual(Arsenal.pending.tag.shell, { shells: 4, dodge: -3 });
+  const dmg = Object.assign(new CPRDamageRoll(), { isAutofire: true, formula: "2d6" });
+  await Arsenal.preRoll(item, dmg);
+  assert.equal(dmg.isAutofire, false, "no Autofire multiplier");
+  assert.equal(dmg.formula, "3d6", "the shells' damage");
+  actor.flags["cyberpunk-red-core"] = { "firetype-w1": "single" };
+  const single = Object.assign(new CPRDamageRoll(), { isAutofire: false, formula: "3d6" });
+  await Arsenal.preRoll(item, single);
+  assert.equal(Arsenal.pending.tag.shell, undefined, "a plain shell shot");
+  const card = await Defense.prompt(actor, { name: "Rico" }, { attack: 17, attacker: "Fury", weapon: "HomeSafe", target: "Scene.s.Token.r", template: "t", penalty: -3, penaltyKey: "ShellDodge" });
+  assert.match(String(card?.content ?? chat.at(-1).content), /shell attack: Evade takes -3/);
 });
 
 test("a ricochet is armed for one shot: -4, then off", async () => {

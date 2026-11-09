@@ -8,7 +8,7 @@ import { Conditions } from "../conditions/engine.js";
 import { Registry, sightKeys } from "../conditions/registry.js";
 import { Core } from "../neonfx/core.js";
 import { Bridge } from "../roller/bridge.js";
-import { classify, profileKeys, smartBaked } from "./kinds.js";
+import { shellAutofire, classify, profileKeys, smartBaked } from "./kinds.js";
 import { soundPlan } from "./profile.js";
 import { Rebuilds, RebuildRegistry, REBUILD_HOOK, traitsOf, attackMods, damageArgs } from "./rebuilds.js";
 import { AA, loadedAmmo } from "./aa.js";
@@ -191,6 +191,14 @@ export const Arsenal = {
       critBonus: traits.critBonus, smartLink: info.flavor !== "smart" && upgrades.some((u) => /smart ?gun link/i.test(u.name ?? ""))
     };
     const rebuilds = !!Settings.get("arsenalRebuilds");
+    // The control group with shells: Autofire is a Shotgun Shell attack (the Autofire Skill, 4 shells, dodged at -3).
+    const shell = mode === "autofire" ? shellAutofire(upgrades, info.ammoVariety) : null;
+    if (shell) tag.shell = shell;
+    if (kind === "damage" && shell) {
+      // A shell attack's damage, not Autofire's 2d6 times the multiplier CPR set up for the card's mode.
+      roll.isAutofire = false;
+      if (typeof item.getWeaponDamage === "function") roll.formula = item.getWeaponDamage();
+    }
     if (kind === "attack") {
       const aimed = mode === "aimed" || (Bridge.rolls?.CPRAimedAttackRoll && roll instanceof Bridge.rolls.CPRAimedAttackRoll);
       if (rebuilds) {
@@ -212,7 +220,7 @@ export const Arsenal = {
         }
       }
       if (info.area && Blast.on && mode !== "suppressive" && mode !== "aimed" && token) {
-        await Blast.place({ area: info.area, actor, item, token, info, ammo });
+        await Blast.place({ area: info.area, actor, item, token, info, ammo, dodge: shell?.dodge ?? 0 });
       } else if (targets[0] && token && info.ranged) {
         // The DV each target stands at (a ROF 2 attack can split between two).
         tag.hits = [];

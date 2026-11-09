@@ -11,6 +11,11 @@
   Autofire and Suppressive buttons and Does it hit?'s multiplier cap already read, and name its new
   Autofire table on the gun, which the DV display and Does it hit? now read first: a Constant
   Recoil rifle autofires on the Machine Gun table.
+- **The Shotgun Automatic Control Group's shell attack** (Neon Hub 1.23.0): with shells loaded, an
+  Autofire attack from a shotgun with the control group is the shell attack the rule describes.
+  The spread is placed as usual, the damage roll is the shells' damage with no Autofire multiplier,
+  and everyone in the spread who can dodge bullets gets Evade at −3 (the prompt and the spread's card
+  say why). How many rounds a burst spends is Neon Hub's.
 - **Fixed: a rocket launcher with a Long Tube looked like a missile launcher.** Its look comes from
   the table it was made with, not the one the tube moved it to.
 

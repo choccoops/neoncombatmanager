@@ -652,6 +652,10 @@ else), and a rocket launcher with a Long Tube still looks like a rocket launcher
 attachments (a Pistol Autosear, SMG Cyclic Internals, a Constant Recoil System...) set the gun's
 Autofire rating and Suppressive Fire, so the HUD's buttons follow, and name the gun's new Autofire
 table (`flags.cpr-neon-hub.autofireTable`), which the DV display and Does it hit? use first.
+With shells loaded, a shotgun with the Shotgun Automatic Control Group makes the rule's shell
+attack when you pick Autofire. You place the spread as usual. Its damage is the shells' damage
+with no Autofire multiplier, and anyone in the spread who dodges takes −3 on Evade. Neon Hub
+spends the 4 shells, and the other attachments' rounds per burst.
 
 **Does it hit?** Under each ranged attack card, for each target: the DV at their range (the
 2070 tables, an Autofire shot on the gun's own Autofire table), hit or miss and by how much (a
