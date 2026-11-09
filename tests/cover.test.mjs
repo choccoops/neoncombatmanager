@@ -1,7 +1,9 @@
 /** Cover: the 2070 Cover HP table on walls and cover pieces, lines of fire, areas, damage and repair. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeActor, registerSettings, asGM, chat } from "./helpers/foundry.mjs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import path from "node:path";
+import { makeActor, registerSettings, asGM, chat, root } from "./helpers/foundry.mjs";
 
 const M = "cpr-neon-combat-manager";
 await registerSettings();
@@ -239,4 +241,25 @@ test("shooting a cover piece itself: the piece takes the shot", () => {
   assert.equal(ref.kind, "piece");
   assert.ok(ref.self);
   assert.equal(ref.hp, 20);
+});
+
+test("the Cover compendium: a piece and a wall section for every material and thickness, at the book's HP, each with its token art", () => {
+  const dir = path.join(root, "packs", "_source", "cover");
+  const actors = readdirSync(dir).filter((f) => f.endsWith(".json")).map((f) => JSON.parse(readFileSync(path.join(dir, f), "utf8")));
+  assert.equal(actors.length, 20);
+  assert.equal(new Set(actors.map((a) => a._id)).size, 20, "ids are unique");
+  for (const material of ["plaster", "wood", "concrete", "glass", "stone", "steel"]) {
+    for (const thickness of ["thin", "thick"]) {
+      const of = actors.filter((a) => a.flags[M].cover.material === material && a.flags[M].cover.thickness === thickness);
+      assert.ok(of.length >= 1, `${material} ${thickness}`);
+      assert.ok(of.some((a) => a.prototypeToken.width === 2 && a.prototypeToken.height === 1), `${material} ${thickness}: a 2-square wall section`);
+      for (const a of of) {
+        assert.equal(a.system.derivedStats.hp.max, coverHp(material, thickness), a.name);
+        assert.equal(a.type, "mook");
+        assert.equal(a.prototypeToken.bar1.attribute, "derivedStats.hp");
+        assert.ok(existsSync(path.join(root, a.img.replace(`modules/${M}/`, ""))), `${a.name}: ${a.img}`);
+        assert.equal(a.prototypeToken.texture.src, a.img);
+      }
+    }
+  }
 });

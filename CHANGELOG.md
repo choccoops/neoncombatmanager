@@ -11,10 +11,12 @@
 - **Destroyed sections open.** At 0 HP a wall section stops blocking movement and sight: tokens
   walk and see through the gap until the GM clicks *Repair cover*. The GM sees damaged sections'
   HP on the map.
-- **Cover pieces.** A new *Cover* compendium with twelve pieces, one for each material and
-  thickness, each with its own top-down token: Office Partition, Sofa, Overturned Table, Bar
+- **Cover pieces.** A new *Cover* compendium with twenty pieces, each with its own top-down
+  token. One for each material and thickness: Office Partition, Sofa, Overturned Table, Bar
   Counter, Low Brick Wall, Dataterm, Teller Glass, Armored Glass Barrier, Statue, Boulder, Car Door
-  and Engine Block. Rides count as cover with their SP and SDP. Moving Thick cover without BODY 10+
+  and Engine Block. And wall sections for the rest: Interior Wall, Wooden Fence, Timber Wall,
+  Concrete Barrier, Low Stone Wall, Fieldstone Wall, Corrugated Fence and Blast Wall. Rides count as
+  cover with their SP and SDP. Moving Thick cover without BODY 10+
   brings a reminder.
 - **Shots:** *Does it hit?* says when a target is behind cover, and the damage card's GM button
   *Hit the cover* puts the damage on it (at 0 it soaks that shot). Cover the shooter leans out from

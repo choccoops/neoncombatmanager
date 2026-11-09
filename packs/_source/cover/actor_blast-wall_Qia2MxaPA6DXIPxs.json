@@ -1,0 +1,58 @@
+{
+  "_id": "Qia2MxaPA6DXIPxs",
+  "_key": "!actors!Qia2MxaPA6DXIPxs",
+  "name": "Blast Wall (Steel, Thick)",
+  "type": "mook",
+  "img": "modules/cpr-neon-combat-manager/assets/cover/steel-thick-blast-wall.svg",
+  "system": {
+    "derivedStats": {
+      "hp": {
+        "value": 50,
+        "max": 50
+      }
+    },
+    "information": {
+      "description": "<p>Cover: steel, thick. 50 HP per 2×2 m/yds section (2070 Core Rules, Ch07, Cover HP). Drop it on the map as cover; Neon Combat Manager puts attacks' damage on it and Repair cover sets it back to full.</p>",
+      "notes": "",
+      "alias": "",
+      "history": ""
+    }
+  },
+  "prototypeToken": {
+    "name": "Blast Wall",
+    "width": 2,
+    "height": 1,
+    "texture": {
+      "src": "modules/cpr-neon-combat-manager/assets/cover/steel-thick-blast-wall.svg"
+    },
+    "actorLink": false,
+    "disposition": 0,
+    "displayName": 30,
+    "displayBars": 20,
+    "bar1": {
+      "attribute": "derivedStats.hp"
+    },
+    "bar2": {
+      "attribute": null
+    },
+    "sight": {
+      "enabled": false
+    },
+    "lockRotation": false
+  },
+  "items": [],
+  "effects": [],
+  "folder": null,
+  "sort": 2000,
+  "flags": {
+    "cpr-neon-combat-manager": {
+      "cover": {
+        "material": "steel",
+        "thickness": "thick"
+      }
+    }
+  },
+  "ownership": {
+    "default": 0
+  }
+}

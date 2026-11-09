@@ -778,11 +778,14 @@ each 2 m/yds section has its own HP. **A section at 0 HP is destroyed: the wall 
 the gap stops blocking movement, sight, light and sound, so tokens can walk and see through it.
 The GM sees each damaged section's HP on the map, and an ✕ where one is destroyed (a setting).
 
-**Cover pieces.** The *Neon Combat Manager: Cover* compendium has twelve, one for each material
-and thickness, each one of the book's own examples with its own top-down token: Office Partition
-and Sofa (Plaster), Overturned Table and Bar Counter (Wood), Low Brick Wall and Dataterm
-(Concrete), Teller Glass and Armored Glass Barrier (Bulletproof glass), Statue and Boulder
-(Stone), Car Door and Engine Block (Steel). Drag one onto the map; its HP bar is the piece's HP,
+**Cover pieces.** The *Neon Combat Manager: Cover* compendium has twenty, each with its own
+top-down token. One piece for each material and thickness, each one of the book's own examples:
+Office Partition and Sofa (Plaster), Overturned Table and Bar Counter (Wood), Low Brick Wall and
+Dataterm (Concrete), Teller Glass and Armored Glass Barrier (Bulletproof glass), Statue and Boulder
+(Stone), Car Door and Engine Block (Steel). And a 2-square wall section for every material and
+thickness the pieces don't already draw as a wall: Interior Wall (Plaster, Thick), Wooden Fence and
+Timber Wall (Wood), Concrete Barrier (Concrete, Thick), Low Stone Wall and Fieldstone Wall (Stone),
+Corrugated Fence and Blast Wall (Steel). Drag one onto the map; its HP bar is the piece's HP,
 seen by the GM. A destroyed piece fades. A player who moves Thick cover without BODY 10+ is
 reminded of the rule. Cover pieces aren't people: no Wound States, Biomon or death saves. **Rides**
 count as cover too, with their SP and SDP (*Your ride as cover*, HOUSE RULE), through Cyberpunk

@@ -1,6 +1,7 @@
 // Neon Cover: the cover pieces' token art (assets/cover/*.svg) and their actors
 // (packs/_source/cover/*.json). One piece per material and thickness, each one of the 2070 Cover
-// HP table's own examples, drawn top-down for the map. Run with `node tools/gen-cover.mjs`.
+// HP table's own examples, and a wall section for every material and thickness, drawn top-down for
+// the map. Run with `node tools/gen-cover.mjs`.
 import { createHash } from "node:crypto";
 import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -103,6 +104,86 @@ const PIECES = [
   }]
 ];
 
+/** A row of irregular stones along a wall, seeded so they come out the same every run. */
+const stones = (w, h, { rows, top, height, seed, fill, line }) => {
+  let r = seed;
+  const rand = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  const out = [];
+  const rh = height / rows;
+  for (let row = 0; row < rows; row++) {
+    let x = 18 + (row % 2) * 14;
+    while (x < w - 30) {
+      const sw = Math.min(w - 18 - x, 34 + rand() * 40);
+      const y = top + row * rh;
+      out.push(`<rect x="${x + 2}" y="${y + 2}" width="${sw - 4}" height="${rh - 4}" rx="${8 + rand() * 8}" fill="${fill[Math.floor(rand() * fill.length)]}" stroke="${line}" stroke-width="2"/>`);
+      x += sw;
+    }
+  }
+  return out.join("");
+};
+
+/**
+ * Wall sections, one for each material and thickness the pieces above don't already draw as a wall
+ * (the Office Partition, Low Brick Wall, Teller Glass and Armored Glass Barrier are walls already):
+ * a 2-square stretch to drop along a line, or to stand in for a wall you haven't drawn.
+ */
+const WALLS = [
+  ["plaster", "thick", "Interior Wall", 2, 1, (w, h) => {
+    const wall = `<rect x="14" y="${h / 2 - 34}" width="${w - 28}" height="68" rx="4"/>`;
+    const seams = [1, 2, 3].map((i) => `<line x1="${14 + ((w - 28) / 4) * i}" y1="${h / 2 - 34}" x2="${14 + ((w - 28) / 4) * i}" y2="${h / 2 + 34}" stroke="#a7adbd" stroke-width="2" stroke-dasharray="6 5"/>`).join("");
+    const paint = `<rect x="14" y="${h / 2 - 34}" width="${w - 28}" height="10" fill="#7e5bd6" opacity="0.85"/><rect x="14" y="${h / 2 + 24}" width="${w - 28}" height="10" fill="#7e5bd6" opacity="0.85"/>`;
+    return `<g filter="url(#s)"><g fill="#eceef4" stroke="#6f7486" stroke-width="3">${wall}</g>${seams}${paint}</g>${rim(wall, NEON.cyan)}`;
+  }],
+  ["wood", "thin", "Wooden Fence", 2, 1, (w, h) => {
+    const planks = [];
+    for (let x = 18; x < w - 18; x += 26) planks.push(`<rect x="${x}" y="${h / 2 - 16}" width="22" height="32" rx="3" fill="${(x / 26) % 2 < 1 ? "#b9814a" : "#a8733f"}" stroke="#4a2a10" stroke-width="2"/>`);
+    const rails = `<rect x="14" y="${h / 2 - 6}" width="${w - 28}" height="12" fill="#6b3f19"/>`;
+    const posts = [16, w / 2 - 9, w - 34].map((x) => `<rect x="${x}" y="${h / 2 - 22}" width="18" height="44" rx="3" fill="#5b3415" stroke="#2c1708" stroke-width="2"/>`).join("");
+    const box = `<rect x="14" y="${h / 2 - 22}" width="${w - 28}" height="44" rx="4"/>`;
+    return `<g filter="url(#s)">${rails}${planks.join("")}${posts}</g>${rim(box, NEON.yellow)}`;
+  }],
+  ["wood", "thick", "Timber Wall", 2, 1, (w, h) => {
+    const box = `<rect x="14" y="${h / 2 - 40}" width="${w - 28}" height="80" rx="10"/>`;
+    const logs = [0, 1, 2].map((i) => {
+      const y = h / 2 - 40 + i * 27;
+      return `<rect x="18" y="${y + 2}" width="${w - 36}" height="23" rx="11" fill="${i % 2 ? "#9a6232" : "#8a5428"}" stroke="#3a1f0a" stroke-width="3"/>`
+        + `<circle cx="30" cy="${y + 13}" r="9" fill="#d3a46b" stroke="#6b3f19" stroke-width="2"/><circle cx="${w - 30}" cy="${y + 13}" r="9" fill="#d3a46b" stroke="#6b3f19" stroke-width="2"/>`
+        + `<path d="M 60 ${y + 10} Q ${w / 2} ${y + 6} ${w - 60} ${y + 12}" stroke="#5b3415" stroke-width="2" fill="none"/>`;
+    }).join("");
+    return `<g filter="url(#s)">${logs}</g>${rim(box, NEON.pink)}`;
+  }],
+  ["concrete", "thick", "Concrete Barrier", 2, 1, (w, h) => {
+    const wall = `<rect x="14" y="${h / 2 - 36}" width="${w - 28}" height="72" rx="8"/>`;
+    const joints = [1, 2].map((i) => `<line x1="${14 + ((w - 28) / 3) * i}" y1="${h / 2 - 36}" x2="${14 + ((w - 28) / 3) * i}" y2="${h / 2 + 36}" stroke="#4d5359" stroke-width="5"/>`).join("");
+    const top = `<rect x="22" y="${h / 2 - 12}" width="${w - 44}" height="24" rx="6" fill="#b4b9bf"/>`;
+    const hazard = [22, w - 58].map((x) => `<g transform="translate(${x} ${h / 2 - 30})">${[0, 1, 2].map((k) => `<path d="M ${k * 12} 0 l 10 0 l -10 60 l -10 0 Z" fill="${NEON.yellow}" opacity="0.85"/>`).join("")}</g>`).join("");
+    return `<g filter="url(#s)"><g fill="#8c9298" stroke="#3d4248" stroke-width="5">${wall}</g>${top}${joints}${hazard}</g>${rim(wall, NEON.yellow)}`;
+  }],
+  ["stone", "thin", "Low Stone Wall", 2, 1, (w, h) => {
+    const box = `<rect x="14" y="${h / 2 - 24}" width="${w - 28}" height="48" rx="14"/>`;
+    return `<g filter="url(#s)"><g fill="#7a725f">${box}</g>${stones(w, h, { rows: 2, top: h / 2 - 24, height: 48, seed: 7, fill: ["#b5ad98", "#a39b85", "#c4bca7"], line: "#5c5444" })}</g>${rim(box, NEON.yellow)}`;
+  }],
+  ["stone", "thick", "Fieldstone Wall", 2, 1, (w, h) => {
+    const box = `<rect x="14" y="${h / 2 - 42}" width="${w - 28}" height="84" rx="16"/>`;
+    return `<g filter="url(#s)"><g fill="#5f584a">${box}</g>${stones(w, h, { rows: 3, top: h / 2 - 42, height: 84, seed: 23, fill: ["#9b937f", "#8a8270", "#b0a790", "#a39b85"], line: "#4d473a" })}</g>${rim(box, NEON.pink)}`;
+  }],
+  ["steel", "thin", "Corrugated Fence", 2, 1, (w, h) => {
+    const sheet = `<rect x="14" y="${h / 2 - 14}" width="${w - 28}" height="28" rx="2"/>`;
+    const ribs = [];
+    for (let x = 22; x < w - 18; x += 14) ribs.push(`<line x1="${x}" y1="${h / 2 - 14}" x2="${x}" y2="${h / 2 + 14}" stroke="${(x / 14) % 2 < 1 ? "#c8d1dc" : "#6d7887"}" stroke-width="5"/>`);
+    const posts = [10, w / 2 - 10, w - 30].map((x) => `<rect x="${x}" y="${h / 2 - 22}" width="20" height="44" rx="4" fill="#3a414b" stroke="#16191d" stroke-width="2"/>`).join("");
+    const rust = `<circle cx="${w * 0.3}" cy="${h / 2 + 6}" r="9" fill="#9c4a1f" opacity="0.6"/><circle cx="${w * 0.72}" cy="${h / 2 - 4}" r="7" fill="#9c4a1f" opacity="0.5"/>`;
+    return `<g filter="url(#s)"><g fill="#8f9aa8" stroke="#3a414b" stroke-width="3">${sheet}</g>${ribs.join("")}${rust}${posts}</g>${rim(sheet, NEON.cyan)}`;
+  }],
+  ["steel", "thick", "Blast Wall", 2, 1, (w, h) => {
+    const wall = `<rect x="14" y="${h / 2 - 40}" width="${w - 28}" height="80" rx="6"/>`;
+    const plates = [0, 1, 2, 3].map((i) => `<rect x="${20 + i * ((w - 40) / 4)}" y="${h / 2 - 34}" width="${(w - 40) / 4 - 6}" height="68" rx="3" fill="#5d6876" stroke="#262b31" stroke-width="3"/>`).join("");
+    const rivets = [0, 1, 2, 3].map((i) => [0, 1].map((j) => `<circle cx="${30 + i * ((w - 40) / 4)}" cy="${h / 2 - 24 + j * 48}" r="4" fill="#b7c2cf"/><circle cx="${14 + (i + 1) * ((w - 40) / 4) - 4}" cy="${h / 2 - 24 + j * 48}" r="4" fill="#b7c2cf"/>`).join("")).join("");
+    const stripe = `<rect x="${w / 2 - 70}" y="${h / 2 - 6}" width="140" height="12" fill="${NEON.pink}" opacity="0.8"/>`;
+    return `<g filter="url(#s)"><g fill="#3f4752" stroke="#16191d" stroke-width="5">${wall}</g>${plates}${rivets}${stripe}</g>${rim(wall, NEON.pink)}`;
+  }]
+];
+
 const assets = path.join(root, "assets", "cover");
 const pack = path.join(root, "packs", "_source", "cover");
 await mkdir(assets, { recursive: true });
@@ -111,12 +192,14 @@ await mkdir(pack, { recursive: true });
 for (const f of await readdir(assets)) if (f.endsWith(".svg")) await rm(path.join(assets, f));
 
 let sort = 0;
-for (const [material, thickness, name, width, height, art] of PIECES) {
+const ALL = [...PIECES.map((p) => [...p, false]), ...WALLS.map((p) => [...p, true])];
+for (const [material, thickness, name, width, height, art, wall] of ALL) {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const file = `${material}-${thickness}-${slug}.svg`;
   await writeFile(path.join(assets, file), svg(256 * width, 256 * height, art(256 * width, 256 * height)));
   const hp = HP[material][thickness === "thin" ? 0 : 1];
-  const _id = id(`${material}|${thickness}`);
+  // The first piece of each kind keeps its id; the wall sections get their own.
+  const _id = id(wall ? `${material}|${thickness}|wall` : `${material}|${thickness}`);
   const img = `modules/${MODULE_ID}/assets/cover/${file}`;
   const label = `${name} (${material[0].toUpperCase()}${material.slice(1)}, ${thickness === "thin" ? "Thin" : "Thick"})`;
   const actor = {
@@ -135,4 +218,4 @@ for (const [material, thickness, name, width, height, art] of PIECES) {
   };
   await writeFile(path.join(pack, `actor_${slug}_${_id}.json`), `${JSON.stringify(actor, null, 2)}\n`);
 }
-console.log(`${PIECES.length} cover pieces`);
+console.log(`${ALL.length} cover pieces (${WALLS.length} wall sections)`);
