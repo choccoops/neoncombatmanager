@@ -56,6 +56,12 @@ export const Run = {
         if (!item?.doAction) return null;
         // As the sheet's reload button: loaded ammo tops up, none opens the load dialog.
         return item.doAction(actor, { "data-action": { nodeValue: "reload-ammo" } });
+      case "ammo":
+        if (!item?.doAction) return null;
+        // The sheet's Change Ammo: CPR's load dialog (another ammo, or unload).
+        return item.doAction(actor, { "data-action": { nodeValue: "select-ammo" } });
+      case "hands":
+        return (await import("./hands-app.js")).HandsApp.open(actor);
       case "sk":
         return item ? this.roll(actor, item, () => item.createRoll("skill", actor), { event, token }) : null;
       case "ra": {

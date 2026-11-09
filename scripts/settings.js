@@ -4,7 +4,7 @@ const K = (key) => `${LANG}.Settings.${key}`;
 
 /** World settings grouped into submenus; everything else shows in Foundry's own list. */
 export const MENUS = {
-  combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement", "movementRuler", "movementRulerWaypoints"],
+  combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement", "pickupCarried", "movementRuler", "movementRulerWaypoints"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim", "conditionSheetNotes"],
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
@@ -76,6 +76,7 @@ const DEFS = [
   ["deathSaves", "world", Boolean, true, {}],
   ["hazardDamage", "world", String, "card", { choices: { card: K("HazardDamage.card"), auto: K("HazardDamage.auto"), off: K("HazardDamage.off") } }],
   ["trackMovement", "world", Boolean, true, {}],
+  ["pickupCarried", "world", Boolean, true, {}],
   ["movementRuler", "world", String, "auto", { choices: { auto: K("MovementRuler.auto"), off: K("MovementRuler.off") }, requiresReload: true }],
   ["movementRulerWaypoints", "world", Boolean, true, {}],
   ["movementRulerNoticed", "world", Boolean, false, { config: false }],
