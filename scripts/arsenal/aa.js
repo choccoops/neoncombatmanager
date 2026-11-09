@@ -127,13 +127,43 @@ export const AA = {
     save(JSON.stringify(menu, null, 2), "text/json", `neon-arsenal-autorec${this.patreon ? "-patreon" : ""}.json`);
   },
 
-  /** On the GM's first load with AA (or after an update), install or refresh the profile. */
-  async ready() {
-    if (!this.active || !Compat.isActiveGM || !Settings.get("arsenalAutoInstall")) return;
+  /**
+   * When the GM loads the world, a few seconds in (once AA has loaded its own menus): if Neon
+   * Arsenal's animations aren't in AA's menu, or are from an older version, offer to put them in.
+   */
+  ready(delay = 4000) {
+    if (!this.active || !Compat.isActiveGM || !Settings.get("arsenalAutoInstall")) return null;
+    return new Promise((resolve) => setTimeout(() => this.offer().then(resolve, (err) => {
+      console.error(`${MODULE_ID} | Automated Animations profile`, err);
+      resolve(null);
+    }), delay));
+  },
+
+  /** Does AA's menu hold this version's profile? */
+  current() {
     const version = game.modules.get(MODULE_ID)?.version ?? "";
+    const { count, version: have } = this.installed();
+    return count > 0 && have === version;
+  },
+
+  /** Ask the GM: Install now, Not now (asked again next time), Don't ask again. */
+  async offer() {
+    if (!this.active || !game.user.isGM || this.current()) return null;
     const { count } = this.installed();
-    if (count && Settings.get("arsenalProfile") === version) return;
-    await this.install({ quiet: !!count });
+    const choice = await Compat.DialogV2.wait({
+      window: { title: L(`${LANG}.Arsenal.Offer.Title`) },
+      classes: ["neon-combat", "ncm-dialog"],
+      content: `<p>${L(`${LANG}.Arsenal.Offer.${count ? "Outdated" : "Missing"}`)}</p><p class="ncm-ref">${L(`${LANG}.Arsenal.Offer.Later`)}</p>`,
+      buttons: [
+        { action: "install", label: L(`${LANG}.Arsenal.Offer.Install`), icon: "fa-solid fa-download", default: true },
+        { action: "later", label: L(`${LANG}.Arsenal.Offer.NotNow`) },
+        { action: "never", label: L(`${LANG}.Arsenal.Offer.Never`) }
+      ],
+      rejectClose: false
+    });
+    if (choice === "install") await this.install();
+    else if (choice === "never") await Settings.set("arsenalAutoInstall", false);
+    return choice ?? null;
   },
 
   /** Our installed entry for the most specific of these labels. */

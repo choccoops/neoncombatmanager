@@ -527,9 +527,10 @@ ammo loaded in it, and its Melee Rebuilds. `api.arsenal.explain(item)` shows the
 **Automated Animations.** The profile has an entry for every kind, its Tech and Smart looks,
 Incendiary and EMP rounds, and mono-edged blades and Propulsion Impact hammers, all JB2A. With
 JB2A Patreon it uses Patreon's grenades, launcher rounds and coloured bullets; with the free pack,
-the nearest it has. When the GM loads the world (and after each update), the entries go into
-AA's Global Automatic Recognition menu, labelled *Neon Arsenal · ...*; your own entries stay as
-they are. At each attack Neon Arsenal hands AA its entry for what the weapon is, the ammo the way
+the nearest it has. When the GM loads the world and the entries aren't in AA's Global Automatic
+Recognition menu (or are from an older version), a window offers to put them in: **Install now**,
+**Not now** (asked again next time) or **Don't ask again**. They're labelled *Neon Arsenal · ...*;
+your own entries stay as they are. At each attack Neon Arsenal hands AA its entry for what the weapon is, the ammo the way
 the CPR fork of AA reads it (Cyberpunk RED 0.92 keeps it among the weapon's installed items), the
 fire mode (Autofire bursts, Suppressive Fire sprays and misses), and, when AA is set to show
 misses, a hit or a miss by the 2070 range tables. The *Install Weapon Animations* macro (GM) puts
@@ -623,7 +624,7 @@ on the scene. A damage roll for an area draws no Tarot card.
 Impact pushes whoever it hits 2 m/yds, under BODY 13, or 4 m/yds, stopping at walls) and the
 Ricochet Compensator. Other modules can add their own (see [docs/API.md](docs/API.md)).
 
-World settings (Neon Arsenal menu): the animations, keeping the profile in AA, the sounds, the
+World settings (Neon Arsenal menu): the animations, offering to install the profile in AA, the sounds, the
 areas, Blown back, the weapon traits, Does it hit? (and hiding Diwako's), the defense step (melee
 rolled at once or by the player, ties, who sees the result), Diwako's DV display tables and
 players' muzzle flashes.

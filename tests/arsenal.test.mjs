@@ -523,6 +523,37 @@ test("AA gets our entry for what the weapon is, the ammo the CPR fork's way, and
   assert.ok(data2.recheckAnimation);
 });
 
+test("the GM is offered the animations when they're missing or old, and can say no for good", async () => {
+  game.modules.set("autoanimations", { id: "autoanimations", active: true });
+  await AA.uninstall();
+  const asked = [];
+  let answer = "install";
+  foundry.applications.api.DialogV2.wait = async (opts) => {
+    asked.push(opts.content);
+    return answer;
+  };
+  assert.equal(await AA.offer(), "install");
+  assert.match(asked[0], /aren't in Automated Animations yet/);
+  assert.ok(AA.current(), "installed for this version");
+  assert.equal(await AA.offer(), null, "nothing to ask once it's current");
+  assert.equal(asked.length, 1);
+  // An older version's entries: the offer says so.
+  const range = game.settings.get("autoanimations", "aaAutorec-range").map((e) => ({ ...e, metaData: { ...e.metaData, moduleVersion: "1.0.0" } }));
+  await game.settings.set("autoanimations", "aaAutorec-range", range);
+  await game.settings.set("autoanimations", "aaAutorec-melee", []);
+  answer = "later";
+  assert.equal(await AA.offer(), "later");
+  assert.match(asked[1], /older version/);
+  assert.ok(!AA.current());
+  answer = "never";
+  await AA.offer();
+  assert.equal(Settings.get("arsenalAutoInstall"), false, "don't ask again");
+  assert.equal(AA.ready(0), null, "and it doesn't");
+  await Settings.set("arsenalAutoInstall", true);
+  await AA.install({ quiet: true });
+  foundry.applications.api.DialogV2.wait = async () => null;
+});
+
 test("arrows throw no muzzle flash; AA's misses follow the 2070 tables", async () => {
   game.modules.set("autoanimations", { id: "autoanimations", active: true });
   await AA.install({ quiet: true });

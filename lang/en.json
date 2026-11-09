@@ -1056,8 +1056,8 @@
         "hint": "Each attack gets Neon Arsenal's animation for what the weapon is (its kind, its Power, Smart or Tech flavor, its ammo, its Melee Rebuild), whatever it's called. Needs Automated Animations and JB2A."
       },
       "arsenalAutoInstall": {
-        "name": "Keep the animations in Automated Animations",
-        "hint": "When the GM loads the world (and after an update), Neon Arsenal's entries go into Automated Animations' Global Automatic Recognition menu, for the JB2A pack installed. Your own entries stay as they are."
+        "name": "Offer to install the animations",
+        "hint": "When the GM loads the world and Neon Arsenal's animations aren't in Automated Animations (or are from an older version), a window offers to put them in. The Install Weapon Animations macro does it any time."
       },
       "arsenalSounds": {
         "name": "Weapon sounds",
@@ -2148,6 +2148,15 @@
             "stays": "{name} stays in the area."
           }
         }
+      },
+      "Offer": {
+        "Title": "Neon Arsenal: weapon animations",
+        "Missing": "Neon Arsenal's weapon animations (JB2A, chosen by what each weapon is) aren't in Automated Animations yet. Put them in now? Your own Automated Animations entries stay as they are.",
+        "Outdated": "Neon Arsenal's weapon animations in Automated Animations are from an older version. Bring them up to date? Your own Automated Animations entries stay as they are.",
+        "Later": "Any time later: the Install Weapon Animations macro (Neon Combat Manager: Macros compendium).",
+        "Install": "Install now",
+        "NotNow": "Not now",
+        "Never": "Don't ask again"
       }
     },
     "Ruler": {
