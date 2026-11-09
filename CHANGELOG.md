@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.25.1
+
+- **Window close buttons show their icon again.** The module's button style gave the header's close
+  (and controls) button its display font, so Foundry showed a missing-glyph box instead of the ×.
+  Every Neon Combat Manager window had it; the Plot Die is where it was spotted.
+- **The Plot Die's six faces are all the same size.** The 6 came out taller than the others; each
+  face's box is now fixed so no outside rule can stretch one.
+
 ## 1.25.0
 
 **Your ride as cover** (HOUSE RULE, 2070 Core Rules Ch07), done in full:
