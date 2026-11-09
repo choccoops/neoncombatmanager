@@ -157,7 +157,11 @@ export const Defense = {
       if (!target) continue;
       const ab = this.ability(target, { attacker });
       if (!ab.can) continue;
-      await this.prompt(target, tok, { attack: total, attacker: attacker?.name ?? "", weapon: weapon?.name ?? "", target: tok.uuid, template: doc.uuid, why: ab.why });
+      const shell = Number(b.dodge) || 0;
+      await this.prompt(target, tok, {
+        attack: total, attacker: attacker?.name ?? "", weapon: weapon?.name ?? "", target: tok.uuid, template: doc.uuid, why: ab.why,
+        ...(shell ? { penalty: shell, penaltyKey: "ShellDodge" } : {})
+      });
     }
   },
 
@@ -171,7 +175,7 @@ export const Defense = {
       kicker: L(`${LANG}.Arsenal.Defense.Kicker`),
       title: L(`${LANG}.Arsenal.Defense.${data.melee ? "MeleeTitle" : data.template ? "AreaTitle" : "Title"}`, { name: esc(tok.name), attacker: esc(data.attacker), weapon: esc(data.weapon) }),
       tone: "cyan",
-      body: `<p>${L(`${LANG}.Arsenal.Defense.${data.melee ? "MeleeBody" : "Body"}`)}${why ? ` ${why}` : ""}${data.penalty ? ` ${L(`${LANG}.Arsenal.Defense.RicochetDodge`, { penalty: data.penalty })}` : ""}</p>`,
+      body: `<p>${L(`${LANG}.Arsenal.Defense.${data.melee ? "MeleeBody" : "Body"}`)}${why ? ` ${why}` : ""}${data.penalty ? ` ${L(`${LANG}.Arsenal.Defense.${data.penaltyKey ?? "RicochetDodge"}`, { penalty: data.penalty })}` : ""}</p>`,
       buttons,
       whisper: Cards.owners(target),
       flags: { defense: true }
@@ -183,7 +187,7 @@ export const Defense = {
     const d = btn.dataset;
     const result = await CPR.skillCheck(target, "Evasion", { event, stat: "dex" });
     if (!result) return null;
-    // Tracking a ricochet's bounce: the dodge takes the same -4 as the shot.
+    // Tracking a ricochet's bounce takes the same -4 as the shot; the control group's shell attack -3.
     return this.resolve(message, { ...d, evasion: result.total + (Number(d.penalty) || 0) });
   },
 

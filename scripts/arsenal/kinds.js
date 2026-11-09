@@ -199,12 +199,15 @@ const AUTOFIRE_TABLES = {
 };
 
 /**
- * The DV table a weapon's Autofire rolls against. A 2070 card names it ("Autofire (Machine Gun
- * 6)"); otherwise the table that goes with its type, the way CPR pairs them; else
+ * The DV table a weapon's Autofire rolls against. Neon Hub's flag when an attachment set it; else
+ * the one a 2070 card names ("Autofire (Machine Gun 6)"); otherwise the table that goes with its type, the way CPR pairs them; else
  * "<table> (Autofire)" (what Diwako's DV display and the AA fork look for).
  */
 export function autofireTable(weapon) {
   const s = weapon?.system ?? {};
+  // Set by Neon Hub when an Autofire attachment changes it (a Constant Recoil System's Machine Gun table).
+  const hub = weapon?.flags?.[NEON_HUB]?.autofireTable;
+  if (hub) return hub;
   const text = String(s.description?.value ?? "").replace(/<[^>]+>/g, " ");
   const m = /Autofire\s*\(\s*([A-Za-z ]+?)\s*\d/i.exec(text);
   if (m) {
@@ -229,3 +232,16 @@ export function autofireTable(weapon) {
 
 /** Ammo varieties that throw no muzzle flash (Diwako's rule: arrows, paintballs, grenades), plus rockets. */
 export const NO_FLASH = ["arrow", "paintball", "grenade", "rocket"];
+
+/**
+ * Neon Hub's Shotgun Automatic Control Group with shells loaded: Autofire is the Shotgun Shell attack
+ * made with the Autofire Skill, for 4 shells, and dodging it is at -3 (Item Compendium). Its flag, or its
+ * name on an older copy: { shells, dodge } or null.
+ */
+export function shellAutofire(upgrades = [], ammoVariety = "") {
+  if (ammoVariety !== "shotgunShell") return null;
+  const group = upgrades
+    .map((u) => u?.flags?.[NEON_HUB]?.burstMod ?? (/^Shotgun Automatic Control Group$/i.test(String(u?.name ?? "").trim()) ? { shells: 4, shellDodge: -3 } : null))
+    .find((m) => m?.shells);
+  return group ? { shells: Number(group.shells) || 4, dodge: Number(group.shellDodge) || 0 } : null;
+}
