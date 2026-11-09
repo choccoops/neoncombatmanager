@@ -2158,6 +2158,15 @@
         "Install": "Install now",
         "NotNow": "Not now",
         "Never": "Don't ask again"
+      },
+      "Reload": {
+        "Title": "Neon Arsenal: reload to finish",
+        "Body": "The weapon animations are repaired. Automated Animations stopped loading partway on every browser that opened the world with the old entries, so the shots won't show until each one reloads. Reload everyone now? Players are asked first.",
+        "PlayerBody": "The GM has repaired the weapon animations. Reload to see them? Automated Animations won't show shots in this browser until it reloads.",
+        "All": "Reload everyone",
+        "Me": "Just me",
+        "Now": "Reload now",
+        "Later": "Later"
       }
     },
     "Ruler": {

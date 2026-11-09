@@ -56,6 +56,7 @@ export const AA = {
       }
     });
     Socket.on("event:arsenalFlash", (data) => this.flashAsGM(data));
+    Socket.on("event:arsenalReload", (data, from) => this.reloadAsked(from));
     // Diwako's muzzle flash is an Active Light the GM creates; a Tech gun's flashes blue.
     Hooks.on("preCreateAmbientLight", (doc, data) => {
       if (!this.tech || Date.now() - this.tech > 2500) return;
@@ -102,6 +103,8 @@ export const AA = {
     const version = game.modules.get(MODULE_ID)?.version ?? "";
     const menu = buildMenu({ patreon: this.patreon, sounds: false, id: uuidv4, version });
     const current = this.menus();
+    // Entries with ids AA's menu won't take stopped AA's start-up on every client that loaded them.
+    const broken = Object.values(current).flat().filter(isOurs).some((e) => !isUuidv4(e.id));
     for (const m of ["melee", "range"]) await game.settings.set(AA_ID, `aaAutorec-${m}`, mergeSection(current[m], menu[m]));
     try {
       const meta = game.settings.get(AA_ID, "aaAutorec");
@@ -111,7 +114,50 @@ export const AA = {
     }
     await Settings.set("arsenalProfile", version);
     if (!quiet) ui.notifications.info(L(`${LANG}.Arsenal.Installed`, { count: menu.melee.length + menu.range.length, pack: this.patreon ? "JB2A Patreon" : "JB2A" }));
+    if (broken && !quiet) await this.askReload();
     return true;
+  },
+
+  /**
+   * After a repair (GM): Automated Animations stopped loading partway on every client that loaded
+   * the old entries, and won't start again until it reloads. Reload everyone, just this client, or later.
+   */
+  async askReload() {
+    const choice = await Compat.DialogV2.wait({
+      window: { title: L(`${LANG}.Arsenal.Reload.Title`) },
+      classes: ["neon-combat", "ncm-dialog"],
+      content: `<p>${L(`${LANG}.Arsenal.Reload.Body`)}</p>`,
+      buttons: [
+        { action: "all", label: L(`${LANG}.Arsenal.Reload.All`), icon: "fa-solid fa-rotate", default: true },
+        { action: "me", label: L(`${LANG}.Arsenal.Reload.Me`) },
+        { action: "later", label: L(`${LANG}.Arsenal.Reload.Later`) }
+      ],
+      rejectClose: false
+    });
+    if (choice === "all") Socket.broadcast("arsenalReload", {});
+    if (choice === "all" || choice === "me") this.reload();
+    return choice ?? null;
+  },
+
+  /** A player, when the GM asks everyone to reload: their choice, not a forced reload. */
+  async reloadAsked(from) {
+    if (!game.users?.get(from)?.isGM) return null;
+    const ok = await Compat.DialogV2.wait({
+      window: { title: L(`${LANG}.Arsenal.Reload.Title`) },
+      classes: ["neon-combat", "ncm-dialog"],
+      content: `<p>${L(`${LANG}.Arsenal.Reload.PlayerBody`)}</p>`,
+      buttons: [
+        { action: "reload", label: L(`${LANG}.Arsenal.Reload.Now`), icon: "fa-solid fa-rotate", default: true },
+        { action: "later", label: L(`${LANG}.Arsenal.Reload.Later`) }
+      ],
+      rejectClose: false
+    });
+    if (ok === "reload") this.reload();
+    return ok ?? null;
+  },
+
+  reload() {
+    globalThis.location?.reload();
   },
 
   /** Take our entries out of AA's menus (GM). */

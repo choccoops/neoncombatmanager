@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.19.3
+
+- **A repair asks everyone to reload.** The old entries' ids didn't just lose the gun entries:
+  Automated Animations stopped loading partway on every browser that opened the world with them,
+  so it never picked up attacks at all, and putting the entries back didn't start it again. After
+  Install now (or the macro) repairs those entries, the GM is asked to reload: everyone, just
+  themselves, or later. Each connected player gets their own prompt (it only comes from a GM). A
+  normal install or update asks nothing.
+
 ## 1.19.2
 
 - **The gun animations stay in Automated Animations.** The weapon animations went in with ids AA's

@@ -530,7 +530,10 @@ JB2A Patreon it uses Patreon's grenades, launcher rounds and coloured bullets; w
 the nearest it has. When the GM loads the world and the entries aren't in AA's Global Automatic
 Recognition menu (or are from an older version), a window offers to put them in: **Install now**,
 **Not now** (asked again next time) or **Don't ask again**. They're labelled *Neon Arsenal · ...*;
-your own entries stay as they are. At each attack Neon Arsenal hands AA its entry for what the weapon is, the ammo the way
+your own entries stay as they are. Only the GM installs: the menu belongs to the world, so players
+need nothing. If the install repairs entries from before 1.19.2, the GM is asked to reload
+everyone, because Automated Animations stopped loading on browsers that opened the world with
+them; each player gets a prompt of their own. At each attack Neon Arsenal hands AA its entry for what the weapon is, the ammo the way
 the CPR fork of AA reads it (Cyberpunk RED 0.92 keeps it among the weapon's installed items), the
 fire mode (Autofire bursts, Suppressive Fire sprays and misses), and, when AA is set to show
 misses, a hit or a miss by the 2070 range tables. The *Install Weapon Animations* macro (GM) puts
