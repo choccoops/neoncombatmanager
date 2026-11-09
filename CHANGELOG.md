@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.24.0
+
+**Cover** (2070 Core Rules, Ch07): the Cover HP table on the map.
+
+- **Walls as cover.** A wall's settings take a material and a thickness (Plaster, Wood, Concrete,
+  Bulletproof glass, Stone, Steel; Thin or Thick), with the book's HP for each 2×2 m/yds section.
+  The GM's *Tag walls as cover* button tags the selected walls, or every untagged wall in the
+  scene, at once. Doors count as Wood (Thin) unless you say otherwise.
+- **Destroyed sections open.** At 0 HP a wall section stops blocking movement and sight: tokens
+  walk and see through the gap until the GM clicks *Repair cover*. The GM sees damaged sections'
+  HP on the map.
+- **Cover pieces.** A new *Cover* compendium with twelve pieces, one for each material and
+  thickness, each with its own top-down token: Office Partition, Sofa, Overturned Table, Bar
+  Counter, Low Brick Wall, Dataterm, Teller Glass, Armored Glass Barrier, Statue, Boulder, Car Door
+  and Engine Block. Rides count as cover with their SP and SDP. Moving Thick cover without BODY 10+
+  brings a reminder.
+- **Shots:** *Does it hit?* says when a target is behind cover, and the damage card's GM button
+  *Hit the cover* puts the damage on it (at 0 it soaks that shot). Cover the shooter leans out from
+  doesn't count; a charged Tech shot goes through Thin cover.
+- **Areas:** the apply window lists the cover that takes the blast or the spread, and unticks
+  whoever it shields. An explosive that destroys cover hits whoever's behind it; rockets do double
+  to cover.
+- Thin cover of any material counts for Tech scopes. `api.cover` for macros.
+
 ## 1.23.1
 
 - **Neon Hub's Range Table Modifications** (Neon Hub 1.23.0: Snub Barrel, Choke, Long Tube and

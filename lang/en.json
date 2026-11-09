@@ -1131,6 +1131,18 @@
         "name": "Closed doors are thin cover",
         "hint": "Tech scopes see through closed doors. Off: only walls marked \"Thin cover\" count."
       },
+      "coverOn": {
+        "name": "Cover",
+        "hint": "Walls tagged with a material and thickness, and Neon Cover pieces, have the 2070 Cover HP per 2×2 m/yds section. Shots and areas say what cover is in the way, and the GM's buttons put the damage on it (2070 Core Rules, Ch07)."
+      },
+      "coverDoors": {
+        "name": "Doors are Wood (Thin) cover",
+        "hint": "A door with no cover of its own counts as Wood (Thin): 5 HP. Off: only walls you tag are cover."
+      },
+      "coverLabels": {
+        "name": "Show cover damage on the map (GM)",
+        "hint": "The GM sees each damaged wall section's HP on the map, and an ✕ where one is destroyed."
+      },
       "arsenalRicochetDodge": {
         "name": "Tracking a ricochet",
         "hint": "A ricochet can't be dodged, unless the target can follow the bounce: a Kerenzikov or other speedware that's on, or low-light, infrared or UV optics while they're in the dark. Then they may Evade at -4 (2070 Core Rules, Ch07, Ricochets in Play). Off: no ricochet is ever dodged."
@@ -2326,6 +2338,52 @@
       "walked": "{metres} {unit} already walked this Turn",
       "Blocked": "A wall is in the way: the token stopped at the last waypoint it could reach.",
       "DragRulerNotice": "Neon Combat Manager has its own movement ruler, with Cyberpunk RED's Move and Run (and what was already walked this Turn). Drag Ruler is running, so for now Drag Ruler shows those bands instead. To use Neon Combat Manager's ruler, disable Drag Ruler."
+    },
+    "Cover": {
+      "Kicker": "Cover",
+      "Legend": "Cover (Neon Combat Manager)",
+      "Material": {
+        "label": "Material",
+        "none": "Not cover",
+        "plaster": "Plaster / foam / plastic",
+        "wood": "Wood",
+        "concrete": "Concrete / brick",
+        "glass": "Bulletproof glass",
+        "stone": "Stone",
+        "steel": "Steel"
+      },
+      "Thickness": {
+        "label": "Thickness",
+        "thin": "Thin",
+        "thick": "Thick"
+      },
+      "Scope": {
+        "label": "Walls",
+        "selected": "The {count} selected",
+        "untagged": "Every untagged wall in this scene",
+        "all": "Every wall in this scene"
+      },
+      "Tool": {
+        "Tag": "Tag walls as cover",
+        "Repair": "Repair cover"
+      },
+      "Tag": "Tag",
+      "TagHint": "HP per 2×2 m/yds section, from the 2070 Cover HP table (Thin / Thick). Bulletproof glass stops bullets even where you can see through it. \"Not cover\" untags them.",
+      "Tagged": "{count} walls tagged.",
+      "Sections": "{count} sections, HP {hp} (of {max} each).",
+      "SectionsHint": "HP per 2×2 m/yds section, from the 2070 Cover HP table. Thin cover also counts for Tech scopes and charged Tech shots.",
+      "BrokenHint": "This section is destroyed: it doesn't block movement, sight, light or sound until the GM repairs cover.",
+      "HpLine": "HP {before} → {after}",
+      "Destroyed": "destroyed",
+      "Took": "Cover took damage ({count})",
+      "Repaired": "Cover repaired: {count}.",
+      "ThickMove": "{name} is Thick cover: moving it takes BODY 10+ (2070 Core Rules, Ch07).",
+      "Behind": "Behind {cover} ({hp} HP): the shot hits the cover, and at 0 HP the cover soaks this whole shot.",
+      "Shooting": "That's cover: {cover} ({hp} HP) takes the shot.",
+      "HitButton": "Hit the cover: {cover} ({name})",
+      "Shielded": "shielded by {cover}",
+      "Through": "the blast goes through {cover}",
+      "AreaHint": "Cover in the area, and cover between it and anyone inside, takes the damage (a rocket's double). Untick what it doesn't reach."
     }
   }
 }

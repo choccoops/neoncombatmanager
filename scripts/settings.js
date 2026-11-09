@@ -9,7 +9,7 @@ export const MENUS = {
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxMacros"],
-  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes"],
+  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -112,6 +112,9 @@ const DEFS = [
   ["arsenalShotFx", "world", Boolean, true, {}],
   ["arsenalXray", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.xrayChanged`) }],
   ["arsenalThinDoors", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.xrayChanged`) }],
+  ["coverOn", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.coverChanged`) }],
+  ["coverDoors", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.coverChanged`) }],
+  ["coverLabels", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.coverChanged`) }],
   ["arsenalSmartPrompt", "world", Boolean, true, {}],
   ["arsenalRicochetDodge", "world", Boolean, true, {}],
   ["arsenalHitCheck", "world", Boolean, true, {}],

@@ -1,0 +1,58 @@
+{
+  "_id": "0fVpvdEq5ZCata3Y",
+  "_key": "!actors!0fVpvdEq5ZCata3Y",
+  "name": "Dataterm (Concrete, Thick)",
+  "type": "mook",
+  "img": "modules/cpr-neon-combat-manager/assets/cover/concrete-thick-dataterm.svg",
+  "system": {
+    "derivedStats": {
+      "hp": {
+        "value": 25,
+        "max": 25
+      }
+    },
+    "information": {
+      "description": "<p>Cover: concrete, thick. 25 HP per 2×2 m/yds section (2070 Core Rules, Ch07, Cover HP). Drop it on the map as cover; Neon Combat Manager puts attacks' damage on it and Repair cover sets it back to full.</p>",
+      "notes": "",
+      "alias": "",
+      "history": ""
+    }
+  },
+  "prototypeToken": {
+    "name": "Dataterm",
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "modules/cpr-neon-combat-manager/assets/cover/concrete-thick-dataterm.svg"
+    },
+    "actorLink": false,
+    "disposition": 0,
+    "displayName": 30,
+    "displayBars": 20,
+    "bar1": {
+      "attribute": "derivedStats.hp"
+    },
+    "bar2": {
+      "attribute": null
+    },
+    "sight": {
+      "enabled": false
+    },
+    "lockRotation": false
+  },
+  "items": [],
+  "effects": [],
+  "folder": null,
+  "sort": 600,
+  "flags": {
+    "cpr-neon-combat-manager": {
+      "cover": {
+        "material": "concrete",
+        "thickness": "thick"
+      }
+    }
+  },
+  "ownership": {
+    "default": 0
+  }
+}

@@ -8,7 +8,7 @@
     "test": "node --test tests/*.test.mjs",
     "check": "node tools/check.mjs",
     "preview": "node tools/preview.mjs",
-    "build:packs": "node tools/gen-macros.mjs && node tools/gen-aa-profile.mjs && node tools/build-packs.mjs",
+    "build:packs": "node tools/gen-macros.mjs && node tools/gen-aa-profile.mjs && node tools/gen-cover.mjs && node tools/build-packs.mjs",
     "build:aa": "node tools/gen-aa-profile.mjs"
   },
   "devDependencies": {

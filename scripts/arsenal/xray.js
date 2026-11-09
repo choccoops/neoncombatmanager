@@ -50,7 +50,9 @@ export function readWall(doc, { doorsThin = true } = {}) {
   const door = Number(doc?.door) || 0;
   const open = door > 0 && Number(doc?.ds) === 1;
   const blocks = Number(doc?.sight ?? 1) !== 0 && !open;
-  const thin = !!doc?.flags?.[MODULE_ID]?.thinCover || (doorsThin && door > 0);
+  // Marked Thin cover, or tagged as Thin cover of some material (Cover), or a closed door.
+  const cover = doc?.flags?.[MODULE_ID]?.cover;
+  const thin = !!doc?.flags?.[MODULE_ID]?.thinCover || (!!cover?.material && cover.thickness === "thin") || (doorsThin && door > 0);
   return { c: doc?.c ?? [0, 0, 0, 0], blocks, thin };
 }
 
