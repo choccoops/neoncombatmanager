@@ -1896,6 +1896,7 @@
       "Reload": "Reload",
       "ChangeAmmo": "Change Ammo",
       "Equip": "Equip / Change Weapon",
+      "BareHands": "Bare Hands",
       "HandsFree": "{free}/{total} free",
       "NoCombat": "There's no encounter to roll Initiative in.",
       "NotInCombat": "{name} isn't in the encounter: select their token and roll again.",
@@ -1957,6 +1958,7 @@
       "Piled": "{name} drops {item} on the ground.",
       "Owned": "{name} puts down {item}: it stays on the sheet as Owned, no longer on them.",
       "PickedUp": "{name} picks up {item} (Carried).",
+      "Unarmed": "Unarmed",
       "Side": {
         "R": "Right hand",
         "L": "Left hand",

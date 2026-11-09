@@ -22,6 +22,11 @@ landings (the AV Landing Zone and AV Landing macros, below).
   - Hands come from Cyberpunk RED's Equipped state and each weapon's Hands Required; shields
     take one too. Which hand holds what is this module's own note on the item. A weapon equipped
     on the sheet takes the first free hand.
+- **Bare Hands**, next to Equip / Change Weapon (with the Brawling base): a Brawling attack with
+  Cyberpunk RED's own Unarmed weapon. The character's Unarmed item is used if they have one (in
+  hand, Carried or Owned); otherwise one is put in their inventory from the system's Core Weapons
+  compendium. It goes into a free hand and its Attack rolls. With no hand free, Unarmed stays
+  Carried and the player is told to free one. In hand, it's a weapon row like any other.
 - **Dropping**: with Neon At Home on, its own drop: an Item Piles pile beside the token, the
   weapon's attachments going back on when it's picked up, the pile cleared once it's empty.
   Without Neon At Home, an Item Piles pile beside the token. Without Item Piles, the weapon stays

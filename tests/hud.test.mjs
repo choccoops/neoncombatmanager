@@ -87,7 +87,7 @@ test("a character's actions: equipped weapons with their fire modes, skills with
   await vee.setFlag("cyberpunk-red-core", "firetype-smg", "autofire");
   await Conditions.add("prone", vee);
   const c = catalog(vee);
-  assert.deepEqual(c.weapons.map((w) => w.key), ["weapon:militechviper", "weapon:combatknife", "hands:equip"], "equipped only, then Equip / Change Weapon");
+  assert.deepEqual(c.weapons.map((w) => w.key), ["weapon:militechviper", "weapon:combatknife", "hands:bare", "hands:equip"], "equipped only, then Bare Hands and Equip / Change Weapon");
   const smg = c.weapons[0];
   assert.deepEqual(smg.buttons.map((b) => b.key), ["atk:smg", "aim:smg", "auto:smg", "supp:smg", "dmg:smg", "rld:smg", "ammo:smg"]);
   assert.equal(smg.buttons.find((b) => b.on).key, "auto:smg", "the weapon's fire mode shows");
