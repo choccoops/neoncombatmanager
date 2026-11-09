@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.19.2
+
+- **The gun animations stay in Automated Animations.** The weapon animations went in with ids AA's
+  menu won't keep (it only takes UUIDv4 ids). When AA loaded its range menu, it stopped at our
+  first entry, kept only its own entries, and saved that list back the next time anything touched
+  the menu. Every gun's entry was lost, and attacks played no shot and no muzzle flash: in one
+  browser straight away, in another after a reload. The entries now carry UUIDv4 ids, the
+  exported JSON included. A menu that's lost some of them counts as not installed, so the GM's
+  prompt offers to put them all back (it says why). That was also why the silent install in
+  1.18.0 and 1.19.0 "didn't take".
+- **Neon Hub's grenades keep their effects.** Neon Hub now loads its grenades into a Thrown Weapon
+  and names them the system's way, as in "Grenade (Sonic)". The Sonic, Arachnid and CO2 grenades
+  were still looked up as "Sonic Grenade" and so on, so they hit with no save, webbing or dousing.
+  Either name works now.
+
 ## 1.19.1
 
 - **The GM is asked to install the weapon animations.** Putting Neon Arsenal's animations into

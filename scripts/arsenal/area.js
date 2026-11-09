@@ -137,6 +137,9 @@ export function escapeSquare(t, token, grid, blocked = () => false, max = 12) {
 /** How far a blast throws (Blown back, HOUSE RULE): 4m for rockets and missiles, else 2m. */
 export const blowBackMetres = (kind) => (kind === "rocketLauncher" || kind === "missileLauncher" ? 4 : 2);
 
+/** A grenade by its kind, named either way: "Sonic Grenade" or the system's "Grenade (Sonic)". */
+const grenadeNamed = (name, kind) => new RegExp(`\\b${kind} grenade\\b|\\bgrenade \\(${kind}\\)`, "i").test(name);
+
 /**
  * What ammo does to the people it catches, beyond its damage (2070 Item Compendium, Ammo &
  * Explosives; our own wording):
@@ -151,9 +154,9 @@ export const blowBackMetres = (kind) => (kind === "rocketLauncher" || kind === "
 export function ammoEffect({ kind, ammoType, ammoName = "" }) {
   const name = String(ammoName);
   if (kind === "flamethrower") return { conditions: [], onDamage: ["onFireStrong"] };
-  if (/\bsonic grenade\b/i.test(name)) return { noDamage: true, save: { skill: "Resist Torture/Drugs", dv: 17 }, conditions: ["concussion", "lostEar"] };
-  if (/\barachnid grenade\b/i.test(name)) return { noDamage: true, conditions: ["grappled"] };
-  if (/\bco2 grenade\b/i.test(name)) return { noDamage: true, douse: true };
+  if (grenadeNamed(name, "sonic")) return { noDamage: true, save: { skill: "Resist Torture/Drugs", dv: 17 }, conditions: ["concussion", "lostEar"] };
+  if (grenadeNamed(name, "arachnid")) return { noDamage: true, conditions: ["grappled"] };
+  if (grenadeNamed(name, "co2")) return { noDamage: true, douse: true };
   switch (ammoType) {
     case "incendiary":
       return { onDamage: ["onFireMild"] };

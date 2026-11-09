@@ -12,8 +12,7 @@ const version = JSON.parse(readFileSync(path.join(root, "module.json"), "utf8"))
 const out = path.join(root, "assets", "arsenal");
 await mkdir(out, { recursive: true });
 for (const patreon of [false, true]) {
-  let n = 0;
-  const menu = buildMenu({ patreon, sounds: true, version, id: () => `neon-arsenal-${patreon ? "p" : "f"}${String(++n).padStart(3, "0")}` });
+  const menu = buildMenu({ patreon, sounds: true, version });
   const file = path.join(out, `neon-arsenal-autorec${patreon ? "-patreon" : ""}.json`);
   await writeFile(file, `${JSON.stringify(menu, null, 2)}\n`);
   console.log(`${path.relative(root, file)}: ${menu.melee.length} melee, ${menu.range.length} range`);

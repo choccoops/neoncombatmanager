@@ -8,7 +8,7 @@ import { makeActor, registerSettings, settle, root, asGM, missingKeys, chat, tes
 const M = "cpr-neon-combat-manager";
 const Settings = await registerSettings();
 const { classify, flavorOf, areaOf, profileKeys, autofireTable, smartBaked, LABEL_PREFIX } = await import("../scripts/arsenal/kinds.js");
-const { ROWS, rowLabel, buildMenu, entryFor, mergeSection, isOurs, soundPlan, soundFiles, SOUNDS, AUTOREC_VERSION } = await import("../scripts/arsenal/profile.js");
+const { ROWS, rowLabel, buildMenu, entryFor, mergeSection, isOurs, isUuidv4, uuidv4, soundPlan, soundFiles, SOUNDS, AUTOREC_VERSION } = await import("../scripts/arsenal/profile.js");
 const { templateData, contains, tokenInside, centerOf, blownBack, blowBackMetres, ammoEffect, scatter, escapeSquare } = await import("../scripts/arsenal/area.js");
 const { dvFromResults, dvLines, Dv } = await import("../scripts/arsenal/dv.js");
 const { RebuildRegistry, traitsFromDef, traitsOf, attackMods, damageArgs, chargeHolds, Rebuilds } = await import("../scripts/arsenal/rebuilds.js");
@@ -77,6 +77,11 @@ test("weapons sort into kinds; shells, launchers and flamethrowers hit an area",
   assert.equal(classify(weapon("Budget Arms Crisp-ER", { weaponType: "heavySmg" })).kind, "flamethrower");
   assert.equal(classify(weapon("Budget Arms Crisp-ER", { weaponType: "heavySmg" })).area.shape, "cone");
   assert.equal(classify(weapon("Frag", { weaponType: "thrownWeapon" }), ammo("Frag", "grenade")).kind, "thrownGrenade");
+  // Neon Hub's Thrown Weapon, whatever grenade is loaded: thrown, an explosive, its own area.
+  const thrower = weapon("Thrown Weapon", { weaponType: "thrownWeapon", dvTable: "DV Thrown Weapon", ammoVariety: ["grenade"] });
+  const flash = classify(thrower, ammo("Grenade (Flashbang)", "grenade", "flashbang"));
+  assert.deepEqual([flash.kind, flash.explosive, flash.ammoType, flash.area], ["thrownGrenade", true, "flashbang", { shape: "rect", size: 10 }]);
+  assert.deepEqual(classify(thrower, ammo("Grenade (Laser)", "grenade", "basic", "sweeping lasers across a 6×6m area")).area, { shape: "rect", size: 6 });
 });
 
 test("an ammo card that names its own area wins", () => {
@@ -160,9 +165,8 @@ test("the shipped AA JSON files are what the profile builds", async () => {
   for (const patreon of [false, true]) {
     const file = path.join(root, "assets", "arsenal", `neon-arsenal-autorec${patreon ? "-patreon" : ""}.json`);
     const shipped = JSON.parse(readFileSync(file, "utf8"));
-    let n = 0;
     const version = JSON.parse(readFileSync(path.join(root, "module.json"), "utf8")).version;
-    const fresh = buildMenu({ patreon, sounds: true, version, id: () => `neon-arsenal-${patreon ? "p" : "f"}${String(++n).padStart(3, "0")}` });
+    const fresh = buildMenu({ patreon, sounds: true, version });
     assert.deepEqual(shipped, JSON.parse(JSON.stringify(fresh)), "run npm run build:aa");
   }
 });
@@ -255,6 +259,11 @@ test("ammo effects follow the 2070 Item Compendium", () => {
   assert.ok(ammoEffect({ ammoType: "smoke" }).persist);
   assert.deepEqual(ammoEffect({ ammoType: "basic", ammoName: "Arachnid Grenade" }).conditions, ["grappled"]);
   assert.ok(ammoEffect({ ammoType: "basic", ammoName: "CO2 Grenade" }).douse);
+  // Neon Hub names grenades the system's way, loaded into a Thrown Weapon.
+  assert.deepEqual(ammoEffect({ kind: "thrownGrenade", ammoType: "basic", ammoName: "Grenade (Arachnid)" }).conditions, ["grappled"]);
+  assert.ok(ammoEffect({ kind: "thrownGrenade", ammoType: "basic", ammoName: "Grenade (CO2)" }).douse);
+  assert.equal(ammoEffect({ kind: "thrownGrenade", ammoType: "basic", ammoName: "Grenade (Sonic)" }).save.dv, 17);
+  assert.deepEqual(ammoEffect({ kind: "thrownGrenade", ammoType: "basic", ammoName: "Grenade (Shuriken Tornado)" }), {});
   assert.deepEqual(ammoEffect({ kind: "flamethrower" }).onDamage, ["onFireStrong"]);
   assert.deepEqual(ammoEffect({ ammoType: "basic" }), {});
 });
@@ -538,9 +547,10 @@ test("the GM is offered the animations when they're missing or old, and can say 
   assert.equal(await AA.offer(), null, "nothing to ask once it's current");
   assert.equal(asked.length, 1);
   // An older version's entries: the offer says so.
-  const range = game.settings.get("autoanimations", "aaAutorec-range").map((e) => ({ ...e, metaData: { ...e.metaData, moduleVersion: "1.0.0" } }));
-  await game.settings.set("autoanimations", "aaAutorec-range", range);
-  await game.settings.set("autoanimations", "aaAutorec-melee", []);
+  for (const m of ["melee", "range"]) {
+    const aged = game.settings.get("autoanimations", `aaAutorec-${m}`).map((e) => ({ ...e, metaData: { ...e.metaData, moduleVersion: "1.0.0" } }));
+    await game.settings.set("autoanimations", `aaAutorec-${m}`, aged);
+  }
   answer = "later";
   assert.equal(await AA.offer(), "later");
   assert.match(asked[1], /older version/);
@@ -551,6 +561,39 @@ test("the GM is offered the animations when they're missing or old, and can say 
   assert.equal(AA.ready(0), null, "and it doesn't");
   await Settings.set("arsenalAutoInstall", true);
   await AA.install({ quiet: true });
+  foundry.applications.api.DialogV2.wait = async () => null;
+});
+
+test("every entry has a UUIDv4 id, and a menu AA gutted is put back", async () => {
+  game.modules.set("autoanimations", { id: "autoanimations", active: true });
+  for (const patreon of [false, true]) {
+    const all = Object.values(buildMenu({ patreon })).filter(Array.isArray).flat();
+    assert.ok(all.every((e) => isUuidv4(e.id)), "the exported JSON's ids");
+    assert.equal(new Set(all.map((e) => e.id)).size, all.length);
+  }
+  assert.ok(isUuidv4(uuidv4()) && uuidv4() !== uuidv4());
+  await AA.install({ quiet: true });
+  const ids = Object.values(AA.menus()).flat().filter(isOurs).map((e) => e.id);
+  assert.equal(ids.length, ROWS.length);
+  assert.ok(ids.every(isUuidv4), "installed ids AA's store keeps");
+  // An older install (16-character ids): AA's store threw on the first, kept only its own range
+  // entries and saved them back. The melee entries are still there, with the old ids.
+  const theirs = { id: uuidv4(), label: "Militech Crusher", menu: "range" };
+  const melee = game.settings.get("autoanimations", "aaAutorec-melee").map((e) => (isOurs(e) ? { ...e, id: "aB3dE5gH7jK9mN1p" } : e));
+  await game.settings.set("autoanimations", "aaAutorec-melee", melee);
+  await game.settings.set("autoanimations", "aaAutorec-range", [theirs]);
+  assert.ok(!AA.current(), "half a profile isn't current, whatever its version");
+  const asked = [];
+  foundry.applications.api.DialogV2.wait = async (opts) => {
+    asked.push(opts.content);
+    return "install";
+  };
+  assert.equal(await AA.offer(), "install");
+  assert.match(asked[0], /dropped out/);
+  assert.ok(AA.current());
+  const range = game.settings.get("autoanimations", "aaAutorec-range");
+  assert.equal(range[0].label, "Militech Crusher", "the world's own entries stay");
+  assert.ok(Object.values(AA.menus()).flat().filter(isOurs).every((e) => isUuidv4(e.id)));
   foundry.applications.api.DialogV2.wait = async () => null;
 });
 

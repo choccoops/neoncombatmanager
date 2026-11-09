@@ -2153,6 +2153,7 @@
         "Title": "Neon Arsenal: weapon animations",
         "Missing": "Neon Arsenal's weapon animations (JB2A, chosen by what each weapon is) aren't in Automated Animations yet. Put them in now? Your own Automated Animations entries stay as they are.",
         "Outdated": "Neon Arsenal's weapon animations in Automated Animations are from an older version. Bring them up to date? Your own Automated Animations entries stay as they are.",
+        "Damaged": "Some of Neon Arsenal's weapon animations have dropped out of Automated Animations (an older install gave them ids AA's menu throws away). Put them all back now? Your own Automated Animations entries stay as they are.",
         "Later": "Any time later: the Install Weapon Animations macro (Neon Combat Manager: Macros compendium).",
         "Install": "Install now",
         "NotNow": "Not now",
