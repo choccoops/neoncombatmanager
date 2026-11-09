@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.19.4
 
 - A Neon Hub mook's **Punknife** gets the light blade look (it was drawn as a blunt weapon).
 
