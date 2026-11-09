@@ -160,6 +160,12 @@ globalThis.ChatMessage = {
   create: async (data) => {
     const msg = { ...data, id: randomID(), flags: data.flags ?? {}, timestamp: Date.now(), visible: true };
     msg.getFlag = (scope, key) => msg.flags?.[scope]?.[key];
+    msg.isOwner = true;
+    msg.setFlag = async (scope, key, value) => {
+      msg.flags[scope] ??= {};
+      msg.flags[scope][key] = value;
+      return msg;
+    };
     chat.push(msg);
     return msg;
   },
@@ -248,7 +254,7 @@ globalThis.game = {
   scenes: new Collection(),
   messages: { get contents() {
     return chat;
-  } },
+  }, get: (id) => chat.find((m) => m.id === id) ?? null },
   packs: new Map(),
   socket: { on() {}, emit() {} },
   combat: null

@@ -39,6 +39,8 @@ export const Stakes = {
     });
     const refresh = () => this.app?.rendered && this.app.render();
     for (const h of ["updateActor", `${MODULE_ID}.stakesChanged`, "updateCombat"]) Hooks.on(h, refresh);
+    // A Plot Die card posted or settled changes what the window offers (Double Down, Force Fate).
+    for (const h of ["createChatMessage", "updateChatMessage"]) Hooks.on(h, (m) => m?.flags?.[MODULE_ID]?.stakes && refresh());
   },
 
   /** The open Plot Die window, if any. */
@@ -145,6 +147,29 @@ export const Stakes = {
     return null;
   },
 
+  /**
+   * The Plot Die result a Double Down would reroll: this character's latest result card, if it was
+   * a plain roll from chat (not Force Fate, a crit, a Double Down, or a roll inside the roll dialog,
+   * which rerolls there) and nothing has settled it.
+   */
+  latestRolled(actor) {
+    const list = game.messages?.contents ?? [];
+    for (let i = list.length - 1; i >= 0; i--) {
+      const f = list[i].flags?.[MODULE_ID];
+      if (f?.stakes?.type !== "result" || f.stakes.actor !== actor?.uuid) continue;
+      return f.stakes.how === "rolled" && !f.stakes.inline && !f.done ? list[i] : null;
+    }
+    return null;
+  },
+
+  /** Double Down: once a session, reroll a Plot Die result (the card it replaces is settled). */
+  async doubleDown(actor, card = this.latestRolled(actor)) {
+    if (!this.options(actor).doubleDown || !card) throw new Error(L(`${LANG}.Stakes.CantDouble`));
+    await this.markDone(card);
+    await this.markUsed(actor, "doubleDown");
+    return this.roll(actor, { doubleDown: true });
+  },
+
   /** Force Fate: 3 LUCK, once a session, for an Opportunity without rolling. */
   async forceFate(actor, { inline = false } = {}) {
     if (!this.options(actor).forceFate) throw new Error(L(`${LANG}.Stakes.CantForce`));
@@ -211,7 +236,8 @@ export const Stakes = {
         buttons.push({ action: "stakes-comp", label: L(`${LANG}.Stakes.Comp.${c}`), gm: true, data: { option: c, count } });
       }
     }
-    if (how === "rolled" && opts.doubleDown) buttons.push({ action: "stakes-double", label: L(`${LANG}.Stakes.DoubleDown`), icon: "fa-solid fa-rotate", owner: true });
+    // Rolled inside the roll dialog, the dialog offers the Double Down (it holds the bonus).
+    if (how === "rolled" && !inline && opts.doubleDown) buttons.push({ action: "stakes-double", label: L(`${LANG}.Stakes.DoubleDown`), icon: "fa-solid fa-rotate", owner: true });
     const face = forced ? "★" : granted ? "✦" : String(r.face);
     // A crit's Complication (or a chain's) carries no bonus: say so, not "+0".
     const key = r.kind === "complication" && !r.bonus ? "complicationNoBonus" : inline && r.bonus ? "complicationInline" : r.kind;
@@ -223,7 +249,7 @@ export const Stakes = {
       body: `<div class="ncm-plot-face kind-${r.kind}">${face}</div><p>${L(`${LANG}.Stakes.ResultBody.${key}`, { bonus: r.bonus, count })}</p>${costNote ? `<p class="ncm-ref">${costNote}</p>` : ""}`,
       tone: r.kind === "opportunity" ? "cyan" : r.kind === "complication" ? "red" : "yellow",
       buttons,
-      flags: { stakes: { type: "result", kind: r.kind, count, picks: 0 } }
+      flags: { stakes: { type: "result", kind: r.kind, count, picks: 0, actor: actor.uuid, how, inline } }
     });
   },
 
@@ -390,9 +416,8 @@ export const Stakes = {
       }
       case "stakes-double": {
         if (!owner || !this.options(actor).doubleDown) return ui.notifications.warn(L(`${LANG}.Stakes.CantDouble`));
-        await done();
-        await this.markUsed(actor, "doubleDown");
-        return this.roll(actor, { doubleDown: true });
+        btn.disabled = true;
+        return this.doubleDown(actor, message);
       }
       case "stakes-approve":
         if (!game.user.isGM) return;

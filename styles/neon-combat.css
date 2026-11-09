@@ -424,6 +424,12 @@
 .ncm-stakes .ncm-stakes-perks { margin: 10px 0 6px; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 11px; color: var(--ncm-dim); }
 .ncm-stakes .ncm-stakes-perks li.on { color: var(--ncm-text); }
 .ncm-stakes .ncm-stakes-perks li.on i { color: var(--ncm-yellow); }
+/* A perk the character can spend now: the whole line is the button. */
+.neon-combat .ncm-stakes-perks button.ncm-stakes-perk {
+  justify-content: flex-start; width: 100%; padding: 3px 8px; gap: 6px;
+  font-family: inherit; font-size: 11px; letter-spacing: 0; text-transform: none;
+  color: #fff; border-color: rgba(243, 230, 0, 0.55); background: rgba(243, 230, 0, 0.08);
+}
 .ncm-stakes textarea { width: 100%; resize: vertical; }
 .neon-combat .ncm-stakes-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
 .neon-combat .ncm-stakes-actions button { flex: 1 1 auto; width: auto; }
