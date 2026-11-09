@@ -7,7 +7,7 @@ import { makeActor, registerSettings, asGM, chat, root } from "./helpers/foundry
 
 const M = "cpr-neon-combat-manager";
 await registerSettings();
-const { coverHp, sectionCount, sectionAt, readWallCover, readPieceCover, coverOnLine, hitCover, splitAt, areaPlan } = await import("../scripts/cover/data.js");
+const { coverHp, sectionCount, sectionAt, readWallCover, readPieceCover, coverOnLine, hitCover, splitAt, areaPlan, isVehicle, seatOf, readGlassCover, coverFor } = await import("../scripts/cover/data.js");
 const { Cover } = await import("../scripts/cover/cover.js");
 const { CPR } = await import("../scripts/cpr.js");
 const { readWall } = await import("../scripts/arsenal/xray.js");
@@ -262,4 +262,86 @@ test("the Cover compendium: a piece and a wall section for every material and th
       }
     }
   }
+});
+
+/* ---------------------------------------- */
+/*  Your ride as cover (HOUSE RULE)         */
+/* ---------------------------------------- */
+
+const VAS = "mmutons-cyberpunk-red-vas";
+const seats = (glass = 15) => [
+  { id: "drv", name: "Driver's Seat", occupants: ["Actor.rico"], bulletproofGlass: glass > 0, glassHpMax: glass, glassHp: glass },
+  { id: "back", name: "Back Seat", occupants: ["Actor.vee"], bulletproofGlass: false, glassHpMax: 0 }
+];
+
+test("what's a ride: MMuton's vehicle sheet, or a Neon Hub 2070s vehicle; not a cyberpet or a person", () => {
+  assert.ok(isVehicle({ flags: { [VAS]: { positions: [] } } }));
+  assert.ok(isVehicle({ flags: { core: { sheetClass: `${VAS}.VehicleSheet` } } }));
+  assert.ok(isVehicle({ flags: { "cpr-neon-hub": { vehicle2070: { kind: "land" } } } }));
+  assert.equal(isVehicle({ flags: { "cpr-neon-hub": { pet2070: true } } }), false);
+  assert.equal(isVehicle(makeActor({ name: "Rico" })), false);
+});
+
+test("a ride takes it as a vehicle does: its SP first, then its SDP; a rocket's double counts past the SP", () => {
+  assert.deepEqual(hitCover(50, 20, { sp: 13 }), { before: 50, after: 43, taken: 7, destroyed: false, soaks: true });
+  assert.equal(hitCover(50, 12, { sp: 13 }).taken, 0, "under its SP: nothing gets through");
+  assert.equal(hitCover(50, 20, { sp: 13, bunkerBuster: true }).taken, 14, "Bunker Buster: double what gets past the SP");
+  assert.equal(hitCover(5, 40, { sp: 13, explosive: true }).soaks, false, "a blast that wrecks it hits whoever's behind");
+  const van = makeActor({ name: "Van", type: "mook", system: { derivedStats: { hp: { value: 50, max: 50 } } } });
+  van.flags[VAS] = { positions: [] };
+  const cover = readPieceCover({ id: "v", name: "Van", x: 0, y: 0, width: 2, height: 2, actor: van }, { ...GRID, sp: 13 });
+  assert.equal(cover.sp, 13);
+  assert.equal(cover.hp[0], 50);
+});
+
+test("inside a ride, normal cover rules: the seat's bulletproof glass, Thin or Thick; no glass, no cover", () => {
+  assert.equal(seatOf(seats(), "Actor.rico").position.id, "drv");
+  assert.equal(seatOf(seats(), "Actor.nobody"), null);
+  const tok = { id: "v", name: "Kaukaz" };
+  const glass = readGlassCover(tok, seatOf(seats(), "Actor.rico"));
+  assert.deepEqual([glass.kind, glass.seat, glass.thickness, glass.hp[0]], ["glass", "drv", "thin", 15]);
+  assert.equal(readGlassCover(tok, seatOf(seats(30), "Actor.rico")).thickness, "thick", "two installs: Thick, 30 HP");
+  assert.equal(readGlassCover(tok, seatOf(seats(), "Actor.vee")), null, "the back seat's windows are no cover");
+  assert.equal(readGlassCover(tok, { position: { ...seats()[0], glassHp: 0 } }), null, "shot out");
+});
+
+test("the line of fire with rides: behind one, its SP and SDP; in one, the seat's glass; cover out past it still counts", () => {
+  const van = { kind: "vehicle", id: "van", name: "Van", sp: 13, hp: [50], max: 50, box: { x: 400, y: -100, w: 200, h: 200 } };
+  const from = { x: 0, y: 0 };
+  assert.equal(coverFor(from, { x: 800, y: 0 }, { pieces: [van] }).cover.id, "van", "crouched behind it");
+  const glass = { kind: "glass", id: "van", seat: "drv", thickness: "thin", hp: [15], max: 15 };
+  assert.equal(coverFor(from, { x: 500, y: 0 }, { pieces: [van], ride: "van", glass }).cover.kind, "glass", "in the driver's seat");
+  assert.equal(coverFor(from, { x: 500, y: 0 }, { pieces: [van], ride: "van" }), null, "in the back seat: windows aren't cover");
+  assert.equal(coverFor(from, { x: 500, y: 0 }, { pieces: [van], ride: "van", glass, throughThin: true }), null, "a charged Tech shot goes through Thin glass");
+  const wall = readWallCover(wallDoc("w", [200, -200, 200, 200], { material: "concrete", thickness: "thick" }), GRID);
+  assert.equal(coverFor(from, { x: 500, y: 0 }, { walls: [wall], pieces: [van], ride: "van", glass }).cover.id, "w", "a wall before the van comes first");
+  const plan = areaPlan({ origin: from, people: [{ id: "rico", center: { x: 500, y: 0 }, ride: "van", glass }], pieces: [van], damage: 10, explosive: true });
+  assert.equal(plan.hit.rico.hit, false, "the glass takes 10 of 15");
+  assert.equal(plan.cover[0].cover.kind, "glass");
+});
+
+test("the GM's damage to a ride goes through CPR's own (a rocket hands it SP plus double the rest); to its glass, onto the seat", async () => {
+  asGM();
+  const van = makeActor({ name: "Kaukaz", type: "mook", system: { derivedStats: { hp: { value: 50, max: 50 } }, externalData: { currentArmorBody: { value: 13 } } } });
+  van.flags[VAS] = { positions: seats() };
+  const handed = [];
+  van._applyDamage = async (amount) => {
+    handed.push(amount);
+    van.system.derivedStats.hp.value -= Math.max(0, amount - 13);
+  };
+  const rico = makeActor({ _id: "rico", name: "Rico" });
+  const s = scene({ tokens: [{ id: "v", name: "Kaukaz", x: 400, y: -100, width: 2, height: 2, actor: van }, { id: "r", name: "Rico", x: 450, y: -50, width: 1, height: 1, actor: rico }] });
+  game.scenes.set("s1", s);
+  let r = await Cover.damageAsGM({ scene: "s1", kind: "vehicle", id: "v", amount: 20, quiet: true });
+  assert.deepEqual(handed, [20]);
+  assert.equal(r.after, 43);
+  assert.equal(r.label, "Kaukaz (SP 13)");
+  await Cover.damageAsGM({ scene: "s1", kind: "vehicle", id: "v", amount: 20, bunkerBuster: true, quiet: true });
+  assert.deepEqual(handed, [20, 27], "13 + 2 × 7");
+  assert.deepEqual(Cover.riding(s.tokens.get("r"), s), { ride: "v", glass: readGlassCover(s.tokens.get("v"), seatOf(seats(), "Actor.rico")) });
+  r = await Cover.damageAsGM({ scene: "s1", kind: "glass", id: "v", section: "drv", amount: 9, quiet: true });
+  assert.equal(r.after, 6);
+  assert.equal(van.flags[VAS].positions.find((p) => p.id === "drv").glassHp, 6);
+  assert.equal(van.flags[VAS].positions.find((p) => p.id === "back").occupants[0], "Actor.vee", "the other seats untouched");
+  game.scenes.delete("s1");
 });

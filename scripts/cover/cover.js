@@ -6,7 +6,7 @@ import { CPR } from "../cpr.js";
 import { Cards } from "../combat/cards.js";
 import { L, esc, debounce } from "../util.js";
 import {
-  MATERIALS, THICKNESS, LEAN_METRES, coverHp, readWallCover, readPieceCover, coverOnLine, hitCover, splitAt, coverLabel, areaPlan
+  MATERIALS, THICKNESS, LEAN_METRES, VAS, coverHp, readWallCover, readPieceCover, readGlassCover, seatOf, coverFor, hitCover, splitAt, coverLabel, areaPlan
 } from "./data.js";
 
 /** The senses a destroyed section stops blocking (Foundry's NONE), so tokens walk and see through it. */
@@ -52,8 +52,24 @@ export const Cover = {
     const grid = this.grid(scene);
     const doorsWood = !!Settings.get("coverDoors");
     const walls = [...(scene?.walls ?? [])].map((w) => readWallCover(w, { doorsWood, ...grid })).filter(Boolean);
-    const pieces = [...(scene?.tokens ?? [])].map((t) => readPieceCover(t, grid)).filter(Boolean);
+    const pieces = [...(scene?.tokens ?? [])].map((t) => readPieceCover(t, { ...grid, sp: CPR.armor(t.actor).body })).filter(Boolean);
     return { walls, pieces };
+  },
+
+  /**
+   * The ride someone sits in on this scene (MMuton's vehicle sheet seats them by actor UUID):
+   * { ride: its token id, glass: their seat's bulletproof glass as cover, or null } or {}.
+   */
+  riding(tok, scene = canvas?.scene) {
+    const doc = tok?.document ?? tok;
+    const uuid = doc?.actor?.uuid;
+    if (!uuid) return {};
+    for (const t of scene?.tokens ?? []) {
+      if (t.id === doc.id || !t.actor) continue;
+      const seat = seatOf(t.actor.flags?.[VAS]?.positions, uuid);
+      if (seat) return { ride: t.id, glass: readGlassCover(t, seat) };
+    }
+    return {};
   },
 
   /** Is this token a cover piece (not a person)? */
@@ -98,8 +114,11 @@ export const Cover = {
     const { walls, pieces } = this.scan(scene);
     const a = this.center(from, grid);
     const b = this.center(to, grid);
-    const ids = [(from.document ?? from).id, (to.document ?? to).id];
-    const [hit] = coverOnLine(a, b, { walls, pieces, lean: (LEAN_METRES / grid.distance) * grid.size, exclude: ids, throughThin });
+    // A shooter firing out of a ride isn't behind it; a target riding in one has its seat's glass, if any.
+    const shooterRide = this.riding(from, scene).ride;
+    const ids = [(from.document ?? from).id, (to.document ?? to).id, ...(shooterRide ? [shooterRide] : [])];
+    const { ride, glass } = this.riding(to, scene);
+    const hit = coverFor(a, b, { walls, pieces, lean: (LEAN_METRES / grid.distance) * grid.size, exclude: ids, throughThin, ride, glass });
     return hit ? this.ref(hit.cover, hit.section, scene) : null;
   },
 
@@ -108,7 +127,10 @@ export const Cover = {
   },
 
   ref(cover, section, scene = canvas?.scene) {
-    return { kind: cover.kind, id: cover.id, section, label: label(cover), hp: cover.hp[section], max: cover.max, thickness: cover.thickness, scene: scene?.id ?? null };
+    return {
+      kind: cover.kind, id: cover.id, section: cover.kind === "glass" ? cover.seat : section, label: label(cover), hp: cover.hp[cover.kind === "wall" ? section : 0],
+      max: cover.max, thickness: cover.thickness, scene: scene?.id ?? null, ...(cover.kind === "vehicle" ? { sp: cover.sp } : {})
+    };
   },
 
   /** An area attack's cover, for the GM's apply window (see areaPlan). */
@@ -134,7 +156,8 @@ export const Cover = {
     let out = null;
     if (kind === "wall") out = await this.damageWall(scene, id, section, amount, { explosive, bunkerBuster });
     else if (kind === "piece") out = await this.damagePiece(scene, id, amount, { explosive, bunkerBuster });
-    else if (kind === "vehicle") out = await this.damageVehicle(scene, id, amount, { bunkerBuster });
+    else if (kind === "vehicle") out = await this.damageVehicle(scene, id, amount, { explosive, bunkerBuster });
+    else if (kind === "glass") out = await this.damageGlass(scene, id, section, amount, { explosive, bunkerBuster });
     if (out && !quiet) await this.card([out]);
     Hooks.callAll(`${MODULE_ID}.coverChanged`, scene);
     return out;
@@ -190,18 +213,39 @@ export const Cover = {
     return { ...r, label: cover.name };
   },
 
-  /** A ride as cover (HOUSE RULE): its SP and SDP, through Cyberpunk RED's own damage. */
-  async damageVehicle(scene, id, amount, { bunkerBuster = false } = {}) {
+  /**
+   * A ride as cover (HOUSE RULE): its SP and SDP, through Cyberpunk RED's own damage (SP stops its
+   * share and ablates, SDP takes the rest). A rocket's double counts once the damage gets through the
+   * SP (Bunker Buster), so CPR is handed the SP plus twice what gets past it.
+   */
+  async damageVehicle(scene, id, amount, { explosive = false, bunkerBuster = false } = {}) {
     const tok = scene.tokens.get(id);
     const actor = tok?.actor;
     if (!actor) return null;
     const before = CPR.hp(actor).value;
-    const taken = (Number(amount) || 0) * (bunkerBuster ? 2 : 1);
+    const sp = CPR.armor(actor).body;
+    const dmg = Number(amount) || 0;
+    const hand = bunkerBuster && dmg > sp ? sp + 2 * (dmg - sp) : dmg;
     if (typeof actor._applyDamage === "function") {
-      await actor._applyDamage(taken, 0, "body", 1, "", 0, 0, true, { damageReductionRole: false, damageReductionAE: false, useShield: false, brainDamageReduction: false });
+      await actor._applyDamage(hand, 0, "body", 1, "", 0, 0, true, { damageReductionRole: false, damageReductionAE: false, useShield: false, brainDamageReduction: false });
     }
     const after = CPR.hp(actor).value;
-    return { before, after, taken, destroyed: after === 0 && before > 0, soaks: true, label: tok.name };
+    const destroyed = after === 0 && before > 0;
+    return { before, after, taken: before - after, destroyed, soaks: !(destroyed && explosive), label: `${tok.name} (SP ${sp})` };
+  },
+
+  /** A seat's bulletproof glass (MMuton's vehicle sheet keeps its HP on the seat). */
+  async damageGlass(scene, id, seatId, amount, opts) {
+    const tok = scene.tokens.get(id);
+    const actor = tok?.actor;
+    const positions = foundry.utils.deepClone(actor?.flags?.[VAS]?.positions ?? []);
+    const seat = positions.find((p) => p.id === seatId);
+    const cover = readGlassCover(tok, seat ? { position: seat } : null);
+    if (!cover) return null;
+    const r = hitCover(cover.hp[0], amount, opts);
+    seat.glassHp = r.after;
+    await actor.update({ [`flags.${VAS}.positions`]: positions });
+    return { ...r, label: cover.name };
   },
 
   /** What the cover took, for everyone. */

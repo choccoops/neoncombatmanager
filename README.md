@@ -787,9 +787,20 @@ thickness the pieces don't already draw as a wall: Interior Wall (Plaster, Thick
 Timber Wall (Wood), Concrete Barrier (Concrete, Thick), Low Stone Wall and Fieldstone Wall (Stone),
 Corrugated Fence and Blast Wall (Steel). Drag one onto the map; its HP bar is the piece's HP,
 seen by the GM. A destroyed piece fades. A player who moves Thick cover without BODY 10+ is
-reminded of the rule. Cover pieces aren't people: no Wound States, Biomon or death saves. **Rides**
-count as cover too, with their SP and SDP (*Your ride as cover*, HOUSE RULE), through Cyberpunk
-RED's own damage.
+reminded of the rule. Cover pieces aren't people: no Wound States, Biomon or death saves.
+
+**Your ride as cover** (HOUSE RULE, 2070 Core Rules Ch07). Every vehicle actor is cover: MMuton's
+vehicle sheet, and Neon Hub's 2070s vehicles and ACPAs.
+- **Crouched behind a ride**, its SP and SDP are the cover's HP. Damage goes through Cyberpunk
+  RED's own vehicle damage: the SP stops its share and ablates, and the SDP takes the rest. A
+  rocket's double counts on what gets past the SP (Bunker Buster). A ride the blast wrecks lets it
+  through to whoever is behind.
+- **Inside a ride**, normal cover rules apply. The ride itself isn't your cover, because people see
+  you through its windows. Windows aren't cover, but a seat with **Bulletproof Glass** on MMuton's
+  sheet is: Thin (15 HP) or Thick (30 HP, two installs). *Hit the cover* and the area window put
+  the damage on that seat's glass HP, on the sheet. Cover out past the ride (a wall between you and
+  the shooter) still comes first. Who sits where comes from the sheet's seats.
+- Someone firing out of a ride isn't behind it.
 
 **When someone shoots:**
 - **A shot** at a target behind intact cover: *Does it hit?* names the cover and its HP. Cover the
