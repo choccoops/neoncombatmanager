@@ -184,3 +184,57 @@ test("the Equip / Change Weapon window renders with every string", async () => {
   assert.ok(held.includes('data-action="freeHand" data-item="knife"') && held.includes('data-action="dropItem"'));
   assert.equal(missingKeys.size, 0, [...missingKeys].join(", "));
 });
+
+test("Bare Hands: Cyberpunk RED's Unarmed is put in the inventory, equipped into a free hand, and its Attack rolls", async () => {
+  const unarmed = { _id: "X6VYB5awDbtURwIv", name: "Unarmed", type: "weapon", img: "unarmed.svg", system: { weaponType: "unarmed", weaponSkill: "Brawling", damage: "1d6", handsReq: 1, isRanged: false, equipped: "owned" } };
+  const prior = game.packs;
+  game.packs = new Map([["cyberpunk-red-core.core_weapons", { getDocument: async (id) => (id === unarmed._id ? { toObject: () => structuredClone(unarmed) } : null) }]]);
+  try {
+    const kade = choom([{ _id: "brawl", name: "Brawling", type: "skill", system: { stat: "dex", level: 4 } }]);
+    const entry = catalog(kade).weapons.find((w) => w.key === "hands:bare");
+    assert.deepEqual([entry.run, entry.sub], ["brawl:attack", "+10"], "DEX 6 + Brawling 4");
+    const rolled = [];
+    const created = kade.createEmbeddedDocuments.bind(kade);
+    kade.createEmbeddedDocuments = async (type, list, o) => {
+      const made = await created(type, list, o);
+      for (const i of made) i.createRoll = (mode) => (rolled.push(mode), null);
+      return made;
+    };
+    await Run.action(kade, "brawl:attack");
+    const fist = Hands.unarmedOf(kade);
+    assert.equal(fist.name, "Unarmed", "from the compendium");
+    assert.equal(fist.system.equipped, "equipped");
+    assert.deepEqual(fist.flags[NCM].hands, ["L"], "the free hand");
+    assert.deepEqual(rolled, ["attack"], "then its Attack");
+    assert.equal(catalog(kade).weapons.some((w) => w.key === "hands:bare"), false, "equipped, it's a weapon row of its own");
+    // Again later (freed in between): the same item, not a second one.
+    await Hands.free(kade, fist);
+    await Run.action(kade, "brawl:attack");
+    assert.equal([...kade.items].filter((i) => i.system?.weaponType === "unarmed").length, 1);
+    assert.equal(Hands.unarmedOf(kade).system.equipped, "equipped");
+
+    // Hands full: Unarmed is in the inventory, Carried, and nothing rolls.
+    const full = choom();
+    await Hands.equip(full, full.items.get("knife"));
+    notes.length = 0;
+    assert.equal(await Run.action(full, "brawl:attack"), null);
+    assert.equal(Hands.unarmedOf(full).system.equipped, "carried");
+    assert.match(notes.at(-1)[1], /no free hand for Unarmed/);
+  } finally {
+    game.packs = prior;
+  }
+  // One already in the stash (Owned): that one goes into the hand, no new one is made.
+  const stashed = choom([{ _id: "fists", name: "Unarmed", type: "weapon", system: { weaponType: "unarmed", handsReq: 1, equipped: "owned" } }]);
+  await Hands.free(stashed, stashed.items.get("pistol"));
+  stashed.items.get("fists").createRoll = () => null;
+  let made = 0;
+  stashed.createEmbeddedDocuments = async () => (made++, []);
+  await Run.action(stashed, "brawl:attack");
+  assert.equal(made, 0);
+  assert.equal(stashed.items.get("fists").system.equipped, "equipped");
+  assert.equal(Hands.unarmedOf(stashed).id, "fists");
+
+  // No compendium: the same weapon, made here.
+  const data = await Hands.unarmedData();
+  assert.deepEqual([data.type, data.system.weaponType, data.system.weaponSkill, data.system.handsReq], ["weapon", "unarmed", "Brawling", 1]);
+});

@@ -1,13 +1,16 @@
-import { MODULE_ID, LANG, NEON_HOME_ID } from "../constants.js";
+import { MODULE_ID, LANG, NEON_HOME_ID, SYSTEM_ID } from "../constants.js";
 import { CPR } from "../cpr.js";
 import { Settings } from "../settings.js";
-import { L, esc } from "../util.js";
+import { L, esc, slug } from "../util.js";
 
 const ITEM_PILES_ID = "item-piles";
 /** Item types Cyberpunk RED keeps as Owned, Carried or Equipped. */
 const EQUIPPABLE = ["armor", "clothing", "cyberdeck", "drug", "gear", "weapon"];
 /** Critical Injuries that take a hand away (Cyberpunk RED p.187). */
 const LOST_HAND = ["dismembered arm", "dismembered hand"];
+
+/** Cyberpunk RED's Unarmed weapon: its Core Weapons compendium (Brawling, damage by BODY, core rulebook p.176). */
+const UNARMED = { pack: `${SYSTEM_ID}.core_weapons`, id: "X6VYB5awDbtURwIv" };
 
 /** A hand's id: R and L, then the lower pair (R2, L2) an Artificial Shoulder Mount adds, and so on. */
 const slotId = (i) => `${i % 2 ? "L" : "R"}${i < 2 ? "" : Math.floor(i / 2) + 1}`;
@@ -204,6 +207,58 @@ export const Hands = {
       tone: "yellow"
     });
     return true;
+  },
+
+  /* ---------------------------------------- */
+  /*  Bare hands                              */
+  /* ---------------------------------------- */
+
+  /**
+   * The character's Unarmed weapon (Cyberpunk RED's weapon type for fists, or one named so), or
+   * null: one in hand first, then a Carried one, then one in the stash.
+   */
+  unarmedOf(actor) {
+    const fists = [...(actor?.items ?? [])].filter((i) => i.type === "weapon" && (i.system?.weaponType === "unarmed" || slug(i.name) === "unarmed"));
+    const rank = { equipped: 0, carried: 1 };
+    return fists.sort((a, b) => (rank[a.system?.equipped] ?? 2) - (rank[b.system?.equipped] ?? 2))[0] ?? null;
+  },
+
+  /** Unarmed's item data, from Cyberpunk RED's compendium (or the same weapon, if it isn't there). */
+  async unarmedData() {
+    try {
+      const doc = await game.packs?.get(UNARMED.pack)?.getDocument(UNARMED.id);
+      if (doc) {
+        const data = doc.toObject();
+        delete data._id;
+        return data;
+      }
+    } catch (err) {
+      console.warn(`${MODULE_ID} | Cyberpunk RED's Unarmed weapon couldn't be read`, err);
+    }
+    return {
+      name: L(`${LANG}.Hands.Unarmed`), type: "weapon", img: `systems/${SYSTEM_ID}/icons/compendium/weapons/unarmed.svg`,
+      system: { weaponType: "unarmed", weaponSkill: "Brawling", damage: "1d6", rof: 2, handsReq: 1, isRanged: false, unarmedAutomaticCalculation: true, equipped: "carried", usage: "equipped", source: { book: "Core", page: 176 } }
+    };
+  },
+
+  /**
+   * Fight bare-handed: the character's Unarmed weapon (put in their inventory from Cyberpunk RED's
+   * compendium when they haven't one) goes into a free hand. No hand free: it stays Carried and the
+   * player is told, as for any weapon.
+   * @returns {Promise<Item|null>} the Unarmed weapon, equipped; null when it couldn't be
+   */
+  async bareHands(actor) {
+    if (!actor?.isOwner) return null;
+    let item = this.unarmedOf(actor);
+    if (!item) {
+      const data = await this.unarmedData();
+      data.system ??= {};
+      data.system.equipped = "carried";
+      [item] = await actor.createEmbeddedDocuments("Item", [data]);
+      if (!item) return null;
+    }
+    if (item.system?.equipped === "equipped") return item;
+    return (await this.equip(actor, item)) ? item : null;
   },
 
   _installed(item) {

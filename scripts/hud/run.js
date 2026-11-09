@@ -62,6 +62,12 @@ export const Run = {
         return item.doAction(actor, { "data-action": { nodeValue: "select-ammo" } });
       case "hands":
         return (await import("./hands-app.js")).HandsApp.open(actor);
+      case "brawl": {
+        // Bare hands: Unarmed in a free hand (made from the compendium if need be), then its Attack.
+        const { Hands } = await import("./hands.js");
+        const fist = await Hands.bareHands(actor);
+        return fist ? this.action(actor, `atk:${fist.id}`, { event, token }) : null;
+      }
       case "sk":
         return item ? this.roll(actor, item, () => item.createRoll("skill", actor), { event, token }) : null;
       case "ra": {
