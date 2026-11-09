@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.25.0
+
+**Your ride as cover** (HOUSE RULE, 2070 Core Rules Ch07), done in full:
+
+- **Every vehicle is cover.** That's MMuton's vehicle sheet actors, and Neon Hub's 2070s vehicles and ACPAs.
+- **Behind a ride:** its SP and SDP. Cyberpunk RED's own vehicle damage applies: SP first, and it
+  ablates, then SDP. The area window's numbers take the SP into account, and a rocket's double
+  counts on what gets past the SP (Bunker Buster). A wrecked ride lets a blast through.
+- **Inside a ride:** the ride isn't your cover. Your seat's Bulletproof Glass is (15 HP Thin, or 30 HP
+  Thick on MMuton's sheet), and plain windows are no cover at all. Damage to the glass goes on that
+  seat's glass HP. A charged Tech shot goes through Thin glass.
+- Someone firing out of a ride isn't behind it.
+
 ## 1.24.0
 
 **Cover** (2070 Core Rules, Ch07): the Cover HP table on the map.

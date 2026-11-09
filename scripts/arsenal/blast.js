@@ -357,7 +357,7 @@ export const Blast = {
     const plan = covered
       ? Cover.areaPlan({
         scene: doc.parent, origin: b.area.shape === "cone" && shooter ? Cover.center(shooter, grid) : centerOf(doc, grid),
-        people: inside.map((t) => ({ id: t.id, center: Cover.center(t, grid) })), inside: all.filter((t) => Cover.isCover(t)).map((t) => t.id),
+        people: inside.map((t) => ({ id: t.id, center: Cover.center(t, grid), ...Cover.riding(t, doc.parent) })), inside: all.filter((t) => Cover.isCover(t)).map((t) => t.id),
         damage: dmg.total, explosive: !!b.explosive, bunkerBuster: ["rocketLauncher", "missileLauncher"].includes(b.kind), exclude: [b.tokenId]
       })
       : { cover: [], hit: {} };
@@ -366,10 +366,10 @@ export const Blast = {
     const rows = inside.map((t) => {
       const shield = behind(t);
       const out = dodged.has(t.id) || plan.hit[t.id]?.hit === false;
-      const why = dodged.has(t.id) ? L(`${LANG}.Arsenal.Defense.DodgedOut`) : shield ? L(`${LANG}.Cover.${plan.hit[t.id].hit ? "Through" : "Shielded"}`, { cover: esc(shield.cover.name ?? Cover.label(shield.cover)) }) : "";
+      const why = dodged.has(t.id) ? L(`${LANG}.Arsenal.Defense.DodgedOut`) : shield ? L(`${LANG}.Cover.${plan.hit[t.id].hit ? "Through" : "Shielded"}`, { cover: esc(Cover.label(shield.cover)) }) : "";
       return `<label class="ncm-check"><input type="checkbox" name="t-${t.id}"${out ? "" : " checked"}> ${esc(t.name)}${why ? ` <em>(${why})</em>` : ""}</label>`;
     }).join("") || `<p>${L(`${LANG}.Arsenal.Nobody`)}</p>`;
-    const coverRows = plan.cover.map((c, i) => `<label class="ncm-check"><input type="checkbox" name="c-${i}" checked> ${esc(c.cover.kind === "wall" ? Cover.label(c.cover) : c.cover.name)} · ${L(`${LANG}.Cover.HpLine`, { before: c.result.before, after: c.result.after })}${c.result.destroyed ? ` · ${L(`${LANG}.Cover.Destroyed`)}` : ""}</label>`).join("");
+    const coverRows = plan.cover.map((c, i) => `<label class="ncm-check"><input type="checkbox" name="c-${i}" checked> ${esc(Cover.label(c.cover))} · ${L(`${LANG}.Cover.HpLine`, { before: c.result.before, after: c.result.after })}${c.result.destroyed ? ` · ${L(`${LANG}.Cover.Destroyed`)}` : ""}</label>`).join("");
     const blow = b.explosive && Settings.get("arsenalBlowBack");
     const content = `<div class="ncm-grid">${dmg ? `<p>${L(`${LANG}.Arsenal.Damage`, { total: dmg.total, ablation: dmg.ablation })}</p>` : ""}`
       + `<p class="ncm-ref">${L(`${LANG}.Arsenal.UntickHint`)}</p>${rows}`
@@ -384,7 +384,7 @@ export const Blast = {
         label: L(`${LANG}.Arsenal.Apply`),
         callback: (event, button) => {
           const f = button.form.elements;
-          const cover = plan.cover.filter((c, i) => f[`c-${i}`]?.checked).map((c) => ({ kind: c.cover.kind, id: c.cover.id, section: c.section }));
+          const cover = plan.cover.filter((c, i) => f[`c-${i}`]?.checked).map((c) => ({ kind: c.cover.kind, id: c.cover.id, section: c.cover.kind === "glass" ? c.cover.seat : c.section }));
           return { tokens: inside.filter((t) => f[`t-${t.id}`]?.checked).map((t) => t.id), cover, blow: !!f.blow?.checked, keep: !!f.keep?.checked };
         }
       },

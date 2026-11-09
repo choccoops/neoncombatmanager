@@ -80,23 +80,60 @@ export function readWallCover(doc, { doorsWood = true, size = 100, distance = 2 
   return { kind: "wall", id: doc.id, material: flag.material, thickness: flag.thickness ?? "thick", max, n, hp, broken, c, implicit };
 }
 
+export const VAS = "mmutons-cyberpunk-red-vas";
+
 /**
- * A token, read as cover: a cover piece (an actor flagged as cover, its HP the piece's) or a
- * ride (MMuton's vehicle sheet: its SP and SDP, the HOUSE RULE). { kind, id, material, thickness,
- * max, hp: [value], box, name } or null.
+ * Is this actor a ride: MMuton's vehicle sheet (its seats, or the sheet itself), or one of Neon Hub's
+ * 2070s vehicles? Cyberpets and people aren't.
  */
-export function readPieceCover(tok, { size = 100 } = {}) {
+export function isVehicle(actor) {
+  if (!actor) return false;
+  const f = actor.flags ?? {};
+  return Array.isArray(f[VAS]?.positions) || String(f.core?.sheetClass ?? "").startsWith(`${VAS}.`) || !!f["cpr-neon-hub"]?.vehicle2070;
+}
+
+/**
+ * A token, read as cover: a cover piece (an actor flagged as cover, its HP the piece's) or a ride
+ * (HOUSE RULE, Your ride as cover: its SP and SDP: `sp`, and its SDP as `hp`). { kind, id, material,
+ * thickness, max, hp: [value], sp, box, name } or null.
+ * @param {number} [sp] - the ride's SP (its body armor), read by the caller
+ */
+export function readPieceCover(tok, { size = 100, sp = 0 } = {}) {
   const actor = tok?.actor;
   if (!actor) return null;
   const flag = flagOf(actor);
-  const vehicle = !flag && !!actor.flags?.["mmutons-cyberpunk-red-vas"]?.positions;
+  const vehicle = !flag && isVehicle(actor);
   if (!flag && !vehicle) return null;
   const hp = actor.system?.derivedStats?.hp ?? {};
   const box = { x: Number(tok.x) || 0, y: Number(tok.y) || 0, w: (Number(tok.width) || 1) * size, h: (Number(tok.height) || 1) * size };
   return {
     kind: vehicle ? "vehicle" : "piece", id: tok.id, name: tok.name ?? actor.name, material: flag?.material ?? null, thickness: flag?.thickness ?? "thick",
-    max: Number(hp.max) || 0, hp: [Math.max(0, Number(hp.value) || 0)], box, actorId: actor.id
+    max: Number(hp.max) || 0, hp: [Math.max(0, Number(hp.value) || 0)], sp: vehicle ? Math.max(0, Number(sp) || 0) : 0, box, actorId: actor.id
   };
+}
+
+/**
+ * The seat someone rides in, on MMuton's vehicle sheet: { position, index } or null. Seats list
+ * their occupants by actor UUID.
+ */
+export function seatOf(positions, actorUuid) {
+  const list = Array.isArray(positions) ? positions : [];
+  const index = list.findIndex((p) => (p?.occupants ?? []).includes(actorUuid));
+  return index < 0 ? null : { position: list[index], index };
+}
+
+/**
+ * Inside a ride, normal cover rules apply (HOUSE RULE): windows aren't cover, but a seat with
+ * Bulletproof Glass is, Thin (15 HP) or Thick (30 HP) by its glass. Cover for someone in that seat,
+ * or null when the glass isn't there or is broken.
+ */
+export function readGlassCover(tok, seat) {
+  const p = seat?.position;
+  if (!tok || !p?.bulletproofGlass) return null;
+  const max = Number(p.glassHpMax) || 0;
+  const hp = Math.max(0, Number(p.glassHp ?? max) || 0);
+  if (!max || !(hp > 0)) return null;
+  return { kind: "glass", id: tok.id, seat: p.id, name: `${tok.name}: ${p.name}`, material: "glass", thickness: max >= 30 ? "thick" : "thin", max, hp: [hp] };
 }
 
 /** Where segment ab meets segment cd, or null. */
@@ -160,14 +197,33 @@ export function coverOnLine(from, to, { walls = [], pieces = [], lean = 0, exclu
 }
 
 /**
+ * The cover a line of fire meets first, for someone who may be riding in a vehicle: `ride` is the
+ * token id of the ride they sit in, `glass` their seat's glass cover (readGlassCover). The ride
+ * isn't their cover (Inside it, normal cover rules apply); cover out past it still is; else their
+ * seat's bulletproof glass, else nothing (windows aren't cover). { cover, section, dist } or null.
+ */
+export function coverFor(from, to, { walls = [], pieces = [], lean = 0, exclude = [], throughThin = false, ride = null, glass = null } = {}) {
+  const own = ride ? pieces.find((p) => p.id === ride) : null;
+  const [first] = coverOnLine(from, to, { walls, pieces, lean, throughThin, exclude: own ? [...exclude, own.id] : exclude });
+  if (!own) return first ?? null;
+  const door = enterBox(from, to, own.box);
+  const doorDist = door ? Math.hypot(door.x - from.x, door.y - from.y) : Infinity;
+  if (first && first.dist < doorDist) return first;
+  if (glass && !(throughThin && glass.thickness === "thin")) return { cover: glass, section: 0, dist: doorDist };
+  return null;
+}
+
+/**
  * What an attack's damage does to one piece of cover. Cover has no armor: the section takes it all,
  * and at 0 it's destroyed but still soaks the whole attack, except an explosive's, which carries
- * on to whoever is behind (Ch07). Rocket launchers' Bunker Buster doubles it against cover.
+ * on to whoever is behind (Ch07). Rocket launchers' Bunker Buster doubles it against cover. A ride
+ * (`sp`) takes it as a vehicle does: its SP first, then its SDP.
  * @returns {{ before, after, taken, destroyed, soaks }}
  */
-export function hitCover(hp, damage, { explosive = false, bunkerBuster = false } = {}) {
+export function hitCover(hp, damage, { explosive = false, bunkerBuster = false, sp = 0 } = {}) {
   const before = Math.max(0, Number(hp) || 0);
-  const taken = Math.max(0, Number(damage) || 0) * (bunkerBuster ? 2 : 1);
+  // A ride's SP stops its share first; a rocket's double counts once the damage gets through it (Bunker Buster).
+  const taken = Math.max(0, (Number(damage) || 0) - (Number(sp) || 0)) * (bunkerBuster ? 2 : 1);
   const after = Math.max(0, before - taken);
   const destroyed = after === 0 && taken > 0;
   return { before, after, taken, destroyed, soaks: !(destroyed && explosive) };
@@ -183,7 +239,7 @@ export function splitAt(c, i, n, hp) {
 }
 
 /** A key for a piece of cover (one wall section, or one token). */
-export const coverKey = (cover, section = 0) => `${cover.kind}:${cover.id}:${cover.kind === "wall" ? section : 0}`;
+export const coverKey = (cover, section = 0) => `${cover.kind}:${cover.id}:${cover.kind === "wall" ? section : cover.kind === "glass" ? cover.seat : 0}`;
 
 /**
  * An area attack's cover, pure. For each person in it, the first intact cover between the
@@ -191,7 +247,7 @@ export const coverKey = (cover, section = 0) => `${cover.kind}:${cover.id}:${cov
  * damage it takes; whether each person is still hit. An explosive that destroys the cover hits
  * whoever is behind it; a Shotgun Shell's cover always soaks it. Cover pieces inside the area
  * take the damage too.
- * @param {object[]} people - { id, center }
+ * @param {object[]} people - { id, center, ride?: the ride's token id they sit in, glass?: its seat's glass cover }
  * @param {object[]} piecesInside - cover pieces (from readPieceCover) inside the area
  * @returns {{ cover: [{ key, cover, section, result }], hit: { [id]: { hit, behind } } }}
  */
@@ -199,13 +255,13 @@ export function areaPlan({ origin, people = [], walls = [], pieces = [], piecesI
   const hits = new Map();
   const add = (cover, section) => {
     const key = coverKey(cover, section);
-    if (!hits.has(key)) hits.set(key, { key, cover, section, result: hitCover(cover.hp[section], damage, { explosive, bunkerBuster }) });
+    if (!hits.has(key)) hits.set(key, { key, cover, section, result: hitCover(cover.hp[section], damage, { explosive, bunkerBuster, sp: cover.sp ?? 0 }) });
     return hits.get(key);
   };
   for (const p of piecesInside) add(p, 0);
   const hit = {};
   for (const person of people) {
-    const [first] = coverOnLine(origin, person.center, { walls, pieces, exclude: [...exclude, person.id] });
+    const first = coverFor(origin, person.center, { walls, pieces, exclude: [...exclude, person.id], ride: person.ride, glass: person.glass });
     if (!first) {
       hit[person.id] = { hit: true, behind: null };
       continue;
@@ -218,6 +274,7 @@ export function areaPlan({ origin, people = [], walls = [], pieces = [], piecesI
 
 /** A cover's label: "Concrete (Thick)", or a token's name. */
 export function coverLabel(cover, L = (k) => k) {
+  if (cover.kind === "vehicle") return `${cover.name} (SP ${cover.sp ?? 0})`;
   if (cover.kind !== "wall" && cover.name) return cover.name;
   return `${L(`Material.${cover.material}`)} (${L(`Thickness.${cover.thickness}`)})`;
 }
