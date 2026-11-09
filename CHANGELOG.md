@@ -15,6 +15,23 @@
 - Worlds that already have the Neon FX macro folder get the two new macros added once. A macro
   you delete stays deleted.
 
+**What the 2070 gun flavors look like** (Neon Arsenal, with Sequencer):
+
+- **Weapon conditions:** *Power Weapon*, *Smart Weapon* and *Tech Weapon* follow the gun in hand.
+  Equip one and its condition goes on; stow it and it comes off. They carry no numbers (the
+  weapon traits add those on the roll). On the token they show as a faint orange haze, a pink
+  reticle or a blue data ring.
+- **Tech scope:** the player of a selected Tech shooter sees glowing outlines of anyone behind thin
+  cover. Walls get a new *Thin cover* box in their settings, and closed doors count too (a setting).
+- **Ricochet:** the shot bounces off the nearest wall that gets it round to the target, with
+  sparks and the path left hanging for a moment.
+- **Smart rounds:** a lock-on reticle, then rounds that curve in to the target. Improved Smart
+  rounds are magenta, steer harder and paint the shooter with a data ring.
+- **Improved Smart retry:** the shooter is asked straight away on a miss by 5 or less. The retry
+  now keeps the first shot's penalties and can add LUCK (the rule's "+ LUCK"), and its round
+  loops back round from past the target.
+- New quiet sounds made with ElevenLabs: lock-on, homing rounds, re-acquire.
+
 ## 1.19.4
 
 - A Neon Hub mook's **Punknife** gets the light blade look (it was drawn as a blunt weapon).

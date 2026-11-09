@@ -518,6 +518,18 @@
       "extremeCyberpsychosis": {
         "name": "Extreme Cyberpsychosis",
         "hint": "Humanity below 0: a complete psychotic break. The GM plays the character until Humanity is positive again (Immunoblockers can bring them back). Each Round, 1 LUCK buys a try at retaking the Move Action or the Action. The +2 is the GM's call."
+      },
+      "powerRebuild": {
+        "name": "Power Weapon",
+        "hint": "A Power gun in hand: +5 Bonus Damage on its Critical Injuries, and ricochets at -4 off cover to hit a target you know is there but can't see (Aimed: only the -8)."
+      },
+      "smartRebuild": {
+        "name": "Smart Weapon",
+        "hint": "A Smart gun in hand: +1 to its attacks with a Personal Link or Subdermal Grip. Improved Smart Ammunition ignores visual obscurement, and a miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK), the first shot's penalties still applying."
+      },
+      "techRebuild": {
+        "name": "Tech Weapon",
+        "hint": "A Tech gun in hand: its scope shows outlines through thin cover. Charge it with the Move Action (20 Rounds or until fired): the next shot is ROF 1, goes through thin cover without damaging it and ignores half the target's SP."
       }
     },
     "Key": {
@@ -1082,6 +1094,26 @@
       "arsenalPlayerFlashes": {
         "name": "Muzzle flashes for players' shots",
         "hint": "Diwako's muzzle flash (with DF Active Lights) only lights the GM's own shots; this sends players' shots to the GM's client so theirs flash too. The GM must be viewing the scene."
+      },
+      "arsenalRebuildConditions": {
+        "name": "Weapon conditions",
+        "hint": "Power Weapon, Smart Weapon and Tech Weapon go on a character while a gun of that flavor (or with that Rebuild) is equipped, and come off when it isn't. They carry no numbers (the weapon traits add those on the roll); they show on the token and switch on the looks below."
+      },
+      "arsenalShotFx": {
+        "name": "Ricochet and smart shot looks",
+        "hint": "A Power ricochet is drawn bouncing off the nearest wall that gets it round to the target, with sparks at the bounce. A Smart gun's rounds lock on and curve in to the target (Improved Smart rounds glowing magenta), and an Improved Smart retry loops back round. Needs Sequencer; these shots replace Automated Animations' straight shot."
+      },
+      "arsenalXray": {
+        "name": "Tech scopes see through thin cover",
+        "hint": "While a character with a Tech Weapon is selected, their player sees a glowing outline of anyone behind thin cover (walls marked \"Thin cover\" in the wall's settings, and closed doors) who they can't otherwise see. Only on that player's screen. Hidden tokens are never shown."
+      },
+      "arsenalThinDoors": {
+        "name": "Closed doors are thin cover",
+        "hint": "Tech scopes see through closed doors. Off: only walls marked \"Thin cover\" count."
+      },
+      "arsenalSmartPrompt": {
+        "name": "Ask to retry Improved Smart misses",
+        "hint": "When an Improved Smart round misses by 5 or less, the shooter is asked straight away whether to take the second try (14 + 1d10, the first shot's penalties, and any LUCK they add). The button on the card stays either way."
       },
       "arsenalHitCheck": {
         "name": "Does it hit?",
@@ -2046,6 +2078,7 @@
       "Source": "Neon Conditions",
       "CriticalItem": "Cyberpunk RED's Critical Injury item carries its penalties and Death Save increase",
       "WoundMirror": "Cyberpunk RED applies the Wound State's roll penalties itself",
+      "RebuildMirror": "comes and goes with the weapon in hand; Neon Arsenal adds its numbers on the roll",
       "Minimum": "{key} minimum {value}",
       "Maximum": "{key} maximum {value}",
       "ToggleOn": "{change} (a roll dialog toggle, ticked)",
@@ -2088,7 +2121,19 @@
         "push": "Propulsion Impact: whoever this hits is pushed {metres} m/yds away (done)."
       },
       "SmartRetry": "Improved Smart retry (vs DV{dv})",
-      "SmartRetryFlavor": "Improved Smart Ammunition: 14 + 1d10 (apply the first shot's penalties)",
+      "SmartRetryFlavor": "Improved Smart Ammunition: 14 + 1d10, with the first shot's penalties",
+      "RetryLuck": "{luck} LUCK",
+      "RetryAsk": {
+        "Title": "Improved Smart Ammunition",
+        "Body": "Missed DV{dv} by {by}. The round can re-acquire: a second try at {formula}.",
+        "Luck": "LUCK to add (you have {luck})",
+        "Go": "Re-acquire",
+        "No": "Let it go"
+      },
+      "ThinCover": {
+        "Label": "Thin cover (Neon Arsenal)",
+        "Hint": "A thin wall, a car door, a shoji screen: Tech scopes show who's behind it as an outline, and a charged Tech shot goes through it. Closed doors count already (a world setting)."
+      },
       "PlaceHint": "Place the {size} m/yds area: left-click to place it, right-click or Escape for a normal attack.",
       "Hit": "{total} vs DV{dv}: on target.",
       "Miss": "{total} vs DV{dv}: missed.",

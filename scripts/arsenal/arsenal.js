@@ -15,6 +15,10 @@ import { Blast, damageFromHtml } from "./blast.js";
 import { Dv } from "./dv.js";
 import { Sound } from "./sound.js";
 import { Defense } from "./defense.js";
+import { Shots } from "./shots.js";
+import { Xray } from "./xray.js";
+import { Equipped } from "./equipped.js";
+import { Stakes } from "../stakes/stakes.js";
 import { L, esc } from "../util.js";
 
 /** How long a roll waits for its card. */
@@ -52,6 +56,23 @@ export function hitLines(total, targets, { autofire = false, cap = 0 } = {}) {
 /** Can an Improved Smart round try again (a miss by 5 or less)? */
 export const smartRetry = (total, dv) => Number.isFinite(Number(dv)) && Number(total) <= Number(dv) && Number(dv) - Number(total) <= SMART_RETRY.within;
 
+/** The penalties on a roll (its negative modifiers, summed): an Improved Smart retry keeps them. */
+export function penaltyOf(roll) {
+  const mods = Array.isArray(roll?.mods) ? roll.mods : [];
+  return mods.reduce((sum, m) => {
+    const v = Number(typeof m === "object" && m !== null ? m.value : m);
+    return Number.isFinite(v) && v < 0 ? sum + v : sum;
+  }, 0);
+}
+
+/** An Improved Smart retry's formula: 14 + 1d10, the first shot's penalties, and any LUCK spent. */
+export function retryFormula(penalty = 0, luck = 0) {
+  let f = `${SMART_RETRY.base} + 1d10`;
+  if (penalty) f += ` - ${Math.abs(penalty)}`;
+  if (luck > 0) f += ` + ${luck}`;
+  return f;
+}
+
 /**
  * Neon Arsenal: Cyberpunk RED's weapons in the 2070s, at the table. Automated Animations' looks
  * (with Diwako's muzzle flashes), sounds, area attacks that place their own template, and the
@@ -65,6 +86,8 @@ export const Arsenal = {
   init() {
     Sound.init();
     Defense.init();
+    Xray.init();
+    Equipped.init();
     AA.init();
     Blast.init();
     Hooks.on("preCreateChatMessage", (message, data, options, userId) => {
@@ -87,6 +110,7 @@ export const Arsenal = {
     Dv.installDisplay();
     // The GM's offer to install the animations comes a few seconds in; nothing waits for the answer.
     AA.ready();
+    Equipped.ready();
   },
 
   /** Wrap CPR's confirmRoll (once): it runs right before the dice, for every way a roll is made. */
@@ -178,7 +202,7 @@ export const Arsenal = {
     const p = this.pending;
     if (!p || userId !== game.user.id || Date.now() - p.at > PENDING_MS || !String(message.content ?? "").includes('class="rollcard"')) return;
     this.pending = null;
-    message.updateSource({ [`flags.${MODULE_ID}.arsenal`]: { ...p.tag, total: Number(p.roll.resultTotal) || 0, at: Date.now() } });
+    message.updateSource({ [`flags.${MODULE_ID}.arsenal`]: { ...p.tag, total: Number(p.roll.resultTotal) || 0, penalty: penaltyOf(p.roll), at: Date.now() } });
   },
 
   /**
@@ -201,6 +225,13 @@ export const Arsenal = {
       const hit = a.dv !== null && a.dv !== undefined ? a.total > a.dv : false;
       for (const s of soundPlan(keys, { mode: a.mode, ricochet: a.ricochet, hit, ranged: a.ranged, explosive: a.explosive })) {
         Sound.play(s.key, { delay: s.delay });
+      }
+      if (Shots.attack(a) && Shots.lookFor(a) === "smart") {
+        Sound.play("smartLock");
+        Sound.play("smartSeek", { delay: 380 });
+      }
+      if (this.canRetry(a) && Settings.get("arsenalSmartPrompt")) {
+        setTimeout(() => this.promptRetry(message).catch((err) => console.error(`${MODULE_ID} | smart retry`, err)), 1400);
       }
       if (a.area) {
         const doc = Blast.find(a.actorId, a.itemId, { states: ["placed"] });
@@ -240,7 +271,7 @@ export const Arsenal = {
     if (a.kind === "damage" && a.sources?.length && Settings.get("arsenalRebuilds")) notes.push(L(`${LANG}.Arsenal.Note.traits`, { list: esc(a.sources.map((s) => this.sourceLabel(s)).join(", ")) }));
     if (a.kind === "damage" && a.push) notes.push(L(`${LANG}.Arsenal.Note.push`, { metres: a.push.metres }));
     const actor = game.actors.get(a.actorId);
-    if (a.kind === "attack" && a.flavor === "smart" && a.ammoType === "smart" && smartRetry(a.total, a.dv) && actor?.isOwner) {
+    if (this.canRetry(a) && actor?.isOwner) {
       buttons.push(`<button type="button" data-arsenal="retry"><i class="fa-solid fa-satellite-dish"></i> ${L(`${LANG}.Arsenal.SmartRetry`, { dv: a.dv })}</button>`);
     }
     if (a.kind === "damage" && a.area && game.user.isGM) {
@@ -259,7 +290,7 @@ export const Arsenal = {
     box.querySelector("[data-arsenal=retry]")?.addEventListener("click", (ev) => {
       ev.preventDefault();
       ev.currentTarget.disabled = true;
-      this.smartRetry(message).catch((err) => ui.notifications.error(err.message));
+      this.promptRetry(message).catch((err) => ui.notifications.error(err.message));
     });
   },
 
@@ -267,17 +298,53 @@ export const Arsenal = {
     return ["power", "smart", "tech"].includes(s) ? L(`${LANG}.Arsenal.Flavor.${s}`) : s;
   },
 
-  /** Improved Smart Ammunition: a miss by 5 or less tries again at 14 + 1d10 (the first shot's penalties still apply). */
-  async smartRetry(message) {
+  /** Does an attack card offer an Improved Smart retry (a Smart gun's Improved Smart round that missed by 5 or less)? */
+  canRetry(a) {
+    return a?.kind === "attack" && a.flavor === "smart" && a.ammoType === "smart" && !a.retried && smartRetry(a.total, a.dv);
+  },
+
+  /** Ask the shooter whether to take the Improved Smart retry, and how much LUCK to add. */
+  async promptRetry(message) {
+    const a = message.flags?.[MODULE_ID]?.arsenal;
+    const actor = game.actors.get(a?.actorId);
+    if (!this.canRetry(a) || !actor?.isOwner || message.flags[MODULE_ID].arsenal.retried) return null;
+    const luck = Stakes.luck(actor).value;
+    const penalty = Number(a.penalty) || 0;
+    const content = `<p>${L(`${LANG}.Arsenal.RetryAsk.Body`, { by: Number(a.dv) - Number(a.total) + 1, dv: a.dv, formula: retryFormula(penalty) })}</p>`
+      + (luck > 0 ? `<div class="form-group"><label>${L(`${LANG}.Arsenal.RetryAsk.Luck`, { luck })}</label><input type="number" name="luck" value="0" min="0" max="${luck}" step="1"></div>` : "");
+    const spend = await Compat.DialogV2.wait({
+      window: { title: L(`${LANG}.Arsenal.RetryAsk.Title`) },
+      classes: ["neon-combat", "ncm-dialog"],
+      content,
+      buttons: [
+        { action: "retry", label: L(`${LANG}.Arsenal.RetryAsk.Go`), icon: "fa-solid fa-satellite-dish", default: true,
+          callback: (event, button) => Math.max(0, Math.min(luck, Math.floor(Number(button.form?.elements?.luck?.value) || 0))) },
+        { action: "no", label: L(`${LANG}.Arsenal.RetryAsk.No`), callback: () => null }
+      ],
+      rejectClose: false
+    });
+    if (spend === null || spend === undefined || spend === "no") return null;
+    return this.smartRetry(message, { luck: Number(spend) || 0 });
+  },
+
+  /**
+   * Improved Smart Ammunition: a miss by 5 or less tries again at 14 + 1d10 instead of STAT + Skill,
+   * the first shot's penalties still applying, plus any LUCK spent (2070 Core Rules Ch07).
+   */
+  async smartRetry(message, { luck = 0 } = {}) {
     const a = message.flags[MODULE_ID].arsenal;
     if (a.retried) return null;
-    const roll = await new Roll(`${SMART_RETRY.base} + 1d10`).evaluate();
-    await message.setFlag(MODULE_ID, "arsenal.retried", true).catch(() => null);
     const actor = game.actors.get(a.actorId);
+    await message.setFlag(MODULE_ID, "arsenal.retried", true).catch(() => null);
+    a.retried = true;
+    const spent = luck > 0 && actor ? -(await Stakes.setLuck(actor, -luck)) : 0;
+    const roll = await new Roll(retryFormula(Number(a.penalty) || 0, spent)).evaluate();
     const hit = roll.total > a.dv;
+    Shots.retry(a, hit);
+    Sound.play("smartReacquire");
     return roll.toMessage({
       speaker: ChatMessage.getSpeaker({ actor }),
-      flavor: `${L(`${LANG}.Arsenal.SmartRetryFlavor`)} · ${L(`${LANG}.Arsenal.${hit ? "Hit" : "Miss"}`, { total: roll.total, dv: a.dv })}`
+      flavor: `${L(`${LANG}.Arsenal.SmartRetryFlavor`)}${spent ? ` · ${L(`${LANG}.Arsenal.RetryLuck`, { luck: spent })}` : ""} · ${L(`${LANG}.Arsenal.${hit ? "Hit" : "Miss"}`, { total: roll.total, dv: a.dv })}`
     });
   },
 

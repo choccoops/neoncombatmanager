@@ -1,0 +1,4 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Neon Combat Manager: Tech Weapon (Neon Arsenal). Sized like CPR's status icons. -->
+  <path d="M256 28 454 142v228L256 484 58 370V142z" fill="#06141d" stroke="#3d8bff" stroke-width="22" stroke-linejoin="round"/><rect x="236" y="120" width="40" height="272" rx="6" fill="#3d8bff" opacity=".45"/><circle cx="330" cy="200" r="34" fill="none" stroke="#00e5ff" stroke-width="12" stroke-dasharray="14 10"/><path d="M296 250c-6 40 0 80 34 110M364 250c6 40 0 80-34 110" fill="none" stroke="#00e5ff" stroke-width="12" stroke-dasharray="14 10" stroke-linecap="round"/><path d="M120 256h96M296 256h0" stroke="#e8f6ff" stroke-width="16" stroke-linecap="round"/><path d="M196 236l28 20-28 20" fill="none" stroke="#e8f6ff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

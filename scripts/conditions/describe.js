@@ -51,6 +51,7 @@ export function changeText(ch, { long = false } = {}) {
 export function behaviour(c) {
   const out = [];
   if (c.mirror === "wound") out.push(L(`${LANG}.Effect.WoundMirror`));
+  if (c.mirror === "rebuild") out.push(L(`${LANG}.Effect.RebuildMirror`));
   if (c.category === "weather" || c.category === "visibility") out.push(L(`${LANG}.Effect.Environment`));
   if (c.turnStart?.damage) out.push(L(`${LANG}.Lab.TurnStartDamage`, { damage: c.turnStart.damage }));
   if (c.turnEnd?.damage) out.push(L(`${LANG}.Lab.TurnEndDamage`, { damage: c.turnEnd.damage }));
