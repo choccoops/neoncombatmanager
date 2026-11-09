@@ -633,6 +633,10 @@
         "name": "Damage from conditions",
         "hint": "Fire, drowning, radiation and reopened Critical Injuries: post a card the GM applies, apply it at once, or do nothing."
       },
+      "pickupCarried": {
+        "name": "Picked-up items are Carried",
+        "hint": "An item taken out of an Item Piles pile goes onto the character as Carried, ready for Equip / Change Weapon in the Action HUD. Without Item Piles, the same goes for an item dropped on a character's token or sheet."
+      },
       "trackMovement": {
         "name": "Track movement for Critical Injuries",
         "hint": "Add up how far the acting token moves each Turn, for Broken Ribs, Foreign Objects and damaged ears (over 4 m/yds)."
@@ -1890,6 +1894,9 @@
       "Suppressive": "Suppressive Fire",
       "Damage": "Damage",
       "Reload": "Reload",
+      "ChangeAmmo": "Change Ammo",
+      "Equip": "Equip / Change Weapon",
+      "HandsFree": "{free}/{total} free",
       "NoCombat": "There's no encounter to roll Initiative in.",
       "NotInCombat": "{name} isn't in the encounter: select their token and roll again.",
       "NotYourTurn": "It isn't this character's turn.",
@@ -1928,6 +1935,41 @@
       "Saved": "Action HUD layout saved.",
       "MacroAdded": "{name} is in the HUD's Macros now.",
       "MacroNoRun": "You can't run {name} yet: the GM gives you Limited ownership of it (and Use Script Macros)."
+    },
+    "Hands": {
+      "Title": "Equip / Change Weapon",
+      "NoActor": "No character.",
+      "Free": "{free} of {total} hands free",
+      "Lost": "lost",
+      "Empty": "free",
+      "Held": "In hand",
+      "Carried": "Carried",
+      "NoHand": "no hand",
+      "Needs": "{n}-handed",
+      "FreeIt": "Free",
+      "FreeHint": "Put it away: back to Carried, and the hand is free.",
+      "Drop": "Drop",
+      "DropHint": "Drop it on the ground.",
+      "NothingHeld": "Empty-handed.",
+      "NothingCarried": "No weapons marked Carried: set one to Carried on the sheet's Gear tab (or pick one up).",
+      "NoneFree": "{name} has no free hand for {item}: free one first.",
+      "NeedMore": "{item} needs {need} hands and {name} has {free} free: free one first.",
+      "Piled": "{name} drops {item} on the ground.",
+      "Owned": "{name} puts down {item}: it stays on the sheet as Owned, no longer on them.",
+      "PickedUp": "{name} picks up {item} (Carried).",
+      "Side": {
+        "R": "Right hand",
+        "L": "Left hand",
+        "R2": "Lower right hand",
+        "L2": "Lower left hand",
+        "Extra": "Hand {n}"
+      },
+      "Short": {
+        "R": "R",
+        "L": "L",
+        "R2": "R2",
+        "L2": "L2"
+      }
     },
     "Chat": {
       "Loading": "Loading…",

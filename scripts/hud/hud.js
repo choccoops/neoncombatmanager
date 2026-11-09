@@ -4,6 +4,8 @@ import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { catalog } from "./catalog.js";
 import { Run } from "./run.js";
+import { Hands } from "./hands.js";
+import { HandsApp } from "./hands-app.js";
 import { normalize, resolve, TEMPLATE, addPick, setGroup } from "./layout.js";
 import { debounce, L, slug } from "../util.js";
 
@@ -48,10 +50,12 @@ export const Hud = {
       Hooks.on(h, (doc) => {
         const actor = doc?.documentName === "Actor" ? doc : doc?.parent;
         if (actor && actor === this.current?.actor) soon();
+        if (actor && doc?.documentName !== "Actor") HandsApp.refresh(actor);
       });
     }
     Hooks.on("updateUser", (user) => user?.id === game.user?.id && soon());
     for (const h of ["createMacro", "updateMacro", "deleteMacro"]) Hooks.on(h, () => soon());
+    Hands.init();
     game.keybindings.register(MODULE_ID, "toggleActionHud", {
       name: `${LANG}.Hud.Title`,
       hint: `${LANG}.Hud.KeyHint`,

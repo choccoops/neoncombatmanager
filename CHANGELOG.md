@@ -1,19 +1,36 @@
 # Changelog
 
-## 1.20.0
+## 1.21.0
 
-**AV landings** for Neon FX (needs Sequencer; uses JB2A's smoke where it's installed):
+**Weapons in the Action HUD**, after a session at the table. Also in this release: 1.20.0's AV
+landings (the AV Landing Zone and AV Landing macros, below).
 
-- **AV Landing Zone** (macro): a holo warning zone you place on the ground. It is a rectangular
-  amber grav field with a hazard-striped pad, a scan bar, a pulsing frame, corner brackets and
-  blinking beacons, sized to the selected AV and squared on the grid. Everyone sees it, and it
-  stays after a reload.
-- **AV Landing** (macro): the selected AV flies in to the nearest zone, high, with its shadow
-  below, then hovers and sets down in dust, and the zone powers down. A hidden AV comes in from
-  the sky and is revealed.
-- New quiet sounds made with ElevenLabs: zone power-up, warning beeps, engines and touchdown.
-- Worlds that already have the Neon FX macro folder get the two new macros added once. A macro
-  you delete stays deleted.
+- **Change Ammo is on each gun**, next to Reload, with Attack, Aimed Shot, Autofire,
+  Suppressive Fire and Damage. It opens Cyberpunk RED's own load dialog (another kind of ammo,
+  or unload), as the sheet's Change Ammo does.
+- **Equip / Change Weapon** ends the Weapons group (it shows how many hands are free) and opens a
+  small window:
+  - **your hands**, and what's in each. Two to start, plus Cyberpunk RED's Number of Hands
+    effects (the system's Artificial Shoulder Mount gives two more). The 2070 Item Compendium's
+    Shoulder Mount has no such effect, so this module counts it as two more hands. A Dismembered
+    Arm or Hand takes one away: the side Neon At Home asked for, else right first.
+  - **in hand**: Free puts the weapon back to Carried; Drop puts it on the ground.
+  - **Carried**: your weapons marked Carried, each with a button per free hand. A two-handed
+    weapon takes the hand you pick and the next free one. With no hand free (or not enough for a
+    two-handed one), nothing changes and you're told to free one first. Neon At Home's own
+    checks (a lost hand, carry slots) still apply.
+  - Hands come from Cyberpunk RED's Equipped state and each weapon's Hands Required; shields
+    take one too. Which hand holds what is this module's own note on the item. A weapon equipped
+    on the sheet takes the first free hand.
+- **Dropping**: with Neon At Home on, its own drop: an Item Piles pile beside the token, the
+  weapon's attachments going back on when it's picked up, the pile cleared once it's empty.
+  Without Neon At Home, an Item Piles pile beside the token. Without Item Piles, the weapon stays
+  on the sheet as Owned (no longer on the character) rather than being deleted. A chat card says
+  which.
+- **Picking up lands it Carried**: anything equippable taken out of an Item Piles pile goes onto
+  the character as Carried, ready to equip. So does anything dropped earlier by this module or
+  Neon At Home, however it comes back. Without Item Piles, an item dropped on a character's token
+  or sheet is a pickup too. A world setting (Combat) turns it off.
 
 **What the 2070 gun flavors look like** (Neon Arsenal, with Sequencer):
 
@@ -31,6 +48,21 @@
   now keeps the first shot's penalties and can add LUCK (the rule's "+ LUCK"), and its round
   loops back round from past the target.
 - New quiet sounds made with ElevenLabs: lock-on, homing rounds, re-acquire.
+
+## 1.20.0
+
+**AV landings** for Neon FX (needs Sequencer; uses JB2A's smoke where it's installed):
+
+- **AV Landing Zone** (macro): a holo warning zone you place on the ground. It is a rectangular
+  amber grav field with a hazard-striped pad, a scan bar, a pulsing frame, corner brackets and
+  blinking beacons, sized to the selected AV and squared on the grid. Everyone sees it, and it
+  stays after a reload.
+- **AV Landing** (macro): the selected AV flies in to the nearest zone, high, with its shadow
+  below, then hovers and sets down in dust, and the zone powers down. A hidden AV comes in from
+  the sky and is revealed.
+- New quiet sounds made with ElevenLabs: zone power-up, warning beeps, engines and touchdown.
+- Worlds that already have the Neon FX macro folder get the two new macros added once. A macro
+  you delete stays deleted.
 
 ## 1.19.4
 
