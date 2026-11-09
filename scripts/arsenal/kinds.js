@@ -199,12 +199,15 @@ const AUTOFIRE_TABLES = {
 };
 
 /**
- * The DV table a weapon's Autofire rolls against. A 2070 card names it ("Autofire (Machine Gun
- * 6)"); otherwise the table that goes with its type, the way CPR pairs them; else
+ * The DV table a weapon's Autofire rolls against. Neon Hub's flag when an attachment set it; else
+ * the one a 2070 card names ("Autofire (Machine Gun 6)"); otherwise the table that goes with its type, the way CPR pairs them; else
  * "<table> (Autofire)" (what Diwako's DV display and the AA fork look for).
  */
 export function autofireTable(weapon) {
   const s = weapon?.system ?? {};
+  // Set by Neon Hub when an Autofire attachment changes it (a Constant Recoil System's Machine Gun table).
+  const hub = weapon?.flags?.[NEON_HUB]?.autofireTable;
+  if (hub) return hub;
   const text = String(s.description?.value ?? "").replace(/<[^>]+>/g, " ");
   const m = /Autofire\s*\(\s*([A-Za-z ]+?)\s*\d/i.exec(text);
   if (m) {

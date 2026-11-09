@@ -6,6 +6,11 @@
   the rest) change a gun's own range table, and Neon Arsenal reads that table: the DV display,
   Does it hit?, the AA look and the areas follow the swap. Autofire stays on the gun's type's
   Autofire table, as the rule says.
+- **Neon Hub's Autofire attachments** (Pistol Autosear, SMG Cyclic Internals, Constant Recoil
+  System and the rest) set the gun's Autofire rating and Suppressive Fire, which the Action HUD's
+  Autofire and Suppressive buttons and Does it hit?'s multiplier cap already read, and name its new
+  Autofire table on the gun, which the DV display and Does it hit? now read first: a Constant
+  Recoil rifle autofires on the Machine Gun table.
 - **Fixed: a rocket launcher with a Long Tube looked like a missile launcher.** Its look comes from
   the table it was made with, not the one the tube moved it to.
 

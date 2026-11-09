@@ -117,6 +117,10 @@ test("the Autofire table: the one a 2070 card names, else the type's", () => {
   assert.equal(autofireTable(weapon("Marksman AR", { weaponType: "assaultRifle", dvTable: "DV Marksman Rifle" })), "DV Assault Rifle (Autofire)");
   assert.equal(autofireTable(weapon("Long Barrel", { weaponType: "heavyPistol", dvTable: "DV Long Barrel Pistol" })), "DV Pistol (Autofire, Machine Pistol)");
   assert.equal(autofireTable(weapon("Choked", { weaponType: "shotgun", dvTable: "DV Long Barrel Shotgun" })), "DV Long Barrel Shotgun (Autofire)", "no such table: forWeapon falls back to the single-shot one");
+  // Neon Hub's Autofire attachments name the new table on the gun, ahead of its card.
+  const recoil = weapon("Recoil AR", { weaponType: "assaultRifle", dvTable: "DV Assault Rifle", description: { value: "Autofire (Assault Rifle 4)" } }, { "cpr-neon-hub": { autofireTable: "DV Machine Gun (Autofire)" } });
+  assert.equal(autofireTable(recoil), "DV Machine Gun (Autofire)");
+  assert.equal(autofireTable(weapon("Autosear", { weaponType: "heavyPistol", dvTable: "DV Snubnose Pistol" }, { "cpr-neon-hub": { autofireTable: "DV Pistol (Autofire, Machine Pistol)" } })), "DV Pistol (Autofire, Machine Pistol)");
 });
 
 test("the DV a weapon faces follows its own table, so a Snub Barrel's swap shows everywhere", async () => {

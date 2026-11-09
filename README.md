@@ -648,7 +648,10 @@ names or types, left or right) still apply.
 another table by changing its own range table, so the DV display, Does it hit?, the AA look and
 the areas all follow with nothing to set here: a Snub Barrel pistol shows DV Snubnose Pistol.
 Autofire stays on the gun's type's Autofire table (the rule changes the range table and nothing
-else), and a rocket launcher with a Long Tube still looks like a rocket launcher.
+else), and a rocket launcher with a Long Tube still looks like a rocket launcher. Neon Hub's Autofire
+attachments (a Pistol Autosear, SMG Cyclic Internals, a Constant Recoil System...) set the gun's
+Autofire rating and Suppressive Fire, so the HUD's buttons follow, and name the gun's new Autofire
+table (`flags.cpr-neon-hub.autofireTable`), which the DV display and Does it hit? use first.
 
 **Does it hit?** Under each ranged attack card, for each target: the DV at their range (the
 2070 tables, an Autofire shot on the gun's own Autofire table), hit or miss and by how much (a
