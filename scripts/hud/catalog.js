@@ -50,8 +50,8 @@ export function weaponsOf(actor) {
 /**
  * Every action an actor has, by source. An entry is { key, label, img?, icon?, sub?, on?, alert?,
  * off?, buttons? }; a weapon has buttons (Attack, Aimed, Autofire, Suppressive, Damage, Reload),
- * each with its own key, Change Ammo with Reload. The Weapons group ends with Equip / Change Weapon
- * (scripts/hud/hands.js). Keys that run something carry the item's id ("atk:<id>"); the entry's
+ * each with its own key, Change Ammo with Reload. The Weapons group ends with Bare Hands (until Unarmed is
+ * equipped) and Equip / Change Weapon (scripts/hud/hands.js). Keys that run something carry the item's id ("atk:<id>"); the entry's
  * key, which a layout picks, carries its name ("weapon:<name>").
  * @param {Actor} actor
  * @param {object} [ctx] - { token, combat }
@@ -96,6 +96,13 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
       sub: ranged && mag ? `${Number(mag.value) || 0}/${Number(mag.max) || 0}` : (s.damage ? String(s.damage) : ""),
       alert: ranged && mag && Number(mag.max) > 0 && !Number(mag.value), buttons
     });
+  }
+
+  // Bare Hands: a Brawling attack with Cyberpunk RED's Unarmed weapon, equipped (and made) on use.
+  if (Hands.unarmedOf(actor)?.system?.equipped !== "equipped") {
+    const brawl = items.find((i) => i.type === "skill" && slug(i.name) === "brawling");
+    const base = brawl ? CPR.stat(actor, brawl.system?.stat || "dex") + (Number(brawl.system?.level) || 0) : null;
+    out.weapons.push({ key: "hands:bare", run: "brawl:attack", label: L(`${LANG}.Hud.BareHands`), icon: "fa-solid fa-hand-back-fist", sub: base === null ? "" : `+${base}` });
   }
 
   // Equip / Change Weapon: the hands, what's in them, and the Carried weapons to put in them.

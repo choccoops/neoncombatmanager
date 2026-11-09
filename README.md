@@ -136,9 +136,12 @@ sheet as Owned. Anything picked up out of an Item Piles pile lands on the charac
 (without Item Piles: an item dropped on a character's token or sheet). The **Picked-up items are
 Carried** setting (Combat) turns that off.
 
-Bare hands: Cyberpunk RED's own **Unarmed** weapon (its Core Weapons compendium, Brawling, damage
-by BODY, core rulebook p.176) is the item for a Brawling attack. Put it on the character and equip
-it like any weapon.
+**Bare Hands** sits next to it: a Brawling attack with Cyberpunk RED's own **Unarmed** weapon (its
+Core Weapons compendium; damage by BODY, core rulebook p.176). It uses the character's Unarmed
+item if they have one (in hand, Carried or Owned), or puts one in their inventory, equips it into a
+free hand and rolls its Attack. Fists need a free hand like any weapon: with none free, Unarmed
+stays Carried and you're told to free one. Once it's in hand, Unarmed is a weapon row of its own
+(Attack, Damage) and Bare Hands steps aside.
 
 Inspired by Token Action HUD and p4vl0-dev's
 [Cyberpunk style](https://github.com/p4vl0-dev/Token-Action-HUD-Cyberpunk-style), but standalone:
