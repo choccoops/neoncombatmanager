@@ -6,6 +6,17 @@
     <span class="ncm-kicker">// {{localize "NEONCOMBAT.Carousel.Round"}}</span>
     <b>{{#if started}}{{round}}{{else}}—{{/if}}</b>
   </div>
+  {{#if started}}
+  {{#if gm}}
+  <button type="button" class="ncm-car-mode is-{{mode.mode}}" data-ncm="mode" data-tooltip="{{mode.hint}} {{mode.switchHint}}" aria-label="{{mode.switchHint}}">
+    <i class="fa-solid {{#if mode.stealth}}fa-user-ninja{{else}}fa-burst{{/if}}"></i> <span>{{mode.label}}</span>
+  </button>
+  {{else}}
+  <div class="ncm-car-mode is-{{mode.mode}}" data-tooltip="{{mode.hint}}">
+    <i class="fa-solid {{#if mode.stealth}}fa-user-ninja{{else}}fa-burst{{/if}}"></i> <span>{{mode.label}}</span>
+  </div>
+  {{/if}}
+  {{/if}}
   <div class="ncm-car-clock" data-tooltip="{{localize 'NEONCOMBAT.Carousel.ClockHint' seconds=roundSeconds}}">
     <span><i class="fa-solid fa-stopwatch"></i> T+{{elapsed}}</span>
     <span><i class="fa-regular fa-clock"></i> {{clock}}</span>
@@ -33,7 +44,8 @@
       <button type="button" data-ncm="nextRound" data-tooltip="COMBAT.RoundNext"><i class="fa-solid fa-forward-fast"></i></button>
       {{else}}
       <button type="button" data-ncm="rollNPC" data-tooltip="COMBAT.RollNPC"><i class="fa-solid fa-dice-d10"></i> NPC</button>
-      <button type="button" class="ncm-cta" data-ncm="start"><i class="fa-solid fa-bolt"></i> {{localize "NEONCOMBAT.Carousel.Start"}}</button>
+      <button type="button" class="ncm-sneak{{#if sneakFirst}} ncm-cta{{/if}}" data-ncm="sneak" data-tooltip="NEONCOMBAT.Carousel.SneakHint"><i class="fa-solid fa-user-ninja"></i> {{localize "NEONCOMBAT.Carousel.Sneak"}}</button>
+      <button type="button" class="{{#unless sneakFirst}}ncm-cta{{/unless}}" data-ncm="start" data-tooltip="NEONCOMBAT.Carousel.StartHint"><i class="fa-solid fa-bolt"></i> {{localize "NEONCOMBAT.Carousel.Start"}}</button>
       {{/if}}
       <button type="button" data-ncm="stakes" data-tooltip="NEONCOMBAT.Stakes.Title"><i class="fa-solid fa-dice-six"></i></button>
       <button type="button" data-ncm="hub" data-tooltip="NEONCOMBAT.Hub.Title"><i class="fa-solid fa-map-location-dot"></i></button>

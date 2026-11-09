@@ -4,7 +4,7 @@
 // (CPR_SOURCE=/path/to/fvtt-cyberpunk-red-core/src).
 import { mkdir, writeFile, readFile, cp, access } from "node:fs/promises";
 import path from "node:path";
-import { makeActor, makeCombat, registerSettings, root, chat } from "../tests/helpers/foundry.mjs";
+import { makeActor, makeCombat, registerSettings, root, chat, asGM } from "../tests/helpers/foundry.mjs";
 
 const Settings = await registerSettings();
 const { Registry } = await import("../scripts/conditions/registry.js");
@@ -50,6 +50,17 @@ await combat.setFlag("cpr-neon-combat-manager", "started", game.time.worldTime -
 
 const T = (name, data) => Compat.renderTemplate(`modules/cpr-neon-combat-manager/templates/${name}.hbs`, data);
 const carousel = await T("carousel", Carousel.context(combat));
+// The same encounter as a stealth segment (the GM's, and a player's), and one not begun yet.
+await combat.setFlag("cpr-neon-combat-manager", "mode", "stealth");
+await combat.setFlag("cpr-neon-combat-manager", "ladder", "suspicious");
+const carouselStealth = await T("carousel", Carousel.context(combat));
+asGM(false);
+const carouselStealthPlayer = await T("carousel", Carousel.context(combat));
+asGM(true);
+await combat.setFlag("cpr-neon-combat-manager", "mode", "combat");
+await combat.setFlag("cpr-neon-combat-manager", "ladder", "alert");
+const notBegun = makeCombat([vee, ganger, hazel], { round: 0 });
+const carouselPre = await T("carousel", Carousel.context(notBegun));
 const labList = ["brokenLeg", "onFireStrong", "darkness", "wxAcidRain", "blackLace", "flashbanged"].map((id) => {
   const c = Registry.get(id);
   return { id, name: c.name, img: c.img, hint: c.hint, category: game.i18n.localize(`NEONCOMBAT.Category.${c.category}`), summary: summary(c), page: typeof c.page === "number" ? `Core rulebook p.${c.page}` : c.page, override: id === "darkness" };
@@ -188,6 +199,11 @@ body>.row,body>.icons,#ui-bottom{margin-top:240px}
   el.style.setProperty("--ncm-center", Math.round(r.left + r.width / 2) + "px");
   el.style.setProperty("--ncm-room", Math.round(r.width - 16) + "px");
 </script>
+<div class="row" style="display:grid;gap:12px;justify-items:center;padding-top:200px">
+  <section id="ncm-carousel" class="neon-combat ncm-carousel size-medium mode-stealth" style="position:static;transform:none">${carouselStealth}</section>
+  <section id="ncm-carousel" class="neon-combat ncm-carousel size-small mode-stealth is-collapsed" style="position:static;transform:none">${carouselStealthPlayer}</section>
+  <section id="ncm-carousel" class="neon-combat ncm-carousel size-small is-collapsed" style="position:static;transform:none">${carouselPre}</section>
+</div>
 <div class="row">
   <div class="neon-combat ncm-window ncm-lab application win"><header class="window-header">Condition Lab</header><section class="window-content">${lab}</section></div>
   <div class="chat">${card1}${card2}</div>

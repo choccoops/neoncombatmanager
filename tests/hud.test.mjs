@@ -118,6 +118,20 @@ test("in a fight: Initiative shows, End Turn lights up on your turn, Death Save 
   game.combat = null;
 });
 
+test("in a stealth segment, the Stealth roll joins the Turn group", async () => {
+  const { EncounterMode } = await import("../scripts/combat/mode.js");
+  const vee = makeActor({ name: "Vee" }, [{ _id: "sth", name: "Stealth", type: "skill", system: { stat: "dex", level: 6 } }]);
+  const combat = makeCombat([vee]);
+  game.combat = combat;
+  assert.ok(!catalog(vee).turn.some((t) => t.key === "turn:stealth"), "not in full combat");
+  await combat.setFlag("cpr-neon-combat-manager", "mode", "stealth");
+  assert.equal(EncounterMode.isStealth(combat), true);
+  const t = catalog(vee).turn;
+  const s = t.find((x) => x.key === "turn:stealth");
+  assert.deepEqual([s.run, s.alert, t.indexOf(s)], ["sk:sth", true, 2]);
+  game.combat = null;
+});
+
 /* ---------------------------------------- */
 /*  Running actions                         */
 /* ---------------------------------------- */

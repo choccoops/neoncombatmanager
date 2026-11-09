@@ -132,8 +132,9 @@ export const CombatTime = {
     if (!Compat.isActiveGM || !Settings.get("combatSummary") || !combat?.started) return;
     const seconds = this.elapsed(combat);
     const { Cards } = await import("./cards.js");
+    const { EncounterMode } = await import("./mode.js");
     await Cards.post({
-      kicker: L(`${LANG}.Card.CombatOverKicker`),
+      kicker: L(`${LANG}.Card.${EncounterMode.isStealth(combat) ? "StealthOverKicker" : "CombatOverKicker"}`),
       title: L(`${LANG}.Card.CombatOver`, { rounds: combat.round }),
       body: `<p>${L(`${LANG}.Card.CombatOverBody`, { elapsed: formatElapsed(seconds), clock: esc(this.clock()) })}</p>`,
       tone: "cyan",

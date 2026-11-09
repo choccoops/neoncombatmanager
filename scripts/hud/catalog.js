@@ -7,6 +7,7 @@ import { Hub } from "../hub/hub.js";
 import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
 import { flavorOf } from "../arsenal/kinds.js";
 import { Hands } from "./hands.js";
+import { EncounterMode } from "../combat/mode.js";
 import { L, slug } from "../util.js";
 
 const { getProperty } = foundry.utils;
@@ -71,6 +72,12 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     { key: "turn:deathSave", label: L(`${LANG}.Hud.DeathSave`), icon: "fa-solid fa-skull", sub: mortal ? `+${CPR.deathSave(actor).penalty}` : "", alert: mortal },
     { key: "turn:facedown", label: L(`${LANG}.Hud.Facedown`), icon: "fa-solid fa-face-angry" }
   );
+  // In a stealth segment, the Stealth roll sits with the Turn (it's what each Turn is for).
+  const stealth = combat?.started && EncounterMode.isStealth(combat) ? items.find((i) => i.type === "skill" && slug(i.name) === "stealth") : null;
+  if (stealth) {
+    const base = CPR.stat(actor, stealth.system?.stat) + (Number(stealth.system?.level) || 0);
+    out.turn.splice(2, 0, { key: "turn:stealth", run: `sk:${stealth.id}`, label: stealth.name, sub: `+${base}`, icon: "fa-solid fa-user-ninja", alert: myTurn });
+  }
 
   // Weapons.
   for (const w of weaponsOf(actor)) {
