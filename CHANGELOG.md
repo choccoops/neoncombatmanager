@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.22.0
+
+**Stealth segments.** Begin no longer puts the enemies at Alert: the carousel runs sneaking Turn
+by Turn too.
+
+- **Sneak or Start.** Before a combat begins, the GM's carousel has two buttons.
+  - **Start** is full combat, as before.
+  - **Sneak** begins a stealth segment: the carousel turns violet, with a **STEALTH** chip by the
+    Round. Players see the chip too.
+- **In a stealth segment, everything runs as in a fight:**
+  - the Initiative order, Turns and Rounds;
+  - each Round moving world time 3 seconds;
+  - timed conditions, Turn automation and Death Saves;
+  - Combat Awareness costing the Solo's Action.
+- **What waits:** the Awareness Ladder. It stays where the GM puts it.
+- **Spotted?** Click the chip: full combat, with the same queue, Round and Turn. Everyone gets a
+  card. The Ladder goes up to Alert if it was lower. Click again to go back to stealth.
+- **The Ladder rises once per stretch of full combat.** Before, every new Round put the Ladder
+  back to Alert. Now full combat raises it once, so the GM can lower it mid-fight and the next
+  Round won't undo that.
+- **Action HUD:** in a stealth segment, the character's Stealth roll joins the Turn group.
+- **New settings:**
+  - **Begin a combat as** (Combat): the mode for a combat begun from Foundry's own tracker or a
+    macro, and which carousel button is the main one.
+  - **Full combat puts the enemies at Alert** (on): turn it off to keep fights away from the
+    Ladder entirely.
+- The end-of-combat card reads *Stealth segment over* for a stealth segment.
+- **API:** `api.encounter` (`mode`, `isStealth`, `begin`, `setMode`, `toggle`) and the hook
+  `cpr-neon-combat-manager.encounterMode`.
+
 ## 1.21.0
 
 **Weapons in the Action HUD**, after a session at the table. Also in this release: 1.20.0's AV

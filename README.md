@@ -5,7 +5,9 @@ An encounter overhaul for **Cyberpunk RED - CORE** on Foundry VTT, part of the N
 encounter screen and makes the fight's conditions, clock, weather and lighting count in
 Cyberpunk RED's own rolls.
 
-- **Combat carousel**: the Initiative Queue as neon cards across the top of the screen.
+- **Combat carousel**: the Initiative Queue as neon cards across the top of the screen. **Sneak**
+  runs it as a stealth segment, Turn by Turn before anyone's spotted, and switches to full combat
+  without losing the order.
 - **Action HUD**: the controlled token's actions in one bar (Initiative, attacks with their fire
   modes, skills, role abilities, conditions), laid out by each player.
 - **Neon Chat**: Discord-style formatting, chat portraits, merged and editable messages, roll
@@ -77,6 +79,35 @@ While a combat is on, the Initiative Queue runs across the top of the screen:
   name display setting.
 
 Foundry's own sidebar tracker gets each combatant's Wound State and the combat clock too.
+
+### Stealth segments
+
+Sneaking in Turn by Turn, before anyone's spotted. Before the combat begins, the GM picks
+**Sneak** or **Start** on the carousel. **Start** begins full combat, as it always has. **Sneak**
+begins a *stealth segment*, with the carousel in violet and a **STEALTH** chip by the Round.
+
+- **What stays the same as a fight:**
+  - the Initiative order;
+  - Turns and Rounds;
+  - each Round moving world time 3 seconds, and the conditions that run out with it;
+  - Turn automation (fire, drowning, Death Saves for the Mortally Wounded);
+  - Combat Awareness costing the Solo's Action;
+  - End Turn for players.
+- **What waits:** the Awareness Ladder isn't touched. It stays wherever the GM has it, so failed
+  Stealth rolls step it up as usual. A fight puts the enemies at Alert; a stealth segment doesn't.
+- **Spotted?** The GM clicks the **STEALTH** chip and the encounter becomes full combat. Same
+  queue, same Round, same Turn. Everyone gets a card, and the Ladder goes up to Alert if it's
+  lower. That happens once: the GM can lower it again, and the next Round won't put it back.
+  Click the **COMBAT** chip to go back to stealth.
+- **Players see** the mode chip (they know they're sneaking), but not the Ladder. In their Action
+  HUD, their **Stealth** roll joins the Turn group for the segment.
+- When a stealth segment ends, the summary card says *Stealth segment over* instead of *Combat
+  over*.
+
+Settings: **Begin a combat as** (Combat) is the mode a combat begun from Foundry's tracker or a
+macro gets, and which of Sneak and Start is the carousel's main button. **Full combat puts the
+enemies at Alert** (Table rules) can stop a fight from moving the Ladder at all. Macros:
+`api.encounter.begin("stealth")`, `setMode("combat")`, `toggle()`, `mode()`.
 
 ## Action HUD
 
@@ -376,8 +407,8 @@ system, these features simply stay off). Each one can be switched off under **Ro
   a Mission; the GM's New beat / New mission reset them.
 - **The Awareness Ladder** (GM, on the carousel): the encounter's enemies' awareness from Unaware
   to Spotted, with the Stealth DV to beat (10 or 11 + enemies, sleepers count half). A failed
-  Stealth roll steps it up, something obvious jumps to Alert, and a fight that starts puts them at
-  Alert.
+  Stealth roll steps it up, something obvious jumps to Alert, and full combat puts them at Alert
+  (once). A [stealth segment](#stealth-segments) leaves it alone.
 
 ## Combat Awareness
 

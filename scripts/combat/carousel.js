@@ -5,6 +5,7 @@ import { CPR } from "../cpr.js";
 import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
 import { CombatTime } from "./time.js";
+import { EncounterMode } from "./mode.js";
 import { Sources } from "../environment/sources.js";
 import { WEATHER_CONDITION } from "../environment/weather-data.js";
 import { Awareness } from "../awareness/awareness.js";
@@ -70,7 +71,7 @@ export const Carousel = {
       document.body.append(this.el);
     }
     const scroll = this.el.querySelector(".ncm-car-track")?.scrollLeft ?? 0;
-    this.el.className = `neon-combat ncm-carousel size-${Settings.get("carouselSize")}${data.collapsed ? " is-collapsed" : ""}`;
+    this.el.className = `neon-combat ncm-carousel size-${Settings.get("carouselSize")}${data.collapsed ? " is-collapsed" : ""}${data.started && data.mode.stealth ? " mode-stealth" : ""}`;
     this.place();
     this.el.innerHTML = html;
     const track = this.el.querySelector(".ncm-car-track");
@@ -185,6 +186,9 @@ export const Carousel = {
       roundSeconds: CombatTime.roundSeconds,
       cards,
       myTurn,
+      // Stealth segment or full combat; before it begins, which of Sneak and Start is the default.
+      mode: EncounterMode.context(combat),
+      sneakFirst: EncounterMode.get(combat) === "stealth",
       weather,
       count: combat.combatants.size,
       // The GM's Awareness Ladder for this encounter's enemies.
@@ -278,7 +282,11 @@ export const Carousel = {
         await Settings.set("carouselCollapsed", !Settings.get("carouselCollapsed"));
         return this.render();
       case "start":
-        return combat.startCombat();
+        return EncounterMode.begin(combat, "combat");
+      case "sneak":
+        return EncounterMode.begin(combat, "stealth");
+      case "mode":
+        return EncounterMode.toggle(combat);
       case "end":
         return combat.endCombat();
       case "prevRound":
