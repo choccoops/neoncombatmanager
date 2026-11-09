@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.19.1
+
+- **The GM is asked to install the weapon animations.** Putting Neon Arsenal's animations into
+  Automated Animations silently when the world loaded didn't always take (AA could still be
+  loading its menus), and attacks then played no shot and no muzzle flash. Now, a few seconds after
+  the GM loads the world, a window offers to install them whenever they're missing from AA's menu
+  or from an older version: Install now, Not now, or Don't ask again (the setting **Offer to
+  install the animations**). The **Install Weapon Animations** macro (Macros compendium) still does
+  it any time.
+
 ## 1.19.0
 
 - **Scatter a missed blast.** A grenade, rocket or missile that misses gets a **Scatter** button on

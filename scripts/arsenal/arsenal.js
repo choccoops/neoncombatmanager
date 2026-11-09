@@ -85,7 +85,8 @@ export const Arsenal = {
   async ready() {
     this.patch();
     Dv.installDisplay();
-    await AA.ready().catch((err) => console.error(`${MODULE_ID} | Automated Animations profile`, err));
+    // The GM's offer to install the animations comes a few seconds in; nothing waits for the answer.
+    AA.ready();
   },
 
   /** Wrap CPR's confirmRoll (once): it runs right before the dice, for every way a roll is made. */
