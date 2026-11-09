@@ -77,6 +77,11 @@ test("weapons sort into kinds; shells, launchers and flamethrowers hit an area",
   assert.equal(classify(weapon("Budget Arms Crisp-ER", { weaponType: "heavySmg" })).kind, "flamethrower");
   assert.equal(classify(weapon("Budget Arms Crisp-ER", { weaponType: "heavySmg" })).area.shape, "cone");
   assert.equal(classify(weapon("Frag", { weaponType: "thrownWeapon" }), ammo("Frag", "grenade")).kind, "thrownGrenade");
+  // Neon Hub's Thrown Weapon, whatever grenade is loaded: thrown, an explosive, its own area.
+  const thrower = weapon("Thrown Weapon", { weaponType: "thrownWeapon", dvTable: "DV Thrown Weapon", ammoVariety: ["grenade"] });
+  const flash = classify(thrower, ammo("Grenade (Flashbang)", "grenade", "flashbang"));
+  assert.deepEqual([flash.kind, flash.explosive, flash.ammoType, flash.area], ["thrownGrenade", true, "flashbang", { shape: "rect", size: 10 }]);
+  assert.deepEqual(classify(thrower, ammo("Grenade (Laser)", "grenade", "basic", "sweeping lasers across a 6×6m area")).area, { shape: "rect", size: 6 });
 });
 
 test("an ammo card that names its own area wins", () => {
@@ -254,6 +259,11 @@ test("ammo effects follow the 2070 Item Compendium", () => {
   assert.ok(ammoEffect({ ammoType: "smoke" }).persist);
   assert.deepEqual(ammoEffect({ ammoType: "basic", ammoName: "Arachnid Grenade" }).conditions, ["grappled"]);
   assert.ok(ammoEffect({ ammoType: "basic", ammoName: "CO2 Grenade" }).douse);
+  // Neon Hub names grenades the system's way, loaded into a Thrown Weapon.
+  assert.deepEqual(ammoEffect({ kind: "thrownGrenade", ammoType: "basic", ammoName: "Grenade (Arachnid)" }).conditions, ["grappled"]);
+  assert.ok(ammoEffect({ kind: "thrownGrenade", ammoType: "basic", ammoName: "Grenade (CO2)" }).douse);
+  assert.equal(ammoEffect({ kind: "thrownGrenade", ammoType: "basic", ammoName: "Grenade (Sonic)" }).save.dv, 17);
+  assert.deepEqual(ammoEffect({ kind: "thrownGrenade", ammoType: "basic", ammoName: "Grenade (Shuriken Tornado)" }), {});
   assert.deepEqual(ammoEffect({ kind: "flamethrower" }).onDamage, ["onFireStrong"]);
   assert.deepEqual(ammoEffect({ ammoType: "basic" }), {});
 });

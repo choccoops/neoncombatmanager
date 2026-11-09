@@ -10,6 +10,10 @@
   exported JSON included. A menu that's lost some of them counts as not installed, so the GM's
   prompt offers to put them all back (it says why). That was also why the silent install in
   1.18.0 and 1.19.0 "didn't take".
+- **Neon Hub's grenades keep their effects.** Neon Hub now loads its grenades into a Thrown Weapon
+  and names them the system's way, as in "Grenade (Sonic)". The Sonic, Arachnid and CO2 grenades
+  were still looked up as "Sonic Grenade" and so on, so they hit with no save, webbing or dousing.
+  Either name works now.
 
 ## 1.19.1
 
