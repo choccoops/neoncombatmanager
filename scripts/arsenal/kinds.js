@@ -121,7 +121,8 @@ export function classify(weapon, ammo = null, upgrades = []) {
       kind = ammoVariety === "shotgunShell" ? "shotgunShell" : "shotgun";
       break;
     case "rocketLauncher":
-      kind = /missile/i.test(`${name} ${s.dvTable ?? ""}`) ? "missileLauncher" : "rocketLauncher";
+      // The table it was made with: a Long Tube (Neon Hub's Range Table Modification) moves it to DV Missile Launcher, but it still fires rockets.
+      kind = /missile/i.test(`${name} ${weapon?.flags?.[NEON_HUB]?.dvTableBase ?? s.dvTable ?? ""}`) ? "missileLauncher" : "rocketLauncher";
       break;
     case "thrownWeapon":
       kind = ammoVariety === "grenade" || /grenade/i.test(name) ? "thrownGrenade" : "thrown";

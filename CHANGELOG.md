@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.23.1
+
+- **Neon Hub's Range Table Modifications** (Neon Hub 1.23.0: Snub Barrel, Choke, Long Tube and
+  the rest) change a gun's own range table, and Neon Arsenal reads that table: the DV display,
+  Does it hit?, the AA look and the areas follow the swap. Autofire stays on the gun's type's
+  Autofire table, as the rule says.
+- **Fixed: a rocket launcher with a Long Tube looked like a missile launcher.** Its look comes from
+  the table it was made with, not the one the tube moved it to.
+
 ## 1.23.0
 
 **What the 2070 gun flavors look like** (Neon Arsenal, with Sequencer):
