@@ -2013,7 +2013,14 @@
         "Sandevistan": "Sandevistan",
         "Psycho": "Cyberpsychosis Glitch",
         "Extreme": "Extreme Cyberpsychosis",
-        "Clear": "Clear Neon FX"
+        "Clear": "Clear Neon FX",
+        "LandingZone": "AV Landing Zone",
+        "Land": "AV Landing"
+      },
+      "Landing": {
+        "PickZone": "AV landing zone",
+        "PickSpot": "Land here",
+        "ClearAsk": "Take away the {count} AV landing zone(s) on this scene?"
       }
     },
     "Shelter": {

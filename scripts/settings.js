@@ -94,6 +94,7 @@ const DEFS = [
   ["fxConditions", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxMacros", "world", Boolean, true, {}],
   ["fxMacrosInstalled", "world", Boolean, false, { config: false }],
+  ["fxMacrosKnown", "world", Array, [], { config: false }],
   ["fxVolume", "client", Number, 0.4, { config: true, range: { min: 0, max: 1, step: 0.05 }, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxChannel", "client", String, "interface", { config: true, choices: { interface: K("FxChannel.interface"), environment: K("FxChannel.environment"), music: K("FxChannel.music") } }],
   ["fxMotion", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],

@@ -34,6 +34,7 @@ import { Hub } from "./hub/hub.js";
 import { Roller } from "./roller/roller.js";
 import { Ladder } from "./roller/ladder.js";
 import { NeonFX } from "./neonfx/neonfx.js";
+import { Landing } from "./neonfx/landing.js";
 import { Arsenal } from "./arsenal/arsenal.js";
 import { AA } from "./arsenal/aa.js";
 import { Blast } from "./arsenal/blast.js";
@@ -76,6 +77,14 @@ const api = {
     clear: (tokens) => NeonFX.clear(tokens),
     /** Redraw every token on the scene. */
     refresh: () => NeonFX.refreshScene(),
+    /** Put an AV landing zone down: at { x, y } (else pick it), size { w, h } grid squares (else fit the selected token). */
+    landingZone: (options) => Landing.placeZone(options),
+    /** Land an AV (default: selected) on a zone: options.zone (id), else the nearest, else pick a spot; keepZone leaves it lit. */
+    land: (tokens, options) => Landing.land(tokens, options),
+    /** The AV landing zones on a scene (default: the viewed one). */
+    landingZones: (sceneId) => Landing.zones(sceneId),
+    /** Take AV landing zones away: one by id, else all on the viewed scene. */
+    clearLandingZones: (id = null) => (id ? Landing.endZone(id) : Landing.clearZones()),
     /** GM: put the Neon FX macros in a "Neon FX" macro folder. */
     installMacros: () => NeonFX.installMacros(),
     /** Which JB2A files (or fallbacks) the looks use here. */

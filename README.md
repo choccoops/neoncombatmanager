@@ -32,7 +32,8 @@ Cyberpunk RED's own rolls.
   Triggler (which stopped at Foundry v12).
 - **Neon FX** (with Sequencer): conditions show on the tokens (fire, electricity, glitching
   quickhacks, Mortally Wounded's heartbeat...), plus a Cyberpsychosis glitch and a Sandevistan
-  afterimage trail you switch on with a macro. Uses JB2A when it's installed.
+  afterimage trail you switch on with a macro, and AV landings: a holo warning zone on the ground
+  and an AV flying in to set down on it. Uses JB2A when it's installed.
 - **Combat time**: each Round moves world time 3 seconds, so SmallTime, Neon Hub's calendar and
   every timed effect keep pace with the fight.
 - **Night City weather**: the day's weather from Neon Hub's calendar becomes conditions on the
@@ -499,6 +500,24 @@ animation; everything else is Neon FX's own art, so nothing needs JB2A.
 
 Players can switch their own tokens. The switches are saved on the token, so they survive a
 reload and show for everyone.
+
+**AV landings** (two more macros in the folder):
+
+- **AV Landing Zone**: pick a spot and a holo warning zone lights up on the ground: a rectangular
+  amber grav field with a hazard-striped pad, a scan bar running its length, a frame pulsing out,
+  cyan corner brackets and blinking beacons, with a power-up chime and a few seconds of quiet
+  warning beeps. It's sized to the selected token (a square's margin all round, and long along
+  its longer side; 3x5 squares with nothing selected) and squared on the grid so the AV sits in
+  the middle. Everyone sees it, and it stays after a reload. Run the macro and cancel the pick
+  (right-click) to take a scene's zones away.
+- **AV Landing**: select the AV and run it. It lands on the nearest zone (with none, you pick a
+  spot): the AV flies in from where it was, drawn bigger while it's up in the air with its shadow
+  cast below, slows into a hover over the pad, and sets down in a blast of dust (JB2A's smoke
+  where it's installed), engine roar and a touchdown thump. The zone powers down after. A GM can
+  place the AV hidden anywhere first: it then comes in from the sky above the pad and is revealed.
+
+The token moves in one step, straight onto the pad; only the drawing flies (each player's own
+motion setting applies: with motion off it just appears on the pad, with the dust and sound).
 
 **Sound and motion are each player's own** (client settings): *Neon FX volume* (0.4 by default,
 0 silences it) on top of the channel slider they pick (Interface by default); the sounds are

@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.20.0
+
+**AV landings** for Neon FX (needs Sequencer; uses JB2A's smoke where it's installed):
+
+- **AV Landing Zone** (macro): a holo warning zone you place on the ground. It is a rectangular
+  amber grav field with a hazard-striped pad, a scan bar, a pulsing frame, corner brackets and
+  blinking beacons, sized to the selected AV and squared on the grid. Everyone sees it, and it
+  stays after a reload.
+- **AV Landing** (macro): the selected AV flies in to the nearest zone, high, with its shadow
+  below, then hovers and sets down in dust, and the zone powers down. A hidden AV comes in from
+  the sky and is revealed.
+- New quiet sounds made with ElevenLabs: zone power-up, warning beeps, engines and touchdown.
+- Worlds that already have the Neon FX macro folder get the two new macros added once. A macro
+  you delete stays deleted.
+
 ## 1.19.4
 
 - A Neon Hub mook's **Punknife** gets the light blade look (it was drawn as a blunt weapon).
