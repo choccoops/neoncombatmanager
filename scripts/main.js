@@ -32,7 +32,7 @@ import { Stakes } from "./stakes/stakes.js";
 import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
 import { Roller } from "./roller/roller.js";
-import { Ladder } from "./roller/ladder.js";
+import { EncounterMode } from "./combat/mode.js";
 import { NeonFX } from "./neonfx/neonfx.js";
 import { Landing } from "./neonfx/landing.js";
 import { Arsenal } from "./arsenal/arsenal.js";
@@ -129,6 +129,17 @@ const api = {
     toRounds: (seconds) => CombatTime.toRounds(seconds),
     toSeconds: (rounds) => CombatTime.toSeconds(rounds),
     clock: () => CombatTime.clock()
+  },
+  /** Stealth segments: a combat run Turn by Turn before anyone's spotted, and full combat. */
+  encounter: {
+    /** "stealth" or "combat". */
+    mode: (combat = game.combat) => EncounterMode.get(combat),
+    isStealth: (combat = game.combat) => EncounterMode.isStealth(combat),
+    /** GM: switch mid-encounter (Initiative order kept); before it begins, the mode it begins in. */
+    setMode: (mode, combat = game.combat) => EncounterMode.set(combat, mode),
+    toggle: (combat = game.combat) => EncounterMode.toggle(combat),
+    /** GM: begin the combat as a stealth segment or a fight. */
+    begin: (mode, combat = game.combat) => EncounterMode.begin(combat, mode)
   },
   /** Weather and visibility. */
   environment: {
@@ -343,7 +354,7 @@ Hooks.once("init", () => {
   Awareness.init();
   Hub.init();
   Roller.init();
-  Ladder.init();
+  EncounterMode.init();
   TrackerHooks.init();
   NeonFX.init();
   Arsenal.init();

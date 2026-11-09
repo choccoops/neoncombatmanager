@@ -4,13 +4,13 @@ const K = (key) => `${LANG}.Settings.${key}`;
 
 /** World settings grouped into submenus; everything else shows in Foundry's own list. */
 export const MENUS = {
-  combat: ["roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement", "pickupCarried", "movementRuler", "movementRulerWaypoints"],
+  combat: ["encounterMode", "roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement", "pickupCarried", "movementRuler", "movementRulerWaypoints"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim", "conditionSheetNotes"],
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxMacros"],
   arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes"],
-  rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder"],
+  rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
     "weatherSource", "weatherFx", "weatherEveryone", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
@@ -68,6 +68,7 @@ const DEFS = [
   ["cityHub", "world", Object, {}, { config: false, onChange: (v) => Hooks.callAll(`${MODULE_ID}.hubChanged`, v) }],
 
   // Combat & time
+  ["encounterMode", "world", String, "combat", { choices: { combat: K("EncounterMode.combat"), stealth: K("EncounterMode.stealth") }, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["roundSeconds", "world", Number, ROUND_SECONDS, { range: { min: 0, max: 12, step: 1 }, onChange: () => Hooks.callAll(`${MODULE_ID}.timeConfig`) }],
   ["turnSeconds", "world", Number, 0, { range: { min: 0, max: 6, step: 1 }, onChange: () => Hooks.callAll(`${MODULE_ID}.timeConfig`) }],
   ["combatSummary", "world", Boolean, true, {}],
@@ -131,6 +132,7 @@ const DEFS = [
   ["flashBeat", "world", Number, 0, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.stakesChanged`) }],
   ["flashMission", "world", Number, 0, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.stakesChanged`) }],
   ["awarenessLadder", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
+  ["combatRaisesAlert", "world", Boolean, true, {}],
   ["wakeOnDamage", "world", Boolean, true, {}],
   ["cltShim", "world", Boolean, true, { requiresReload: true }],
   ["conditionOverrides", "world", Object, {}, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.conditionsChanged`) }],

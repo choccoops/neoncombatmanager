@@ -609,6 +609,10 @@
         "name": "Carousel collapsed",
         "hint": ""
       },
+      "encounterMode": {
+        "name": "Begin a combat as",
+        "hint": "What a combat begun from Foundry's combat tracker or a macro is: a fight, or a stealth segment (Turns and Rounds in Initiative order, the enemies' Awareness left where it is). On the carousel the GM picks Sneak or Start, and can switch at any time."
+      },
       "roundSeconds": {
         "name": "Seconds per Round",
         "hint": "World time each new Round adds. Cyberpunk RED: about 3 seconds (a minute is 20 Rounds). SmallTime and Neon Hub's calendar follow world time."
@@ -790,6 +794,10 @@
         "manual": "Manual",
         "off": "Off"
       },
+      "EncounterMode": {
+        "combat": "Full combat",
+        "stealth": "Stealth segment"
+      },
       "SceneWeather": {
         "outdoor": "Outdoors",
         "indoor": "Indoors"
@@ -946,6 +954,10 @@
       "awarenessLadder": {
         "name": "Awareness Ladder",
         "hint": "The GM sees the encounter's enemies' awareness (Unaware to Spotted) and the Stealth DV on the carousel."
+      },
+      "combatRaisesAlert": {
+        "name": "Full combat puts the enemies at Alert",
+        "hint": "When a fight begins, or a stealth segment turns into one, the Awareness Ladder goes up to Alert if it's lower (once: the GM can lower it again). A stealth segment never moves it."
       },
       "actionHud": {
         "name": "Action HUD",
@@ -1198,6 +1210,7 @@
       "CombatOverKicker": "Combat over",
       "CombatOver": "{rounds} Rounds",
       "CombatOverBody": "{elapsed} passed in the world. It's now {clock}.",
+      "StealthOverKicker": "Stealth segment over",
       "Page2070": "2070 Core Rules",
       "WokeUp": "{name} takes a hit and comes to."
     },
@@ -1238,7 +1251,29 @@
       "DeathSave": "Mortally Wounded: Death Save penalty",
       "Empty": "No combatants yet.",
       "Unknown": "Unknown",
-      "Flatlined": "Flatlined"
+      "Flatlined": "Flatlined",
+      "Sneak": "Sneak",
+      "SneakHint": "Begin a stealth segment: Turns and Rounds in Initiative order, nobody spotted yet",
+      "StartHint": "Begin full combat"
+    },
+    "Mode": {
+      "combat": "Combat",
+      "stealth": "Stealth",
+      "Hint": {
+        "combat": "Full combat.",
+        "stealth": "Stealth segment: Turns and Rounds in Initiative order, nobody spotted yet. The enemies' Awareness stays where the GM puts it."
+      },
+      "Switch": {
+        "combat": "Spotted: switch to full combat (Initiative order kept)",
+        "stealth": "Back to stealth (Initiative order kept)"
+      },
+      "Card": {
+        "combatKicker": "Spotted",
+        "combat": "Full combat",
+        "stealthKicker": "Stealth",
+        "stealth": "Back to stealth",
+        "Body": "Round {round}. Same Initiative order: carry on from the Turn under way."
+      }
     },
     "Tracker": {
       "Clock": "T+{elapsed} · {seconds} s/Round · {clock}"

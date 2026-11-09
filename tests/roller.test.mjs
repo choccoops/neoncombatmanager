@@ -241,7 +241,7 @@ test("Tarot Criticals: the GM draws once a session (or confirms another), and ap
   Settings.set("critItems", true);
 });
 
-test("the Awareness Ladder: DV from the encounter's enemies, steps, and Alert once the fight starts", async () => {
+test("the Awareness Ladder: DV from the encounter's enemies, steps, and Alert for something obvious", async () => {
   asGM(true);
   const vee = pc("Velvet");
   const g1 = makeActor({ name: "Guard 1", hasPlayerOwner: false });
@@ -260,11 +260,6 @@ test("the Awareness Ladder: DV from the encounter's enemies, steps, and Alert on
   await Ladder.step(combat, -1);
   await Ladder.obvious(combat);
   assert.equal(Ladder.level(combat), "alert");
-  const fresh = makeCombat([vee, g1], { round: 1 });
-  Ladder.init();
-  Hooks.callAll("updateCombat", fresh, { round: 1 });
-  await settle();
-  assert.equal(Ladder.level(fresh), "alert", "a fight puts them at Alert");
 });
 
 /* ---------------------------------------- */

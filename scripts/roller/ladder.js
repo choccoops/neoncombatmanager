@@ -1,6 +1,4 @@
 import { MODULE_ID, LANG } from "../constants.js";
-import { Compat } from "../compat.js";
-import { Settings } from "../settings.js";
 import { Conditions } from "../conditions/engine.js";
 import { LADDER, ladderDV, ladderStep } from "./rules.js";
 import { L } from "../util.js";
@@ -8,16 +6,10 @@ import { L } from "../util.js";
 /**
  * The Awareness Ladder (2070 Core Rules, Ch.06): one status for the enemies in an encounter,
  * Unaware to Spotted, shown to the GM on the carousel with the Stealth DV to beat. Kept on the
- * combat (flags[MODULE].ladder). A combat that starts puts them at Alert, at least.
+ * combat (flags[MODULE].ladder). Beginning a combat doesn't move it; full combat (not a stealth
+ * segment) puts them at Alert, at least, once (scripts/combat/mode.js).
  */
 export const Ladder = {
-  init() {
-    Hooks.on("updateCombat", (combat, changed) => {
-      if (!Compat.isActiveGM || !Settings.get("awarenessLadder") || !("round" in (changed ?? {})) || !combat.started) return;
-      if (LADDER.indexOf(this.level(combat)) < LADDER.indexOf("alert")) this.set(combat, "alert").catch(() => null);
-    });
-  },
-
   level(combat) {
     const l = combat?.flags?.[MODULE_ID]?.ladder;
     return LADDER.includes(l) ? l : "unaware";

@@ -119,6 +119,18 @@ with `addCondition`, `applyCondition`, `removeCondition`, `removeAllConditions`,
 read the raw flags (`effect.flags["condition-lab-triggler"]?.conditionId`) or move to
 `ncm.conditions`.
 
+## Stealth segments: `ncm.encounter`
+
+| | |
+| --- | --- |
+| `mode(combat?)` | `"stealth"` or `"combat"` (a combat not begun yet: the mode it will begin in) |
+| `isStealth(combat?)` | true in a stealth segment |
+| `begin(mode, combat?)` | GM: begin the combat as a stealth segment or full combat |
+| `setMode(mode, combat?)` / `toggle(combat?)` | GM: switch, Initiative order kept; full combat raises the Awareness Ladder to Alert once |
+
+Kept on the combat (`flags.cpr-neon-combat-manager.mode`). Hook
+`cpr-neon-combat-manager.encounterMode` (combat, mode) when a combat under way switches.
+
 ## Combat time: `ncm.time`
 
 | | |
