@@ -157,6 +157,20 @@ SmallTime and Neon Hub all move world time.
 The path is the combatant flag `flags.cpr-neon-combat-manager.path` (`{ points: [{x, y}] centres,
 metres, noMove }`), written by the active GM as the token moves and reset at the start of its Turn.
 
+## Cover: `ncm.cover`
+
+| Call | What it does |
+|---|---|
+| `between(fromToken, toToken, { throughThin })` | the first intact cover on the line of fire (not cover the shooter leans out from): `{ kind: "wall"\|"piece"\|"vehicle", id, section, label, hp, max, thickness, scene }`, or `null` |
+| `damage(ref, amount, { explosive, bunkerBuster })` | put damage on that cover (the active GM does it): `{ before, after, taken, destroyed, soaks, label }` |
+| `repair(scene)` | (GM) every wall section and cover piece back to full, destroyed sections closed again |
+| `tag({ ids, scope, material, thickness })` | (GM) tag walls: `scope` is `"selected"` (with `ids`), `"untagged"` or `"all"`; `material` `""` untags |
+| `scan(scene)` | everything that's cover: `{ walls, pieces }` |
+
+Walls keep it in `flags.cpr-neon-combat-manager.cover`: `{ material, thickness, hp: [per 2 m section], broken, restore }`.
+Cover pieces are actors with `flags.cpr-neon-combat-manager.cover = { material, thickness }`; their HP is the piece's.
+The hook `cpr-neon-combat-manager.coverChanged` (scene) fires when cover is damaged, repaired or tagged.
+
 ## Weather and visibility: `ncm.environment`
 
 | | |

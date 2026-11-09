@@ -1,0 +1,58 @@
+{
+  "_id": "lfqRBJdwF26b5wr3",
+  "_key": "!actors!lfqRBJdwF26b5wr3",
+  "name": "Sofa (Plaster, Thick)",
+  "type": "mook",
+  "img": "modules/cpr-neon-combat-manager/assets/cover/plaster-thick-sofa.svg",
+  "system": {
+    "derivedStats": {
+      "hp": {
+        "value": 15,
+        "max": 15
+      }
+    },
+    "information": {
+      "description": "<p>Cover: plaster, thick. 15 HP per 2×2 m/yds section (2070 Core Rules, Ch07, Cover HP). Drop it on the map as cover; Neon Combat Manager puts attacks' damage on it and Repair cover sets it back to full.</p>",
+      "notes": "",
+      "alias": "",
+      "history": ""
+    }
+  },
+  "prototypeToken": {
+    "name": "Sofa",
+    "width": 2,
+    "height": 1,
+    "texture": {
+      "src": "modules/cpr-neon-combat-manager/assets/cover/plaster-thick-sofa.svg"
+    },
+    "actorLink": false,
+    "disposition": 0,
+    "displayName": 30,
+    "displayBars": 20,
+    "bar1": {
+      "attribute": "derivedStats.hp"
+    },
+    "bar2": {
+      "attribute": null
+    },
+    "sight": {
+      "enabled": false
+    },
+    "lockRotation": false
+  },
+  "items": [],
+  "effects": [],
+  "folder": null,
+  "sort": 200,
+  "flags": {
+    "cpr-neon-combat-manager": {
+      "cover": {
+        "material": "plaster",
+        "thickness": "thick"
+      }
+    }
+  },
+  "ownership": {
+    "default": 0
+  }
+}

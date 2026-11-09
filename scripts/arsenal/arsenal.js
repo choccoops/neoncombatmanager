@@ -12,6 +12,7 @@ import { shellAutofire, classify, profileKeys, smartBaked } from "./kinds.js";
 import { soundPlan } from "./profile.js";
 import { Rebuilds, RebuildRegistry, REBUILD_HOOK, traitsOf, attackMods, damageArgs } from "./rebuilds.js";
 import { AA, loadedAmmo } from "./aa.js";
+import { Cover } from "../cover/cover.js";
 import { Blast, damageFromHtml } from "./blast.js";
 import { Dv } from "./dv.js";
 import { Sound } from "./sound.js";
@@ -226,11 +227,18 @@ export const Arsenal = {
         tag.hits = [];
         for (const t of targets) {
           const dv = await Dv.forWeapon(item, Dv.distance(token, t), { autofire: mode === "autofire" });
-          tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref"), dodge: Defense.ability(t.actor, { attacker: actor, ricochet: tag.ricochet }).can });
+          // Cover in the way (a charged Tech shot goes through Thin cover): the card says so, and the damage card can hit it.
+          const cover = Cover.forShot(token, t, { throughThin: tag.charged });
+          tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref"), dodge: Defense.ability(t.actor, { attacker: actor, ricochet: tag.ricochet }).can, ...(cover ? { cover } : {}) });
         }
         tag.dv = tag.hits[0]?.dv ?? null;
         tag.cap = Number(item.system?.fireModes?.autoFire) || 0;
       }
+    }
+    if (kind === "damage" && info.ranged && !info.area && token && targets.length) {
+      const charged = !!Rebuilds.state(actor, item).fired;
+      const cover = targets.map((t) => ({ name: t.name, ...Cover.forShot(token, t, { throughThin: charged }) })).filter((c) => c.kind);
+      if (cover.length) tag.cover = cover;
     }
     if (kind === "damage" && rebuilds) {
       const charged = !!state.fired;
@@ -314,6 +322,8 @@ export const Arsenal = {
         let line = L(`${LANG}.Arsenal.HitCheck.${h.hit ? "hit" : "miss"}`, { name: esc(h.name), dv: h.dv, by: h.by });
         if (h.mult) line += ` ${L(`${LANG}.Arsenal.HitCheck.autofire`, { mult: h.mult })}`;
         if (h.dodge) line += ` ${L(`${LANG}.Arsenal.HitCheck.dodge`)}`;
+        const cover = a.hits.find((x) => x.name === h.name)?.cover;
+        if (cover) line += ` ${L(`${LANG}.Cover.${cover.self ? "Shooting" : "Behind"}`, { cover: esc(cover.label), hp: cover.hp })}`;
         notes.push(`<span class="ncm-hit ${h.hit ? "is-hit" : "is-miss"}">${line}</span>`);
       }
     }
@@ -332,6 +342,9 @@ export const Arsenal = {
       const doc = Blast.find(a.actorId, a.itemId);
       if (doc) buttons.push(`<button type="button" data-arsenal="apply" data-template="${esc(doc.uuid)}"><i class="fa-solid fa-burst"></i> ${L(`${LANG}.Arsenal.ApplyArea`)}</button>`);
     }
+    if (a.kind === "damage" && a.cover?.length && game.user.isGM) {
+      a.cover.forEach((c, i) => buttons.push(`<button type="button" data-arsenal="cover" data-i="${i}"><i class="fa-solid fa-shield-halved"></i> ${L(`${LANG}.Cover.HitButton`, { cover: esc(c.label), name: esc(c.name) })}</button>`));
+    }
     if (!notes.length && !buttons.length) return;
     const box = document.createElement("div");
     box.className = "ncm-arsenal neon-combat-chat";
@@ -341,6 +354,15 @@ export const Arsenal = {
       ev.preventDefault();
       Blast.askAndApply(ev.currentTarget.dataset.template, damageFromHtml(message.content)).catch((err) => ui.notifications.error(err.message));
     });
+    for (const btn of box.querySelectorAll("[data-arsenal=cover]")) {
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.currentTarget.disabled = true;
+        const c = a.cover[Number(ev.currentTarget.dataset.i)];
+        const dmg = damageFromHtml(message.content);
+        Cover.damage(c, dmg?.total ?? 0, { explosive: !!a.explosive }).catch((err) => ui.notifications.error(err.message));
+      });
+    }
     box.querySelector("[data-arsenal=retry]")?.addEventListener("click", (ev) => {
       ev.preventDefault();
       ev.currentTarget.disabled = true;

@@ -241,13 +241,17 @@ export const Compat = {
   },
 
   /**
-   * Add buttons to the token controls. v12 hands getSceneControlButtons an array of controls
-   * with tool arrays and onClick; v13 an object of controls ("tokens") with tool objects and onChange.
+   * Add buttons to the token controls (or the walls controls). v12 hands getSceneControlButtons an
+   * array of controls with tool arrays and onClick; v13 an object of controls ("tokens", "walls")
+   * with tool objects and onChange.
    * @param {object[]|object} controls
    * @param {object[]} tools - { name, title, icon, onClick, visible? }
+   * @param {"token"|"walls"} [layer]
    */
-  addSceneTools(controls, tools) {
-    const token = Array.isArray(controls) ? controls.find((c) => c.name === "token") : controls?.tokens ?? controls?.token;
+  addSceneTools(controls, tools, layer = "token") {
+    const token = Array.isArray(controls)
+      ? controls.find((c) => c.name === layer)
+      : layer === "token" ? controls?.tokens ?? controls?.token : controls?.[layer];
     if (!token) return;
     tools.forEach((t, i) => {
       const tool = { name: t.name, title: t.title, icon: t.icon, button: true, visible: t.visible ?? true, order: t.order ?? 100 + i, onClick: () => t.onClick(), onChange: () => t.onClick() };

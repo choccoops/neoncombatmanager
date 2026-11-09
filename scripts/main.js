@@ -36,6 +36,7 @@ import { EncounterMode } from "./combat/mode.js";
 import { NeonFX } from "./neonfx/neonfx.js";
 import { Landing } from "./neonfx/landing.js";
 import { Arsenal } from "./arsenal/arsenal.js";
+import { Cover } from "./cover/cover.js";
 import { AA } from "./arsenal/aa.js";
 import { Blast } from "./arsenal/blast.js";
 import { Dv } from "./arsenal/dv.js";
@@ -91,6 +92,19 @@ const api = {
     report: () => NeonFX.report()
   },
   /** Neon Arsenal: Automated Animations for 2070 weapons, their sounds, area attacks and weapon traits. */
+  /** Cover (2070 Ch07): walls tagged with a material and thickness, and cover pieces, with HP per 2×2m section. */
+  cover: {
+    /** The first intact cover between two tokens (a ref: { kind, id, section, label, hp, max }), or null. */
+    between: (from, to, opts) => Cover.between(from, to, opts),
+    /** Put damage on a piece of cover (a ref from between): { before, after, destroyed }. */
+    damage: (ref, amount, opts) => Cover.damage(ref, amount, opts),
+    /** GM: back to full, destroyed sections closed again. */
+    repair: (scene) => Cover.repair(scene),
+    /** GM: tag walls (material "" untags): { ids, scope: "selected"|"untagged"|"all", material, thickness }. */
+    tag: (opts) => Socket.request("coverTag", { scene: canvas?.scene?.id, ...opts }),
+    /** Everything on a scene that's cover: { walls, pieces }. */
+    scan: (scene) => Cover.scan(scene)
+  },
   arsenal: {
     /** GM: put the profile into Automated Animations' menus (or bring it up to date). */
     install: () => AA.install(),
@@ -358,6 +372,7 @@ Hooks.once("init", () => {
   TrackerHooks.init();
   NeonFX.init();
   Arsenal.init();
+  Cover.init();
   NeonRuler.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
 

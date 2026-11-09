@@ -1,0 +1,58 @@
+{
+  "_id": "rHVYRCewSHdPCurV",
+  "_key": "!actors!rHVYRCewSHdPCurV",
+  "name": "Teller Glass (Glass, Thin)",
+  "type": "mook",
+  "img": "modules/cpr-neon-combat-manager/assets/cover/glass-thin-teller-glass.svg",
+  "system": {
+    "derivedStats": {
+      "hp": {
+        "value": 15,
+        "max": 15
+      }
+    },
+    "information": {
+      "description": "<p>Cover: glass, thin. 15 HP per 2×2 m/yds section (2070 Core Rules, Ch07, Cover HP). Drop it on the map as cover; Neon Combat Manager puts attacks' damage on it and Repair cover sets it back to full.</p>",
+      "notes": "",
+      "alias": "",
+      "history": ""
+    }
+  },
+  "prototypeToken": {
+    "name": "Teller Glass",
+    "width": 2,
+    "height": 1,
+    "texture": {
+      "src": "modules/cpr-neon-combat-manager/assets/cover/glass-thin-teller-glass.svg"
+    },
+    "actorLink": false,
+    "disposition": 0,
+    "displayName": 30,
+    "displayBars": 20,
+    "bar1": {
+      "attribute": "derivedStats.hp"
+    },
+    "bar2": {
+      "attribute": null
+    },
+    "sight": {
+      "enabled": false
+    },
+    "lockRotation": false
+  },
+  "items": [],
+  "effects": [],
+  "folder": null,
+  "sort": 700,
+  "flags": {
+    "cpr-neon-combat-manager": {
+      "cover": {
+        "material": "glass",
+        "thickness": "thin"
+      }
+    }
+  },
+  "ownership": {
+    "default": 0
+  }
+}

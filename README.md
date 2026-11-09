@@ -762,6 +762,53 @@ areas, Blown back, the weapon traits, Does it hit? (and hiding Diwako's), the de
 rolled at once or by the player, ties, who sees the result), Diwako's DV display tables and
 players' muzzle flashes.
 
+## Cover
+
+The 2070 Core Rules' Cover HP (Ch07, Cover, Shields & Armor) on the map. HP is per 2×2 m/yds
+section, Thin / Thick: Plaster 0 / 15, Wood 5 / 20, Concrete 10 / 25, Bulletproof glass 15 / 30,
+Stone 20 / 40, Steel 25 / 50. Cover has no armor: it takes the whole hit.
+
+**Walls.** A wall's settings have a *Cover* block: its material and thickness, and its sections'
+HP. To tag many walls at once, the GM's **Tag walls as cover** button (in the walls controls) tags
+the selected walls, every untagged wall in the scene, or every wall (*Not cover* untags them).
+Doors with no cover of their own count as Wood (Thin), as a setting. Bulletproof glass stops
+bullets even where you can see through it. Thin cover of any material also counts for Tech scopes
+and charged Tech shots. A long wall takes damage where the line of fire (or the blast) meets it:
+each 2 m/yds section has its own HP. **A section at 0 HP is destroyed: the wall opens there**, and
+the gap stops blocking movement, sight, light and sound, so tokens can walk and see through it.
+The GM sees each damaged section's HP on the map, and an ✕ where one is destroyed (a setting).
+
+**Cover pieces.** The *Neon Combat Manager: Cover* compendium has twenty, each with its own
+top-down token. One piece for each material and thickness, each one of the book's own examples:
+Office Partition and Sofa (Plaster), Overturned Table and Bar Counter (Wood), Low Brick Wall and
+Dataterm (Concrete), Teller Glass and Armored Glass Barrier (Bulletproof glass), Statue and Boulder
+(Stone), Car Door and Engine Block (Steel). And a 2-square wall section for every material and
+thickness the pieces don't already draw as a wall: Interior Wall (Plaster, Thick), Wooden Fence and
+Timber Wall (Wood), Concrete Barrier (Concrete, Thick), Low Stone Wall and Fieldstone Wall (Stone),
+Corrugated Fence and Blast Wall (Steel). Drag one onto the map; its HP bar is the piece's HP,
+seen by the GM. A destroyed piece fades. A player who moves Thick cover without BODY 10+ is
+reminded of the rule. Cover pieces aren't people: no Wound States, Biomon or death saves. **Rides**
+count as cover too, with their SP and SDP (*Your ride as cover*, HOUSE RULE), through Cyberpunk
+RED's own damage.
+
+**When someone shoots:**
+- **A shot** at a target behind intact cover: *Does it hit?* names the cover and its HP. Cover the
+  shooter leans out from (within 2 m/yds of them) doesn't count, and a charged Tech shot goes
+  through Thin cover. The damage card gets a GM button, **Hit the cover**. The cover takes the
+  damage, and at 0 HP it's destroyed but soaks that whole shot, so the next one gets through.
+  Shooting a cover piece itself works the same way.
+- **An area** (grenades, rockets, shells): the GM's apply window lists the cover that takes the
+  damage: pieces and rides in the area, and the cover between the blast (or the shell's shooter)
+  and each person in it. Anyone it shields is unticked. An explosive that destroys the cover hits
+  whoever is behind it for full damage; a Shotgun Shell's cover always soaks it. Rocket launchers
+  do double to cover (Bunker Buster).
+- The damage only goes on when the GM clicks; nothing is applied on its own.
+
+**Repair cover** (the GM's button in the token controls) puts every wall section and cover piece
+on the scene back to full and closes the gaps. World settings (Neon Arsenal menu): cover on or off,
+doors as Wood (Thin), the HP on the map. For macros: `api.cover` (`between`, `damage`, `repair`,
+`tag`, `scan`).
+
 ## Combat time
 
 A Cyberpunk RED Round is about 3 seconds (p.126, p.168): one minute is 20 Rounds. The module

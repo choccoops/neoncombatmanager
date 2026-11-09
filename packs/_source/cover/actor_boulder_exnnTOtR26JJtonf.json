@@ -1,0 +1,58 @@
+{
+  "_id": "exnnTOtR26JJtonf",
+  "_key": "!actors!exnnTOtR26JJtonf",
+  "name": "Boulder (Stone, Thick)",
+  "type": "mook",
+  "img": "modules/cpr-neon-combat-manager/assets/cover/stone-thick-boulder.svg",
+  "system": {
+    "derivedStats": {
+      "hp": {
+        "value": 40,
+        "max": 40
+      }
+    },
+    "information": {
+      "description": "<p>Cover: stone, thick. 40 HP per 2×2 m/yds section (2070 Core Rules, Ch07, Cover HP). Drop it on the map as cover; Neon Combat Manager puts attacks' damage on it and Repair cover sets it back to full.</p>",
+      "notes": "",
+      "alias": "",
+      "history": ""
+    }
+  },
+  "prototypeToken": {
+    "name": "Boulder",
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "modules/cpr-neon-combat-manager/assets/cover/stone-thick-boulder.svg"
+    },
+    "actorLink": false,
+    "disposition": 0,
+    "displayName": 30,
+    "displayBars": 20,
+    "bar1": {
+      "attribute": "derivedStats.hp"
+    },
+    "bar2": {
+      "attribute": null
+    },
+    "sight": {
+      "enabled": false
+    },
+    "lockRotation": false
+  },
+  "items": [],
+  "effects": [],
+  "folder": null,
+  "sort": 1000,
+  "flags": {
+    "cpr-neon-combat-manager": {
+      "cover": {
+        "material": "stone",
+        "thickness": "thick"
+      }
+    }
+  },
+  "ownership": {
+    "default": 0
+  }
+}

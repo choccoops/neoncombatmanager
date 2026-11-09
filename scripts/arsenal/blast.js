@@ -9,6 +9,7 @@ import { Registry } from "../conditions/registry.js";
 import { Core } from "../neonfx/core.js";
 import { Sound } from "./sound.js";
 import { Defense } from "./defense.js";
+import { Cover } from "../cover/cover.js";
 import { Dv } from "./dv.js";
 import { templateData, tokenInside, centerOf, blownBack, blowBackMetres, ammoEffect, scatter } from "./area.js";
 import { L, esc } from "../util.js";
@@ -346,12 +347,33 @@ export const Blast = {
     const effect = ammoEffect({ kind: b.kind, ammoType: b.ammoType, ammoName: b.ammoName });
     const dmg = damage ?? (effect.noDamage ? null : this.damageFor(b));
     if (!effect.noDamage && !dmg) return ui.notifications.warn(L(`${LANG}.Arsenal.RollDamageFirst`));
-    const inside = tokensIn(doc, doc.parent, { exclude: b.area.shape === "cone" ? b.tokenId : null }).filter((t) => t.actor);
+    const all = tokensIn(doc, doc.parent, { exclude: b.area.shape === "cone" ? b.tokenId : null }).filter((t) => t.actor);
+    // Cover (2070 Ch07): pieces and rides in the area, and whatever stands between the blast (or the
+    // shell's shooter) and each person, take the damage; whoever it still shields is left out.
+    const covered = Cover.on && dmg;
+    const inside = covered ? all.filter((t) => !Cover.isCover(t)) : all;
+    const grid = this.grid(doc.parent);
+    const shooter = doc.parent.tokens?.get(b.tokenId);
+    const plan = covered
+      ? Cover.areaPlan({
+        scene: doc.parent, origin: b.area.shape === "cone" && shooter ? Cover.center(shooter, grid) : centerOf(doc, grid),
+        people: inside.map((t) => ({ id: t.id, center: Cover.center(t, grid) })), inside: all.filter((t) => Cover.isCover(t)).map((t) => t.id),
+        damage: dmg.total, explosive: !!b.explosive, bunkerBuster: ["rocketLauncher", "missileLauncher"].includes(b.kind), exclude: [b.tokenId]
+      })
+      : { cover: [], hit: {} };
+    const behind = (t) => plan.cover.find((c) => c.key === plan.hit[t.id]?.behind);
     const dodged = new Set(b.dodged ?? []);
-    const rows = inside.map((t) => `<label class="ncm-check"><input type="checkbox" name="t-${t.id}"${dodged.has(t.id) ? "" : " checked"}> ${esc(t.name)}${dodged.has(t.id) ? ` <em>(${L(`${LANG}.Arsenal.Defense.DodgedOut`)})</em>` : ""}</label>`).join("") || `<p>${L(`${LANG}.Arsenal.Nobody`)}</p>`;
+    const rows = inside.map((t) => {
+      const shield = behind(t);
+      const out = dodged.has(t.id) || plan.hit[t.id]?.hit === false;
+      const why = dodged.has(t.id) ? L(`${LANG}.Arsenal.Defense.DodgedOut`) : shield ? L(`${LANG}.Cover.${plan.hit[t.id].hit ? "Through" : "Shielded"}`, { cover: esc(shield.cover.name ?? Cover.label(shield.cover)) }) : "";
+      return `<label class="ncm-check"><input type="checkbox" name="t-${t.id}"${out ? "" : " checked"}> ${esc(t.name)}${why ? ` <em>(${why})</em>` : ""}</label>`;
+    }).join("") || `<p>${L(`${LANG}.Arsenal.Nobody`)}</p>`;
+    const coverRows = plan.cover.map((c, i) => `<label class="ncm-check"><input type="checkbox" name="c-${i}" checked> ${esc(c.cover.kind === "wall" ? Cover.label(c.cover) : c.cover.name)} · ${L(`${LANG}.Cover.HpLine`, { before: c.result.before, after: c.result.after })}${c.result.destroyed ? ` · ${L(`${LANG}.Cover.Destroyed`)}` : ""}</label>`).join("");
     const blow = b.explosive && Settings.get("arsenalBlowBack");
     const content = `<div class="ncm-grid">${dmg ? `<p>${L(`${LANG}.Arsenal.Damage`, { total: dmg.total, ablation: dmg.ablation })}</p>` : ""}`
       + `<p class="ncm-ref">${L(`${LANG}.Arsenal.UntickHint`)}</p>${rows}`
+      + (coverRows ? `<p class="ncm-ref">${L(`${LANG}.Cover.AreaHint`)}</p>${coverRows}` : "")
       + (blow ? `<label class="ncm-check"><input type="checkbox" name="blow" checked> ${L(`${LANG}.Arsenal.BlowBack`, { metres: blowBackMetres(b.kind) })}</label>` : "")
       + `<label class="ncm-check"><input type="checkbox" name="keep"${effect.persist ? " checked" : ""}> ${L(`${LANG}.Arsenal.KeepArea`)}</label></div>`;
     const picked = await Compat.DialogV2.prompt({
@@ -362,7 +384,8 @@ export const Blast = {
         label: L(`${LANG}.Arsenal.Apply`),
         callback: (event, button) => {
           const f = button.form.elements;
-          return { tokens: inside.filter((t) => f[`t-${t.id}`]?.checked).map((t) => t.id), blow: !!f.blow?.checked, keep: !!f.keep?.checked };
+          const cover = plan.cover.filter((c, i) => f[`c-${i}`]?.checked).map((c) => ({ kind: c.cover.kind, id: c.cover.id, section: c.section }));
+          return { tokens: inside.filter((t) => f[`t-${t.id}`]?.checked).map((t) => t.id), cover, blow: !!f.blow?.checked, keep: !!f.keep?.checked };
         }
       },
       rejectClose: false
@@ -375,7 +398,7 @@ export const Blast = {
    * Apply an area (the active GM): Cyberpunk RED's own damage application for each one in it
    * (their armor, shields, damage reduction; its card), then fire, gas or EMP, then Blown back.
    */
-  async applyAsGM({ template, damage, tokens = [], blow = false, keep = false }) {
+  async applyAsGM({ template, damage, tokens = [], cover = [], blow = false, keep = false }) {
     const doc = await fromUuid(template);
     const b = doc?.flags?.[MODULE_ID]?.blast;
     if (!doc || !b || b.state === "resolved") return null;
@@ -420,6 +443,11 @@ export const Blast = {
         }
       }
       lines.push(`<li><strong>${esc(tok.name)}</strong>${effect.noDamage ? "" : ` · ${L(`${LANG}.Arsenal.HpLine`, { before, after: CPR.hp(actor).value })}`}${notes.length ? ` · ${esc(notes.join(" · "))}` : ""}</li>`);
+    }
+    const bunkerBuster = ["rocketLauncher", "missileLauncher"].includes(b.kind);
+    for (const c of cover) {
+      const r = await Cover.damageAsGM({ scene: scene.id, ...c, amount: damage?.total ?? 0, explosive: !!b.explosive, bunkerBuster, quiet: true });
+      if (r) lines.push(`<li><strong>${esc(r.label)}</strong> · ${L(`${LANG}.Cover.HpLine`, { before: r.before, after: r.after })}${r.destroyed ? ` · ${L(`${LANG}.Cover.Destroyed`)}` : ""}</li>`);
     }
     if (!keep && !effect.persist) await doc.delete();
     const actor = game.actors.get(b.actorId);
