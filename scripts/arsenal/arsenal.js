@@ -5,6 +5,7 @@ import { Socket } from "../socket.js";
 import { CPR } from "../cpr.js";
 import { Cards } from "../combat/cards.js";
 import { Conditions } from "../conditions/engine.js";
+import { Registry, sightKeys } from "../conditions/registry.js";
 import { Core } from "../neonfx/core.js";
 import { Bridge } from "../roller/bridge.js";
 import { classify, profileKeys, smartBaked } from "./kinds.js";
@@ -63,6 +64,39 @@ export function penaltyOf(roll) {
     const v = Number(typeof m === "object" && m !== null ? m.value : m);
     return Number.isFinite(v) && v < 0 ? sum + v : sum;
   }, 0);
+}
+
+/**
+ * Visual obscurement, which Improved Smart rounds ignore (2070 Ch07): every penalty from Low Light,
+ * Darkness, Obscured, smoke and pop-ups, and the sight penalties weather puts on.
+ */
+export function obscures(c, key, sight = new Set(sightKeys())) {
+  if (!c) return false;
+  if (c.category === "visibility" || c.id === "smoke" || c.id === "qhPopupGeddon") return true;
+  return c.category === "weather" && sight.has(key);
+}
+
+/**
+ * The obscurement penalties among a roll's modifiers (CPR names each one `<key>-<effect id>`).
+ * @param {Function} conditionOf - effect id -> condition, or null
+ */
+export function obscurementMods(mods, conditionOf, sight = new Set(sightKeys())) {
+  return (mods ?? []).filter((m) => {
+    if (!(Number(m?.value) < 0) || typeof m.id !== "string" || !m.id.includes("-")) return false;
+    return obscures(conditionOf(m.id.slice(m.id.lastIndexOf("-") + 1)), m.key ?? m.id.slice(0, m.id.lastIndexOf("-")), sight);
+  });
+}
+
+/** Did a damage roll come up a Critical Injury (two or more 6s)? */
+export function rolledCrit(roll) {
+  try {
+    if (typeof roll?.wasCritSuccess === "function") return !!roll.wasCritSuccess();
+    if (typeof roll?.wasCritical === "function") return !!roll.wasCritical();
+  } catch {
+    /* not rolled */
+  }
+  const faces = roll?.faces ?? roll?.terms?.[0]?.results?.map((r) => r.result) ?? [];
+  return faces.filter((f) => Number(f) === 6).length >= 2;
 }
 
 /** An Improved Smart retry's formula: 14 + 1d10, the first shot's penalties, and any LUCK spent. */
@@ -153,7 +187,8 @@ export const Arsenal = {
     const tag = {
       kind, actorId: actor.id, itemId: item.id, tokenId: token?.id ?? null, mode, weapon: info.kind, flavor: info.flavor,
       ammoType: info.ammoType, ammoVariety: info.ammoVariety, explosive: info.explosive, area: !!info.area, ranged: info.ranged,
-      tags: traits.tags, sources: traits.sources, targets: targets.map((t) => t.id), ricochet: false, charged: false, dv: null
+      tags: traits.tags, sources: traits.sources, targets: targets.map((t) => t.id), ricochet: false, charged: false, dv: null,
+      critBonus: traits.critBonus, smartLink: info.flavor !== "smart" && upgrades.some((u) => /smart ?gun link/i.test(u.name ?? ""))
     };
     const rebuilds = !!Settings.get("arsenalRebuilds");
     if (kind === "attack") {
@@ -164,6 +199,12 @@ export const Arsenal = {
         if (mods.length && typeof roll.addMod === "function") roll.addMod(mods);
         tag.ricochet = ricochet;
         if (state.ricochet) await Rebuilds.setState(actor, item, { ricochet: false });
+        // Improved Smart rounds ignore visual obscurement: those penalties come off the roll.
+        if (info.flavor === "smart" && info.ammoType === "smart" && info.ranged && typeof roll.removeMod === "function") {
+          const off = obscurementMods(roll.mods, (id) => Registry.ofEffect(actor.effects?.get?.(id)));
+          for (const m of off) roll.removeMod(m.id);
+          if (off.length) tag.unobscured = off.reduce((sum, m) => sum + Number(m.value), 0);
+        }
         if (traits.active.includes("charge") && Rebuilds.isCharged(actor, item) && !info.explosive) {
           tag.charged = true;
           await Rebuilds.setState(actor, item, { chargedUntil: 0, fired: true });
@@ -202,7 +243,8 @@ export const Arsenal = {
     const p = this.pending;
     if (!p || userId !== game.user.id || Date.now() - p.at > PENDING_MS || !String(message.content ?? "").includes('class="rollcard"')) return;
     this.pending = null;
-    message.updateSource({ [`flags.${MODULE_ID}.arsenal`]: { ...p.tag, total: Number(p.roll.resultTotal) || 0, penalty: penaltyOf(p.roll), at: Date.now() } });
+    const crit = p.tag.kind === "damage" ? rolledCrit(p.roll) : false;
+    message.updateSource({ [`flags.${MODULE_ID}.arsenal`]: { ...p.tag, total: Number(p.roll.resultTotal) || 0, penalty: penaltyOf(p.roll), crit, at: Date.now() } });
   },
 
   /**
@@ -226,10 +268,11 @@ export const Arsenal = {
       for (const s of soundPlan(keys, { mode: a.mode, ricochet: a.ricochet, hit, ranged: a.ranged, explosive: a.explosive })) {
         Sound.play(s.key, { delay: s.delay });
       }
-      if (Shots.attack(a) && Shots.lookFor(a) === "smart") {
+      if (Shots.attack(a) && ["smart", "smartlink"].includes(Shots.lookFor(a))) {
         Sound.play("smartLock");
-        Sound.play("smartSeek", { delay: 380 });
+        if (Shots.lookFor(a) === "smart") Sound.play("smartSeek", { delay: 380 });
       }
+      if (a.charged && a.flavor === "tech") Shots.charged(a);
       if (this.canRetry(a) && Settings.get("arsenalSmartPrompt")) {
         setTimeout(() => this.promptRetry(message).catch((err) => console.error(`${MODULE_ID} | smart retry`, err)), 1400);
       }
@@ -240,6 +283,7 @@ export const Arsenal = {
     }
     if (a.kind === "damage") {
       const scene = canvas?.scene?.id;
+      if (a.crit && a.critBonus && Shots.powerCrit(a)) Sound.play("impactArmor");
       if (a.push && a.targets?.length) await Socket.request("arsenalPush", { scene, tokens: a.targets, from: a.tokenId, ...a.push });
       if (a.charged && a.ammoVariety === "shotgunSlug" && a.targets?.length) await Socket.request("arsenalConditions", { scene, tokens: a.targets, ids: ["prone"] });
     }
@@ -267,6 +311,8 @@ export const Arsenal = {
     }
     if (a.kind === "attack" && a.ricochet) notes.push(L(`${LANG}.Arsenal.Note.ricochet`));
     if (a.kind === "attack" && a.charged) notes.push(L(`${LANG}.Arsenal.Note.chargedAttack`));
+    if (a.kind === "attack" && a.unobscured) notes.push(L(`${LANG}.Arsenal.Note.unobscured`, { value: a.unobscured }));
+    if (a.kind === "damage" && a.crit && a.critBonus) notes.push(L(`${LANG}.Arsenal.Note.powerCrit`));
     if (a.kind === "damage" && a.charged) notes.push(L(`${LANG}.Arsenal.Note.chargedDamage`));
     if (a.kind === "damage" && a.sources?.length && Settings.get("arsenalRebuilds")) notes.push(L(`${LANG}.Arsenal.Note.traits`, { list: esc(a.sources.map((s) => this.sourceLabel(s)).join(", ")) }));
     if (a.kind === "damage" && a.push) notes.push(L(`${LANG}.Arsenal.Note.push`, { metres: a.push.metres }));
@@ -437,6 +483,9 @@ export const Arsenal = {
     if (!actor?.isOwner) return ui.notifications.warn(L(`${LANG}.Arsenal.NoActor`));
     const weapons = [...actor.items].filter((i) => (i.type === "weapon" && i.system?.equipped === "equipped") || (i.type === "cyberware" && i.system?.isWeapon && i.system?.isInstalled));
     const rows = weapons.map((w) => ({ w, buttons: Rebuilds.buttons(actor, w, this.traitsFor(w)) })).filter((r) => r.buttons.length);
+    // Whoever the Tech scope shows behind thin cover can be targeted from here.
+    const seen = [...Xray.drawn.keys()].map((id) => canvas.tokens?.get(id)).filter(Boolean);
+    if (seen.length) rows.push({ w: { name: L(`${LANG}.Arsenal.BehindCover`) }, buttons: seen.map((t) => ({ key: `tgt:${t.id}`, label: t.name, icon: "fa-solid fa-crosshairs", on: game.user.targets?.has?.(t) })) });
     if (!rows.length) return ui.notifications.info(L(`${LANG}.Arsenal.NoSwitches`, { name: actor.name }));
     const content = rows.map((r) => `<p><strong>${esc(r.w.name)}</strong> ${r.buttons.map((b) => `<button type="button" data-key="${b.key}"${b.on ? ' class="active"' : ""}><i class="${b.icon}"></i> ${esc(b.label)}</button>`).join(" ")}</p>`).join("");
     const pick = await Compat.DialogV2.wait({
@@ -450,7 +499,8 @@ export const Arsenal = {
         const el = app?.element ?? Compat.element(second?.element ?? second);
         el?.querySelectorAll?.("[data-key]").forEach((b) => b.addEventListener("click", () => {
           const [k, id] = b.dataset.key.split(":");
-          this.toggle(actor, actor.items.get(id), k === "rico" ? "ricochet" : "charge");
+          if (k === "tgt") Compat.setTargets([id]);
+          else this.toggle(actor, actor.items.get(id), k === "rico" ? "ricochet" : "charge");
           app?.close?.();
         }));
       },
@@ -477,7 +527,10 @@ export const Arsenal = {
       if (!actor || (maxBody && CPR.stat(actor, "body") >= maxBody)) continue;
       const to = Blast.blowTo(tok, center, metres, grid);
       if (!to || (to.x === tok.x && to.y === tok.y)) continue;
+      const half = { x: ((Number(tok.width) || 1) * grid.size) / 2, y: ((Number(tok.height) || 1) * grid.size) / 2 };
+      const from = { x: tok.x + half.x, y: tok.y + half.y };
       await tok.update({ x: to.x, y: to.y });
+      if (sc.id === canvas?.scene?.id) Shots.pushed(from, { x: to.x + half.x, y: to.y + half.y }, { wall: !!to.wall });
       if (to.wall) await Conditions.add("intoTheWall", actor);
       n++;
     }

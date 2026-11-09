@@ -527,6 +527,10 @@
         "name": "Smart Weapon",
         "hint": "A Smart gun in hand: +1 to its attacks with a Personal Link or Subdermal Grip. Improved Smart Ammunition ignores visual obscurement, and a miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK), the first shot's penalties still applying."
       },
+      "monoRebuild": {
+        "name": "Mono-edge Weapon",
+        "hint": "A blade with Mono-edge Blading or the Monoblade Rebuild in hand: its damage ignores armor below its SP (7, 11 or 13 by tier)."
+      },
       "techRebuild": {
         "name": "Tech Weapon",
         "hint": "A Tech gun in hand: its scope shows outlines through thin cover. Charge it with the Move Action (20 Rounds or until fired): the next shot is ROF 1, goes through thin cover without damaging it and ignores half the target's SP."
@@ -1114,6 +1118,10 @@
       "arsenalThinDoors": {
         "name": "Closed doors are thin cover",
         "hint": "Tech scopes see through closed doors. Off: only walls marked \"Thin cover\" count."
+      },
+      "arsenalRicochetDodge": {
+        "name": "Tracking a ricochet",
+        "hint": "A ricochet can't be dodged, unless the target can follow the bounce: a Kerenzikov or other speedware that's on, or low-light, infrared or UV optics while they're in the dark. Then they may Evade at -4 (2070 Core Rules, Ch07, Ricochets in Play). Off: no ricochet is ever dodged."
       },
       "arsenalSmartPrompt": {
         "name": "Ask to retry Improved Smart misses",
@@ -2158,7 +2166,9 @@
       "ChargeTitle": "{name} charges the {weapon}",
       "ChargeBody": "That's the Move Action. It holds for 20 Rounds or until fired: the next non-explosive attack is ROF1, goes through Thin cover without damaging it, and ignores half the target's SP (2070 Core Rules, Ch07).",
       "Note": {
-        "ricochet": "Ricochet (−4): bounced off cover at a target the shooter knows is there. It can't be dodged unless the GM allows it (2070 Core Rules, Ch07, Ricochets in Play).",
+        "ricochet": "Ricochet (−4): bounced off cover at a target the shooter knows is there. It can't be dodged, unless the target can follow the bounce (speedware that's on, or low-light, IR or UV optics in the dark): then at −4 (2070 Core Rules, Ch07, Ricochets in Play).",
+        "unobscured": "Improved Smart: ignores {value} from obscurement (darkness, smoke, fog).",
+        "powerCrit": "Power: the Critical Injury's Bonus Damage is +5 more.",
         "chargedAttack": "Charged Tech shot: ROF1, through Thin cover without damaging it.",
         "chargedDamage": "Charged Tech shot: ignores half the target's SP (on the Apply Damage button).",
         "traits": "Weapon traits on this roll: {list}.",
@@ -2211,6 +2221,7 @@
       "MenuTitle": "Weapon Rebuilds: {name}",
       "NoActor": "Select a token of yours (or have a character).",
       "NoSwitches": "{name} has no weapon with a switch (a Power gun's ricochet, a Tech gun's charge).",
+      "BehindCover": "Target behind cover (Tech scope)",
       "HitCheck": {
         "hit": "<b>{name}</b>: beats DV{dv} by {by}, a hit.",
         "miss": "<b>{name}</b>: missed DV{dv} by {by}.",
@@ -2228,6 +2239,7 @@
         "Body": "Evade: roll DEX + Evasion + 1d10 against the attack roll (you can dodge bullets). Tank: the range DV stands.",
         "MeleeBody": "Melee is always an opposed roll: DEX + Evasion + 1d10 against the attack roll.",
         "WhyChrome": "({chrome} lets you dodge bullets.)",
+        "RicochetDodge": "It's a ricochet you can follow: Evade takes {penalty}.",
         "Evade": "Evade",
         "Tank": "Tank",
         "DodgedOut": "dodged out",

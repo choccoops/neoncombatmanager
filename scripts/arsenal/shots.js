@@ -1,7 +1,7 @@
 import { MODULE_ID } from "../constants.js";
 import { Settings } from "../settings.js";
 import { Core, img } from "../neonfx/core.js";
-import { segmentsCross } from "./xray.js";
+import { segmentsCross, readWall } from "./xray.js";
 
 /**
  * How a Power ricochet and a Smart gun's rounds are drawn (Sequencer, seen by everyone, played by
@@ -20,6 +20,7 @@ const SPARK = 0xffd23f;
 const SMART = 0x00e5ff;
 const ISA = 0xff4fd8;
 const HIT = 0xff3b3b;
+const TECH = 0x3d8bff;
 
 /** JB2A entries to look for, most specific first (Neon FX's own art stands in without JB2A). */
 export const SHOT_JB2A = {
@@ -27,11 +28,15 @@ export const SHOT_JB2A = {
   hit: ["jb2a.impact.010", "jb2a.impact.004", "jb2a.impact.005", "jb2a.impact"]
 };
 
-/** Which look an attack gets: "ricochet", "smart", or null (Automated Animations draws it). */
+/**
+ * Which look an attack gets: "ricochet" or "smart" (drawn instead of Automated Animations' shot),
+ * "smartlink" (a Power or Tech gun with a Smartgun Link: the lock-on only, over AA's shot), or null.
+ */
 export function shotLook(a, { on = true } = {}) {
   if (!on || a?.kind !== "attack" || !a.ranged || a.explosive || a.area || a.mode === "suppressive") return null;
   if (a.ricochet) return "ricochet";
   if (a.flavor === "smart") return "smart";
+  if (a.smartLink) return "smartlink";
   return null;
 }
 
@@ -81,6 +86,20 @@ export function bouncePoint(from, to, walls, gs = 100) {
   if (best) return { x: Math.round(best.x), y: Math.round(best.y), wall: true };
   const len = span || 1;
   return { x: Math.round(mid.x - ((to.y - from.y) / len) * gs * 1.5), y: Math.round(mid.y + ((to.x - from.x) / len) * gs * 1.5), wall: false };
+}
+
+/** Where a line crosses walls: [{ x, y }], nearest first. */
+export function crossings(from, to, walls) {
+  const out = [];
+  for (const w of walls) {
+    const [x1, y1, x2, y2] = w.c;
+    const d = (to.x - from.x) * (y2 - y1) - (to.y - from.y) * (x2 - x1);
+    if (!d) continue;
+    const t = ((x1 - from.x) * (y2 - y1) - (y1 - from.y) * (x2 - x1)) / d;
+    const u = ((x1 - from.x) * (to.y - from.y) - (y1 - from.y) * (to.x - from.x)) / d;
+    if (t >= 0 && t <= 1 && u >= 0 && u <= 1) out.push({ x: Math.round(from.x + t * (to.x - from.x)), y: Math.round(from.y + t * (to.y - from.y)), t });
+  }
+  return out.sort((p, q) => p.t - q.t).map(({ x, y }) => ({ x, y }));
 }
 
 /** How long a round takes over a distance, within bounds (ms). */
@@ -153,6 +172,7 @@ export const Shots = {
     });
     const seq = new Sequence({ moduleName: MODULE_ID, softFail: true });
     if (look === "ricochet") this.ricochet(seq, from, targets[0].center, hits[0]);
+    else if (look === "smartlink") this.lockOn(seq, targets, SMART, { hold: 900, opacity: 0.7 });
     else this.smart(seq, from, targets, hits, { improved: a.ammoType === "smart", autofire: a.mode === "autofire" });
     seq.play();
     return true;
@@ -181,12 +201,7 @@ export const Shots = {
     const gs = canvas.grid.size;
     const tint = improved ? ISA : SMART;
     const lock = 380;
-    for (const t of targets) {
-      const size = Core.artSize(t);
-      seq.effect().file(img("reticle-white.webp")).atLocation(t.center).size({ width: size.width * 1.5, height: size.height * 1.5 }).tint(tint).zIndex(28)
-        .scaleIn(2.2, lock, { ease: "easeOutCubic" }).duration(lock + 1200).fadeOut(400)
-        .loopProperty("spriteContainer", "rotation", { from: 0, to: 90, duration: 1600 });
-    }
+    this.lockOn(seq, targets, tint, { lock });
     if (improved) {
       seq.effect().file(img("data-ring-white.webp")).atLocation(from).size(1.6, { gridUnits: true }).tint(ISA).opacity(0.8).zIndex(27)
         .scaleIn(0.4, 300).duration(lock + 1100).fadeOut(400)
@@ -212,6 +227,76 @@ export const Shots = {
       if (r.hit) burst(seq, to, { tint, delay: delay + duration, size: improved ? 1 : 0.8 });
     }
     return rounds.length;
+  },
+
+  /** A reticle closing in on each target. */
+  lockOn(seq, targets, tint, { lock = 380, hold = 1200, opacity = 1 } = {}) {
+    for (const t of targets) {
+      const size = Core.artSize(t);
+      seq.effect().file(img("reticle-white.webp")).atLocation(t.center).size({ width: size.width * 1.5, height: size.height * 1.5 }).tint(tint).opacity(opacity).zIndex(28)
+        .scaleIn(2.2, lock, { ease: "easeOutCubic" }).duration(lock + hold).fadeOut(400)
+        .loopProperty("spriteContainer", "rotation", { from: 0, to: 90, duration: 1600 });
+    }
+  },
+
+  /**
+   * A charged Tech shot (drawn over Automated Animations' own): a blue line straight to the target
+   * and a ripple where it punches through each piece of thin cover on the way.
+   */
+  charged(a) {
+    if (!this.on) return false;
+    const from = canvas?.tokens?.get(a?.tokenId)?.center;
+    const target = canvas?.tokens?.get(a?.targets?.[0]);
+    if (!from || !target) return false;
+    const to = target.center;
+    const doorsThin = !!Settings.get("arsenalThinDoors");
+    const holes = crossings(from, to, (canvas.walls?.placeables ?? []).map((w) => readWall(w.document, { doorsThin })).filter((w) => w.blocks && w.thin));
+    const gs = canvas.grid.size;
+    const seq = new Sequence({ moduleName: MODULE_ID, softFail: true });
+    trail(seq, from, to, { tint: TECH });
+    const total = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    for (const p of holes) {
+      const delay = Math.round((Math.hypot(p.x - from.x, p.y - from.y) / total) * 200);
+      burst(seq, p, { tint: TECH, delay, size: 0.9 });
+      seq.effect().file(img("ring-pulse.webp")).atLocation(p).size(1.4, { gridUnits: true }).tint(0xffffff).delay(delay + 60).duration(600).zIndex(31)
+        .animateProperty("spriteContainer", "scale.x", { from: 0.2, to: 1, duration: 600, ease: "easeOutCubic" })
+        .animateProperty("spriteContainer", "scale.y", { from: 0.2, to: 1, duration: 600, ease: "easeOutCubic" })
+        .animateProperty("sprite", "alpha", { from: 0.8, to: 0, duration: 600, absolute: true });
+    }
+    seq.play();
+    return holes.length || true;
+  },
+
+  /** A Power gun's Critical Injury: a heavy hit and a shockwave on each target. */
+  powerCrit(a) {
+    if (!this.on) return false;
+    const targets = (a?.targets ?? []).map((id) => canvas?.tokens?.get(id)).filter(Boolean);
+    if (!targets.length) return false;
+    const seq = new Sequence({ moduleName: MODULE_ID, softFail: true });
+    for (const t of targets) {
+      const size = Math.max(t.document?.width ?? 1, t.document?.height ?? 1);
+      burst(seq, t.center, { tint: ORANGE, size: size * 1.2, jb2a: SHOT_JB2A.hit });
+      seq.effect().file(img("ring-pulse.webp")).atLocation(t.center).size(size * 2.6, { gridUnits: true }).tint(ORANGE).duration(700).zIndex(31)
+        .animateProperty("spriteContainer", "scale.x", { from: 0.25, to: 1, duration: 700, ease: "easeOutQuart" })
+        .animateProperty("spriteContainer", "scale.y", { from: 0.25, to: 1, duration: 700, ease: "easeOutQuart" })
+        .animateProperty("sprite", "alpha", { from: 1, to: 0, duration: 700, absolute: true });
+    }
+    seq.play();
+    return true;
+  },
+
+  /** A Propulsion Impact push (the GM's client, seen by everyone): a streak along the push, a jolt where it stops. */
+  pushed(from, to, { wall = false } = {}) {
+    if (!this.on) return false;
+    const seq = new Sequence({ moduleName: MODULE_ID, softFail: true });
+    seq.effect().file(img("ring-pulse.webp")).atLocation(from).size(1.6, { gridUnits: true }).tint(ORANGE).duration(450).zIndex(31)
+      .animateProperty("spriteContainer", "scale.x", { from: 0.3, to: 1, duration: 450, ease: "easeOutCubic" })
+      .animateProperty("spriteContainer", "scale.y", { from: 0.3, to: 1, duration: 450, ease: "easeOutCubic" })
+      .animateProperty("sprite", "alpha", { from: 0.9, to: 0, duration: 450, absolute: true });
+    trail(seq, from, to, { tint: 0xffffff });
+    if (wall) burst(seq, to, { tint: ORANGE, delay: 150, size: 1, jb2a: SHOT_JB2A.spark });
+    seq.play();
+    return true;
   },
 
   /** An Improved Smart retry: the round comes back round from past the target. */

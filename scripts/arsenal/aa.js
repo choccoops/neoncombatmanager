@@ -257,7 +257,7 @@ export const AA = {
     }
 
     // A ricochet or a Smart gun's rounds are drawn by Neon Arsenal itself (shots.js).
-    if (Shots.lookFor(data.workflow?.flags?.[MODULE_ID]?.arsenal)) {
+    if (["ricochet", "smart"].includes(Shots.lookFor(data.workflow?.flags?.[MODULE_ID]?.arsenal))) {
       data.stopWorkflow = true;
       return;
     }

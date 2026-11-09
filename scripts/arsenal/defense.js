@@ -15,6 +15,15 @@ import { L, esc } from "../util.js";
  */
 export const DODGE_TEXT = /dodge (?:bullets|ranged attacks)[^.]{0,20}?(?:regardless of|whatever)(?: your)? REF/i;
 
+/**
+ * What lets someone follow a ricochet's bounce (2070 Ch07, Ricochets in Play): speedware such as a
+ * Kerenzikov or a running Sandevistan; or low-light, infrared or UV optics while it's dark.
+ */
+export const TRACK_CHROME = /\b(kerenzikov|sandevistan|speedware)\b/i;
+export const TRACK_OPTICS = /\b(low[- ]?light|infra-?red|ultra-?violet|night ?vision|thermo-?graph\w*|thermal|IR|UV)\b/i;
+/** The penalty to dodge a ricochet you can track. */
+export const RICOCHET_DODGE = -4;
+
 const strip = (html) => String(html ?? "").replace(/<[^>]+>/g, " ");
 const isActiveEffect = (e) => /\(active\)\s*$/i.test(String(e?.name ?? ""));
 
@@ -23,10 +32,11 @@ const isActiveEffect = (e) => /\(active\)\s*$/i.test(String(e?.name ?? ""));
  * why: "ref" (REF 8+), or the name of the chrome that lets them; blocked: why they can't now.
  * An item with an "(active)" effect (Neon Hub's switch for speedware and its OS) only counts
  * while that effect is on: the Sandevistan's OS lets you dodge bullets while it runs.
+ * A ricochet can't be dodged unless the target can track it (`tracks`); then it's at -4 (penalty).
  * @param {object} c - { ref, items: [{ name, installed, description, effects: [{ name, disabled }] }],
- *   blind, attackerHidden, ricochet }
+ *   blind, attackerHidden, ricochet, tracks }
  */
-export function dodgeAbility({ ref = 0, items = [], blind = false, attackerHidden = false, ricochet = false } = {}) {
+export function dodgeAbility({ ref = 0, items = [], blind = false, attackerHidden = false, ricochet = false, tracks = false } = {}) {
   let why = Number(ref) >= 8 ? "ref" : null;
   if (!why) {
     for (const i of items) {
@@ -39,8 +49,25 @@ export function dodgeAbility({ ref = 0, items = [], blind = false, attackerHidde
   }
   // 2070 Core Rules: no dodging a shooter you don't know is there (Ch06), nor a ricochet (Ch07),
   // nor bullets with all-chrome eyes shut down.
-  const blocked = attackerHidden ? "hidden" : ricochet ? "ricochet" : blind ? "blind" : null;
-  return { can: !!why && !blocked, why, blocked };
+  const blocked = attackerHidden ? "hidden" : ricochet && !tracks ? "ricochet" : blind ? "blind" : null;
+  const out = { can: !!why && !blocked, why, blocked };
+  if (ricochet && tracks && !blocked) out.penalty = RICOCHET_DODGE;
+  return out;
+}
+
+/**
+ * Can someone track a ricochet: speedware that's on (an item with an "(active)" switch only while
+ * it runs), or low-light/IR/UV optics while they're in the dark. Pure.
+ * @param {object[]} items - as dodgeAbility takes them
+ * @param {boolean} dark - Low Light, Darkness or Obscured on them
+ */
+export function tracksRicochet(items = [], dark = false) {
+  return items.some((i) => {
+    if (!i.installed) return false;
+    const on = !(i.effects ?? []).filter(isActiveEffect).length || (i.effects ?? []).filter(isActiveEffect).some((e) => !e.disabled);
+    if (TRACK_CHROME.test(i.name ?? "")) return on;
+    return dark && TRACK_OPTICS.test(i.name ?? "");
+  });
 }
 
 /** An Evasion roll against an attack: "dodged" or "hit". A tie goes to the defender (the attacker must beat it). */
@@ -78,12 +105,15 @@ export const Defense = {
 
   /** Can this target dodge this ranged attack now? */
   ability(target, { attacker = null, ricochet = false } = {}) {
+    const items = this.itemsOf(target);
+    const dark = ["lowLight", "darkness", "obscured"].some((id) => Conditions.has(id, target));
     return dodgeAbility({
       ref: CPR.stat(target, "ref"),
-      items: this.itemsOf(target),
+      items,
       blind: Conditions.has("blind", target) || Conditions.has("qhRebootOptics", target),
       attackerHidden: !!attacker && Conditions.has("hidden", attacker),
-      ricochet
+      ricochet,
+      tracks: ricochet && !!Settings.get("arsenalRicochetDodge") && tracksRicochet(items, dark)
     });
   },
 
@@ -110,7 +140,7 @@ export const Defense = {
       }
       const dv = a.hits?.find((h) => h.name === tok.name)?.dv ?? a.dv ?? null;
       const ab = this.ability(target, { attacker, ricochet: a.ricochet });
-      if (ab.can) await this.prompt(target, tok, { ...base, dv, why: ab.why });
+      if (ab.can) await this.prompt(target, tok, { ...base, dv, why: ab.why, ...(ab.penalty ? { penalty: ab.penalty } : {}) });
     }
   },
 
@@ -141,7 +171,7 @@ export const Defense = {
       kicker: L(`${LANG}.Arsenal.Defense.Kicker`),
       title: L(`${LANG}.Arsenal.Defense.${data.melee ? "MeleeTitle" : data.template ? "AreaTitle" : "Title"}`, { name: esc(tok.name), attacker: esc(data.attacker), weapon: esc(data.weapon) }),
       tone: "cyan",
-      body: `<p>${L(`${LANG}.Arsenal.Defense.${data.melee ? "MeleeBody" : "Body"}`)}${why ? ` ${why}` : ""}</p>`,
+      body: `<p>${L(`${LANG}.Arsenal.Defense.${data.melee ? "MeleeBody" : "Body"}`)}${why ? ` ${why}` : ""}${data.penalty ? ` ${L(`${LANG}.Arsenal.Defense.RicochetDodge`, { penalty: data.penalty })}` : ""}</p>`,
       buttons,
       whisper: Cards.owners(target),
       flags: { defense: true }
@@ -153,7 +183,8 @@ export const Defense = {
     const d = btn.dataset;
     const result = await CPR.skillCheck(target, "Evasion", { event, stat: "dex" });
     if (!result) return null;
-    return this.resolve(message, { ...d, evasion: result.total });
+    // Tracking a ricochet's bounce: the dodge takes the same -4 as the shot.
+    return this.resolve(message, { ...d, evasion: result.total + (Number(d.penalty) || 0) });
   },
 
   /** Tank: the range DV stands (in an area, they stay in it). */

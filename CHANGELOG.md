@@ -52,6 +52,15 @@ landings (the AV Landing Zone and AV Landing macros, below).
 - **Improved Smart retry:** the shooter is asked straight away on a miss by 5 or less. The retry
   now keeps the first shot's penalties and can add LUCK (the rule's "+ LUCK"), and its round
   loops back round from past the target.
+- **Improved Smart ignores obscurement** (the rule): penalties from Low Light, Darkness,
+  Obscured, smoke, pop-ups and weather's sight come off Improved Smart attacks.
+- **Following a ricochet:** a target with speedware that's on, or low-light, IR or UV optics in the
+  dark, can Evade a ricochet at −4 instead of not at all (a setting).
+- **Charged Tech shots** punch a ripple through each piece of thin cover they cross. The Weapon
+  Rebuilds macro can target whoever the Tech scope shows behind cover.
+- **Power Critical Injuries** hit with a shockwave. **Propulsion Impact** pushes leave a streak.
+  A **Smartgun Link** on a Power or Tech gun gets the lock-on reticle. **Mono-edge Weapon** is a
+  fourth weapon condition, with a faint cyan edge glow.
 - New quiet sounds made with ElevenLabs: lock-on, homing rounds, re-acquire.
 
 ## 1.20.0

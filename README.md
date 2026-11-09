@@ -689,7 +689,24 @@ on the scene. A damage roll for an area draws no Tarot card.
   re-acquire (the card's button stays too). The second try is 14 + 1d10, with the first shot's
   penalties and any LUCK they choose to add. The round loops back from past the target.
 
+- **Improved Smart vs obscurement.** Improved Smart rounds ignore visual obscurement penalties
+  (2070 Ch07), so Low Light, Darkness, Obscured, smoke, pop-ups and weather's sight penalties come
+  off that roll. The card says how much.
+- **Following a ricochet.** A ricochet can't be dodged, unless the target can follow the bounce: a
+  Kerenzikov, a running Sandevistan or other speedware, or low-light, IR or UV optics while they're
+  in the dark. Then their Evade card takes −4 (Ch07, Ricochets in Play; a setting).
+- **Charged Tech shot.** A blue line runs to the target, with a ripple where it punches through
+  each piece of thin cover. The *Weapon Rebuilds* macro lists whoever the Tech scope shows behind
+  cover, so you can target them.
+- **Power Critical Injury.** A heavy hit and an orange shockwave on the target, and a note on the
+  card that the Bonus Damage is +5 more.
+- **Smartgun Link** on a Power or Tech gun: the lock-on reticle, over the gun's own shot.
+- **Mono-edge Weapon.** A faint cyan edge glow while a blade with Mono-edge Blading or the
+  Monoblade Rebuild is in hand (a weapon condition, like the three above).
+- **Propulsion Impact.** A shockwave and a streak along the push, with sparks if it ends in a wall.
+
 Ricochets and Smart shots replace Automated Animations' straight shot; the gunshot sounds stay.
+Smart bows get the homing look too, with Improved Smart Arrows steering like rounds.
 
 **Rebuilds that are always on** apply on every attack: Neon At Home registers the Melee Rebuilds
 (Mono-edge Blading and the Monoblade Rebuild ignore armor below SP7, 11 or 13 by tier; Propulsion

@@ -88,9 +88,11 @@ function tokenAt(actor, x, y, { visible = true, hidden = false } = {}) {
 const { Registry } = await import("../scripts/conditions/registry.js");
 const { Conditions } = await import("../scripts/conditions/engine.js");
 const { segmentsCross, throughThinCover, readWall, Xray } = await import("../scripts/arsenal/xray.js");
-const { bouncePoint, shotLook, shotWall, Shots, flightMs } = await import("../scripts/arsenal/shots.js");
+const { bouncePoint, shotLook, shotWall, Shots, flightMs, crossings } = await import("../scripts/arsenal/shots.js");
 const { Equipped, flavorsInHand, inHand, REBUILD_CONDITION } = await import("../scripts/arsenal/equipped.js");
-const { Arsenal, penaltyOf, retryFormula } = await import("../scripts/arsenal/arsenal.js");
+const { Arsenal, penaltyOf, retryFormula, obscurementMods, rolledCrit } = await import("../scripts/arsenal/arsenal.js");
+const { dodgeAbility, tracksRicochet } = await import("../scripts/arsenal/defense.js");
+const { RebuildRegistry } = await import("../scripts/arsenal/rebuilds.js");
 const { AA } = await import("../scripts/arsenal/aa.js");
 const { RECIPES, LAYERED } = await import("../scripts/neonfx/recipes.js");
 const { SOUNDS, soundFiles } = await import("../scripts/arsenal/profile.js");
@@ -339,4 +341,101 @@ test("the new sounds ship, quiet; every word is in the language file", () => {
     for (const [, key] of src.matchAll(/LANG\}\.([A-Za-z.]+)/g)) assert.ok(game.i18n.has?.(`NEONCOMBAT.${key}`) ?? true, key);
   }
   assert.equal(missingKeys.size, 0, [...missingKeys].join(", "));
+});
+
+/* ---------------------------------------- */
+/*  The rest of the Rebuild rules           */
+/* ---------------------------------------- */
+
+class CPRAttackRoll {
+  constructor(mods = []) {
+    this.mods = [...mods];
+    this.rollCardExtraArgs = {};
+    this.resultTotal = 14;
+  }
+  addMod(list) {
+    this.mods.push(...list);
+  }
+  removeMod(id) {
+    this.mods.splice(this.mods.findIndex((m) => m.id === id), 1);
+  }
+}
+
+test("Improved Smart rounds ignore visual obscurement: darkness, smoke and weather's sight penalties come off", async () => {
+  const conds = { e1: Registry.get("darkness"), e2: Registry.get("heavyRain") ?? { category: "weather", id: "rain" }, e3: { category: "weather", id: "cold" }, e4: Registry.get("blind"), e5: Registry.get("smoke") };
+  const mods = [
+    { id: "bonuses.ranged-e1", key: "bonuses.ranged", value: -4 },
+    { id: "bonuses.ranged-e2", key: "bonuses.ranged", value: -2 },
+    { id: "bonuses.allActions-e3", key: "bonuses.allActions", value: -2 },
+    { id: "bonuses.ranged-e4", key: "bonuses.ranged", value: -4 },
+    { id: "bonuses.ranged-e5", key: "bonuses.ranged", value: -4 },
+    { value: 1, source: "Smart" }
+  ];
+  assert.deepEqual(obscurementMods(mods, (id) => conds[id]).map((m) => m.id), ["bonuses.ranged-e1", "bonuses.ranged-e2", "bonuses.ranged-e5"], "not blindness, not the cold");
+
+  // On the roll: only with Improved Smart rounds in a Smart gun.
+  const actor = crew("Fury", [weapon("w1", "Assault Rifle (Smart)", { weaponType: "assaultRifle", installedItems: { list: ["a1"] } }), { _id: "a1", name: "Improved Smart Rifle Ammo", type: "ammo", system: { variety: "rifle", type: "smart", amount: 10 } }]);
+  game.user.targets = new Set();
+  const [dark] = await Conditions.add("darkness", actor);
+  const roll = new CPRAttackRoll([{ id: `bonuses.ranged-${dark.id}`, key: "bonuses.ranged", value: -4, source: "Darkness" }]);
+  await Arsenal.preRoll(actor.items.get("w1"), roll);
+  assert.ok(!roll.mods.some((m) => m.source === "Darkness"));
+  assert.equal(Arsenal.pending.tag.unobscured, -4);
+  const plain = crew("Lattice", [weapon("w1", "Assault Rifle (Smart)", { weaponType: "assaultRifle" })]);
+  const [dark2] = await Conditions.add("darkness", plain);
+  const r2 = new CPRAttackRoll([{ id: `bonuses.ranged-${dark2.id}`, key: "bonuses.ranged", value: -4, source: "Darkness" }]);
+  await Arsenal.preRoll(plain.items.get("w1"), r2);
+  assert.ok(r2.mods.some((m) => m.source === "Darkness"), "ordinary rounds still take it");
+});
+
+test("a ricochet can be dodged at -4 by whoever can follow it: speedware that's on, or optics in the dark", () => {
+  const kz = [{ name: "Kerenzikov", installed: true }];
+  const sande = (disabled) => [{ name: "Militech Sandevistan", installed: true, effects: [{ name: "Sandevistan (active)", disabled }] }];
+  const optics = [{ name: "Low Light / Infrared / UV", installed: true }];
+  assert.ok(tracksRicochet(kz));
+  assert.ok(!tracksRicochet(sande(true)) && tracksRicochet(sande(false)));
+  assert.ok(!tracksRicochet(optics, false) && tracksRicochet(optics, true));
+  assert.ok(!tracksRicochet([{ name: "Kerenzikov", installed: false }]));
+  assert.deepEqual(dodgeAbility({ ref: 8, ricochet: true, tracks: true }), { can: true, why: "ref", blocked: null, penalty: -4 });
+  assert.equal(dodgeAbility({ ref: 8, ricochet: true }).blocked, "ricochet");
+});
+
+test("a Power crit, a charged Tech shot through thin cover, a Propulsion push and a Smartgun Link each get their look", () => {
+  assert.ok(rolledCrit({ wasCritSuccess: () => true }));
+  assert.ok(rolledCrit({ faces: [6, 6, 2] }) && !rolledCrit({ faces: [6, 1, 3] }));
+  assert.deepEqual(crossings({ x: 0, y: 50 }, { x: 1000, y: 50 }, [{ c: [700, 0, 700, 100] }, { c: [300, 0, 300, 100] }]), [{ x: 300, y: 50 }, { x: 700, y: 50 }]);
+
+  const me = tokenAt(makeActor({ name: "Fury" }), 100, 500);
+  const them = tokenAt(makeActor({ name: "Ganger" }), 900, 500);
+  canvas.walls.placeables = [wall([500, 0, 500, 1000], { flags: { [M]: { thinCover: true } } })];
+  const a = { kind: "attack", ranged: true, mode: "single", tokenId: me.id, targets: [them.id] };
+  assert.equal(Shots.charged({ ...a, charged: true, flavor: "tech" }), 1, "one hole punched");
+  assert.ok(played.some((s) => call(s, "atLocation")?.[0]?.x === 500), "the ripple is on the wall");
+
+  played.length = 0;
+  assert.ok(Shots.powerCrit({ targets: [them.id] }));
+  assert.ok(played.some((s) => String(call(s, "file")?.[0]).endsWith("ring-pulse.webp")));
+  played.length = 0;
+  assert.ok(Shots.pushed({ x: 100, y: 100 }, { x: 300, y: 100 }, { wall: true }));
+  assert.ok(played.some((s) => String(call(s, "file")?.[0]).endsWith("trajectory.webp")));
+
+  // A Smartgun Link on a Power gun: the lock-on only, over Automated Animations' own shot.
+  assert.equal(shotLook({ ...a, flavor: "power", smartLink: true }), "smartlink");
+  played.length = 0;
+  assert.ok(Shots.attack({ ...a, flavor: "power", smartLink: true }));
+  assert.ok(played.every((s) => String(call(s, "file")?.[0]).endsWith("reticle-white.webp")));
+  const actor = crew("Fury", [weapon("w1", "Heavy Pistol (Power)", { weaponType: "heavyPistol" })]);
+  const data = { item: actor.items.get("w1"), token: { actor }, workflow: { flags: { [M]: { arsenal: { ...a, flavor: "power", smartLink: true } } } } };
+  AA.onWorkflowStart(data, {});
+  assert.ok(!data.stopWorkflow);
+});
+
+test("a Mono-edge blade in hand puts on Mono-edge Weapon", async () => {
+  RebuildRegistry.register({ id: "monoEdge", label: "Mono-edge Blading", match: "mono-?edge", traits: { ignoreBelowSP: 7, tag: "Monoblade" } });
+  const actor = crew("Fury", [weapon("w1", "Katana", { isRanged: false, weaponType: "heavyMelee", installedItems: { list: ["u1"] } }), { _id: "u1", name: "Mono-edge Blading", type: "itemUpgrade", system: {} }]);
+  assert.deepEqual([...flavorsInHand(actor)], ["mono"]);
+  await Equipped.sync(actor);
+  assert.ok(Conditions.has("monoRebuild", actor));
+  assert.ok(LAYERED.has("monoRebuild"));
+  RebuildRegistry.clear();
 });
