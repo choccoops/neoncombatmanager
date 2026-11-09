@@ -644,6 +644,12 @@ same name first), and each gun's own Autofire table as its card names it ("Autof
 Pistol 4)"), where Diwako's own looks for "<table> (Autofire)". Diwako's settings (in combat only,
 names or types, left or right) still apply.
 
+**Range Table Modifications.** Neon Hub's barrels, chokes, limbs and tubes (1.23.0) move a gun to
+another table by changing its own range table, so the DV display, Does it hit?, the AA look and
+the areas all follow with nothing to set here: a Snub Barrel pistol shows DV Snubnose Pistol.
+Autofire stays on the gun's type's Autofire table (the rule changes the range table and nothing
+else), and a rocket launcher with a Long Tube still looks like a rocket launcher.
+
 **Does it hit?** Under each ranged attack card, for each target: the DV at their range (the
 2070 tables, an Autofire shot on the gun's own Autofire table), hit or miss and by how much (a
 Check must beat the DV), Autofire's damage multiplier (what it beat the DV by, up to the gun's

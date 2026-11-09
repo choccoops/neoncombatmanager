@@ -74,6 +74,8 @@ test("weapons sort into kinds; shells, launchers and flamethrowers hit an area",
   assert.ok(gl.explosive);
   assert.deepEqual(gl.area, { shape: "rect", size: 10 });
   assert.equal(classify(weapon("Tube", { weaponType: "rocketLauncher", dvTable: "DV Missile Launcher" })).kind, "missileLauncher");
+  const longTube = weapon("Tube", { weaponType: "rocketLauncher", dvTable: "DV Missile Launcher" }, { "cpr-neon-hub": { dvTableBase: "DV Rocket Launcher" } });
+  assert.equal(classify(longTube).kind, "rocketLauncher", "a Long Tube changes the table, not the rockets");
   assert.equal(classify(weapon("Budget Arms Crisp-ER", { weaponType: "heavySmg" })).kind, "flamethrower");
   assert.equal(classify(weapon("Budget Arms Crisp-ER", { weaponType: "heavySmg" })).area.shape, "cone");
   assert.equal(classify(weapon("Frag", { weaponType: "thrownWeapon" }), ammo("Frag", "grenade")).kind, "thrownGrenade");
@@ -109,6 +111,26 @@ test("the Autofire table: the one a 2070 card names, else the type's", () => {
   assert.equal(autofireTable(weapon("MG", { weaponType: "assaultRifle", dvTable: "DV Machine Gun" })), "DV Machine Gun (Autofire)");
   assert.equal(autofireTable(weapon("SMG", { weaponType: "heavySmg", dvTable: "DV SMG" })), "DV SMG (Autofire)");
   assert.equal(autofireTable(weapon("Odd", { weaponType: "bow", dvTable: "DV Bow" })), "DV Bow (Autofire)");
+  // Neon Hub's Range Table Modifications move the single-shot table; Autofire stays the type's.
+  const hub = { "cpr-neon-hub": { dvTableBase: "DV SMG" } };
+  assert.equal(autofireTable(weapon("Short Barrel SMG", { weaponType: "smg", dvTable: "DV Subcompact SMG" }, hub)), "DV SMG (Autofire)");
+  assert.equal(autofireTable(weapon("Marksman AR", { weaponType: "assaultRifle", dvTable: "DV Marksman Rifle" })), "DV Assault Rifle (Autofire)");
+  assert.equal(autofireTable(weapon("Long Barrel", { weaponType: "heavyPistol", dvTable: "DV Long Barrel Pistol" })), "DV Pistol (Autofire, Machine Pistol)");
+  assert.equal(autofireTable(weapon("Choked", { weaponType: "shotgun", dvTable: "DV Long Barrel Shotgun" })), "DV Long Barrel Shotgun (Autofire)", "no such table: forWeapon falls back to the single-shot one");
+});
+
+test("the DV a weapon faces follows its own table, so a Snub Barrel's swap shows everywhere", async () => {
+  Dv.clear();
+  Dv.cache.set("DV Pistol", [{ range: [0, 6], text: "13" }]);
+  Dv.cache.set("DV Snubnose Pistol", [{ range: [0, 6], text: "11" }]);
+  Dv.cache.set("DV Pistol (Autofire, Machine Pistol)", [{ range: [0, 6], text: "17" }]);
+  const snub = weapon("Snub", { weaponType: "medPistol", dvTable: "DV Snubnose Pistol", fireModes: { autoFire: 3 } }, { "cpr-neon-hub": { dvTableBase: "DV Pistol" } });
+  assert.equal(await Dv.forWeapon(snub, 5), 11);
+  assert.equal(await Dv.forWeapon(snub, 5, { autofire: true }), 17);
+  Dv.cache.set("DV Long Barrel Shotgun", [{ range: [0, 6], text: "15" }]);
+  Dv.cache.set("DV Long Barrel Shotgun (Autofire)", null);
+  assert.equal(await Dv.forWeapon(weapon("Choked", { weaponType: "shotgun", dvTable: "DV Long Barrel Shotgun" }), 5, { autofire: true }), 15);
+  Dv.clear();
 });
 
 test("profile keys go from the most specific to the plain kind", () => {
