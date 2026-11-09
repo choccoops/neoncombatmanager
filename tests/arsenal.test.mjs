@@ -584,13 +584,38 @@ test("every entry has a UUIDv4 id, and a menu AA gutted is put back", async () =
   await game.settings.set("autoanimations", "aaAutorec-range", [theirs]);
   assert.ok(!AA.current(), "half a profile isn't current, whatever its version");
   const asked = [];
+  const reloads = [];
+  const emits = [];
+  const realReload = AA.reload;
+  const realEmit = game.socket.emit;
+  AA.reload = () => reloads.push("me");
+  game.socket.emit = (name, msg) => emits.push(msg);
   foundry.applications.api.DialogV2.wait = async (opts) => {
     asked.push(opts.content);
-    return "install";
+    return asked.length === 1 ? "install" : "all";
   };
   assert.equal(await AA.offer(), "install");
   assert.match(asked[0], /dropped out/);
   assert.ok(AA.current());
+  // AA stopped loading on every client that read the old ids: the GM reloads everyone.
+  assert.match(asked[1], /won't show until each one reloads/);
+  assert.deepEqual(reloads, ["me"]);
+  assert.deepEqual(emits.map((m) => [m.type, m.action]), [["event", "arsenalReload"]]);
+  // A player is asked, and only when a GM sent it.
+  foundry.applications.api.DialogV2.wait = async (opts) => {
+    asked.push(opts.content);
+    return "reload";
+  };
+  assert.equal(await AA.reloadAsked(testUsers.player.id), null, "not from a player");
+  assert.equal(await AA.reloadAsked(testUsers.gm.id), "reload");
+  assert.match(asked.at(-1), /The GM has repaired/);
+  assert.deepEqual(reloads, ["me", "me"]);
+  // A repair of entries that were already fine asks nothing more.
+  asked.length = 0;
+  await AA.install();
+  assert.equal(asked.length, 0);
+  AA.reload = realReload;
+  game.socket.emit = realEmit;
   const range = game.settings.get("autoanimations", "aaAutorec-range");
   assert.equal(range[0].label, "Militech Crusher", "the world's own entries stay");
   assert.ok(Object.values(AA.menus()).flat().filter(isOurs).every((e) => isUuidv4(e.id)));
