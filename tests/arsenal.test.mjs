@@ -93,6 +93,7 @@ test("an ammo card that names its own area wins", () => {
 test("melee weapons: blades, blunt weapons, monowire, fists", () => {
   const melee = (name, weaponType) => classify({ name, type: "weapon", system: { isRanged: false, weaponType } }).kind;
   assert.equal(melee("Combat Knife", "lightMelee"), "lightBlade");
+  assert.equal(melee("Punknife", "medMelee"), "lightBlade", "a Neon Hub mook's stand-in");
   assert.equal(melee("Katana", "heavyMelee"), "heavyBlade");
   assert.equal(melee("Baseball Bat", "medMelee"), "blunt");
   assert.equal(melee("Sledgehammer", "vHeavyMelee"), "heavyBlunt");

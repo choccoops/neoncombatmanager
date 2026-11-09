@@ -46,8 +46,8 @@ export const FLAVOR_LABEL = { power: "Power", smart: "Smart", tech: "Tech" };
 /** Ammo types worth their own look (the rest look like Basic). */
 export const AMMO_LABEL = { incendiary: "Incendiary", emp: "EMP", smoke: "Smoke", flashbang: "Flashbang", teargas: "Teargas" };
 
-const BLADE = /\b(knife|knives|blade|katana|sword|machete|wakizashi|dagger|kukri|tanto|mantis|scalpel|razor|cleaver|axe|hatchet|scythe|spear|bayonet|claw|wolvers|ripper|kris|shiv|nodachi|odachi)\b/i;
-const LIGHT_BLADE = /\b(knife|knives|dagger|scalpel|razor|shiv|tanto|kunai|claws?|wolvers|rippers?)\b/i;
+const BLADE = /\b(knife|knives|punknife|blade|katana|sword|machete|wakizashi|dagger|kukri|tanto|mantis|scalpel|razor|cleaver|axe|hatchet|scythe|spear|bayonet|claw|wolvers|ripper|kris|shiv|nodachi|odachi)\b/i;
+const LIGHT_BLADE = /\b(knife|knives|punknife|dagger|scalpel|razor|shiv|tanto|kunai|claws?|wolvers|rippers?)\b/i;
 const FLAME = /\b(flamethrower|flame ?thrower|crisp-?er|incinerator)\b/i;
 const MONOWIRE = /\bmono-?wire\b/i;
 
