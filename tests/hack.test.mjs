@@ -620,9 +620,11 @@ test("Berserk from the macro: the condition, the token's red look and a burst; i
   assert.equal(token.document.flags[M].fx.berserk, "baldur");
   assert.ok(live.some((e) => e.name === `ncm-fx-berserk-${token.id}`), "the look while it runs");
   assert.ok(beats().length >= 2, "the burst as it kicks in");
+  assert.ok(sounds.some((f) => String(f).includes("berserk-activate")), "and its surge");
   await Conditions.remove("chromeBaldur", actor);
   await settle();
   assert.equal(token.document.flags[M].fx.berserk, undefined);
+  assert.ok(sounds.some((f) => String(f).includes("berserk-deactivate")), "winding down");
   assert.ok(!live.some((e) => e.name === `ncm-fx-berserk-${token.id}`));
 });
 

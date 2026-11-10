@@ -594,8 +594,9 @@ animation; everything else is Neon FX's own art, so nothing needs JB2A.
   fading green, magenta and cyan afterimages, with a green and magenta fringe on the token and a
   slow-time hum. Run it again to switch it off.
 - **Berserk**: a hard red pulse and haze on the token, which shakes; the ground cracks under it as
-  it kicks in (JB2A).
-- **Speedware (Kerenzikov)**: a cool blue edge, for speedware that's always on. A look only.
+  it kicks in (JB2A), with a low surge, and it winds down as it stops.
+- **Speedware (Kerenzikov)**: a cool blue edge and a quick rush, for speedware that's always on.
+  A look only.
 - **Cyberpsychosis Glitch**: the token itself shakes and jerks, with red and cyan copies tearing
   off it, red scanlines and flickering corrupted-signal bands. A look only; the condition is
   Extreme Cyberpsychosis. Run it again to switch it off.

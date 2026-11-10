@@ -4,7 +4,7 @@ import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
 import { L } from "../util.js";
 import { Compat } from "../compat.js";
-import { Core, FX_FLAG, SOUNDS } from "./core.js";
+import { Core, FX_FLAG } from "./core.js";
 import { RECIPES, recipeFor, LAYERED, JB2A, Once } from "./recipes.js";
 import { Motion, MODES } from "./motion.js";
 import { Trail } from "./sandevistan.js";
@@ -251,12 +251,9 @@ export const NeonFX = {
         Core.sound("sandeOff");
       }
     } else if (key === "kerenzikov") {
-      // Speedware kicking in: the Sandevistan's rush, without its hum.
-      if (on) Core.sound(SOUNDS.kerenOn ? "kerenOn" : "sandeOn");
-    } else if (key === "berserk") {
-      // Berserk's own sounds play once the module ships them; silent until then.
-      if (SOUNDS[on ? "berserkOn" : "berserkOff"]) Core.sound(on ? "berserkOn" : "berserkOff");
-    }
+      // Speedware kicking in: a quick rush, no hum.
+      if (on) Core.sound("kerenOn");
+    } else if (key === "berserk") Core.sound(on ? "berserkOn" : "berserkOff");
   },
 
   /** Chrome switching on or off: a burst in its colour (its Operating System's, when one runs). This client only. */

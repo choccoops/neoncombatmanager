@@ -40,7 +40,8 @@
     way round, with nothing counted twice.
 - **Eight quiet quickhack sounds** made with ElevenLabs, two takes each, at each player's Neon FX
   volume: Jack In, Jack Out, Eject, Self-ICE holding, Self-ICE breaking, the alert, a system
-  coming back up, and a Ghost's whisper (quieter still). Berserk has no sound of its own yet.
+  coming back up, and a Ghost's whisper (quieter still). Berserk surges as it kicks in and winds down as it stops,
+  and speedware (the Kerenzikov look) has a quick rush of its own.
 
 ## 1.25.2
 
