@@ -174,6 +174,10 @@ export const Cards = {
       const { Arsenal } = await import("../arsenal/arsenal.js");
       return Arsenal.click(message, btn, event, actor);
     }
+    if (String(d.ncmAction).startsWith("hack-")) {
+      const { Hack } = await import("../hack/hack.js");
+      return Hack.click(message, btn, event, actor);
+    }
     if (String(d.ncmAction).startsWith("roller-")) {
       const { Roller } = await import("../roller/roller.js");
       return Roller.click(message, btn, event, actor);

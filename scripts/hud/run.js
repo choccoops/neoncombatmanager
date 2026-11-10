@@ -85,6 +85,11 @@ export const Run = {
         }
         return this.roll(actor, deck, () => deck.createRoll("interfaceAbility", actor, { interfaceAbility: rest[1], cyberdeck: deck, netRoleItem: role }), { event, token });
       }
+      case "hack": {
+        // Quickhacking: Jack In, Breach, a slotted quickhack, Jack Out, Eject.
+        const { Hack } = await import("../hack/hack.js");
+        return Hack.run(actor, rest, { event, token });
+      }
       case "stat":
         return this.roll(actor, null, () => actor.createRoll("stat", id), { event, token });
       case "drug":

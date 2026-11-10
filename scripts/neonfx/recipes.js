@@ -249,6 +249,22 @@ export const Once = {
         .fadeIn(150).fadeOut(600).duration(1200));
   },
 
+  /**
+   * Chrome switching on: a flash and a ring in its colour; Berserk cracks the ground (JB2A) and
+   * speedware leaves a quick second ring.
+   */
+  activate(key, tint) {
+    const out = [Once.flash(tint, { scale: key === "berserk" ? 2.6 : 2, life: key === "kerenzikov" ? 350 : 550 }), Once.pulse(tint, { life: key === "berserk" ? 800 : 500 })];
+    if (key === "berserk") out.push(Once.jb2a(["jb2a.impact.ground_crack", "jb2a.impact.004"], ["orange", "dark_red", "red"], { scale: 2.4, below: true }));
+    else out.push((seq, token) => Once.pulse(tint, { life: 500 })(seq, token).delay(140));
+    return out;
+  },
+
+  /** Chrome switching off: a small grey ring. */
+  deactivate() {
+    return [Once.pulse(C.grey, { life: 450 })];
+  },
+
   /** A quickhack landing: a cyan glitch burst and the data ring snapping shut. */
   upload() {
     return (seq, token) => {
@@ -360,7 +376,11 @@ export const RECIPES = {
 
   // Switched on by the macros, not by a condition
   psycho: { layers: PSYCHO, motion: "psycho" },
-  sandevistan: { layers: [Layers.fringe(), Layers.glow(C.green, { min: 0.15, max: 0.4, period: 900 })] }
+  sandevistan: { layers: [Layers.fringe(), Layers.glow(C.green, { min: 0.15, max: 0.4, period: 900 })] },
+  // Berserk running: a hard red pulse and a red haze, and the shakes
+  berserk: { layers: [Layers.glow(C.red, { min: 0.3, max: 0.8, period: 420 }), Layers.aura(C.red, { scale: 1.9, min: 0.2, max: 0.45, period: 700 })], motion: "tremble" },
+  // A Kerenzikov (and other speedware) running: a cool blue edge
+  kerenzikov: { layers: [Layers.glow(C.blue, { min: 0.12, max: 0.35, period: 700 })] }
 };
 
 /**

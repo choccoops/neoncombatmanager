@@ -8,6 +8,7 @@ import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
 import { flavorOf } from "../arsenal/kinds.js";
 import { Hands } from "./hands.js";
 import { EncounterMode } from "../combat/mode.js";
+import { Hack } from "../hack/hack.js";
 import { L, slug } from "../util.js";
 
 const { getProperty } = foundry.utils;
@@ -140,6 +141,9 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
       out.net.push({ key: `net:${ab}`, run: `net:${deck.id}:${ab}`, label: cpr(`CPR.global.role.netrunner.interfaceAbility.${ab}`, ab[0].toUpperCase() + ab.slice(1)), icon: "fa-solid fa-network-wired" });
     }
   }
+
+  // Quickhacking (2070 ch.10): Jack In, Breach, the quickhacks slotted in the deck, Jack Out; Eject for whoever's being hacked.
+  out.net.push(...Hack.entries(actor, token));
 
   // Status: this module's conditions, on or off.
   for (const c of Registry.all().filter((x) => STATUS_CATS.includes(x.category) && !/^(tarot|stakes)/.test(x.id))) {

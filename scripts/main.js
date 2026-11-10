@@ -36,6 +36,8 @@ import { EncounterMode } from "./combat/mode.js";
 import { NeonFX } from "./neonfx/neonfx.js";
 import { Landing } from "./neonfx/landing.js";
 import { Arsenal } from "./arsenal/arsenal.js";
+import { Hack } from "./hack/hack.js";
+import { HackFx } from "./hack/fx.js";
 import { Cover } from "./cover/cover.js";
 import { AA } from "./arsenal/aa.js";
 import { Blast } from "./arsenal/blast.js";
@@ -74,6 +76,11 @@ const api = {
     psycho: (tokens, on = null) => NeonFX.toggle("psycho", tokens, on),
     /** Flip the Sandevistan (afterimage trail while the token moves) on tokens (default: selected). */
     sandevistan: (tokens, on = null) => NeonFX.toggle("sandevistan", tokens, on),
+    /** Flip Berserk's red rage, or a Kerenzikov's blue edge, on tokens (default: selected). Chrome with an "(active)" effect flips them by itself. */
+    /** Switch a Sandevistan or Berserk on or off as the rules run it (default: selected tokens): the Chrome running condition, its "(active)" effect, the look and Initiative together. */
+    activate: (kind, tokens, on = null) => NeonFX.activate(kind, tokens, on),
+    berserk: (tokens, on = null) => NeonFX.toggle("berserk", tokens, on),
+    kerenzikov: (tokens, on = null) => NeonFX.toggle("kerenzikov", tokens, on),
     /** Switch both off on tokens (default: selected). Conditions stay. */
     clear: (tokens) => NeonFX.clear(tokens),
     /** Redraw every token on the scene. */
@@ -128,6 +135,27 @@ const api = {
     dv: (item, distance, options) => Dv.forWeapon(item, distance, options),
     /** GM: apply an area (a template Neon Arsenal placed) to everyone in it. */
     applyArea: (templateUuid) => Blast.askAndApply(templateUuid)
+  },
+  /** Quickhacking in the field (2070 ch.10): the steps the Action HUD runs, for macros. */
+  hack: {
+    /** Jack In to the token the user targets (options.ghost: a Ghost Jack In; options.target: a token). */
+    jackIn: (actor, options) => Hack.jackIn(actor, options),
+    /** Breach a Passwall on a Neuroport the character is in (targetTokenId: which, when in several). */
+    breach: (actor, targetTokenId, options) => Hack.breach(actor, targetTokenId, options),
+    /** Run a slotted quickhack (its item id). */
+    quickhack: (actor, itemId, targetTokenId, options) => Hack.quickhack(actor, itemId, targetTokenId, options),
+    /** Jack Out of one Neuroport, or all of them. */
+    jackOut: (actor, targetTokenId, options) => Hack.jackOut(actor, targetTokenId, options),
+    /** The target tries to kick a Netrunner (by token id; else the first they know of) out. */
+    eject: (target, runnerTokenId, options) => Hack.eject(target, runnerTokenId, options),
+    /** { links, cooldowns, lockouts } as a character holds them. */
+    state: (actor) => Hack.state(actor),
+    /** GM: forget a character's Cooldowns and lockouts (a quickhack that failed for want of what it Needs has no Cooldown). */
+    reset: (actor) => actor.update({ [`flags.${MODULE_ID}.hack.-=cooldowns`]: null, [`flags.${MODULE_ID}.hack.-=lockouts`]: null }),
+    /** Play a beat by hand: jackIn | jackOut | eject | breach | upload | detect, with { runner, target (token ids), ...}. */
+    fx: (beat, ctx) => HackFx.send(beat, ctx),
+    /** Which JB2A files the quickhack looks use here. */
+    report: () => HackFx.report()
   },
   /** The movement ruler: how far a token's character gets this Turn, and what it walked. */
   ruler: {
@@ -372,6 +400,7 @@ Hooks.once("init", () => {
   TrackerHooks.init();
   NeonFX.init();
   Arsenal.init();
+  Hack.init();
   Cover.init();
   NeonRuler.init();
   Roller.isArea = (r) => Arsenal.isArea(r);

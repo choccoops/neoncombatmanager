@@ -4,14 +4,16 @@ import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
 import { L } from "../util.js";
 import { Compat } from "../compat.js";
-import { Core, FX_FLAG } from "./core.js";
-import { RECIPES, recipeFor, LAYERED, JB2A } from "./recipes.js";
+import { Core, FX_FLAG, SOUNDS } from "./core.js";
+import { RECIPES, recipeFor, LAYERED, JB2A, Once } from "./recipes.js";
 import { Motion, MODES } from "./motion.js";
 import { Trail } from "./sandevistan.js";
 import { Landing } from "./landing.js";
+import { Chrome, tintOf } from "./chrome.js";
+import { HackFx } from "../hack/fx.js";
 
 /** The effects a token can have switched on by hand (the macros), as token flags. */
-export const SWITCHES = ["psycho", "sandevistan"];
+export const SWITCHES = ["psycho", "sandevistan", "berserk", "kerenzikov"];
 /** The macros the first Neon FX (1.13.0) installed: a world that has those gets only the newer ones. */
 const FIRST_MACROS = ["Sandevistan", "Psycho", "Extreme", "Clear"];
 /** How long the switch loops (the cyberpsycho's static, the Sandevistan's hum) play before fading. */
@@ -61,6 +63,7 @@ export const NeonFX = {
     });
     Hooks.on(`${MODULE_ID}.fxChanged`, () => this.refreshScene());
     Landing.init();
+    Chrome.init();
   },
 
   async ready() {
@@ -200,6 +203,8 @@ export const NeonFX = {
     if (!c || actor?.documentName !== "Actor" || !Core.sequencer) return;
     for (const token of Core.tokensOf(actor)) {
       if (added) this._flourish(token, c);
+      // A quickhack's condition ending, however it ends: the system comes back up.
+      else if (c.category === "quickhack" && Settings.get("fxConditions")) HackFx.conditionEnded(token);
       this.refresh(token, userId);
     }
   },
@@ -215,7 +220,10 @@ export const NeonFX = {
     this._remember(token);
     if (!flipped.length) return;
     if (Core.on && token.visible) {
-      for (const k of flipped) this._switchSound(token, k, !!state[k]);
+      for (const k of flipped) {
+        this._switchSound(token, k, !!state[k]);
+        this._switchBurst(token, k, state[k]);
+      }
       if (flipped.includes("sandevistan")) Trail.pop(token);
     }
     if (!state.sandevistan) Trail.forget(token.id);
@@ -234,13 +242,29 @@ export const NeonFX = {
         Core.sound("psychoSting");
         Core.sound("psychoLoop", { name: loop, duration: LOOP_MS });
       } else Core.endSound(loop);
-    } else if (on) {
-      Core.sound("sandeOn");
-      Core.sound("sandeLoop", { name: loop, duration: LOOP_MS });
-    } else {
-      Core.endSound(loop);
-      Core.sound("sandeOff");
+    } else if (key === "sandevistan") {
+      if (on) {
+        Core.sound("sandeOn");
+        Core.sound("sandeLoop", { name: loop, duration: LOOP_MS });
+      } else {
+        Core.endSound(loop);
+        Core.sound("sandeOff");
+      }
+    } else if (key === "kerenzikov") {
+      // Speedware kicking in: the Sandevistan's rush, without its hum.
+      if (on) Core.sound(SOUNDS.kerenOn ? "kerenOn" : "sandeOn");
+    } else if (key === "berserk") {
+      // Berserk's own sounds play once the module ships them; silent until then.
+      if (SOUNDS[on ? "berserkOn" : "berserkOff"]) Core.sound(on ? "berserkOn" : "berserkOff");
     }
+  },
+
+  /** Chrome switching on or off: a burst in its colour (its Operating System's, when one runs). This client only. */
+  _switchBurst(token, key, value) {
+    if (key === "psycho") return;
+    const seq = new Sequence({ moduleName: MODULE_ID, softFail: true });
+    for (const once of value ? Once.activate(key, tintOf(key, value)) : Once.deactivate()) once(seq, token);
+    seq.play();
   },
 
   /* ---------------------------------------- */
@@ -277,6 +301,22 @@ export const NeonFX = {
     return list;
   },
 
+  /**
+   * Switch a Sandevistan or Berserk on or off for tokens (default: selected), as the rules run it:
+   * the Chrome running condition (their Operating System's, when they have one), which holds the
+   * token's look on. With the chrome conditions switched off in the settings, the look alone.
+   */
+  async activate(kind, tokens = null, on = null) {
+    if (!["sandevistan", "berserk"].includes(kind)) throw new Error(`${MODULE_ID} | no chrome "${kind}"`);
+    if (!Chrome.on) return this.toggle(kind, tokens, on);
+    const list = this._targets(tokens);
+    if (!list.length) {
+      ui.notifications.warn(L(`${LANG}.FX.SelectToken`));
+      return [];
+    }
+    return Chrome.activate(kind, list, on);
+  },
+
   /** Switch off both switches on tokens (default: selected). Conditions are left alone. */
   async clear(tokens = null) {
     const list = this._targets(tokens);
@@ -294,7 +334,9 @@ export const NeonFX = {
   macros() {
     const api = `game.modules.get("${MODULE_ID}").api`;
     return [
-      { key: "Sandevistan", img: `modules/${MODULE_ID}/assets/icons/sandevistan.svg`, command: `${api}.fx.sandevistan();` },
+      { key: "Sandevistan", img: `modules/${MODULE_ID}/assets/icons/sandevistan.svg`, command: `${api}.fx.activate("sandevistan");` },
+      { key: "Berserk", img: `modules/${MODULE_ID}/assets/icons/berserk.svg`, command: `${api}.fx.activate("berserk");` },
+      { key: "Speedware", img: `modules/${MODULE_ID}/assets/icons/qh-speedware.svg`, command: `${api}.fx.kerenzikov();` },
       { key: "Psycho", img: `modules/${MODULE_ID}/assets/icons/qh-cyberpsychosis.svg`, command: `${api}.fx.psycho();` },
       { key: "Extreme", img: `modules/${MODULE_ID}/assets/icons/extreme-cyberpsychosis.svg`, command: `${api}.conditions.toggle("extremeCyberpsychosis");` },
       { key: "Clear", img: "icons/svg/cancel.svg", command: `${api}.fx.clear();` },

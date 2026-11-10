@@ -8,7 +8,7 @@
  *
  * A condition:
  *   id          status id (Foundry's own id where the meaning matches: dead, unconscious, prone, blind, deaf, sleep)
- *   category    wound | critical | combat | hazard | situation | drug | quickhack | weather | visibility
+ *   category    wound | critical | combat | hazard | situation | drug | chrome | quickhack | weather | visibility
  *   img         icon (Cyberpunk RED's own status icons where it has one)
  *   page        rulebook reference shown in the Condition Lab
  *   changes     [{ key, value, situational?, onByDefault?, mode? }] in CPR roll keys (see cpr-flags.js);
@@ -39,6 +39,8 @@
  *               "rebuild": follows the 2070 guns in hand (Neon Arsenal adds their numbers on the roll)
  *   fire        a fire's stage (1 Mild, 2 Strong, 3 Deadly): "Already On Fire" pushes a repeat up a stage
  *   wakeOnDamage  ends when the bearer takes damage (unless drugged asleep or choked out)
+ *   chrome      { kind, os? }: speedware or Berserk running (scripts/neonfx/chrome.js keeps it in step with the
+ *               chrome's "(active)" effect, the token's Neon FX switch and the current Initiative)
  *   consume     "check": gone once the bearer's next Cyberpunk RED roll card is posted (the Plot Die)
  *
  * A change's value may be a dice formula ("-1d6"): it is rolled when the condition is added.
@@ -50,12 +52,14 @@ const A = "modules/cpr-neon-combat-manager/assets/icons";
 const DAY = 86400;
 const HOUR = 3600;
 
+/** Initiative up by n while speedware runs. */
+const init = (n) => ({ key: "bonuses.initiative", value: n });
 const ds = (n = 1) => ({ key: "bonuses.deathSavePenalty", value: n });
 /** MOVE down by n, but not below 1 (an UPGRADE change, applied after every ADD). */
 const move = (n) => [{ key: "system.stats.move.value", value: n }, MOVE_MIN];
 const MOVE_MIN = { key: "system.stats.move.value", value: 1, mode: 4 };
 
-export const CATEGORIES = ["wound", "critical", "combat", "hazard", "situation", "drug", "quickhack", "weather", "visibility"];
+export const CATEGORIES = ["wound", "critical", "combat", "hazard", "situation", "drug", "chrome", "quickhack", "weather", "visibility"];
 
 const R3 = 9; // 3 Rounds
 const R20 = 60; // 20 Rounds
@@ -208,6 +212,22 @@ export const CONDITIONS = [
   { id: "qhSystemReset", category: "quickhack", img: `${A}/qh-system-reset.svg`, page: "2070", duration: R20, also: ["unconscious", "prone"], wakeOnDamage: true },
   { id: "qhPuppet", category: "quickhack", img: `${A}/qh-puppet.svg`, page: "2070", duration: 3, remindOnce: true },
   { id: "qhCyberpsychosis", category: "quickhack", img: `${A}/qh-cyberpsychosis.svg`, page: "2070", duration: R3, remindOnce: true },
+
+  /* ------------------------------------------------------------------ */
+  /*  Chrome running (2070 Item Compendium): a Sandevistan, Berserk,    */
+  /*  and the Operating Systems on them. One of a kind at a time.       */
+  /* ------------------------------------------------------------------ */
+  { id: "chromeSandevistan", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", duration: R20, group: "sandevistan", changes: [init(3)], chrome: { kind: "sandevistan" } },
+  { id: "chromeApogee", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", duration: R3, group: "sandevistan", changes: [init(6), { key: "bonuses.aimedShot", value: 2 }], chrome: { kind: "sandevistan", os: "apogee" } },
+  { id: "chromeProfessional", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", duration: R3, group: "sandevistan", changes: [init(3)], chrome: { kind: "sandevistan", os: "professional" } },
+  { id: "chromeWarpDancer", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", duration: 12, group: "sandevistan", changes: [init(3)], chrome: { kind: "sandevistan", os: "warpdancer" } },
+  { id: "chromeFalcon", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", duration: R3, group: "sandevistan", changes: [init(4)], chrome: { kind: "sandevistan", os: "falcon" } },
+  { id: "chromeReflexPlus", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", duration: 15, group: "sandevistan", changes: [init(3), { key: "system.stats.ref.value", value: 1 }], chrome: { kind: "sandevistan", os: "reflexplus" } },
+  { id: "chromeBerserk", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: R20, group: "berserk", chrome: { kind: "berserk" } },
+  { id: "chromeBerserker", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", chrome: { kind: "berserk", os: "berserker" } },
+  { id: "chromeBaldur", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 12, group: "berserk", chrome: { kind: "berserk", os: "baldur" } },
+  { id: "chromeMatterhorn", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 30, group: "berserk", chrome: { kind: "berserk", os: "matterhorn" } },
+  { id: "chromeBrawler", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", chrome: { kind: "berserk", os: "brawler" } },
 
   /* ------------------------------------------------------------------ */
   /*  Pharmaceuticals (p.150) and Street Drugs (p.227-228)              */
