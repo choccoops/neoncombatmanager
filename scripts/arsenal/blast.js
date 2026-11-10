@@ -8,6 +8,7 @@ import { Conditions } from "../conditions/engine.js";
 import { Registry } from "../conditions/registry.js";
 import { Core } from "../neonfx/core.js";
 import { Sound } from "./sound.js";
+import { flightFor, squaresBetween, BLOOM_LEAD } from "./timing.js";
 import { Defense } from "./defense.js";
 import { Cover } from "../cover/cover.js";
 import { Dv } from "./dv.js";
@@ -287,6 +288,26 @@ export const Blast = {
     return { bases: ["jb2a.explosion.01", "jb2a.explosion.02", "jb2a.explosion", "jb2a.fireball.explosion"], wanted: ["orange"], sound: rocket ? "rocketBlast" : "grenadeBlast" };
   },
 
+  /** The clip that carries an explosive round to its area (a throw, a launcher's round), or null. */
+  shotFor(b) {
+    return Core.jb2a(b.kind === "thrownGrenade" ? ["jb2a.throwable.throw.grenade", "jb2a.throwable.throw", "jb2a.bullet.02"] : ["jb2a.throwable.launch.grenade", "jb2a.bullet.02", "jb2a.bullet.01", "jb2a.bullet"], ["green", "orange"]);
+  },
+
+  /**
+   * When an area's round leaves the thrower and when it lands, by the clip that carries it and how
+   * far it goes (ms from the start; zeros when nothing is thrown): the launch sound and the blast
+   * are placed by these.
+   */
+  times(doc, { launch = true } = {}) {
+    const b = doc?.flags?.[MODULE_ID]?.blast;
+    const token = b ? canvas.tokens?.get(b.tokenId) : null;
+    if (!launch || !b?.explosive || !token) return { launch: 0, arrive: 0, shot: null };
+    const shot = Core.sequencer ? this.shotFor(b) : null;
+    if (!shot) return { launch: 0, arrive: 0, shot: null };
+    const squares = squaresBetween(token.center, centerOf(doc, this.grid(doc.parent)), canvas.grid.size);
+    return { ...flightFor(shot, squares), shot };
+  },
+
   async local({ template, launch = true, noBlast = false }, given = null) {
     const doc = given ?? (await fromUuid(template));
     const b = doc?.flags?.[MODULE_ID]?.blast;
@@ -295,26 +316,25 @@ export const Blast = {
     const center = centerOf(doc, grid);
     const token = canvas.tokens?.get(b.tokenId);
     const look = this.lookFor(b);
-    const travel = launch && b.explosive && token ? 450 : 0;
+    const { arrive: travel, shot } = this.times(doc, { launch });
     if (look?.sound && !noBlast && Settings.get("arsenalSounds")) Sound.local({ key: look.sound, delay: travel });
     // Only the client that set it off starts the effects: Sequencer shows them to everyone.
     if (given === null || !Core.sequencer || !Settings.get("fxEnabled")) return true;
     try {
       const seq = new Sequence({ moduleName: MODULE_ID, softFail: true });
-      if (travel) {
-        const shot = Core.jb2a(b.kind === "thrownGrenade" ? ["jb2a.throwable.throw.grenade", "jb2a.throwable.throw", "jb2a.bullet.02"] : ["jb2a.throwable.launch.grenade", "jb2a.bullet.02", "jb2a.bullet.01", "jb2a.bullet"], ["green", "orange"]);
-        if (shot) seq.effect().file(shot).atLocation(token).stretchTo(center).waitUntilFinished(-100);
-      }
+      // The round flies while everything else waits for the moment it lands (the same moment the
+      // blast sounds on every client), rather than for its clip to end.
+      if (shot) seq.effect().file(shot).atLocation(token).stretchTo(center);
       if (look && !noBlast) {
         const file = Core.jb2a(look.bases, look.wanted);
         if (file) {
-          const fx = seq.effect().file(file).fadeOut(400);
+          const fx = seq.effect().file(file).fadeOut(400).delay(Math.max(0, travel - (b.explosive ? BLOOM_LEAD : 0)));
           if (look.cone && token) fx.atLocation(token).stretchTo(center, { onlyX: false });
           else fx.atLocation(center).size(b.area.size / grid.distance * 1.15, { gridUnits: true });
           if (look.duration) fx.duration(look.duration);
         }
         if (Core.motion && b.explosive && !["smoke", "teargas", "poison", "biotoxin", "sleep"].includes(b.ammoType)) {
-          seq.canvasPan().atLocation(center).shake({ duration: 350, strength: 4, rotation: false, fadeOutDuration: 200 });
+          seq.canvasPan().delay(travel).atLocation(center).shake({ duration: 350, strength: 4, rotation: false, fadeOutDuration: 200 });
         }
       }
       seq.play();

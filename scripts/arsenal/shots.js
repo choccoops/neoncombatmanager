@@ -160,7 +160,10 @@ export const Shots = {
     return shotLook(a, { on: this.on });
   },
 
-  /** Draw an attack (the shooter's client; Sequencer shows it to everyone). True when drawn. */
+  /**
+   * Draw an attack (the shooter's client; Sequencer shows it to everyone). False when there's
+   * nothing to draw; else when its parts happen, for the sounds: { look, launch, ricochet?, arrive } (ms).
+   */
   attack(a) {
     const look = this.lookFor(a);
     const from = canvas?.tokens?.get(a?.tokenId)?.center;
@@ -171,11 +174,17 @@ export const Shots = {
       return h?.dv === null || h?.dv === undefined ? true : Number(a.total) > Number(h.dv);
     });
     const seq = new Sequence({ moduleName: MODULE_ID, softFail: true });
-    if (look === "ricochet") this.ricochet(seq, from, targets[0].center, hits[0]);
-    else if (look === "smartlink") this.lockOn(seq, targets, SMART, { hold: 900, opacity: 0.7 });
-    else this.smart(seq, from, targets, hits, { improved: a.ammoType === "smart", autofire: a.mode === "autofire" });
+    let times = { launch: 0, arrive: 0 };
+    if (look === "ricochet") {
+      const r = this.ricochet(seq, from, targets[0].center, hits[0]);
+      times = { launch: 0, ricochet: r.leg1, arrive: r.leg1 + r.leg2 };
+    } else if (look === "smartlink") this.lockOn(seq, targets, SMART, { hold: 900, opacity: 0.7 });
+    else {
+      const r = this.smart(seq, from, targets, hits, { improved: a.ammoType === "smart", autofire: a.mode === "autofire" });
+      times = { launch: r.lock, arrive: r.lock + r.flight };
+    }
     seq.play();
-    return true;
+    return { look, ...times };
   },
 
   /** A Power ricochet: to the bounce, sparks, on to the target. */
@@ -193,7 +202,7 @@ export const Shots = {
     burst(seq, bounce, { tint: SPARK, delay: leg1, size: 0.7, jb2a: SHOT_JB2A.spark });
     round(seq, bounce, to, { tint: SPARK, delay: leg1, duration: leg2, size: streak, file: img("tracer.webp"), overshoot: hit ? 0 : gs * 1.5 });
     if (hit) burst(seq, to, { tint: HIT, delay: leg1 + leg2, size: 0.9, jb2a: SHOT_JB2A.hit });
-    return bounce;
+    return { bounce, leg1, leg2 };
   },
 
   /** Smart rounds: lock on, then launch wide and curve in (Improved Smart: harder, magenta). */
@@ -226,7 +235,8 @@ export const Shots = {
       });
       if (r.hit) burst(seq, to, { tint, delay: delay + duration, size: improved ? 1 : 0.8 });
     }
-    return rounds.length;
+    const first = rounds[0]?.t.center;
+    return { rounds: rounds.length, lock, flight: first ? flightMs(Math.hypot(first.x - from.x, first.y - from.y), gs, 45, 450, 900) : 0 };
   },
 
   /** A reticle closing in on each target. */
@@ -241,9 +251,10 @@ export const Shots = {
 
   /**
    * A charged Tech shot (drawn over Automated Animations' own): a blue line straight to the target
-   * and a ripple where it punches through each piece of thin cover on the way.
+   * and a ripple where it punches through each piece of thin cover on the way, as the bolt passes
+   * (`arrive`: how long AA's bolt takes to the target, ms).
    */
-  charged(a) {
+  charged(a, { arrive = 270 } = {}) {
     if (!this.on) return false;
     const from = canvas?.tokens?.get(a?.tokenId)?.center;
     const target = canvas?.tokens?.get(a?.targets?.[0]);
@@ -256,7 +267,7 @@ export const Shots = {
     trail(seq, from, to, { tint: TECH });
     const total = Math.hypot(to.x - from.x, to.y - from.y) || 1;
     for (const p of holes) {
-      const delay = Math.round((Math.hypot(p.x - from.x, p.y - from.y) / total) * 200);
+      const delay = Math.round((Math.hypot(p.x - from.x, p.y - from.y) / total) * (Number(arrive) || 270));
       burst(seq, p, { tint: TECH, delay, size: 0.9 });
       seq.effect().file(img("ring-pulse.webp")).atLocation(p).size(1.4, { gridUnits: true }).tint(0xffffff).delay(delay + 60).duration(600).zIndex(31)
         .animateProperty("spriteContainer", "scale.x", { from: 0.2, to: 1, duration: 600, ease: "easeOutCubic" })

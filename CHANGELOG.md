@@ -2,11 +2,29 @@
 
 ## 1.25.2
 
-- **The hit lands after the shot.** With Automated Animations, a ranged weapon's hit effect played at
-  the same moment as its projectile, so a slower shot (a Tech weapon's bolt) showed the impact
-  first. The hit now waits for the shot to arrive, in step with the impact sound; a lobbed grenade
-  or rocket waits a little longer.
-  - The GM is offered the updated animations on the next load (**Install**), as after any update.
+**Animations in step.** Every weapon's shot, hit and sound was checked against JB2A's own clips,
+frame by frame, and placed by what the clip shows.
+
+- **The hit lands when the round does.** Automated Animations played a weapon's hit effect at the
+  same moment as its projectile, so a Tech bolt showed its impact first. A round's flight also
+  depends on the distance: a bullet crosses 3 squares in under a tenth of a second and 15 in three
+  quarters. Neon Arsenal now draws the hit itself at the moment the round arrives, for each target.
+  - A shot shown missing (Suppressive Fire, a miss with AA's misses on) hits nothing.
+  - An Incendiary hit burns for a moment, not for its whole five-second loop.
+- **Sounds follow the picture.**
+  - The shot sounds as the round leaves: a bow's string at the release (the arrow is nocked and
+    drawn first), a thrown blade at the throw.
+  - The impact sounds as the round arrives, by distance.
+  - A melee weapon sounds as its swing connects (about a second in, later for a heavy blade), and a
+    Propulsion Impact shows then.
+  - A ricochet whines at the bounce and hits when the second leg ends; a Smart gun fires after its
+    lock, and its hit sounds when the rounds curve in.
+- **One clock.** Sounds and hits wait for Automated Animations' first frame, so a clip that takes
+  a moment to load no longer leaves them running ahead.
+- **Blasts.** The explosion, its sound and the screen shake all come when the grenade or launcher
+  round lands. The sound used to come at a fixed 0.45 s, well before a thrown grenade arrived.
+- A charged Tech shot's ripples through thin cover follow the bolt.
+- The GM is offered the updated animations on the next load (**Install**), as after any update.
 
 ## 1.25.1
 

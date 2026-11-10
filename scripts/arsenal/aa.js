@@ -3,7 +3,10 @@ import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { Socket } from "../socket.js";
 import { classify, profileKeys, NO_FLASH } from "./kinds.js";
-import { ROWS, buildMenu, mergeSection, isOurs, isUuidv4, uuidv4, AUTOREC_VERSION } from "./profile.js";
+import { ROWS, buildMenu, mergeSection, isOurs, isUuidv4, uuidv4, AUTOREC_VERSION, rowFor, lookOf, hitOf, hitSize } from "./profile.js";
+import { flightFor, contactFor, squaresBetween, BLOOM_LEAD } from "./timing.js";
+import { Sync } from "./sync.js";
+import { Core } from "../neonfx/core.js";
 import { Rebuilds, traitsOf } from "./rebuilds.js";
 import { DIWAKO_ID } from "./dv.js";
 import { Shots } from "./shots.js";
@@ -56,6 +59,8 @@ export const AA = {
         console.error(`${MODULE_ID} | Automated Animations`, err);
       }
     });
+    // AA's first frame for an attack: what's timed against the shot starts counting here.
+    Hooks.on("aa.animationStart", (source) => Sync.started(source?.id ?? source?.document?.id ?? null));
     Socket.on("event:arsenalFlash", (data) => this.flashAsGM(data));
     Socket.on("event:arsenalReload", (data, from) => this.reloadAsked(from));
     // Diwako's muzzle flash is an Active Light the GM creates; a Tech gun's flashes blue.
@@ -102,7 +107,7 @@ export const AA = {
   async install({ quiet = false } = {}) {
     if (!this.active || !game.user.isGM) return false;
     const version = game.modules.get(MODULE_ID)?.version ?? "";
-    const menu = buildMenu({ patreon: this.patreon, sounds: false, id: uuidv4, version });
+    const menu = buildMenu({ patreon: this.patreon, sounds: false, hits: false, id: uuidv4, version });
     const current = this.menus();
     // Entries with ids AA's menu won't take stopped AA's start-up on every client that loaded them.
     const broken = Object.values(current).flat().filter(isOurs).some((e) => !isUuidv4(e.id));
@@ -241,7 +246,11 @@ export const AA = {
     if (data?.[`${MODULE_ID}Relay`]) return;
     const item = data?.item;
     const actor = data?.token?.actor ?? item?.actor;
-    if (!item || !actor || !["weapon", "cyberware"].includes(item.type) || !Settings.get("arsenalAnimations")) return;
+    if (!item || !actor || !["weapon", "cyberware"].includes(item.type)) return;
+    // AA has taken this attack up: its sounds wait for the first frame (see sync.js).
+    const tokenId = data.token?.id ?? data.token?.document?.id ?? null;
+    Sync.seen(tokenId);
+    if (!Settings.get("arsenalAnimations")) return;
     const ammo = loadedAmmo(item, actor);
     const upgrades = Rebuilds.upgradesOf(item, actor);
     const info = classify(item, ammo, upgrades);
@@ -253,12 +262,14 @@ export const AA = {
 
     if (info.explosive && Blast.find(actor.id, item.id)) {
       data.stopWorkflow = true;
+      Sync.dropped(tokenId);
       return;
     }
 
     // A ricochet or a Smart gun's rounds are drawn by Neon Arsenal itself (shots.js).
     if (["ricochet", "smart"].includes(Shots.lookFor(data.workflow?.flags?.[MODULE_ID]?.arsenal))) {
       data.stopWorkflow = true;
+      Sync.dropped(tokenId);
       return;
     }
 
@@ -293,6 +304,8 @@ export const AA = {
     }
     if (canMiss && info.ranged && mode !== "suppressive" && r?.dv !== undefined && r.dv !== null) data.forceMiss = !(Number(r.total) > Number(r.dv));
 
+    if (entry) this.planHits(data, rowFor(keys), tokenId);
+
     // Diwako's muzzle flash only lights for the GM's own attacks; a player's goes to the GM.
     if (info.flavor === "tech") this.tech = Date.now();
     if (!game.user.isGM && info.ranged && data.ammoItem && this.flashes) {
@@ -303,6 +316,77 @@ export const AA = {
         options: { delay: animation?.primary?.options?.delay ?? 0, repeat: animation?.primary?.options?.repeat ?? 1, repeatDelay: animation?.primary?.options?.repeatDelay ?? 250 }
       });
     }
+  },
+
+  /** The JB2A files for a hit look (an AA look: impact, explosion, fireball), as Sequencer paths. */
+  hitFiles(hit) {
+    const color = hit?.color ?? "orange";
+    let paths = [];
+    if (hit?.animation === "impact") paths = ["001", "002", "003", "004", "005", "007", "008", "009", "010"].map((n) => `jb2a.impact.${n}.${color}`);
+    else if (hit?.animation === "explosion") paths = ["01", "02", "04"].map((n) => `jb2a.explosion.${n}.${color}`);
+    else if (hit?.animation === "fireball") paths = [`jb2a.fireball.loop_no_debris.${color}`, `jb2a.fireball.explosion.${color}`];
+    paths = paths.filter((p) => Core.dbHas(p));
+    if (hit?.animation === "fireball") paths = paths.slice(0, 1);
+    if (paths.length) return paths;
+    const any = Core.jb2a(hit?.animation === "explosion" ? ["jb2a.explosion.01", "jb2a.explosion"] : ["jb2a.impact.004", "jb2a.impact"], [color]);
+    return any ? [any] : [];
+  },
+
+  /**
+   * What an attack does to its targets, drawn when it gets there: AA can only start an entry's
+   * secondary with the shot or a fixed time after it, and a round's flight depends on the distance
+   * (a swing's contact on the weapon). Waits for AA's first frame; a shot that's shown missing
+   * (Suppressive Fire, a miss with AA's misses on) hits nothing.
+   */
+  planHits(data, row, tokenId) {
+    const hit = row ? hitOf(row, this.patreon) : null;
+    if (!hit || data.forceMiss || !Core.sequencer) return false;
+    const from = data.token?.center ?? data.token?.object?.center;
+    const targets = [...(data.targets ?? [])].map((t) => t?.object ?? t).filter((t) => t?.center);
+    if (!from || !targets.length) return false;
+    const look = lookOf(row, this.patreon);
+    const melee = row.menu === "melee";
+    const gs = canvas.grid.size;
+    const plan = targets.map((t) => ({ target: t, delay: melee ? contactFor(look) : flightFor(look, squaresBetween(from, t.center, gs)).arrive }));
+    const repeat = Number(data.overrideRepeat) > 1 ? Number(data.overrideRepeat) : 1;
+    Sync.when(tokenId, (started) => {
+      if (started) this.drawHits(plan, { hit, size: hitSize(row), repeat, repeatDelay: row.repeatDelay ?? 250 });
+    }, { limit: 5000 });
+    return plan;
+  },
+
+  drawHits(plan, { hit, size = 1, repeat = 1, repeatDelay = 250 }) {
+    const files = this.hitFiles(hit);
+    if (!files.length) return false;
+    const lead = hit.animation === "explosion" ? BLOOM_LEAD : 0;
+    try {
+      const seq = new Sequence({ moduleName: MODULE_ID, softFail: true });
+      for (const { target, delay } of plan) {
+        const fx = seq.effect().file(files).atLocation(target).size(size, { gridUnits: true }).opacity(0.9).fadeOut(300).delay(Math.max(0, delay - lead)).zIndex(1);
+        // A fire that catches burns a moment, not its whole five-second loop.
+        if (hit.animation === "fireball") fx.duration(1500);
+        if (repeat > 1) fx.repeats(repeat, repeatDelay);
+      }
+      seq.play();
+      return true;
+    } catch (err) {
+      console.warn(`${MODULE_ID} | hit effect`, err);
+      return false;
+    }
+  },
+
+  /**
+   * When an attack's round leaves and arrives, for its sounds: by the look its profile entry
+   * plays and the distance to its first target.
+   * @param {object} a - the attack card's tag ({ tokenId, targets })
+   * @param {string[]} keys - profile labels, most specific first
+   */
+  flight(a, keys) {
+    const row = rowFor(keys);
+    const from = canvas?.tokens?.get(a?.tokenId)?.center;
+    const to = canvas?.tokens?.get(a?.targets?.[0])?.center;
+    if (!row || row.menu === "melee" || !from || !to) return null;
+    return flightFor(lookOf(row, this.patreon), squaresBetween(from, to, canvas.grid.size));
   },
 
   /** Diwako's muzzle flash is on (with DF Active Lights) in this world. */

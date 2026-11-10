@@ -18,6 +18,7 @@ import { Dv } from "./dv.js";
 import { Sound } from "./sound.js";
 import { Defense } from "./defense.js";
 import { Shots } from "./shots.js";
+import { Sync } from "./sync.js";
 import { Xray } from "./xray.js";
 import { Equipped } from "./equipped.js";
 import { Stakes } from "../stakes/stakes.js";
@@ -281,14 +282,38 @@ export const Arsenal = {
       const keys = profileKeys({ kind: a.weapon, flavor: a.flavor, ammoType: a.ammoType });
       if (a.tags?.[0]) keys.unshift(`${keys.at(-1)} · ${a.tags[0]}`);
       const hit = a.dv !== null && a.dv !== undefined ? a.total > a.dv : false;
-      for (const s of soundPlan(keys, { mode: a.mode, ricochet: a.ricochet, hit, ranged: a.ranged, explosive: a.explosive })) {
-        Sound.play(s.key, { delay: s.delay });
+      // Each sound at the moment its picture shows it: the shot as the round leaves, the impact
+      // as it arrives. Who draws the shot decides the clock.
+      const play = (times) => {
+        for (const s of soundPlan(keys, { mode: a.mode, ricochet: a.ricochet, hit, ranged: a.ranged, explosive: a.explosive, patreon: AA.patreon, times })) {
+          Sound.play(s.key, { delay: s.delay });
+        }
+      };
+      const drawn = Shots.attack(a);
+      const placed = a.area && a.explosive ? Blast.find(a.actorId, a.itemId, { states: ["placed"] }) : null;
+      if (drawn && drawn.look !== "smartlink") {
+        // A ricochet or Smart rounds, drawn here and now.
+        play(drawn);
+        if (drawn.look === "smart") {
+          Sound.play("smartLock");
+          Sound.play("smartSeek", { delay: drawn.launch });
+        }
+      } else if (placed) {
+        // A blast: Neon Arsenal throws the round itself, below.
+        play(Blast.times(placed));
+      } else {
+        if (drawn) Sound.play("smartLock");
+        // Automated Animations draws it: wait for its first frame (at once if it isn't taking this one).
+        const times = AA.flight(a, keys);
+        if (AA.active) Sync.when(a.tokenId, () => play(times));
+        else play(times);
       }
-      if (Shots.attack(a) && ["smart", "smartlink"].includes(Shots.lookFor(a))) {
-        Sound.play("smartLock");
-        if (Shots.lookFor(a) === "smart") Sound.play("smartSeek", { delay: 380 });
+      if (a.charged && a.flavor === "tech") {
+        const bolt = AA.flight(a, keys);
+        const draw = () => Shots.charged(a, { arrive: bolt?.arrive });
+        if (AA.active) Sync.when(a.tokenId, draw);
+        else draw();
       }
-      if (a.charged && a.flavor === "tech") Shots.charged(a);
       if (this.canRetry(a) && Settings.get("arsenalSmartPrompt")) {
         setTimeout(() => this.promptRetry(message).catch((err) => console.error(`${MODULE_ID} | smart retry`, err)), 1400);
       }
