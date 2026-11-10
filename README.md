@@ -124,7 +124,9 @@ their own character. Each group opens on hover, or click a group to keep it open
   - **Skills**: Evasion, Perception, Brawling, Melee Weapon, Athletics, Stealth and First Aid,
     with their base
   - **Role**: abilities that roll
-  - **Netrunning**: Interface abilities, when the character has a cyberdeck
+  - **Netrunning**: Interface abilities, when the character has a cyberdeck, and
+    [Quickhacking](#quickhacking): Jack In, Ghost Jack In, Breach, the quickhacks slotted in the
+    deck, Jack Out; Eject for whoever's being hacked
   - **Status**: Prone, In Cover, Hidden, Holding Action, Grappled and Suppressed, toggled on and
     off
   - **Utility**: the Plot Die, Holocall, Biomon Link, Night City Map and the sheet
@@ -529,6 +531,44 @@ Condition Lab & Triggler (CLT) stopped development at Foundry v12. Neon Conditio
 
 New code should use Neon Conditions' API directly: see [docs/API.md](docs/API.md).
 
+## Quickhacking
+
+Quickhacking in the field, as the 2070 Core Rules run it (Chapter 10, Part 1), from the Action
+HUD's Netrunning group. Each step rolls, posts a card and plays on the map by what the roll decided.
+Quickhacks are the Programs Neon At Home's compendium ships, slotted in the deck the character runs.
+
+| Step | The roll | On the map |
+| --- | --- | --- |
+| **Jack In** to the token you target | Interface + 1d10 against their WILL + 1d10 (Interface 1-2 beats the firewall's DV6 first). You're in either way; lose and they know | a pulse runs from the Netrunner to the target and a data ring snaps shut on it; a faint link stays between the two tokens while you're in |
+| **Ghost Jack In** | the same with Cloak, for 2 NET Actions (a Netrunner target rolls Interface). Win and you're Ghosted | a thin, dim pulse and link, and nothing on the target |
+| **Breach** | Interface against DV6, 8 or 10 by how many Passwalls (Self-ICE) the port has, one Passwall each | the pulse meets Self-ICE: the shield flares, holds and throws the pulse back, or it shatters |
+| **A quickhack** (once every Passwall is down) | Interface against its DV; one per target per Turn; its Cooldown starts hit or miss | the upload runs up the link and lands in the way of its family: Intel a scan sweep, Covert a violet shimmer, Control crackling static, Combat a red hit, Ultimates an overload (Overheat burns, Sonic Shock rings, System Reset powers down, Puppet strings). A miss fizzles |
+| **Detected** | a lost Jack In, a loud quickhack, a broken Ghost | a red alert on the target and a trace running back up the link to the Netrunner |
+| **Eject** (the target's Action; a button on the card and on their Action HUD) | WILL + Concentration + 1d10 against Interface + 1d10 | the link tears and snaps back into the Netrunner, who can't hack them for an hour |
+| **Jack Out** | none | the ring lets go and the link runs home |
+
+- **What a hit does.** A quickhack with a Neon Condition (Short Circuit, Reboot Optics, System
+  Reset, Overheat's fire...) places it as the upload arrives, with the condition's own burst and
+  look; when it ends, however it ends, the token shows the system coming back up. Synapse Burnout,
+  Contagion and Total System Kill roll their damage straight to HP, 4 less against Self-ICE:
+  Defender. Anything else is the GM's to apply, and the card says so.
+- **Ghost runs.** While the Netrunner is Ghosted and unnoticed, the cards are whispered to the GM
+  and the Netrunner's players, and the dim link and uploads play only for them (setting: for
+  everyone, or not at all). Quiet (◆) quickhacks keep the Ghost; a failed Breach or a Quiet hit on
+  a Netrunner gives the target a roll to notice; anything else breaks it, and from then on
+  everyone sees.
+- **Left to the table:** range and line of sight, counting NET Actions (the card names the cost),
+  a quickhack's Needs (the card names them; `api.hack.reset(actor)` clears a Cooldown that
+  shouldn't have started), vehicles, a Cybersuite's built-in quickhacks, Pathfinder bonuses, and
+  how many times an hour Self-ICE: Defender has soaked.
+
+Automated Animations isn't involved: it plays on a weapon's attack roll, and a quickhack isn't one,
+so the module draws every beat itself with Sequencer, timed from JB2A's clips (all of them in the
+free pack; Patreon adds colours). Without JB2A the module's own art plays; without Sequencer the
+flow runs with no animation. Each beat has a short, quiet sound (made with ElevenLabs for this
+module), played at each player's Neon FX volume; a Ghost's is quieter still. Settings: *Quickhacking on the Action HUD* (Table rules), *Quickhack
+animations* and *Who sees a Ghost Hack* (Neon FX).
+
 ## Neon FX
 
 Visual effects through [Sequencer](https://foundryvtt.com/packages/sequencer) (needed for Neon
@@ -543,7 +583,8 @@ animation; everything else is Neon FX's own art, so nothing needs JB2A.
 | Critical Injuries | a hit flash when one lands (JB2A impact) |
 | Hazards | On Fire grows with the stage (JB2A flames); Electrocuted crackles (JB2A static electricity) with a zap; Radiation, Acid, Drowning and Asphyxiating glow and tremble |
 | Combat | Netrunning: a turning data ring. Suppressed: an amber target reticle. Hidden: an optical-camo ripple. Grappled, Choked, Flashbanged, Teargassed, In Smoke (JB2A fog), EMP'd |
-| Quickhacks | each lands with an upload burst and chirp; most leave a cyan glitch while they run (Short Circuit sparks, Sonic Shock pulses, Puppet's ring) |
+| Quickhacks | each lands with an upload burst and chirp; most leave a cyan glitch while they run (Short Circuit sparks, Sonic Shock pulses, Puppet's ring); a ring opens and a green pulse runs out as one ends |
+| Chrome running | a Sandevistan, Berserk or one of their Operating Systems: see below |
 | Drugs | a coloured glow per drug; Blue Glass sways, Synthcoke jitters |
 | Extreme Cyberpsychosis | the full glitch below, a red target-lock reticle under the token, and a sting |
 
@@ -552,10 +593,36 @@ animation; everything else is Neon FX's own art, so nothing needs JB2A.
 - **Sandevistan**: switch it on, and every move the token makes (drag, ruler, arrow keys) leaves
   fading green, magenta and cyan afterimages, with a green and magenta fringe on the token and a
   slow-time hum. Run it again to switch it off.
+- **Berserk**: a hard red pulse and haze on the token, which shakes; the ground cracks under it as
+  it kicks in (JB2A), with a low surge, and it winds down as it stops.
+- **Speedware (Kerenzikov)**: a cool blue edge and a quick rush, for speedware that's always on.
+  A look only.
 - **Cyberpsychosis Glitch**: the token itself shakes and jerks, with red and cyan copies tearing
   off it, red scanlines and flickering corrupted-signal bands. A look only; the condition is
   Extreme Cyberpsychosis. Run it again to switch it off.
-- **Clear Neon FX**: switches both off on the selected tokens.
+- **Clear Neon FX**: switches them all off on the selected tokens.
+
+**Chrome running.** The Sandevistan and Berserk macros run the chrome as the rules do: the
+character gets a **Chrome running** condition (an Active Effect with a status icon), their
+Operating System's when they have one installed, and the condition holds the look on.
+
+| Condition | Lasts | On the character |
+| --- | --- | --- |
+| Sandevistan | 20 Rounds | +3 Initiative |
+| Apogee OS / Falcon OS | 3 Rounds | +6 Initiative and +2 Aimed Shots / +4 Initiative |
+| Professional OS / Warp Dancer OS / Reflex-Plus OS | 3 / 4 / 5 Rounds | +3 Initiative (Reflex-Plus: +1 REF too) |
+| Berserk | 20 Rounds | the hint: no Seriously or Mortally Wounded penalties |
+| Berserker OS / Baldur OS / Matterhorn OS / Brawler OS | 5 / 4 / 10 / 5 Rounds | the hint: what each does while it runs |
+
+- Each Operating System runs in its own colour, with a burst as it kicks in and a ring as it stops.
+- In a fight under way, the character's Initiative moves up by the bonus as it starts and back
+  down as it ends.
+- Neon Hub's Sandevistan and Apogee carry an "(active)" effect of their own: switching that on or
+  off places or removes the condition, the macro goes through it, and the condition ending
+  switches it off. What that effect already gives isn't counted again.
+- Humanity Loss on activation, cooldowns, halved damage and the other things the hints list stay
+  with the table. A Kerenzikov is always on and has no condition.
+- A setting (*Speedware and Berserk conditions*) turns this off: the macros are then looks only.
 
 Players can switch their own tokens. The switches are saved on the token, so they survive a
 reload and show for everyone.
@@ -584,7 +651,8 @@ levelled quiet and fade in, so nothing jumps out at the table. *Neon FX token mo
 shaking and swaying (so does the system's reduced-motion setting); it only ever moves the art,
 never the token, and the token is never hidden.
 
-World settings (Neon FX menu): Neon FX on or off, condition visuals on or off, and the macros.
+World settings (Neon FX menu): Neon FX on or off, condition visuals on or off, chrome conditions,
+quickhack animations and who sees a Ghost Hack, and the macros.
 `api.fx.report()` in the console shows which JB2A files are in use.
 
 ## Neon Arsenal

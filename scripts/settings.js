@@ -8,9 +8,9 @@ export const MENUS = {
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim", "conditionSheetNotes"],
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
-  fx: ["fxEnabled", "fxConditions", "fxMacros"],
+  fx: ["fxEnabled", "fxConditions", "fxChrome", "hackFx", "hackGhostFx", "fxMacros"],
   arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels"],
-  rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert"],
+  rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
     "weatherSource", "weatherFx", "weatherEveryone", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
@@ -95,6 +95,12 @@ const DEFS = [
   ["fxEnabled", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxConditions", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxMacros", "world", Boolean, true, {}],
+  // Speedware, Berserk and their Operating Systems light up while their "(active)" effect is on
+  ["fxChrome", "world", Boolean, true, {}],
+  // Quickhacking (2070 ch.10): the flow on the Action HUD, its animations, and who sees a Ghost's
+  ["hackFlow", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
+  ["hackFx", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  ["hackGhostFx", "world", String, "owners", { choices: { owners: K("HackGhostFx.owners"), all: K("HackGhostFx.all"), off: K("HackGhostFx.off") }, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxMacrosInstalled", "world", Boolean, false, { config: false }],
   ["fxMacrosKnown", "world", Array, [], { config: false }],
   ["fxVolume", "client", Number, 0.4, { config: true, range: { min: 0, max: 1, step: 0.05 }, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],

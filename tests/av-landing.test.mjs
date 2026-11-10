@@ -389,7 +389,7 @@ test("FX off: the AV still lands, nothing is drawn or heard", async () => {
 test("the AV macros join a world that already had the Neon FX folder, once", async () => {
   await Settings.set("fxMacrosInstalled", true);
   await Settings.set("fxMacrosKnown", []);
-  assert.deepEqual(NeonFX._newMacros(), ["LandingZone", "Land"]);
+  assert.deepEqual(NeonFX._newMacros(), ["Berserk", "Speedware", "LandingZone", "Land"]);
   const macros = [];
   const folder = { id: "f1", type: "Macro", name: "Neon FX" };
   globalThis.Folder = { create: async () => folder };
@@ -397,7 +397,7 @@ test("the AV macros join a world that already had the Neon FX folder, once", asy
   game.folders = { find: (fn) => [folder].find(fn) };
   game.macros = { find: (fn) => macros.find(fn) };
   await NeonFX.installMacros({ quiet: true, keys: NeonFX._newMacros() });
-  assert.deepEqual(macros.map((m) => m.name), ["AV Landing Zone", "AV Landing"]);
+  assert.deepEqual(macros.map((m) => m.name), ["Berserk", "Speedware (Kerenzikov)", "AV Landing Zone", "AV Landing"]);
   assert.ok(macros.every((m) => m.command.includes(".fx.") && existsSync(path.join(root, m.img.replace(`modules/${M}/`, "")))));
   assert.deepEqual(NeonFX._newMacros(), [], "a deleted macro isn't brought back");
 });

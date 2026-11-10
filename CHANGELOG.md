@@ -1,5 +1,48 @@
 # Changelog
 
+## 1.26.0
+
+**Quickhacking, and chrome that runs.**
+
+- **Quickhacking on the Action HUD** (2070 Core Rules, Chapter 10). The Netrunning group gets
+  **Jack In**, **Ghost Jack In**, **Breach**, a button for each quickhack slotted in the deck (Neon
+  At Home's Programs) and **Jack Out**; someone being hacked gets **Eject**, on their Action HUD
+  and on the card. Each rolls by the rules and posts a card:
+  - Jack In is Interface against WILL (the firewall first at Interface 1-2); a loss tells them.
+  - Breach is DV6, 8 or 10 by the port's Self-ICE, one Passwall each.
+  - A quickhack rolls against its DV, once per target per Turn, and its Cooldown starts hit or
+    miss. A hit places its Neon Condition, or rolls Synapse Burnout's, Contagion's and Total
+    System Kill's damage straight to HP (4 less against Self-ICE: Defender).
+  - A Ghost run is whispered to the GM and the Netrunner's players. Quiet quickhacks keep it; a
+    failed Breach rattles the port; anything else breaks it.
+  - Range, line of sight, NET Actions, a quickhack's Needs and vehicles stay with the table.
+- **Quickhack animations** (Sequencer; JB2A's free pack, with the module's own art without it):
+  - a pulse and a data ring as you Jack In, and a faint link between the tokens while you're in;
+  - Self-ICE flaring and throwing the pulse back, or shattering;
+  - the upload running up the link and landing by its family (a scan, a shimmer, static, a red
+    hit, an overload), or fizzling on a miss;
+  - a red alert on the target and a trace back to the Netrunner when they're found out;
+  - the link tearing on an Eject, and running home on a Jack Out;
+  - a quickhack's condition ending, however it ends: a ring opens and a green pulse runs out.
+  - A Ghost's link and uploads are dim, and play for the GM and the Netrunner's players only
+    (setting: everyone, or no one) until the Ghost breaks.
+  - Timed from JB2A's clips, measured as the weapon animations were. Automated Animations isn't
+    used: it plays on attack rolls, and a quickhack isn't one.
+- **Chrome running.** A Sandevistan, Berserk and their nine Operating Systems are now conditions
+  (a new **Chrome running** category): an Active Effect with the rule's Initiative, Aimed Shot and
+  REF bonuses, its Rounds, and a status icon.
+  - The **Sandevistan** macro now runs the condition (new worlds; a macro already in your folder
+    keeps flipping the look alone), and there are **Berserk** and **Speedware (Kerenzikov)** macros.
+  - The token shows it: a burst as it kicks in, Berserk's red pulse and shakes or the
+    Sandevistan's trail while it runs, each Operating System in its own colour, a ring as it stops.
+  - Initiative in a fight under way moves with it.
+  - Neon Hub's "(active)" effects on a Sandevistan and Apogee switch the condition, and the other
+    way round, with nothing counted twice.
+- **Eight quiet quickhack sounds** made with ElevenLabs, two takes each, at each player's Neon FX
+  volume: Jack In, Jack Out, Eject, Self-ICE holding, Self-ICE breaking, the alert, a system
+  coming back up, and a Ghost's whisper (quieter still). Berserk surges as it kicks in and winds down as it stops,
+  and speedware (the Kerenzikov look) has a quick rush of its own.
+
 ## 1.25.2
 
 **Animations in step.** Every weapon's shot, hit and sound was checked against JB2A's own clips,

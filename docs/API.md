@@ -60,7 +60,7 @@ Hooks.on("cpr-neon-combat-manager.registerConditions", (conditions) => {
     hint: "MYMODULE.OverloadedHint",
     img: "modules/my-module/overloaded.svg",
     page: "My Book p.12",                  // shown in the Lab and the effect's description
-    category: "situation",                 // wound | critical | combat | hazard | situation | drug | quickhack | weather | visibility | custom
+    category: "situation",                 // wound | critical | combat | hazard | situation | drug | chrome | quickhack | weather | visibility | custom
     changes: [{ key: "system.stats.move.value", value: -2 }],
     duration: null,                        // seconds
     group: null,                           // only one condition of a group at a time
@@ -338,6 +338,8 @@ Needs Sequencer. Tokens default to the selected ones; only tokens you own are sw
 | | |
 | --- | --- |
 | `sandevistan(tokens?, on?)` | flip the Sandevistan (the afterimage trail as the token moves); `on: true/false` forces it |
+| `activate(kind, tokens?, on?)` | run a `"sandevistan"` or `"berserk"` as the rules do: the Chrome running condition (the installed Operating System's), through the chrome's "(active)" effect when it has one; the condition holds the look on and moves Initiative in a fight |
+| `berserk(tokens?, on?)`, `kerenzikov(tokens?, on?)` | flip Berserk's red look, or speedware's blue edge (looks only) |
 | `psycho(tokens?, on?)` | flip the Cyberpsychosis glitch (a look only; the condition is `extremeCyberpsychosis`) |
 | `clear(tokens?)` | switch both off |
 | `refresh()` | redraw every token on the scene |
@@ -348,13 +350,38 @@ Needs Sequencer. Tokens default to the selected ones; only tokens you own are sw
 | `installMacros()` | GM: add the Neon FX macros to the "Neon FX" macro folder (skips ones already there) |
 | `report()` | which JB2A files (or Neon FX fallbacks) the looks use here |
 
-The switches are the token flags `flags.cpr-neon-combat-manager.fx.sandevistan` and `.psycho`.
+The switches are the token flags `flags.cpr-neon-combat-manager.fx.sandevistan`, `.berserk`,
+`.kerenzikov` and `.psycho` (`true`, or the running Operating System's key: `"falcon"`). A
+condition with `chrome: { kind, os? }` holds its kind's switch on while it lasts.
 Persistent looks are Sequencer effects named `ncm-fx-<condition or switch>-<tokenId>`.
 
 An AV landing zone is a set of persistent Sequencer effects named `ncm-fx-avzone-<id>-<w>x<h>` (the
 pad itself ends in `-pad`). A landing is one token update with `animate: false` and the flag
 `flags.cpr-neon-combat-manager.fx.landing` (`{ id, fx, fy, airborne, zone, w, h, keep }`: where it
 flew in from); every client draws the flight from that.
+
+## Quickhacking: `ncm.hack`
+
+The steps the Action HUD runs (2070 Core Rules ch.10), for macros. Each resolves to what the roll
+decided, or `null` when it didn't happen (no target, a closed dialog, a Cooldown).
+
+| | |
+| --- | --- |
+| `jackIn(actor, { ghost?, target?, token? })` | Jack In to the token the user targets (or `target`): `{ won, aware, ghosted, walls }` |
+| `breach(actor, targetTokenId?)` | Breach a Passwall: `{ down, broken }` (`broken`: the Ghost) |
+| `quickhack(actor, itemId, targetTokenId?)` | run a slotted quickhack: `{ hit, aware, broken, damage, condition }` |
+| `jackOut(actor, targetTokenId?)` | Jack Out of one Neuroport, or all |
+| `eject(target, runnerTokenId?)` | the target tries to kick a Netrunner out: `{ ejected }` |
+| `state(actor)` | `{ links, cooldowns, lockouts }` |
+| `reset(actor)` | forget a character's Cooldowns and lockouts |
+| `fx(beat, ctx)` | play a beat by hand: `jackIn`, `jackOut`, `eject`, `breach`, `upload`, `detect`, with `{ runner, target }` token ids and the beat's own fields (`aware`, `down`, `hit`, `family`, `key`, `ghosted`) |
+| `report()` | which JB2A files the looks use here |
+
+State is the actor flag `flags.cpr-neon-combat-manager.hack`: `links` by target token id
+(`{ scene, name, ghost, aware, walls, total, at }`), `cooldowns` by item id, `lockouts` by token id
+(world time). A quickhack is a `program` item with `flags.cpr-neon-at-home.quickhack`
+(`{ type, dv, cooldown, quiet, needs }`). The drawn link is a Sequencer effect named
+`ncm-hack-<runner token>-<target token>` (`-g` while Ghosted).
 
 ## Neon Arsenal: `ncm.arsenal`
 

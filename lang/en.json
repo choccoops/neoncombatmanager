@@ -25,6 +25,7 @@
       "hazard": "Hazard",
       "situation": "Situation",
       "drug": "Drug",
+      "chrome": "Chrome running",
       "quickhack": "Quickhack",
       "weather": "Weather",
       "visibility": "Visibility",
@@ -499,6 +500,50 @@
         "name": "Cyberpsychosis (hack)",
         "hint": "For 3 Rounds they attack the nearest person. Then 2d6 Humanity Loss."
       },
+      "chromeSandevistan": {
+        "name": "Sandevistan",
+        "hint": "Speedware running: +3 Initiative for a minute (their place in a fight already under way moves up 3, and drops back when it stops). An Action to start; 1-hour cooldown."
+      },
+      "chromeApogee": {
+        "name": "Sandevistan: Apogee OS",
+        "hint": "Militech 'Apogee' running for 3 Rounds: +6 Initiative, +2 to Aimed Shots, dodges bullets whatever their REF, no MOVE or Evasion penalties. Free to start, even out of turn. Without an FBC or Cyberspine: 1d6 Humanity Loss each time. 20-Round cooldown."
+      },
+      "chromeProfessional": {
+        "name": "Sandevistan: Professional OS",
+        "hint": "Dynalar 'Professional' running for 3 Rounds: +3 Initiative, and their Move Action comes as if first in Initiative. Starts as half of a ROF2 Action."
+      },
+      "chromeWarpDancer": {
+        "name": "Sandevistan: Warp Dancer OS",
+        "hint": "Qiant 'Warp Dancer' running for 4 Rounds: +3 Initiative, and small jobs (get up, Reload, clear a jam...) take half of a ROF2 Action, each once a Turn. 1-hour cooldown."
+      },
+      "chromeFalcon": {
+        "name": "Sandevistan: Falcon OS",
+        "hint": "Militech 'Falcon' running for 3 Rounds: +4 Initiative, dodges bullets whatever their REF; each Turn, +2 MOVE or +4 on one Evasion Check. Free to start. Without an FBC or Cyberspine: 1d6 Humanity Loss each time. 1-hour cooldown."
+      },
+      "chromeReflexPlus": {
+        "name": "Sandevistan: Reflex-Plus OS",
+        "hint": "Zetatech 'Reflex-Plus' running for 5 Rounds: +3 Initiative and +1 REF (not with Synthcoke). Starts as half of a ROF2 Action. 1-hour cooldown."
+      },
+      "chromeBerserk": {
+        "name": "Berserk",
+        "hint": "Berserk running for a minute: no Seriously or Mortally Wounded penalties (the automatic Critical Injuries and Death Saves stay). An Action to start; 1-hour cooldown."
+      },
+      "chromeBerserker": {
+        "name": "Berserk: Berserker OS",
+        "hint": "Biodyne 'Berserker' running for 5 Rounds: Berserk, with small jobs as half of a ROF2 Action; once a Round a melee hit for 4+ counts as two for Martial Arts. Without an FBC or Cyberspine: -4 to ranged attacks."
+      },
+      "chromeBaldur": {
+        "name": "Berserk: Baldur OS",
+        "hint": "Militech 'Baldur' running for 4 Rounds: Berserk, all HP damage halved (round up), Brawling and Martial Arts Aimed Shots at ROF2; 5 HP back when it stops. Free to start. Without an FBC or Cyberspine: 1d6 Humanity Loss each time and -4 to ranged attacks. 1-hour cooldown."
+      },
+      "chromeMatterhorn": {
+        "name": "Berserk: Matterhorn OS",
+        "hint": "Moore Tech 'Matterhorn' running for 10 Rounds: Berserk, the first damage each Round cut by half their BODY, Critical Injury penalties halved. Without an FBC or Cyberspine: -4 to ranged attacks."
+      },
+      "chromeBrawler": {
+        "name": "Berserk: Brawler OS",
+        "hint": "Zetatech 'Brawler' running for 5 Rounds: Berserk, all damage 2 less before armor, limbs hit like cyberlimbs, no automatic Critical Injuries while Mortally Wounded. Without an FBC or Cyberspine: -4 to ranged attacks. 1-hour cooldown."
+      },
       "tarotWinded": {
         "name": "Winded (Justice)",
         "hint": "The wind knocked out of them: -5 Evasion against melee and no dodging ranged attacks, for a minute."
@@ -959,6 +1004,10 @@
         "name": "Full combat puts the enemies at Alert",
         "hint": "When a fight begins, or a stealth segment turns into one, the Awareness Ladder goes up to Alert if it's lower (once: the GM can lower it again). A stealth segment never moves it."
       },
+      "hackFlow": {
+        "name": "Quickhacking on the Action HUD",
+        "hint": "The Netrunning group gets Jack In, Ghost Jack In, Breach, the quickhacks slotted in the deck and Jack Out; someone being hacked gets Eject. Each rolls by the 2070 rules (Core Rules ch.10) and posts a card. Range, line of sight, NET Actions and a quickhack's Needs stay with the table."
+      },
       "actionHud": {
         "name": "Action HUD",
         "hint": "A bar of the controlled token's actions: Initiative, attacks, skills, role abilities and more, laid out your way (the sliders button customizes it)."
@@ -1049,6 +1098,23 @@
       "fxMacros": {
         "name": "Neon FX macros",
         "hint": "Put the Sandevistan, Cyberpsychosis and Clear Neon FX macros in a \"Neon FX\" macro folder (once; delete or move them freely)."
+      },
+      "fxChrome": {
+        "name": "Speedware and Berserk conditions",
+        "hint": "A Sandevistan, Berserk or one of their Operating Systems running is a condition on the character (Chrome running), whose token shows it: a burst as it kicks in, a look while it runs (each Operating System in its own colour), a ring as it stops. Switching the chrome's \"(active)\" effect, the Neon FX macros and the condition itself all stay in step, and Initiative in a fight moves with it."
+      },
+      "hackFx": {
+        "name": "Quickhack animations",
+        "hint": "Jack In, Breach, quickhacks, Self-ICE, detection and Jack Out play on the map: a link between the Netrunner and the target, the upload, and how it lands. Needs Sequencer; uses JB2A when it's installed."
+      },
+      "hackGhostFx": {
+        "name": "Who sees a Ghost Hack",
+        "hint": "A Ghosted Netrunner the target hasn't noticed: the dim link and uploads play for the GM and the Netrunner's players only, for everyone, or not at all. Once the Ghost is broken, everyone sees."
+      },
+      "HackGhostFx": {
+        "owners": "The GM and the Netrunner",
+        "all": "Everyone (subdued)",
+        "off": "No one"
       },
       "fxVolume": {
         "name": "Neon FX volume",
@@ -1994,6 +2060,83 @@
       "MacroAdded": "{name} is in the HUD's Macros now.",
       "MacroNoRun": "You can't run {name} yet: the GM gives you Limited ownership of it (and Use Script Macros)."
     },
+    "Hack": {
+      "Kicker": "Quickhacking",
+      "Rounds": "{n} Rounds",
+      "Roll": {
+        "Firewall": "Firewall",
+        "JackIn": "Jack In",
+        "Ghost": "Ghost Jack In",
+        "Breach": "Breach",
+        "StayGhosted": "Stay Ghosted"
+      },
+      "Hud": {
+        "JackIn": "Jack In",
+        "Ghost": "Ghost Jack In",
+        "Breach": "Breach: {target}",
+        "JackOut": "Jack Out: {target}",
+        "Eject": "Eject {name}",
+        "NetActions": "{n} NET Actions",
+        "Ghosted": "Ghosted",
+        "Cooling": "{n} R",
+        "CoolingTime": "{n} min",
+        "Burned": "burned out"
+      },
+      "Error": {
+        "NoDeck": "{name} isn't running a cyberdeck.",
+        "NoTarget": "Target the one token whose Neuroport you're jacking in to.",
+        "Self": "A Netrunner is always in their own Neuroport.",
+        "AlreadyIn": "Already jacked in to {target}.",
+        "LockedOut": "{target} kicked you out: no hacking them for another {minutes} min.",
+        "NoLink": "Not jacked in to anyone here. Jack In first.",
+        "PickLink": "Jacked in to more than one Neuroport: target the token to act on.",
+        "NoWalls": "{target} has no Passwall left to Breach.",
+        "NotSlotted": "That quickhack isn't slotted in the deck you're running.",
+        "Burned": "{hack} burned out: it was single use.",
+        "Cooldown": "{hack} is on Cooldown for {n} more Rounds.",
+        "CooldownTime": "{hack} is on Cooldown for about {n} more min.",
+        "WallsUp": "{target} still has {n} Passwalls up: Breach first.",
+        "ThisTurn": "One quickhack per target per Turn: {target} has had theirs.",
+        "NotYours": "That character isn't yours.",
+        "NoIntruder": "No Netrunner you know of is in that Neuroport."
+      },
+      "Card": {
+        "VsDv": "Interface {total} against DV{dv}.",
+        "VsWill": "Interface {attack} against WILL {defense}.",
+        "VsInterface": "Interface + Cloak {attack} against Interface {defense}.",
+        "VsEject": "WILL + Concentration {target} against Interface {runner}.",
+        "Cost": "NET Actions: {n}.",
+        "Walls": "Passwalls up: {n} (Breach DV{dv} each).",
+        "NoWalls": "No Passwalls: quickhacks can run.",
+        "WallsLeft": "Passwalls left: {n}.",
+        "Firewall": "{name} can't get through {target}'s firewall",
+        "FirewallHint": "They didn't notice.",
+        "JackedIn": "{name} jacks in to {target}",
+        "JackedInKnown": "{name} jacks in to {target}, and they know it",
+        "Ghosted": "{name} ghosts into {target}",
+        "GhostFail": "{name} is in, but {target} felt it",
+        "LadderStep": "A failed Ghost Jack In: their group climbs one step on the Awareness Ladder.",
+        "Breached": "{name} breaches a Passwall on {target}",
+        "IceHolds": "{target}'s Self-ICE holds",
+        "Rattle": "The port rattles: {target} against Interface + Cloak {runner}.",
+        "GhostBroken": "The Ghost is broken: they know.",
+        "GhostHolds": "Still Ghosted.",
+        "QuietGlitch": "Quiet, and Ghosted: to them it's chrome acting up.",
+        "Hit": "{name} runs {hack} on {target}",
+        "Miss": "{hack} doesn't take on {target}",
+        "Gains": "{target}: {condition}.",
+        "Damage": "{amount} straight to HP ({formula}; no armor).",
+        "Defender": "Self-ICE: Defender took {n} off (its uses this hour aren't counted here).",
+        "ByHand": "Its effect is the GM's to apply.",
+        "Needs": "Needs: {needs}. Without it the quickhack fails, with no Cooldown.",
+        "Cooldown": "Cooldown: {cooldown}.",
+        "JackedOut": "{name} jacks out of {target}",
+        "Ejected": "{target} kicks {name} out",
+        "EjectFail": "{target} can't shake {name}",
+        "Lockout": "An unsafe Jack Out: no hacking them for 60 minutes.",
+        "EjectButton": "Eject (an Action)"
+      }
+    },
     "Hands": {
       "Title": "Equip / Change Weapon",
       "NoActor": "No character.",
@@ -2144,6 +2287,8 @@
       "Installed": "Neon FX: {count} macro(s) added to the \"{folder}\" folder.",
       "Macro": {
         "Sandevistan": "Sandevistan",
+        "Berserk": "Berserk",
+        "Speedware": "Speedware (Kerenzikov)",
         "Psycho": "Cyberpsychosis Glitch",
         "Extreme": "Extreme Cyberpsychosis",
         "Clear": "Clear Neon FX",
@@ -2154,7 +2299,8 @@
         "PickZone": "AV landing zone",
         "PickSpot": "Land here",
         "ClearAsk": "Take away the {count} AV landing zone(s) on this scene?"
-      }
+      },
+      "NoChrome": "{name} has nothing running to switch off."
     },
     "Shelter": {
       "Label": "Shelters from weather (Neon Combat Manager)",
