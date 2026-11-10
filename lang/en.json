@@ -27,6 +27,7 @@
       "drug": "Drug",
       "chrome": "Chrome running",
       "quickhack": "Quickhack",
+      "awareness": "Awareness",
       "weather": "Weather",
       "visibility": "Visibility",
       "custom": "Custom"
@@ -544,6 +545,22 @@
         "name": "Berserk: Brawler OS",
         "hint": "Zetatech 'Brawler' running for 5 Rounds: Berserk, all damage 2 less before armor, limbs hit like cyberlimbs, no automatic Critical Injuries while Mortally Wounded. Without an FBC or Cyberspine: -4 to ranged attacks. 1-hour cooldown."
       },
+      "awareSuspicious": {
+        "name": "Suspicious",
+        "hint": "Heard something: head up, looking around, not searching yet. Stealth DV 11 + the number of enemies. Back to Unaware after a minute of nothing (GM option)."
+      },
+      "awareSearching": {
+        "name": "Searching",
+        "hint": "Looking for someone. The Stealth DV is the closest enemy's Perception roll. Back to Suspicious after 10 minutes of nothing (GM option)."
+      },
+      "awareAlert": {
+        "name": "Alert",
+        "hint": "They know someone's here: weapons up, doors locked. The Stealth DV is the highest Perception roll among them, and the security response is on its way. Kept until something is done about it."
+      },
+      "awareSpotted": {
+        "name": "Spotted",
+        "hint": "They see you. No more sneaking: roll Initiative."
+      },
       "tarotWinded": {
         "name": "Winded (Justice)",
         "hint": "The wind knocked out of them: -5 Evasion against melee and no dodging ranged attacks, for a minute."
@@ -1003,6 +1020,27 @@
       "combatRaisesAlert": {
         "name": "Full combat puts the enemies at Alert",
         "hint": "When a fight begins, or a stealth segment turns into one, the Awareness Ladder goes up to Alert if it's lower (once: the GM can lower it again). A stealth segment never moves it."
+      },
+      "awarenessTokens": {
+        "name": "Awareness on the tokens",
+        "hint": "The encounter's enemies carry the Awareness Ladder's step as a condition, with a mark over each as it changes. Only Alert and Spotted (the rest stays the GM's, with a mark only the GM sees), every step for everyone, or not at all."
+      },
+      "AwarenessTokens": {
+        "alert": "Alert and Spotted",
+        "all": "Every step",
+        "off": "Off"
+      },
+      "alertTimer": {
+        "name": "Alert: Rounds until the response is called",
+        "hint": "When the enemies reach Alert, a countdown to the security response being called shows for everyone and runs on the game clock (20 Rounds is a minute). At zero the GM is told the response is called; the Alert stays. The GM can wave it away. 0: no countdown."
+      },
+      "alertClears": {
+        "name": "An Alert clears when no one's left to raise it",
+        "hint": "With every enemy in the encounter dead or out before the response is called, the Alert ends and the Ladder goes back to Unaware. Once the response is called, the Alert stays until the GM moves the Ladder."
+      },
+      "alertBanner": {
+        "name": "Alert on screen",
+        "hint": "ALERT flashes across your screen when the enemies reach it, and the countdown to the security response shows while it runs. Its sounds follow your Neon FX volume."
       },
       "hackFlow": {
         "name": "Quickhacking on the Action HUD",
@@ -1964,6 +2002,25 @@
       },
       "Up": "A failed Stealth roll: one step up",
       "Obvious": "Something obvious (a gunshot, a scream, a body): straight to Alert"
+    },
+    "Alert": {
+      "Kicker": "Awareness",
+      "Label": "Alert",
+      "Called": "Response called",
+      "Hint": "Until the security response is called. Put every one of them down first and the alarm never goes out.",
+      "CalledHint": "The security response is on its way. The Alert stays until the GM moves the Awareness Ladder.",
+      "Dismiss": "Wave the countdown away (the Alert stays)",
+      "Banner": {
+        "alert": "Alert",
+        "called": "Response called",
+        "clear": "Alert cleared"
+      },
+      "Card": {
+        "Cleared": "The alarm never went out",
+        "ClearedBody": "No one is left to raise it: the enemies' Alert ends before a security response was called.",
+        "Called": "The security response is called",
+        "CalledBody": "The countdown ran out. Roll the district's Security Code for the response (Core Rules, Chapter 01); the crew's Heat goes up (Chapter 14). The enemies stay at Alert."
+      }
     },
     "Flash": {
       "Kicker": "Flash of Luck",

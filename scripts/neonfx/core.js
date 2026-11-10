@@ -42,6 +42,10 @@ export const SOUNDS = {
   hackAlert: { files: takes("qh-alert"), level: 0.4, fadeIn: 40 },
   hackReboot: { files: takes("qh-reboot"), level: 0.4, fadeIn: 60 },
   hackGhost: { files: takes("qh-ghost"), level: 0.3, fadeIn: 80 },
+  // The Alert (scripts/stealth/alert.js): one sting for the table, not one per enemy
+  alertSting: { files: takes("alert-sting"), level: 0.6, fadeIn: 30 },
+  alertResponse: { files: takes("alert-response"), level: 0.5, fadeIn: 60 },
+  alertClear: { files: takes("alert-clear"), level: 0.45, fadeIn: 60 },
   avZoneOn: { files: takes("av-zone-on"), level: 0.5, fadeIn: 150 },
   avZoneLoop: { files: takes("av-zone-loop"), level: 0.35, fadeIn: 1500 },
   avApproach: { files: takes("av-approach"), level: 0.55, fadeIn: 1200 },
