@@ -10,7 +10,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "blade",
         "ncmBurst": null
@@ -27,7 +27,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 810,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/blade-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -73,7 +73,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 900,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -245,7 +245,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "blade",
         "ncmBurst": null
@@ -262,7 +262,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 840,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/blade-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -308,7 +308,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 930,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -480,7 +480,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "blade",
         "ncmBurst": null
@@ -497,7 +497,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 1510,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/blade-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -543,7 +543,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1600,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -715,7 +715,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "blunt",
         "ncmBurst": null
@@ -732,7 +732,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 1220,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/blunt-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -778,7 +778,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1300,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -950,7 +950,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "blunt",
         "ncmBurst": null
@@ -967,7 +967,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 1220,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/blunt-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -1013,7 +1013,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1300,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -1185,7 +1185,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "monoblade",
         "ncmBurst": null
@@ -1202,7 +1202,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 500,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/monoblade-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -1248,7 +1248,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1100,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -1420,7 +1420,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "blunt",
         "ncmBurst": null
@@ -1437,7 +1437,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 620,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/blunt-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -1483,7 +1483,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 700,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -1655,7 +1655,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "monoblade",
         "ncmBurst": null
@@ -1672,7 +1672,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 300,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/monoblade-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -1718,7 +1718,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 900,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -1890,7 +1890,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "monoblade",
         "ncmBurst": null
@@ -1907,7 +1907,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 330,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/monoblade-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -1953,7 +1953,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 930,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -2125,7 +2125,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "monoblade",
         "ncmBurst": null
@@ -2142,7 +2142,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 1000,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/monoblade-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -2188,7 +2188,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1600,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -2360,7 +2360,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "blunt",
         "ncmBurst": null
@@ -2377,7 +2377,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 1220,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/blunt-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -2423,7 +2423,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1300,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -2595,7 +2595,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "blunt",
         "ncmBurst": null
@@ -2612,7 +2612,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 1220,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/blunt-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -2658,7 +2658,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1300,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -2832,7 +2832,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "pistol",
         "ncmBurst": "smgBurst"
@@ -2896,7 +2896,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 400,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -3043,7 +3043,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "heavyPistol",
         "ncmBurst": "smgBurst"
@@ -3107,7 +3107,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -3254,7 +3254,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "heavyPistol",
         "ncmBurst": null
@@ -3318,7 +3318,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -3465,7 +3465,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "pistol",
         "ncmBurst": "smgBurst"
@@ -3529,7 +3529,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 400,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -3676,7 +3676,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "heavyPistol",
         "ncmBurst": "smgBurst"
@@ -3740,7 +3740,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -3887,7 +3887,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rifle",
         "ncmBurst": "rifleBurst"
@@ -3951,7 +3951,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -4098,7 +4098,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "sniper",
         "ncmBurst": null
@@ -4115,7 +4115,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 30,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/sniper-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -4162,7 +4162,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 70,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -4309,7 +4309,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "shotgun",
         "ncmBurst": null
@@ -4373,7 +4373,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -4520,7 +4520,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "shotgun",
         "ncmBurst": null
@@ -4584,7 +4584,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 470,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -4731,7 +4731,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "bow",
         "ncmBurst": null
@@ -4748,7 +4748,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 750,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/bow-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -4795,7 +4795,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1100,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -4942,7 +4942,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "launcher",
         "ncmBurst": null
@@ -4959,7 +4959,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 130,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/launcher-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -5006,7 +5006,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1000,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -5153,7 +5153,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rocketLaunch",
         "ncmBurst": null
@@ -5170,7 +5170,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 130,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/rocket-launch-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -5217,7 +5217,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1000,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -5364,7 +5364,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rocketLaunch",
         "ncmBurst": null
@@ -5381,7 +5381,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 130,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/rocket-launch-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -5428,7 +5428,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 1000,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -5575,7 +5575,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "launcher",
         "ncmBurst": null
@@ -5592,7 +5592,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 2000,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/launcher-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -5639,7 +5639,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 2570,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -5786,7 +5786,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "blade",
         "ncmBurst": null
@@ -5803,7 +5803,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 500,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/blade-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -5850,7 +5850,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 900,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -5997,7 +5997,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "flamethrower",
         "ncmBurst": null
@@ -6061,7 +6061,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -6208,7 +6208,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "tech",
         "ncmBurst": null
@@ -6272,7 +6272,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -6419,7 +6419,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "smart",
         "ncmBurst": null
@@ -6483,7 +6483,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 400,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -6630,7 +6630,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "tech",
         "ncmBurst": null
@@ -6694,7 +6694,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -6841,7 +6841,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "smart",
         "ncmBurst": null
@@ -6905,7 +6905,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 400,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -7052,7 +7052,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "tech",
         "ncmBurst": null
@@ -7116,7 +7116,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -7263,7 +7263,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "smart",
         "ncmBurst": null
@@ -7327,7 +7327,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 400,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -7474,7 +7474,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "tech",
         "ncmBurst": "rifleBurst"
@@ -7538,7 +7538,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -7685,7 +7685,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "smart",
         "ncmBurst": "rifleBurst"
@@ -7749,7 +7749,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 400,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -7896,7 +7896,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "tech",
         "ncmBurst": "rifleBurst"
@@ -7960,7 +7960,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -8107,7 +8107,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "smart",
         "ncmBurst": "rifleBurst"
@@ -8171,7 +8171,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 400,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -8318,7 +8318,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "tech",
         "ncmBurst": "rifleBurst"
@@ -8382,7 +8382,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -8529,7 +8529,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "smart",
         "ncmBurst": "rifleBurst"
@@ -8593,7 +8593,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 400,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -8740,7 +8740,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "tech",
         "ncmBurst": null
@@ -8804,7 +8804,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -8951,7 +8951,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "smart",
         "ncmBurst": null
@@ -9015,7 +9015,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 400,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -9162,7 +9162,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "tech",
         "ncmBurst": null
@@ -9226,7 +9226,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -9373,7 +9373,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "smart",
         "ncmBurst": null
@@ -9437,7 +9437,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 400,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -9584,7 +9584,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "tech",
         "ncmBurst": null
@@ -9601,7 +9601,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 30,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/tech-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -9648,7 +9648,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 70,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -9795,7 +9795,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "smart",
         "ncmBurst": null
@@ -9812,7 +9812,7 @@
         },
         "sound": {
           "enable": true,
-          "delay": 0,
+          "delay": 30,
           "file": "modules/cpr-neon-combat-manager/assets/arsenal/sfx/smart-a.ogg",
           "repeat": 1,
           "repeatDelay": 250,
@@ -9859,7 +9859,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 70,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -10006,7 +10006,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rifle",
         "ncmBurst": null
@@ -10070,7 +10070,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -10217,7 +10217,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "emp",
         "ncmBurst": null
@@ -10281,7 +10281,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -10428,7 +10428,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rifle",
         "ncmBurst": null
@@ -10492,7 +10492,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -10639,7 +10639,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "emp",
         "ncmBurst": null
@@ -10703,7 +10703,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -10850,7 +10850,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rifle",
         "ncmBurst": null
@@ -10914,7 +10914,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -11061,7 +11061,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "emp",
         "ncmBurst": null
@@ -11125,7 +11125,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -11272,7 +11272,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rifle",
         "ncmBurst": null
@@ -11336,7 +11336,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -11483,7 +11483,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "emp",
         "ncmBurst": null
@@ -11547,7 +11547,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -11694,7 +11694,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rifle",
         "ncmBurst": null
@@ -11758,7 +11758,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -11905,7 +11905,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "emp",
         "ncmBurst": null
@@ -11969,7 +11969,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -12116,7 +12116,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rifle",
         "ncmBurst": null
@@ -12180,7 +12180,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -12327,7 +12327,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "emp",
         "ncmBurst": null
@@ -12391,7 +12391,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -12538,7 +12538,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rifle",
         "ncmBurst": null
@@ -12602,7 +12602,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -12749,7 +12749,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "emp",
         "ncmBurst": null
@@ -12813,7 +12813,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -12960,7 +12960,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "rifle",
         "ncmBurst": null
@@ -13024,7 +13024,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -13171,7 +13171,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "emp",
         "ncmBurst": null
@@ -13235,7 +13235,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -13382,7 +13382,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "bow",
         "ncmBurst": null
@@ -13446,7 +13446,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 370,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,
@@ -13593,7 +13593,7 @@
       },
       "metaData": {
         "name": "Neon Arsenal",
-        "moduleVersion": "1.25.1",
+        "moduleVersion": "1.25.2",
         "version": 5,
         "ncmSound": "emp",
         "ncmBurst": null
@@ -13657,7 +13657,7 @@
           "addTokenWidth": false,
           "anchor": "0.5",
           "contrast": 0,
-          "delay": 0,
+          "delay": 270,
           "elevation": 1000,
           "fadeIn": 0,
           "fadeOut": 300,

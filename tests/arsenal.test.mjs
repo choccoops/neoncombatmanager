@@ -179,6 +179,7 @@ test("the AA menu: exact-match entries, silent in a world with the module, sound
   assert.equal(ar.primary.video.animation, "bullet");
   assert.equal(ar.primary.sound.enable, false);
   assert.ok(ar.secondary.enable);
+  assert.equal(ar.secondary.options.delay, 370, "the hit waits for the shot to arrive (AA plays both at once otherwise)");
   const exported = buildMenu({ patreon: true, sounds: true });
   const gl = exported.range.find((e) => e.label === `${LABEL_PREFIX}Grenade Launcher`);
   assert.equal(gl.primary.video.animation, "grenadelaunch");

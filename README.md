@@ -617,6 +617,14 @@ fire mode (Autofire bursts, Suppressive Fire sprays and misses), and, when AA is
 misses, a hit or a miss by the 2070 range tables. The *Install Weapon Animations* macro (GM) puts
 the profile in by hand; `api.arsenal.uninstall()` takes it out.
 
+**Timing.** Each sound and hit is placed by what JB2A's clip shows, measured frame by frame
+(`scripts/arsenal/timing.js`): the shot sounds as the round leaves (a bow's string at the release),
+the hit shows and sounds as it arrives (sooner up close, later across the map), a melee weapon
+sounds as its swing connects, and a blast goes off as its round lands. Neon Arsenal draws the hit
+itself, since Automated Animations can only hold an entry's second effect back by a fixed time,
+and everything waits for Automated Animations' first frame so a slow-loading clip doesn't leave
+the sound ahead.
+
 *Why a module and not a fork of AA, or only a JSON file:* a JSON profile can only match items by
 name, and the 2070 catalog names its guns, not their kinds; a fork of AA would have to be kept in
 step with AA itself. Registering the profile from this module lets it match on the weapon's data,

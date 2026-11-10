@@ -13,6 +13,7 @@
  * for a world without it carries them, low.
  */
 import { LABEL_PREFIX } from "./kinds.js";
+import { flightFor, contactFor, SOUND_LEAD } from "./timing.js";
 
 /** The AA Global Automatic Recognition menu version these entries are written for (AA 5.x). */
 export const AUTOREC_VERSION = 5;
@@ -85,9 +86,11 @@ const M = (animation, variant, color) => v("melee", "weapon", animation, variant
 const impact = (color) => v("static", "generic", "impact", "01", color);
 const explosion = (color) => v("static", "generic", "explosion", "01", color);
 
+
 /**
  * The profile. Each row: { kind, flavor?, ammo?, menu, free, patreon?, sound, burst?, hit?,
- * hitPatreon?, tint?, size?, repeatDelay? }. `hit` is the secondary on the target.
+ * hitPatreon?, tint?, size?, repeatDelay? }. `hit` is what shows on the target when the round
+ * gets there (or the swing lands): Neon Arsenal draws it at that moment (scripts/arsenal/aa.js).
  */
 export const ROWS = [
   // Pistols and SMGs
@@ -134,6 +137,14 @@ export const ROWS = [
   ...["Blunt", "Heavy Blunt"].map((kind) => ({ kind, ammo: "Propulsion", menu: "melee", free: M(kind === "Blunt" ? "club" : "warhammer", "01", "white"), sound: "blunt", hit: impact("orange") }))
 ];
 
+/** A row's look, hit and hit size for a JB2A pack. */
+export const lookOf = (row, patreon = false) => (patreon && row.patreon) || row.free;
+export const hitOf = (row, patreon = false) => (patreon && row.hitPatreon) || row.hit || null;
+export const hitSize = (row) => row.hitSize ?? row.size ?? 1;
+
+/** When a row's own sound belongs in its clip: as the round leaves, or just before a swing lands. */
+const soundAt = (row, look) => (row.menu === "melee" ? Math.max(0, contactFor(look) - (SOUND_LEAD[row.sound] ?? 0)) : flightFor(look, 5).launch);
+
 /** A row's label: "Neon Arsenal · Assault Rifle · Tech". */
 export const rowLabel = (row) => [`${LABEL_PREFIX}${row.kind}`, row.flavor, row.ammo].filter(Boolean).join(" · ");
 
@@ -144,11 +155,12 @@ const sound = (key, on) => {
 const silent = () => ({ enable: false, delay: 0, file: undefined, repeat: 1, repeatDelay: 250, startTime: 0, volume: 0.75 });
 const video = (x) => ({ ...x, enableCustom: false, customPath: "" });
 
-const secondaryOf = (hit, size = 1) => ({
+
+const secondaryOf = (hit, size = 1, delay = 0) => ({
   enable: !!hit,
   video: video(hit ?? impact("orange")),
   sound: silent(),
-  options: { addTokenWidth: false, anchor: "0.5", contrast: 0, delay: 0, elevation: 1000, fadeIn: 0, fadeOut: 300, isMasked: false, isRadius: false, isWait: false, opacity: 0.9, repeat: 1, repeatDelay: 250, saturate: 0, size, tint: false, tintColor: "#FFFFFF", zIndex: 1 }
+  options: { addTokenWidth: false, anchor: "0.5", contrast: 0, delay, elevation: 1000, fadeIn: 0, fadeOut: 300, isMasked: false, isRadius: false, isWait: false, opacity: 0.9, repeat: 1, repeatDelay: 250, saturate: 0, size, tint: false, tintColor: "#FFFFFF", zIndex: 1 }
 });
 
 const sideOf = () => ({
@@ -161,9 +173,14 @@ const sideOf = () => ({
 /**
  * One AA entry from a row.
  * @param {object} row
- * @param {object} opts - { patreon: boolean, sounds: boolean, id: () => string (a UUIDv4), version: string }
+ * @param {object} opts - { patreon: boolean, sounds: boolean, hits: boolean, id: () => string (a UUIDv4), version: string }
+ *
+ * AA starts an entry's secondary together with its primary, and can only hold it back by a fixed
+ * time; when the round arrives depends on the distance. So in a world with Neon Combat Manager
+ * the entries carry no secondary (hits: false) and the module draws the hit when the round lands.
+ * The exported JSON keeps one, held back by the look's time over a middling distance.
  */
-export function entryFor(row, { patreon = false, sounds = false, id = () => "", version = "" } = {}) {
+export function entryFor(row, { patreon = false, sounds = false, hits = true, id = () => "", version = "" } = {}) {
   const look = (patreon && row.patreon) || row.free;
   const isMelee = row.menu === "melee";
   const tint = !!row.tint;
@@ -176,8 +193,8 @@ export function entryFor(row, { patreon = false, sounds = false, id = () => "", 
     menu: row.menu,
     advanced: { exactMatch: true, excludedTerms: [] },
     metaData: { name: "Neon Arsenal", moduleVersion: version, version: AUTOREC_VERSION, ncmSound: row.sound, ncmBurst: row.burst ?? null },
-    primary: { video: video(look), sound: sound(row.sound, sounds), options },
-    secondary: secondaryOf((patreon && row.hitPatreon) || row.hit, row.hitSize ?? row.size ?? 1),
+    primary: { video: video(look), sound: { ...sound(row.sound, sounds), delay: soundAt(row, look) }, options },
+    secondary: secondaryOf(hits ? hitOf(row, patreon) : null, hitSize(row), isMelee ? contactFor(look) : flightFor(look, 5).arrive),
     soundOnly: { sound: silent() },
     macro: { enable: false, name: undefined, args: undefined, playWhen: undefined },
     source: sideOf(),
@@ -220,19 +237,24 @@ export function rowFor(keys) {
 }
 
 /**
- * What an attack sounds like, in order: [{ key, delay }]. The shot (a burst for Autofire and
- * Suppressive Fire), a ricochet's whine, then an impact on a hit. Explosions sound when the
- * blast lands (scripts/arsenal/blast.js), not here.
+ * What an attack sounds like, in order: [{ key, delay }], from the moment its picture starts. The
+ * shot (a burst for Autofire and Suppressive Fire) when the round leaves, a ricochet's whine at
+ * the bounce, an impact when it arrives on a hit; a melee weapon as its swing lands. Explosions
+ * sound when the blast lands (scripts/arsenal/blast.js), not here.
  * @param {string[]} keys - profile labels, most specific first
- * @param {object} ctx - { mode: "single"|"autofire"|"suppressive", ricochet, hit, ranged, explosive }
+ * @param {object} ctx - { mode: "single"|"autofire"|"suppressive", ricochet, hit, ranged, explosive,
+ *   patreon, times: { launch, ricochet?, arrive } (ms; default: the look over a middling distance) }
  */
-export function soundPlan(keys, { mode = "single", ricochet = false, hit = false, ranged = true, explosive = false } = {}) {
+export function soundPlan(keys, { mode = "single", ricochet = false, hit = false, ranged = true, explosive = false, patreon = false, times = null } = {}) {
   const row = rowFor(keys);
   if (!row) return [];
   const burst = mode === "autofire" || mode === "suppressive";
-  const out = [{ key: (burst && row.burst) || row.sound, delay: 0 }];
-  if (ricochet) out.push({ key: "ricochet", delay: 260 });
-  if (hit && ranged && !explosive && row.sound !== "flamethrower") out.push({ key: "impactBody", delay: ricochet ? 520 : 380 });
+  const key = (burst && row.burst) || row.sound;
+  if (row.menu === "melee") return [{ key, delay: Math.max(0, contactFor(row.free) - (SOUND_LEAD[row.sound] ?? 0)) }];
+  const t = times ?? flightFor(lookOf(row, patreon), 5);
+  const out = [{ key, delay: t.launch ?? 0 }];
+  if (ricochet) out.push({ key: "ricochet", delay: t.ricochet ?? Math.round((t.launch + t.arrive) / 2) });
+  if (hit && ranged && !explosive && row.sound !== "flamethrower") out.push({ key: "impactBody", delay: t.arrive });
   return out;
 }
 
