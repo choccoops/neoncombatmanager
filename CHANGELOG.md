@@ -38,8 +38,9 @@
   - Initiative in a fight under way moves with it.
   - Neon Hub's "(active)" effects on a Sandevistan and Apogee switch the condition, and the other
     way round, with nothing counted twice.
-- Quickhack and Berserk sounds are still to come: for now a Jack In borrows the upload chirp, a
-  shattered Passwall and an Eject the zap, and the rest are silent.
+- **Eight quiet quickhack sounds** made with ElevenLabs, two takes each, at each player's Neon FX
+  volume: Jack In, Jack Out, Eject, Self-ICE holding, Self-ICE breaking, the alert, a system
+  coming back up, and a Ghost's whisper (quieter still). Berserk has no sound of its own yet.
 
 ## 1.25.2
 

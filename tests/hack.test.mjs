@@ -304,7 +304,9 @@ test("each family of quickhack lands its own way, some quickhacks their own; a m
   assert.ok(Plan.length(Plan.eject({ squares: 6 })) >= 500);
 });
 
-test("sounds wait for their files: until they ship, a beat borrows what Neon FX has or stays silent", () => {
+test("every beat has its own quiet sound, and a missing one falls back or stays silent", () => {
+  for (const key of ["jackIn", "jackOut", "eject", "iceBlock", "iceBreak", "alert", "reboot", "ghost"]) assert.match(soundFor(key), /^hack/, key);
+  assert.ok(SOUNDS.hackGhost.level < SOUNDS.hackJackIn.level, "a Ghost is quieter still");
   assert.equal(soundFor("upload"), "upload");
   assert.equal(soundFor("jackIn", { upload: {} }), "upload");
   assert.equal(soundFor("jackIn", { upload: {}, hackJackIn: {} }), "hackJackIn");

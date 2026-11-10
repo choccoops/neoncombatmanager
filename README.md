@@ -565,7 +565,8 @@ Quickhacks are the Programs Neon At Home's compendium ships, slotted in the deck
 Automated Animations isn't involved: it plays on a weapon's attack roll, and a quickhack isn't one,
 so the module draws every beat itself with Sequencer, timed from JB2A's clips (all of them in the
 free pack; Patreon adds colours). Without JB2A the module's own art plays; without Sequencer the
-flow runs with no animation. Settings: *Quickhacking on the Action HUD* (Table rules), *Quickhack
+flow runs with no animation. Each beat has a short, quiet sound (made with ElevenLabs for this
+module), played at each player's Neon FX volume; a Ghost's is quieter still. Settings: *Quickhacking on the Action HUD* (Table rules), *Quickhack
 animations* and *Who sees a Ghost Hack* (Neon FX).
 
 ## Neon FX

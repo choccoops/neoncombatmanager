@@ -53,7 +53,7 @@ const LOOKS = {
   reboot: { jb: "outpulse", scale: 1.8, life: 1200, tint: true }
 };
 
-/** Sounds waiting on their files fall back to what Neon FX already has (or stay silent). */
+/** Should one of the quickhack sounds be missing from Neon FX's list, a beat falls back to these (or stays silent). */
 const SOUND_FALLBACK = { jackIn: "upload", iceBreak: "zap", eject: "zap" };
 const SOUND_KEYS = { jackIn: "hackJackIn", jackOut: "hackJackOut", eject: "hackEject", iceBlock: "hackIceBlock", iceBreak: "hackIceBreak", alert: "hackAlert", reboot: "hackReboot", ghost: "hackGhost" };
 
