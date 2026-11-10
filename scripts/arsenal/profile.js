@@ -86,8 +86,17 @@ const impact = (color) => v("static", "generic", "impact", "01", color);
 const explosion = (color) => v("static", "generic", "explosion", "01", color);
 
 /**
+ * How long a shot takes to reach its target, in ms: when the hit shows and the impact sounds. AA
+ * plays an entry's secondary at the same moment as its projectile unless it's told to wait.
+ */
+export const HIT_DELAY = 380;
+export const RICOCHET_HIT_DELAY = 520;
+/** A lobbed grenade or rocket takes longer to land. */
+export const LOB_HIT_DELAY = 900;
+
+/**
  * The profile. Each row: { kind, flavor?, ammo?, menu, free, patreon?, sound, burst?, hit?,
- * hitPatreon?, tint?, size?, repeatDelay? }. `hit` is the secondary on the target.
+ * hitPatreon?, tint?, size?, repeatDelay?, hitDelay? }. `hit` is the secondary on the target.
  */
 export const ROWS = [
   // Pistols and SMGs
@@ -103,10 +112,10 @@ export const ROWS = [
   { kind: "Shotgun Shell", menu: "range", free: R("bullet", "3", "blue"), patreon: R("bullet", "3", "orange"), sound: "shotgun", hit: impact("orange") },
   { kind: "Bow", menu: "range", free: R("arrow", "regular", "regular"), patreon: R("arrow", "physical", "white"), sound: "bow", hit: null },
   // Launchers (Neon Arsenal draws the blast itself when it places the area; these are the shot)
-  { kind: "Grenade Launcher", menu: "range", free: R("bomb", "01", "black"), patreon: R("grenadelaunch", "01", "green"), sound: "launcher", hit: explosion("orange") },
-  { kind: "Rocket Launcher", menu: "range", free: R("bomb", "01", "black"), patreon: R("grenadelaunch", "02", "blackyellow"), sound: "rocketLaunch", hit: explosion("orange"), size: 2 },
+  { kind: "Grenade Launcher", menu: "range", hitDelay: LOB_HIT_DELAY, free: R("bomb", "01", "black"), patreon: R("grenadelaunch", "01", "green"), sound: "launcher", hit: explosion("orange") },
+  { kind: "Rocket Launcher", menu: "range", hitDelay: LOB_HIT_DELAY, free: R("bomb", "01", "black"), patreon: R("grenadelaunch", "02", "blackyellow"), sound: "rocketLaunch", hit: explosion("orange"), size: 2 },
   { kind: "Missile Launcher", menu: "range", free: R("bomb", "01", "black"), patreon: R("grenadelaunch", "03", "blackblue"), sound: "rocketLaunch", hit: explosion("orange"), size: 2 },
-  { kind: "Thrown Grenade", menu: "range", free: R("flask", "01", "orange"), patreon: R("grenade", "01", "green"), sound: "launcher", hit: explosion("orange") },
+  { kind: "Thrown Grenade", menu: "range", hitDelay: LOB_HIT_DELAY, free: R("flask", "01", "orange"), patreon: R("grenade", "01", "green"), sound: "launcher", hit: explosion("orange") },
   { kind: "Thrown Weapon", menu: "range", free: R("dagger", "01", "white"), sound: "blade", hit: null },
   { kind: "Flamethrower", menu: "range", free: R("lasershot", "01", "orange"), sound: "flamethrower", hit: null },
   // 2070 flavors: Tech fires a charged magnetic round, Smart a guided one.
@@ -144,11 +153,12 @@ const sound = (key, on) => {
 const silent = () => ({ enable: false, delay: 0, file: undefined, repeat: 1, repeatDelay: 250, startTime: 0, volume: 0.75 });
 const video = (x) => ({ ...x, enableCustom: false, customPath: "" });
 
-const secondaryOf = (hit, size = 1) => ({
+
+const secondaryOf = (hit, size = 1, delay = 0) => ({
   enable: !!hit,
   video: video(hit ?? impact("orange")),
   sound: silent(),
-  options: { addTokenWidth: false, anchor: "0.5", contrast: 0, delay: 0, elevation: 1000, fadeIn: 0, fadeOut: 300, isMasked: false, isRadius: false, isWait: false, opacity: 0.9, repeat: 1, repeatDelay: 250, saturate: 0, size, tint: false, tintColor: "#FFFFFF", zIndex: 1 }
+  options: { addTokenWidth: false, anchor: "0.5", contrast: 0, delay, elevation: 1000, fadeIn: 0, fadeOut: 300, isMasked: false, isRadius: false, isWait: false, opacity: 0.9, repeat: 1, repeatDelay: 250, saturate: 0, size, tint: false, tintColor: "#FFFFFF", zIndex: 1 }
 });
 
 const sideOf = () => ({
@@ -177,7 +187,7 @@ export function entryFor(row, { patreon = false, sounds = false, id = () => "", 
     advanced: { exactMatch: true, excludedTerms: [] },
     metaData: { name: "Neon Arsenal", moduleVersion: version, version: AUTOREC_VERSION, ncmSound: row.sound, ncmBurst: row.burst ?? null },
     primary: { video: video(look), sound: sound(row.sound, sounds), options },
-    secondary: secondaryOf((patreon && row.hitPatreon) || row.hit, row.hitSize ?? row.size ?? 1),
+    secondary: secondaryOf((patreon && row.hitPatreon) || row.hit, row.hitSize ?? row.size ?? 1, isMelee ? 0 : row.hitDelay ?? HIT_DELAY),
     soundOnly: { sound: silent() },
     macro: { enable: false, name: undefined, args: undefined, playWhen: undefined },
     source: sideOf(),
@@ -232,7 +242,7 @@ export function soundPlan(keys, { mode = "single", ricochet = false, hit = false
   const burst = mode === "autofire" || mode === "suppressive";
   const out = [{ key: (burst && row.burst) || row.sound, delay: 0 }];
   if (ricochet) out.push({ key: "ricochet", delay: 260 });
-  if (hit && ranged && !explosive && row.sound !== "flamethrower") out.push({ key: "impactBody", delay: ricochet ? 520 : 380 });
+  if (hit && ranged && !explosive && row.sound !== "flamethrower") out.push({ key: "impactBody", delay: ricochet ? RICOCHET_HIT_DELAY : HIT_DELAY });
   return out;
 }
 

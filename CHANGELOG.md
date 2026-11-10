@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.25.2
+
+- **The hit lands after the shot.** With Automated Animations, a ranged weapon's hit effect played at
+  the same moment as its projectile, so a slower shot (a Tech weapon's bolt) showed the impact
+  first. The hit now waits for the shot to arrive, in step with the impact sound; a lobbed grenade
+  or rocket waits a little longer.
+  - The GM is offered the updated animations on the next load (**Install**), as after any update.
+
 ## 1.25.1
 
 - **Window close buttons show their icon again.** The module's button style gave the header's close
