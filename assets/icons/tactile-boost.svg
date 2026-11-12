@@ -1,0 +1,4 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Neon Combat Manager: Tactile Boost, a hand on a surface feeling for motion. Sized like CPR's status icons. -->
+  <path d="M256 28 454 142v228L256 484 58 370V142z" fill="#14100a" stroke="#ffb300" stroke-width="22" stroke-linejoin="round"/><path d="M206 392v-96l-34-52 22-20 34 30v-112l28-8 8 84 10-98 30 2 2 98 16-84 28 8-8 96 22-58 26 12-30 124-26 74z" fill="#fff"/><path d="M118 300q-30-44 0-88M394 300q30-44 0-88" fill="none" stroke="#ffb300" stroke-width="16" stroke-linecap="round"/><path d="M84 330q-52-74 0-148M428 330q52-74 0-148" fill="none" stroke="#ffb300" stroke-width="12" stroke-linecap="round" opacity=".6"/>
+</svg>

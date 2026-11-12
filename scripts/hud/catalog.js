@@ -7,6 +7,7 @@ import { Hub } from "../hub/hub.js";
 import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
 import { flavorOf } from "../arsenal/kinds.js";
 import { Xray } from "../arsenal/xray.js";
+import { isTactileBoost, TACTILE_CONDITION } from "../neonfx/tactile.js";
 import { Hands } from "./hands.js";
 import { EncounterMode } from "../combat/mode.js";
 import { Hack } from "../hack/hack.js";
@@ -155,6 +156,12 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   // Status: this module's conditions, on or off.
   for (const c of Registry.all().filter((x) => STATUS_CATS.includes(x.category) && !/^(tarot|stakes)/.test(x.id))) {
     out.status.push({ key: `cond:${c.id}`, label: c.name, img: c.img, on: Conditions.has(c.id, actor) });
+  }
+
+  // Tactile Boost installed: its hand-on-a-surface switch sits with the Status toggles.
+  if (items.some((i) => i.type === "cyberware" && i.system?.isInstalled && isTactileBoost(i.name))) {
+    const c = Registry.get(TACTILE_CONDITION);
+    if (c) out.status.push({ key: `cond:${c.id}`, label: c.name, img: c.img, on: Conditions.has(c.id, actor) });
   }
 
   // Utility: this module's windows for this character.

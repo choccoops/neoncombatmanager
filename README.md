@@ -657,6 +657,20 @@ Operating System's when they have one installed, and the condition holds the loo
 Players can switch their own tokens. The switches are saved on the token, so they survive a
 reload and show for everyone.
 
+**Tactile Boost** (Cyberpunk RED p.359). The chipware feels motion within 20 m/yds through a hand
+on a surface. That's the **Feeling for Motion** condition (Chrome running; on the Token HUD, and
+in the Action HUD's Status group for anyone with a Tactile Boost installed). While a character
+with it is selected, their player sees:
+
+- an **amber ripple where anyone out of sight moves** within 20 m/yds, through any wall or door
+  (it's the surface that carries it, so thin or thick makes no difference). It marks where motion
+  was last felt: no outline and no name, unlike a Tech scope. It follows them as they move again,
+  and goes when they come into view, pass 20 m/yds or the hand comes off;
+- a slow, faint ring out from their own token to the edge of the 20 m/yds.
+
+Someone standing still isn't felt. Only that player sees any of it, GM-hidden tokens never show,
+and the hand being busy is left to the table. A setting (*Tactile Boost ripples*) turns it off.
+
 **AV landings** (two more macros in the folder):
 
 - **AV Landing Zone**: pick a spot and a holo warning zone lights up on the ground: a rectangular

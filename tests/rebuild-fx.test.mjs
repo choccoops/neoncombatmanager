@@ -483,3 +483,61 @@ test("a Mono-edge blade in hand puts on Mono-edge Weapon", async () => {
   assert.ok(LAYERED.has("monoRebuild"));
   RebuildRegistry.clear();
 });
+
+/* ---------------------------------------- */
+/*  Tactile Boost                           */
+/* ---------------------------------------- */
+
+test("Tactile Boost: a hand on a surface feels motion within 20 m/yds, through any wall, as a ripple where it last moved", async () => {
+  const { Tactile, ripples, feltBy, isTactileBoost, TACTILE_RANGE } = await import("../scripts/neonfx/tactile.js");
+  await Settings.set("fxTactile", true);
+  assert.equal(TACTILE_RANGE, 20);
+  assert.ok(isTactileBoost("Tactile Boost") && isTactileBoost("TACTILE  BOOST (Chipware)") && !isTactileBoost("Olfactory Boost"));
+  assert.ok(feltBy([{ x: 0, y: 0 }], { x: 600, y: 800 }, 1000) && !feltBy([{ x: 0, y: 0 }], { x: 800, y: 800 }, 1000));
+  // Pure: hidden by the GM, in plain view, the viewer, or out of range: no ripple.
+  const felt = new Map([["a", { x: 300, y: 0 }], ["b", { x: 300, y: 0 }], ["c", { x: 300, y: 0 }], ["d", { x: 5000, y: 0 }], ["me", { x: 0, y: 0 }]]);
+  const tokens = [{ id: "a", hidden: false, visible: false }, { id: "b", hidden: true, visible: false }, { id: "c", hidden: false, visible: true }, { id: "d", hidden: false, visible: false }, { id: "me", hidden: false, visible: true }];
+  assert.deepEqual(ripples(felt, tokens, [{ id: "me", x: 0, y: 0 }], 1000), [{ id: "a", x: 300, y: 0 }]);
+  assert.deepEqual(ripples(felt, tokens, [], 1000), [], "nobody feeling: nothing");
+
+  // On the canvas (100 px squares of 2 m/yds: 20 m/yds is 1000 px).
+  Tactile.reset();
+  const fixer = crew("Sable", [{ _id: "tb", name: "Tactile Boost", type: "cyberware", system: { isInstalled: true } }]);
+  const me = tokenAt(fixer, 100, 500);
+  canvas.tokens.controlled = [me];
+  const guard = tokenAt(makeActor({ name: "Guard" }), 600, 500, { visible: false });
+  const moveTo = (t, x, y) => {
+    t.center = { x: x + 50, y: y + 50 };
+    Tactile.moved({ id: t.id, x, y, width: 1, height: 1, parent: canvas.scene });
+  };
+  moveTo(guard, 600, 450);
+  assert.deepEqual(Tactile.wanted(), [], "no hand on the surface: nothing is felt");
+  await Conditions.add("tactileBoost", fixer);
+  moveTo(guard, 700, 450);
+  assert.deepEqual(Tactile.wanted(), [{ id: guard.id, x: 750, y: 500 }], "behind any wall: it's the surface that carries it");
+  Tactile.refresh();
+  const fx = played.filter((s) => call(s, "name")?.[0] === `ncm-tactile-${guard.id}`);
+  assert.equal(fx.length, 2, "two rings a beat apart");
+  assert.ok(fx.every((e) => call(e, "locally") && call(e, "persist") && call(e, "xray")), "this player's screen only, through vision");
+  assert.ok(!fx.some((e) => call(e, "copySprite")), "a ripple, not the person's outline");
+  assert.ok(played.some((s) => call(s, "name")?.[0] === `ncm-tactile-self-${me.id}`), "the reach of the sense, from the hand");
+
+  // They move again: the ripple moves with them. Out past 20 m/yds: gone.
+  moveTo(guard, 800, 450);
+  Tactile.refresh();
+  assert.deepEqual(ended.map((e) => e.name), [`ncm-tactile-${guard.id}`]);
+  assert.equal(Tactile.drawn.get(guard.id).x, 850);
+  moveTo(guard, 1500, 450);
+  assert.deepEqual(Tactile.wanted(), []);
+  // The hand comes off: everything goes, and nothing is remembered.
+  moveTo(guard, 700, 450);
+  await Conditions.remove("tactileBoost", fixer);
+  assert.deepEqual(Tactile.wanted(), []);
+  assert.equal(Tactile.felt.size, 0);
+
+  // With the chipware installed, the Action HUD's Status group has the switch.
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  assert.ok(catalog(fixer).status.some((e) => e.key === "cond:tactileBoost"));
+  assert.ok(!catalog(crew("V", [])).status.some((e) => e.key === "cond:tactileBoost"));
+  assert.ok(existsSync(path.join(root, "assets/icons/tactile-boost.svg")));
+});

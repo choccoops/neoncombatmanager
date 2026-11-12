@@ -14,6 +14,11 @@
   targeted for a Charged Shot: click it (Shift adds), hover it and press the Target key, or press
   *Target through cover* on the Tech gun's Action HUD entry (nearest first, then the next). Cyan
   brackets mark the target, since Foundry draws none on a token out of sight.
+- **Tactile Boost** (p.359). A new **Feeling for Motion** condition for the hand on a surface
+  (Token HUD, and the Action HUD's Status group when the chipware is installed). While that
+  character is selected, their player sees an amber ripple where anyone out of sight moves within
+  20 m/yds, through any wall, and a faint ring showing the reach. It marks where motion was last
+  felt, not who it is. New setting *Tactile Boost ripples*.
 
 ## 1.27.0
 

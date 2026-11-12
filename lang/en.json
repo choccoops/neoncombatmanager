@@ -529,6 +529,10 @@
         "name": "Berserk",
         "hint": "Berserk running for a minute: no Seriously or Mortally Wounded penalties (the automatic Critical Injuries and Death Saves stay). An Action to start; 1-hour cooldown."
       },
+      "tactileBoost": {
+        "name": "Feeling for Motion",
+        "hint": "Tactile Boost, with a hand flat on a surface: you feel anything moving within 20 m/yds, walls or not, as a ripple where it last moved. That hand does nothing else while you do. Needs Sequencer for the ripples."
+      },
       "chromeBerserker": {
         "name": "Berserk: Berserker OS",
         "hint": "Biodyne 'Berserker' running for 5 Rounds: Berserk, with small jobs as half of a ROF2 Action; once a Round a melee hit for 4+ counts as two for Martial Arts. Without an FBC or Cyberspine: -4 to ranged attacks."
@@ -1140,6 +1144,10 @@
       "fxChrome": {
         "name": "Speedware and Berserk conditions",
         "hint": "A Sandevistan, Berserk or one of their Operating Systems running is a condition on the character (Chrome running), whose token shows it: a burst as it kicks in, a look while it runs (each Operating System in its own colour), a ring as it stops. Switching the chrome's \"(active)\" effect, the Neon FX macros and the condition itself all stay in step, and Initiative in a fight moves with it."
+      },
+      "fxTactile": {
+        "name": "Tactile Boost ripples",
+        "hint": "A selected character Feeling for Motion (Tactile Boost, a hand on a surface) shows their player an amber ripple where anyone out of sight moves within 20 m/yds, through walls. Only that player sees it; GM-hidden tokens never show."
       },
       "hackFx": {
         "name": "Quickhack animations",

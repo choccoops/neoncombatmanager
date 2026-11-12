@@ -228,6 +228,8 @@ export const CONDITIONS = [
   { id: "chromeBaldur", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 12, group: "berserk", chrome: { kind: "berserk", os: "baldur" } },
   { id: "chromeMatterhorn", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 30, group: "berserk", chrome: { kind: "berserk", os: "matterhorn" } },
   { id: "chromeBrawler", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", chrome: { kind: "berserk", os: "brawler" } },
+  // Tactile Boost (p.359): a hand on a surface feels motion within 20 m/yds; Neon FX shows it (scripts/neonfx/tactile.js).
+  { id: "tactileBoost", category: "chrome", img: `${A}/tactile-boost.svg`, page: "p.359" },
 
   /* ------------------------------------------------------------------ */
   /*  The Awareness Ladder (2070 ch.06) on an encounter's enemies:      */

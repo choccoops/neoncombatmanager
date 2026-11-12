@@ -10,6 +10,7 @@ import { Motion, MODES } from "./motion.js";
 import { Trail } from "./sandevistan.js";
 import { Landing } from "./landing.js";
 import { Chrome, tintOf } from "./chrome.js";
+import { Tactile } from "./tactile.js";
 import { HackFx } from "../hack/fx.js";
 
 /** The effects a token can have switched on by hand (the macros), as token flags. */
@@ -64,6 +65,7 @@ export const NeonFX = {
     Hooks.on(`${MODULE_ID}.fxChanged`, () => this.refreshScene());
     Landing.init();
     Chrome.init();
+    Tactile.init();
   },
 
   async ready() {
