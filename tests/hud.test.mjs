@@ -37,7 +37,11 @@ function solo() {
 
 test("the template is the combat basics; a layout shows its visible groups, picks in order, empty groups left out", () => {
   const t = Lay.template();
-  assert.deepEqual(t.groups.filter((g) => !g.hidden).map((g) => g.id), ["turn", "weapons", "skills", "role", "net", "status", "utility", "macros"]);
+  assert.deepEqual(t.groups.filter((g) => !g.hidden).map((g) => g.id), ["turn", "weapons", "skills", "role", "net", "chrome", "status", "utility", "macros"]);
+  // A layout saved before the Chrome group existed gets it shown; other groups it predates stay hidden.
+  const old = Lay.normalize({ v: 1, groups: [{ id: "turn", source: "turn", picks: null }] });
+  assert.equal(old.groups.find((g) => g.id === "chrome").hidden, false);
+  assert.equal(old.groups.find((g) => g.id === "net").hidden, true);
   const cat = {
     turn: [{ key: "turn:initiative" }],
     weapons: [{ key: "weapon:a" }, { key: "weapon:b" }],

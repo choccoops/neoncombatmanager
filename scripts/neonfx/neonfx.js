@@ -11,6 +11,8 @@ import { Trail } from "./sandevistan.js";
 import { Landing } from "./landing.js";
 import { Chrome, tintOf } from "./chrome.js";
 import { Tactile } from "./tactile.js";
+import { Switches } from "./switches.js";
+import { Screen } from "./screen.js";
 import { HackFx } from "../hack/fx.js";
 
 /** The effects a token can have switched on by hand (the macros), as token flags. */
@@ -66,10 +68,14 @@ export const NeonFX = {
     Landing.init();
     Chrome.init();
     Tactile.init();
+    Switches.init();
+    Screen.init();
   },
 
   async ready() {
     if (canvas?.ready) this.refreshScene({ settle: true });
+    Switches.ready();
+    Screen.refresh();
     const fresh = this._newMacros();
     if (Core.sequencer && Settings.get("fxMacros") && fresh.length && game.user.isGM) {
       await this.installMacros({ quiet: true, keys: fresh }).catch((err) => console.error(`${MODULE_ID} | Neon FX macros`, err));

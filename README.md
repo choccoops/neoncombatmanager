@@ -651,15 +651,45 @@ Operating System's when they have one installed, and the condition holds the loo
   off places or removes the condition, the macro goes through it, and the condition ending
   switches it off. What that effect already gives isn't counted again.
 - Humanity Loss on activation, cooldowns, halved damage and the other things the hints list stay
-  with the table. A Kerenzikov is always on and has no condition.
+  with the table. A Kerenzikov is always on: see below.
 - A setting (*Speedware and Berserk conditions*) turns this off: the macros are then looks only.
 
 Players can switch their own tokens. The switches are saved on the token, so they survive a
 reload and show for everyone.
 
+**Chrome switches.** Chrome that switches on and off has a button of its own, lit while it runs:
+
+- on the **Action HUD**, a *Chrome* group (shown by default, also in layouts saved before it
+  existed);
+- on the **Token HUD**, a chip button in the right column that opens the list (a setting).
+
+Each character gets a switch for what they have installed: their **Sandevistan** and **Berserk**
+(named for the Operating System fitted, and run as its condition from the table above),
+**Tactile Boost**, **Optical Camo** (a minute), **Microrotors** (2 Rounds), the **KERS** mask, and
+any other piece whose item has an "(active)" effect of its own (DeathTrance, Adrenaline
+Convertor, Prehensile Cyberfoot, Reflex Tuner, Revulsor...), which the switch turns on and off.
+Either way the result is an Active Effect on the character: the numbers the rules give are on it,
+and what no roll key can carry is in its description. Optical Camo never hides the token: who
+sees the character stays the table's call.
+
+**A Kerenzikov is always on.** It has no switch. From the moment it's installed the character
+carries the **Kerenzikov** condition (kept by the GM's client, removed when the chrome comes
+out): the token's faint blue look, +2 to notice an Ambush as a tick box on Perception rolls, and
++2 Initiative while a Kerenzikov Boost System is fitted. Dodging bullets whatever your REF is
+already read from the item by the Evade step.
+
+**On your own screen.** While your character's Sandevistan or Berserk runs, your screen shows it,
+and only yours: for a Sandevistan the world drains of colour and the rim glows and streaks in the
+Operating System's colour; for Berserk the rim beats red. A Kerenzikov cools the picture very
+slightly, all the time, as if everything else ran a touch slow. Berserk wins over a Sandevistan,
+which wins over a Kerenzikov. It's a layer over the map that never takes a click and hides
+nothing. You get it for your assigned character and, as a player, for tokens you own and have
+selected; a GM never gets it for NPCs. *Chrome on my screen* (each player's own setting) turns it
+off, and it holds still with token motion off or reduced motion asked for. No new sounds.
+
 **Tactile Boost** (Cyberpunk RED p.359). The chipware feels motion within 20 m/yds through a hand
 on a surface. That's the **Feeling for Motion** condition (Chrome running; on the Token HUD, and
-in the Action HUD's Status group for anyone with a Tactile Boost installed). While a character
+in the Action HUD's Chrome group for anyone with a Tactile Boost installed). While a character
 with it is selected, their player sees:
 
 - an **amber ripple where anyone out of sight moves** within 20 m/yds, through any wall or door

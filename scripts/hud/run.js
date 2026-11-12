@@ -52,6 +52,8 @@ export const Run = {
         const { Arsenal } = await import("../arsenal/arsenal.js");
         return Arsenal.toggle(actor, item, kind === "rico" ? "ricochet" : "charge", { token });
       }
+      case "chrome":
+        return (await import("../neonfx/switches.js")).Switches.toggle(actor, `chrome:${id}`, { token });
       case "scope":
         return (await import("../arsenal/xray.js")).Xray.cycle();
       case "rld":

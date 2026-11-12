@@ -587,9 +587,125 @@ test("Tactile Boost: a hand on a surface feels motion within 20 m/yds, through a
   assert.deepEqual(Tactile.wanted(), []);
   assert.equal(Tactile.felt.size, 0);
 
-  // With the chipware installed, the Action HUD's Status group has the switch.
+  // With the chipware installed, the Action HUD's Chrome group has the switch.
   const { catalog } = await import("../scripts/hud/catalog.js");
-  assert.ok(catalog(fixer).status.some((e) => e.key === "cond:tactileBoost"));
-  assert.ok(!catalog(crew("V", [])).status.some((e) => e.key === "cond:tactileBoost"));
+  assert.ok(catalog(fixer).chrome.some((e) => e.key === "chrome:tactileboost"));
+  assert.equal(catalog(crew("V", [])).chrome.length, 0);
   assert.ok(existsSync(path.join(root, "assets/icons/tactile-boost.svg")));
+});
+
+/* ---------------------------------------- */
+/*  Chrome switches, Kerenzikov, the screen */
+/* ---------------------------------------- */
+
+test("chrome switches: what a character can switch on, by what's installed; a Kerenzikov has none", async () => {
+  const { switchesOf, kerenzikovOf } = await import("../scripts/neonfx/switches.js");
+  const { chromeConditions } = await import("../scripts/neonfx/chrome.js");
+  const cw = (id, name, extra = {}) => ({ id, name, type: "cyberware", installed: true, effects: [], in: null, ...extra });
+  const up = (id, name, host, extra = {}) => ({ id, name, type: "itemUpgrade", installed: false, effects: [], in: host, ...extra });
+  const items = [
+    cw("s", "Sandevistan", { effects: [{ name: "Sandevistan (active)", disabled: true }] }),
+    up("f", "Militech ‘Falcon’ OS", "s", { effects: [{ name: "Militech ‘Falcon’ OS (active)", disabled: true }] }),
+    cw("b", "Berserk"),
+    cw("k", "Kerenzikov"), up("kb", "Kerenzikov Boost System", "k"),
+    cw("t", "Tactile Boost"), cw("o", "Optical Camo"), cw("m", "Microrotors"), cw("x", "Kaleidoscopic Electric Reflection System (KERS)"),
+    cw("d", "DeathTrance", { effects: [{ name: "DeathTrance (active)", disabled: true }] }),
+    cw("a", "Adrenaline Convertor", { installed: false, effects: [{ name: "Adrenaline Convertor (active)", disabled: true }] }),
+    cw("e", "Cybereye"), up("loose", "Zetatech ‘Brawler’ OS", null)
+  ];
+  const list = switchesOf(items, chromeConditions());
+  assert.deepEqual(list.map((s) => [s.key, s.kind, s.id]), [
+    ["chrome:sandevistan", "chrome", "sandevistan"], ["chrome:berserk", "chrome", "berserk"],
+    ["chrome:tactileboost", "condition", "tactileBoost"], ["chrome:opticalcamo", "condition", "chromeOpticalCamo"],
+    ["chrome:microrotors", "condition", "chromeMicrorotors"], ["chrome:kaleidoscopicelectricreflectionsystemkers", "condition", "chromeKers"],
+    ["chrome:deathtrance", "effect", "d"]
+  ], "not the Kerenzikov, the Cybereye, chrome that isn't installed, or an Operating System lying loose");
+  assert.equal(list[0].label, "Militech ‘Falcon’ OS", "a Sandevistan's switch is named for the Operating System in it");
+  assert.equal(list[0].condition, "chromeFalcon");
+  assert.equal(list[1].condition, "chromeBerserk", "the loose Brawler OS doesn't run");
+  assert.deepEqual(kerenzikovOf(items), { installed: true, boost: true });
+  assert.deepEqual(kerenzikovOf([cw("k", "Kerenzikov"), up("kb", "Kerenzikov Boost System", null)]), { installed: true, boost: false });
+  assert.deepEqual(kerenzikovOf([cw("k", "Kerenzikov", { installed: false })]), { installed: false, boost: false });
+});
+
+test("switching chrome from the Action HUD puts its Active Effect on and takes it off; a Kerenzikov is on once installed", async () => {
+  await Settings.set("fxChrome", true);
+  const { Switches } = await import("../scripts/neonfx/switches.js");
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  const { Run } = await import("../scripts/hud/run.js");
+  const chromeItem = (id, name, extra = {}) => ({ _id: id, name, type: "cyberware", system: { isInstalled: true, installedItems: { list: [] }, ...extra } });
+  const solo = crew("Fury", [chromeItem("b", "Berserk"), chromeItem("o", "Optical Camo"), chromeItem("k", "Kerenzikov", { installedItems: { list: ["kb"] } }),
+    { _id: "kb", name: "Kerenzikov Boost System", type: "itemUpgrade", system: { type: "cyberware" } }]);
+  solo.isOwner = true;
+  const keys = () => catalog(solo).chrome.map((e) => [e.key, !!e.on]);
+  assert.deepEqual(keys(), [["chrome:berserk", false], ["chrome:opticalcamo", false]]);
+
+  await Run.action(solo, "chrome:berserk");
+  assert.ok(Conditions.has("chromeBerserk", solo), "Berserk runs as its Chrome running condition");
+  await Run.action(solo, "chrome:opticalcamo");
+  assert.ok(Conditions.has("chromeOpticalCamo", solo));
+  assert.deepEqual(keys(), [["chrome:berserk", true], ["chrome:opticalcamo", true]]);
+  await Run.action(solo, "chrome:berserk");
+  await Switches.toggle(solo, "chrome:opticalcamo", { on: false });
+  assert.ok(!Conditions.has("chromeBerserk", solo) && !Conditions.has("chromeOpticalCamo", solo));
+  assert.equal(await Switches.toggle(solo, "chrome:nothing"), null);
+
+  // The Kerenzikov: no switch; the GM's client keeps its condition on, with the Boost System's +2 Initiative.
+  assert.equal(await Switches.syncKerenzikov(solo), true);
+  const [kz] = Conditions.effects(solo, "chromeKerenzikov");
+  assert.ok(kz, "on from the day it's installed");
+  assert.ok(kz.changes.some((c) => c.key === "bonuses.initiative" && Number(c.value) === 2), "the Boost System's +2 Initiative");
+  assert.equal(Registry.get("chromeKerenzikov").hud, false);
+  // The Boost System comes out: the condition stays, without the Initiative.
+  solo.items.get("k").system.installedItems.list = [];
+  await Switches.syncKerenzikov(solo);
+  const [plain] = Conditions.effects(solo, "chromeKerenzikov");
+  assert.ok(plain && !plain.changes.some((c) => c.key === "bonuses.initiative"));
+  assert.ok(plain.changes.some((c) => c.key === "bonuses.perception"), "+2 to notice an Ambush stays, as a tick box");
+  // The Kerenzikov comes out: gone.
+  solo.items.get("k").system.isInstalled = false;
+  assert.equal(await Switches.syncKerenzikov(solo), false);
+  assert.ok(!Conditions.has("chromeKerenzikov", solo));
+});
+
+test("running chrome on its owner's screen only: Berserk over a Sandevistan over a Kerenzikov, in the Operating System's colour, and a switch to turn it off", async () => {
+  const { screenLook, viewpoints, Screen, SCREEN_ID } = await import("../scripts/neonfx/screen.js");
+  assert.equal(screenLook([]), null);
+  assert.deepEqual(screenLook([{ kerenzikov: true }]), { kind: "kerenzikov", tint: "#3d8bff" });
+  assert.deepEqual(screenLook([{ kerenzikov: true, sandevistan: "falcon" }]), { kind: "sandevistan", tint: "#00e5ff" });
+  assert.deepEqual(screenLook([{ sandevistan: true }, { berserk: true }]), { kind: "berserk", tint: "#ff1744" });
+  assert.equal(screenLook([{ berserk: true }], { enabled: false }), null, "the player's own switch");
+  // Whose eyes: your character; a player's selected tokens they own; never a GM's NPCs.
+  const mine = { id: "a", isOwner: true };
+  const npc = { id: "n", isOwner: true };
+  const theirs = { id: "t", isOwner: false };
+  assert.deepEqual(viewpoints({ character: mine, controlled: [npc, theirs], isGM: false }).map((a) => a.id), ["a", "n"]);
+  assert.deepEqual(viewpoints({ character: mine, controlled: [npc], isGM: true }).map((a) => a.id), ["a"]);
+  assert.deepEqual(viewpoints({ controlled: [npc], isGM: true }), []);
+
+  // On a page: the layer goes up while it runs and comes down after, and never takes a click (the stylesheet).
+  const made = [];
+  const el = () => ({ id: "", dataset: {}, style: { props: {}, setProperty(k, v) { this.props[k] = v; } }, classList: { set: new Set(), toggle(c, on) { on ? this.set.add(c) : this.set.delete(c); } }, setAttribute() {}, remove() { made.length = 0; } });
+  globalThis.document = { getElementById: (id) => made.find((e) => e.id === id) ?? null, createElement: () => el(), body: { append: (e) => made.push(e) } };
+  await Settings.set("fxScreen", true);
+  const solo = crew("Fury", []);
+  solo.isOwner = true;
+  const savedChar = game.user.character;
+  game.user.character = solo;
+  assert.equal(Screen.refresh(), null);
+  await Conditions.add("chromeFalcon", solo);
+  assert.deepEqual(Screen.refresh(), { kind: "sandevistan", tint: "#00e5ff" });
+  assert.equal(made[0].id, SCREEN_ID);
+  assert.equal(made[0].dataset.kind, "sandevistan");
+  assert.equal(made[0].style.props["--ncm-screen-tint"], "#00e5ff");
+  await Settings.set("fxScreen", false);
+  assert.equal(Screen.refresh(), null);
+  assert.equal(made.length, 0, "switched off: the layer is gone");
+  await Settings.set("fxScreen", true);
+  await Conditions.remove("chromeFalcon", solo);
+  assert.equal(Screen.refresh(), null);
+  game.user.character = savedChar;
+  delete globalThis.document;
+  const css = readFileSync(path.join(root, "styles/neon-combat.css"), "utf8");
+  assert.match(css, /#ncm-screen-fx \{[^}]*pointer-events: none/);
 });

@@ -26,6 +26,22 @@
 - **Smart's +1 by name.** The +1 is on the roll before its dialog as *Smart weapon +1* (taken out
   of the gun's own attack modifier on Neon Hub's Smart guns, so it's never counted twice), and on
   the attack card. No link: no +1, and the card says so.
+- **Cyberware upgrades and Borgware** land in the sibling modules: **Neon Hub 1.25.0** ships
+  every piece of 2070 chrome open to Operating Systems and Enhancements and fixes the copies
+  already in a world once; **Neon At Home 1.14.0** counts a piece as Borgware for Maximum
+  Humanity (−4 in place of −2) while an Operating System or Enhancement that says so is in it.
+- **Chrome switches.** A *Chrome* group on the Action HUD and a chip button on the Token HUD
+  list the chrome a character can switch on and off, lit while it runs: Sandevistan and Berserk
+  (by their Operating System), Tactile Boost, Optical Camo, Microrotors, the KERS mask (three new
+  Chrome running conditions), and any piece whose item has an "(active)" effect. Each one puts
+  its Active Effect on the character and takes it off.
+- **A Kerenzikov is always on.** Installed, it puts the new **Kerenzikov** condition on the
+  character: the token's faint look, +2 to notice an Ambush as a tick box, and the Boost
+  System's +2 Initiative when that's fitted.
+- **Chrome on your own screen.** While your character's Sandevistan or Berserk runs, your screen
+  alone shows it, in the Operating System's colour; a Kerenzikov cools the picture slightly all
+  the time. A layer over the map that takes no clicks and hides nothing. New per-player setting
+  *Chrome on my screen*; new world setting *Chrome switches on the Token HUD*.
 
 ## 1.27.0
 

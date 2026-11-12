@@ -16,6 +16,7 @@ export const GROUP_ICONS = {
   skills: "fa-solid fa-dice",
   role: "fa-solid fa-diamond",
   net: "fa-solid fa-network-wired",
+  chrome: "fa-solid fa-microchip",
   status: "fa-solid fa-person-falling",
   utility: "fa-solid fa-toolbox",
   macros: "fa-solid fa-terminal",

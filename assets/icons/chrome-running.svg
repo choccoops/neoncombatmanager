@@ -1,0 +1,4 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Neon Combat Manager: a piece of chrome switched on. Sized like CPR's status icons. -->
+  <path d="M256 28 454 142v228L256 484 58 370V142z" fill="#0a1418" stroke="#00e5ff" stroke-width="22" stroke-linejoin="round"/><rect x="176" y="176" width="160" height="160" rx="18" fill="#fff"/><rect x="216" y="216" width="80" height="80" rx="8" fill="#0a1418"/><path d="M206 176v-44M256 176v-44M306 176v-44M206 380v-44M256 380v-44M306 380v-44M176 206h-44M176 256h-44M176 306h-44M380 206h-44M380 256h-44M380 306h-44" stroke="#00e5ff" stroke-width="16" stroke-linecap="round"/><path d="M262 226l-22 34h20l-8 30 26-38h-20z" fill="#00e5ff"/>
+</svg>

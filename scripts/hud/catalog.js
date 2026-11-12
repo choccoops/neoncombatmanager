@@ -7,7 +7,7 @@ import { Hub } from "../hub/hub.js";
 import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
 import { flavorOf } from "../arsenal/kinds.js";
 import { Xray } from "../arsenal/xray.js";
-import { isTactileBoost, TACTILE_CONDITION } from "../neonfx/tactile.js";
+import { Switches } from "../neonfx/switches.js";
 import { Hands } from "./hands.js";
 import { EncounterMode } from "../combat/mode.js";
 import { Hack } from "../hack/hack.js";
@@ -61,7 +61,7 @@ export function weaponsOf(actor) {
  * @param {object} [ctx] - { token, combat }
  */
 export function catalog(actor, { token = null, combat = game.combat } = {}) {
-  const out = Object.fromEntries(["turn", "weapons", "skills", "role", "net", "status", "utility", "macros", "stats", "gear"].map((s) => [s, []]));
+  const out = Object.fromEntries(["turn", "weapons", "skills", "role", "net", "chrome", "status", "utility", "macros", "stats", "gear"].map((s) => [s, []]));
   if (!actor) return out;
   const items = [...(actor.items ?? [])];
 
@@ -158,10 +158,9 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     out.status.push({ key: `cond:${c.id}`, label: c.name, img: c.img, on: Conditions.has(c.id, actor) });
   }
 
-  // Tactile Boost installed: its hand-on-a-surface switch sits with the Status toggles.
-  if (items.some((i) => i.type === "cyberware" && i.system?.isInstalled && isTactileBoost(i.name))) {
-    const c = Registry.get(TACTILE_CONDITION);
-    if (c) out.status.push({ key: `cond:${c.id}`, label: c.name, img: c.img, on: Conditions.has(c.id, actor) });
+  // Chrome that switches on and off (a Sandevistan, Berserk, their Operating Systems, Tactile Boost, Optical Camo...).
+  for (const sw of Switches.of(actor)) {
+    out.chrome.push({ key: sw.key, run: `chrome:${sw.key.slice(7)}`, label: sw.label, img: sw.img, icon: sw.img ? undefined : "fa-solid fa-microchip", on: sw.on, alert: sw.on });
   }
 
   // Utility: this module's windows for this character.

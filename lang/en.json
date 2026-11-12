@@ -529,6 +529,22 @@
         "name": "Berserk",
         "hint": "Berserk running for a minute: no Seriously or Mortally Wounded penalties (the automatic Critical Injuries and Death Saves stay). An Action to start; 1-hour cooldown."
       },
+      "chromeKerenzikov": {
+        "name": "Kerenzikov",
+        "hint": "A Kerenzikov, always on from the day it's installed: you can dodge ranged attacks whatever your REF, and get +2 to notice an Ambush (a tick box on Perception rolls). With a Kerenzikov Boost System fitted it's Speedware, with +2 Initiative always. Its player's screen runs a shade cooler, as if the world were a touch slow."
+      },
+      "chromeOpticalCamo": {
+        "name": "Optical Camo",
+        "hint": "Optical Camo running for a minute, until you attack, Run or get hit: free Stealth Checks even in plain sight, Perception against you at −4, and nobody targets you without beating your Stealth with Perception. An Action to start; 10-minute recharge. The token stays where everyone can see it: who can see the character is the table's call."
+      },
+      "chromeMicrorotors": {
+        "name": "Microrotors",
+        "hint": "Microrotors running for 2 Rounds: two-handed and cyberlimb melee weapons go from ROF1 to ROF2, and ROF2 ones can make Aimed Shots at ROF2. An Action to start; 10-Round cooldown."
+      },
+      "chromeKers": {
+        "name": "KERS Mask",
+        "hint": "The reflection system is on: your face is masked, cameras included. −2 to Human Perception and Lip Reading against you. An Action to switch on or off."
+      },
       "tactileBoost": {
         "name": "Feeling for Motion",
         "hint": "Tactile Boost, with a hand flat on a surface: you feel anything moving within 20 m/yds, walls or not, as a ripple where it last moved. That hand does nothing else while you do. Needs Sequencer for the ripples."
@@ -1148,6 +1164,14 @@
       "fxChrome": {
         "name": "Speedware and Berserk conditions",
         "hint": "A Sandevistan, Berserk or one of their Operating Systems running is a condition on the character (Chrome running), whose token shows it: a burst as it kicks in, a look while it runs (each Operating System in its own colour), a ring as it stops. Switching the chrome's \"(active)\" effect, the Neon FX macros and the condition itself all stay in step, and Initiative in a fight moves with it."
+      },
+      "fxScreen": {
+        "name": "Chrome on my screen",
+        "hint": "While your own character's Sandevistan or Berserk runs, your screen shows it (the world drained and edged in the Operating System's colour; a red, beating rim for Berserk), and a Kerenzikov cools the picture slightly all the time. Only you see it; it never hides anything or takes a click. Off: no screen effect for you."
+      },
+      "chromeTokenHud": {
+        "name": "Chrome switches on the Token HUD",
+        "hint": "A chip button on the Token HUD's right column lists the chrome the character can switch on and off (Sandevistan and Berserk with their Operating Systems, Tactile Boost, Optical Camo and the rest), lit while it runs."
       },
       "fxTactile": {
         "name": "Tactile Boost ripples",
@@ -2109,7 +2133,8 @@
         "stats": "STATs",
         "gear": "Gear",
         "own": "My group",
-        "macros": "Macros"
+        "macros": "Macros",
+        "chrome": "Chrome"
       },
       "LayoutFor": "Layout for",
       "ScopeMe": "All my characters",
@@ -2352,6 +2377,9 @@
       "Left": "Left",
       "Right": "Right",
       "Empty": "No one on stage"
+    },
+    "Chrome": {
+      "HudTitle": "Chrome: switch on or off"
     },
     "FX": {
       "NoSequencer": "Neon FX needs the Sequencer module.",
