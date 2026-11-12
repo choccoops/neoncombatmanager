@@ -92,7 +92,7 @@ const { bouncePoint, shotLook, shotWall, Shots, flightMs, crossings } = await im
 const { Equipped, flavorsInHand, inHand, REBUILD_CONDITION } = await import("../scripts/arsenal/equipped.js");
 const { Arsenal, penaltyOf, retryFormula, obscurementMods, rolledCrit } = await import("../scripts/arsenal/arsenal.js");
 const { dodgeAbility, tracksRicochet } = await import("../scripts/arsenal/defense.js");
-const { RebuildRegistry } = await import("../scripts/arsenal/rebuilds.js");
+const { RebuildRegistry, Rebuilds } = await import("../scripts/arsenal/rebuilds.js");
 const { AA } = await import("../scripts/arsenal/aa.js");
 const { RECIPES, LAYERED } = await import("../scripts/neonfx/recipes.js");
 const { SOUNDS, soundFiles } = await import("../scripts/arsenal/profile.js");
@@ -731,7 +731,7 @@ test("a weapon's own rules are read from its card: bursts, Autofire rounds, Aime
   assert.deepEqual(parseSpecials(card("On an Aimed Shot, 5s count as 6s for Critical Injuries. Still halves SP when thrown.")), { crit: { face: 5, when: "aimed" } });
   assert.deepEqual(parseSpecials(card("+1 to Aimed Shots and Autofire.")), { aimedMod: 1, autofireMod: 1 });
   // Lines that only sound alike are left to the table.
-  assert.equal(parseSpecials(card("Two-handed: +1 to Aimed Shots and Autofire.")), null, "a condition the module can't see");
+  assert.deepEqual(parseSpecials(card("Two-handed: +1 to Aimed Shots and Autofire.")), { twoHanded: { attack: 0, aimed: 1, autofire: 1 } }, "for the weapon's Two hands switch");
   assert.equal(parseSpecials(card("Loads only its own Armor-Piercing shells (100eb per 10), which ablate 1 extra SP.")), null, "the ammo's rule, not the gun's");
   assert.equal(parseSpecials(card("Leg and Held Item Aimed Shots deal +1d6 (6d6); head Aimed Shots deal −1d6 (4d6).")), null);
   assert.equal(parseSpecials("<p>Generic weapon (standard quality).</p>"), null);
@@ -810,4 +810,83 @@ test("on the rolls: a burst named on the card and its short damage, Aimed Shot d
   assert.ok(!catalog(sable).weapons[0].buttons.some((b) => b.key === "aim:w1"));
   assert.ok(catalog(fury).weapons[0].buttons.some((b) => b.key === "aim:w1"));
   for (const k of ["burst", "burstShort", "burstShortDamage", "autofireRounds", "specialMod", "shortBurstDamage", "aimedDice", "ablate", "ruleCrit"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Note.${k}`), `NEONCOMBAT.Arsenal.Note.${k}`, k);
+});
+
+test("the rest of the first part: Bonus Damage, Armor-Piercing rounds, the first shot of a fight, two hands, Autofire-only guns, charged shots that stop at cover, scopes that read Thick cover", async () => {
+  const { parseSpecials, specialMods, singleShots } = await import("../scripts/arsenal/specials.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.deepEqual(P("Critical Injuries deal +3 Bonus Damage (8)."), { critBonus: 3 });
+  assert.deepEqual(P("Its Critical Injuries deal +5 Bonus Damage (10) and −2 MOVE (min 1) for 1 Round."), { critBonus: 5 });
+  assert.equal(P("Head Critical Injuries deal +5 Bonus Damage."), null, "by location: the table's");
+  assert.deepEqual(P("An Aimed Shot fires 2 rounds for +1d6 (6d6)."), { aimedRounds: 2, aimedDice: 1 });
+  assert.deepEqual(P("+1 to hit on its first Single Shot of a fight."), { firstShot: 1 });
+  assert.deepEqual(P("No capacity attachments; every round also counts as Armor-Piercing."), { ap: true });
+  assert.deepEqual(P("Excellent Quality two-handed."), { twoHanded: { attack: 1, aimed: 0, autofire: 0 } });
+  assert.deepEqual(P("Autofire and Suppressive Fire only, 20 rounds each."), { autoOnly: true });
+  assert.deepEqual(P("No Autofire."), { noAutofire: true });
+  assert.deepEqual(P("Charged, it can't see or fire through cover and can only Autofire."), { chargedAutoOnly: true, noThrough: true });
+  assert.deepEqual(P("Its Tech scope sees outlines through one layer of Thin or Thick cover."), { scopeThick: true });
+  assert.ok(singleShots(null) && !singleShots({ autoOnly: true }) && singleShots({ chargedAutoOnly: true }) && !singleShots({ chargedAutoOnly: true }, true));
+  const two = { twoHanded: { attack: 0, aimed: 1, autofire: 1 } };
+  assert.equal(specialMods(two, { aimed: true, twoHands: true })[0].value, 1);
+  assert.deepEqual(specialMods(two, { aimed: true, twoHands: false }), [], "one-handed: nothing");
+  assert.deepEqual(specialMods(two, { twoHands: true }), [], "a plain shot: nothing");
+  assert.equal(specialMods({ firstShot: 1 }, { firstShot: true })[0].value, 1);
+  assert.deepEqual(specialMods({ firstShot: 1 }, { firstShot: true, aimed: true }), []);
+
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
+  game.user.targets = new Set();
+  const solo = crew("Fury", [
+    weapon("w1", "Comrade’s Hammer", { weaponType: "vHeavyPistol", description: desc("Critical Injuries deal +3 Bonus Damage (8). Every round also counts as Armor-Piercing. +1 to hit on its first Single Shot of a fight. Excellent Quality two-handed.") }),
+    weapon("w2", "Militech Mk. 31 HMG", { weaponType: "assaultRifle", fireModes: { autoFire: 4, suppressiveFire: true }, description: desc("Autofire and Suppressive Fire only, 20 rounds each.") }),
+    weapon("w3", "Senkoh (Tech)", { weaponType: "heavySmg", fireModes: { autoFire: 3 }, description: desc("While its Tech Rebuild is charged, it can only Autofire.") })
+  ]);
+  solo.isOwner = true;
+  const gun = solo.items.get("w1");
+  const d = new CPRDamageRoll("4d6");
+  await Arsenal.preRoll(gun, d);
+  assert.equal(d.bonusDamage, 8);
+  assert.equal(d.rollCardExtraArgs.ablationValue, 2, "as Armor-Piercing ablates");
+
+  // The first Single Shot of a fight gets +1, once; two hands add Excellent Quality's +1 while the switch is on.
+  const savedCombat = game.combat;
+  game.combat = { id: "fight1", started: true, combatants: [] };
+  const first = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, first);
+  assert.equal(first.mods[0].value, 1);
+  await Arsenal.preRoll(gun, first);
+  const second = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, second);
+  assert.equal(second.mods.length, 0, "not the second shot");
+  assert.equal(await Arsenal.toggle(solo, gun, "twoHands"), true);
+  const third = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, third);
+  assert.equal(third.mods[0].value, 1, "Excellent Quality in two hands");
+  game.combat = { id: "fight2", started: true, combatants: [] };
+  const again = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, again);
+  assert.equal(again.mods[0].value, 2, "a new fight: the first shot again, and still two hands");
+  game.combat = savedCombat;
+
+  // The Action HUD: Two hands on the pistol; no Attack or Aimed on an Autofire-only gun, or on one that's charged.
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  const { Run } = await import("../scripts/hud/run.js");
+  const keys = (name) => catalog(solo).weapons.find((w) => w.label === name).buttons.map((b) => b.key.split(":")[0]);
+  assert.ok(keys("Comrade’s Hammer").includes("2h"));
+  assert.ok(!keys("Militech Mk. 31 HMG").includes("atk") && !keys("Militech Mk. 31 HMG").includes("aim") && keys("Militech Mk. 31 HMG").includes("auto"));
+  assert.equal(await Run.action(solo, "atk:w2"), null, "refused, with the reason");
+  assert.ok(keys("Senkoh (Tech)").includes("atk"));
+  await Rebuilds.toggleCharge(solo, solo.items.get("w3"));
+  assert.ok(!keys("Senkoh (Tech)").includes("atk") && keys("Senkoh (Tech)").includes("auto"), "charged: Autofire only");
+
+  // A scope that reads one layer of Thick cover: one solid wall, not two; an ordinary scope, thin only.
+  const solid = { c: [500, 0, 500, 1000], blocks: true, thin: false };
+  const thin = { c: [700, 0, 700, 1000], blocks: true, thin: true };
+  const a = { x: 100, y: 500 };
+  assert.ok(!throughThinCover(a, { x: 600, y: 500 }, [solid]));
+  assert.ok(throughThinCover(a, { x: 600, y: 500 }, [solid], { thick: 1 }));
+  assert.ok(!throughThinCover(a, { x: 900, y: 500 }, [solid, thin], { thick: 1 }), "one layer in all");
+  assert.ok(!throughThinCover(a, { x: 900, y: 500 }, [solid, { ...solid, c: [800, 0, 800, 1000] }], { thick: 1 }));
+  for (const k of ["ap", "critBonus"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Note.${k}`), `NEONCOMBAT.Arsenal.Note.${k}`);
 });

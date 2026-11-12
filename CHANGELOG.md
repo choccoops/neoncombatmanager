@@ -35,9 +35,14 @@
   named on the attack card, with the short-magazine damage on the next damage roll; *Aimed Shots
   deal +1d6*; *Ablates N extra SP*; *5s count as 6s for Critical Injuries*, called out on the
   damage card; *−2 to every attack* as a named modifier before the dialog; *No Aimed Shots* and
-  *can't ricochet* on the Action HUD. 108 weapons in the catalog have at least one; weapons
-  already on sheets count. The rounds themselves are spent by Neon Hub 1.25.0. Conditional
-  lines, effects on targets, recoil and the Iconics' one-off rules are not automated yet.
+  *can't ricochet* on the Action HUD. Also: *Critical Injuries deal +N Bonus Damage*; rounds
+  that *count as Armor-Piercing*; *+1 to hit on its first Single Shot of a fight*; a **Two
+  hands** switch for *Excellent Quality two-handed* and *Two-handed: +1...*; Autofire-only guns
+  and guns that only Autofire while charged; charged shots that stop at cover; Tech scopes that
+  read one layer of Thick cover. 134 weapons in the catalog have at least one; weapons already
+  on sheets count. The rounds themselves are spent by Neon Hub 1.25.0. Rules tied to a location,
+  range or wound state, effects on targets, recoil and the Iconics' one-off rules are not
+  automated yet.
 - **Chrome switches.** A *Chrome* group on the Action HUD and a chip button on the Token HUD
   list the chrome a character can switch on and off, lit while it runs: Sandevistan and Berserk
   (by their Operating System), Tactile Boost, Optical Camo, Microrotors, the KERS mask (three new

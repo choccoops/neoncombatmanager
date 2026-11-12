@@ -4,6 +4,7 @@ import { Compat } from "../compat.js";
 import { Conditions } from "../conditions/engine.js";
 import { Core } from "../neonfx/core.js";
 import { L, debounce } from "../util.js";
+import { specialsOf } from "./specials.js";
 
 /**
  * A Tech scope's view through thin cover (2070 Ch07: "its scope shows outlines through Thin
@@ -44,16 +45,18 @@ export function segmentsCross(a, b, c, d) {
  * blocks sight and every one it crosses is thin.
  * @param {object[]} walls - { c: [x1, y1, x2, y2], blocks, thin }
  */
-export function throughThinCover(from, to, walls) {
+export function throughThinCover(from, to, walls, { thick = 0 } = {}) {
   let crossed = 0;
+  let solid = 0;
   for (const w of walls) {
     if (!w.blocks) continue;
     const [x1, y1, x2, y2] = w.c;
     if (!segmentsCross(from, to, { x: x1, y: y1 }, { x: x2, y: y2 })) continue;
-    if (!w.thin) return false;
+    // A scope that reads one layer of any cover (`thick`): one wall in all, thin or not.
+    if (!w.thin && ++solid > thick) return false;
     crossed++;
   }
-  return crossed > 0;
+  return crossed > 0 && (!thick || crossed <= thick);
 }
 
 /** A wall document, read for the scope: { c, blocks, thin }. */
@@ -97,6 +100,11 @@ export const Xray = {
     return (canvas?.tokens?.controlled ?? []).filter((t) => t.actor && Conditions.has("techRebuild", t.actor));
   },
 
+  /** Does a character hold a weapon whose scope reads one layer of Thick cover too (its card)? */
+  scopeThick(actor) {
+    return [...(actor?.items ?? [])].some((i) => i.type === "weapon" && i.system?.equipped === "equipped" && specialsOf(i)?.scopeThick);
+  },
+
   /** Who this player should see outlined now: [token]. */
   wanted() {
     if (!this.on || !canvas?.ready) return [];
@@ -107,7 +115,12 @@ export const Xray = {
     const range = (XRAY_RANGE / (canvas.dimensions?.distance || 1)) * (canvas.grid?.size || 100);
     return (canvas.tokens?.placeables ?? []).filter((t) => {
       if (!t.actor || t.document?.hidden || t.visible || viewers.includes(t)) return false;
-      return viewers.some((v) => Math.hypot(t.center.x - v.center.x, t.center.y - v.center.y) <= range && throughThinCover(v.center, t.center, walls));
+      return viewers.some((v) => {
+        if (Math.hypot(t.center.x - v.center.x, t.center.y - v.center.y) > range) return false;
+        if (throughThinCover(v.center, t.center, walls)) return true;
+        // A scope whose card says it reads one layer of Thin or Thick cover.
+        return this.scopeThick(v.actor) && throughThinCover(v.center, t.center, walls, { thick: 1 });
+      });
     });
   },
 

@@ -14,6 +14,15 @@
  *   crit         "5s count as 6s for Critical Injuries" (always, or "On an Aimed Shot, ..."): the
  *                damage card says when the dice make one by that rule
  *   attackMod    "−2 to every attack"; aimedMod / autofireMod: "+1 to Aimed Shots (and Autofire)"
+ *   aimedRounds  "An Aimed Shot fires 2 rounds for +1d6": the dice here, the rounds by Neon Hub
+ *   critBonus    "Critical Injuries deal +3 Bonus Damage": added to the damage roll's Bonus Damage
+ *   firstShot    "+1 to hit on its first Single Shot of a fight": once per combat
+ *   ap           "every round also counts as Armor-Piercing": ablates 2 SP like Armor-Piercing
+ *   twoHanded    "Excellent Quality two-handed" (+1) / "Two-handed: +1 to Aimed Shots and Autofire":
+ *                with the weapon's Two hands switch on (the Action HUD)
+ *   autoOnly / noAutofire / chargedAutoOnly   fire modes the Action HUD leaves out
+ *   noThrough    a charged shot that can't pass cover; scopeThick: a scope that sees through one
+ *                layer of Thick cover too
  *   noAimed      "No Aimed Shots."
  *   noRicochet   "Its Power Rebuild can't ricochet."
  */
@@ -52,6 +61,24 @@ export function parseSpecials(html) {
     out.aimedMod = Number(am[1]);
     if (am[2]) out.autofireMod = Number(am[1]);
   }
+  const ar = t.match(new RegExp(`${START}An Aimed Shot fires (\\d+) rounds for \\+(\\d+)d6`));
+  if (ar) {
+    out.aimedRounds = Number(ar[1]);
+    out.aimedDice = Number(ar[2]);
+  }
+  const cb = t.match(new RegExp(`${START}(?:Its )?Critical Injuries deal \\+(\\d+) Bonus Damage`));
+  if (cb) out.critBonus = Number(cb[1]);
+  const first = t.match(new RegExp(`${START}\\+(\\d+) to hit on its first Single Shot of a fight`));
+  if (first) out.firstShot = Number(first[1]);
+  if (/every round also counts as Armor-Piercing|burst that counts as Armor-Piercing/i.test(t)) out.ap = true;
+  const two = t.match(/Two-handed: \+(\d+) to Aimed Shots( and Autofire)?/);
+  const fine = /Excellent Quality (?:two-handed|when held in two hands)/i.test(t);
+  if (two || fine) out.twoHanded = { attack: fine ? 1 : 0, aimed: two ? Number(two[1]) : 0, autofire: two?.[2] ? Number(two[1]) : 0 };
+  if (new RegExp(`${START}Autofire and Suppressive Fire only`).test(t)) out.autoOnly = true;
+  if (new RegExp(`${START}No Autofire\\.`).test(t)) out.noAutofire = true;
+  if (/charged[^.]*can only Autofire/i.test(t)) out.chargedAutoOnly = true;
+  if (/can't see or fire through cover/i.test(t)) out.noThrough = true;
+  if (/scope sees outlines through one layer of Thin or Thick cover/i.test(t)) out.scopeThick = true;
   if (new RegExp(`${START}No Aimed Shots[.,]`).test(t)) out.noAimed = true;
   if (/Power Rebuild can't ricochet/i.test(t)) out.noRicochet = true;
   return Object.keys(out).length ? out : null;
@@ -61,9 +88,12 @@ export function parseSpecials(html) {
 export const specialsOf = (item) => parseSpecials(item?.system?.description?.value);
 
 /** The modifiers a weapon's rules put on an attack roll: [{ id, value, source }]. */
-export function specialMods(sp, { aimed = false, autofire = false, name = "", moduleId = "ncm" } = {}) {
+export function specialMods(sp, { aimed = false, autofire = false, twoHands = false, firstShot = false, name = "", moduleId = "ncm" } = {}) {
   if (!sp) return [];
-  const value = (sp.attackMod || 0) + (aimed ? sp.aimedMod || 0 : 0) + (autofire ? sp.autofireMod || 0 : 0);
+  let value = (sp.attackMod || 0) + (aimed ? sp.aimedMod || 0 : 0) + (autofire ? sp.autofireMod || 0 : 0);
+  // Held in two hands (the shooter's switch): Excellent Quality's +1, or the card's own bonus.
+  if (twoHands && sp.twoHanded) value += sp.twoHanded.attack + (aimed ? sp.twoHanded.aimed : 0) + (autofire ? sp.twoHanded.autofire : 0);
+  if (firstShot && !aimed && !autofire) value += sp.firstShot || 0;
   return value ? [{ id: `${moduleId}-special`, value, source: name, key: "bonuses.universalAttack", category: "combat" }] : [];
 }
 
@@ -84,3 +114,6 @@ export function ruleCrit(sp, faces = [], { aimed = false } = {}) {
   if (list.filter((f) => f === 6).length >= 2) return false;
   return list.filter((f) => f === 6 || f === c.face).length >= 2;
 }
+
+/** Can the weapon make Single and Aimed Shots now? Not one that only Autofires, or only does while charged. */
+export const singleShots = (sp, charged = false) => !(sp?.autoOnly || (sp?.chargedAutoOnly && charged));

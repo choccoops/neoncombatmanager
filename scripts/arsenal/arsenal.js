@@ -204,9 +204,13 @@ export const Arsenal = {
     const info = classify(item, loadedAmmo(item, actor), upgrades);
     // The weapon's own rules (its card): a flat modifier by name, and what the magazine held before the shot.
     const name = String(roll.constructor?.name ?? "");
-    const own = specialMods(specialsOf(item), { aimed: /Aimed/.test(name), autofire: /Autofire/.test(name), name: item.name, moduleId: MODULE_ID });
+    const sp = specialsOf(item);
+    const st = Rebuilds.state(actor, item);
+    // "Its first Single Shot of a fight": once per combat (outside one, every shot is a first).
+    const firstShot = !!sp?.firstShot && !/Aimed|Autofire|Suppressive/.test(name) && (!game.combat?.id || st.firstShot !== game.combat.id);
+    const own = specialMods(sp, { aimed: /Aimed/.test(name), autofire: /Autofire/.test(name), twoHands: !!st.twoHands, firstShot, name: item.name, moduleId: MODULE_ID });
     for (const m of own) if (!roll.mods.some((x) => x?.id === m.id)) roll.mods.push(m);
-    const done = { unobscured: 0, split: false, special: own.length > 0, magazine: Number(item.system?.magazine?.value) };
+    const done = { unobscured: 0, split: false, special: own.length > 0, firstShot, magazine: Number(item.system?.magazine?.value) };
     this.pre.set(roll, done);
     if (!info.ranged || info.flavor !== "smart") return own.length ? done : null;
     const traits = traitsOf(info.flavor, upgrades);
@@ -281,6 +285,7 @@ export const Arsenal = {
         else if (state.shortBurst) await Rebuilds.setState(actor, item, { shortBurst: null });
       }
       if (sp?.autofire && mode === "autofire") tag.autofireRounds = sp.autofire;
+      if (pre0.firstShot && game.combat?.id) await Rebuilds.setState(actor, item, { firstShot: game.combat.id });
       if (pre0.special) tag.specialMod = (roll.mods ?? []).find((m) => m?.id === `${MODULE_ID}-special`)?.value ?? 0;
       if (rebuilds) {
         const ricochet = !!state.ricochet && info.ranged && !info.explosive && !sp?.noRicochet;
@@ -313,7 +318,7 @@ export const Arsenal = {
         for (const t of targets) {
           const dv = await Dv.forWeapon(item, Dv.distance(token, t), { autofire: mode === "autofire" });
           // Cover in the way (a charged Tech shot goes through Thin cover): the card says so, and the damage card can hit it.
-          const cover = Cover.forShot(token, t, { throughThin: tag.charged });
+          const cover = Cover.forShot(token, t, { throughThin: tag.charged && !sp?.noThrough });
           tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref"), dodge: Defense.ability(t.actor, { attacker: actor, ricochet: tag.ricochet }).can, ...(cover ? { cover } : {}) });
         }
         tag.dv = tag.hits[0]?.dv ?? null;
@@ -322,7 +327,7 @@ export const Arsenal = {
     }
     if (kind === "damage" && info.ranged && !info.area && token && targets.length) {
       const charged = !!Rebuilds.state(actor, item).fired;
-      const cover = targets.map((t) => ({ name: t.name, ...Cover.forShot(token, t, { throughThin: charged }) })).filter((c) => c.kind);
+      const cover = targets.map((t) => ({ name: t.name, ...Cover.forShot(token, t, { throughThin: charged && !specialsOf(item)?.noThrough }) })).filter((c) => c.kind);
       if (cover.length) tag.cover = cover;
     }
     if (kind === "damage") {
@@ -336,6 +341,14 @@ export const Arsenal = {
       } else if (sp?.aimedDice && mode === "aimed" && typeof roll.formula === "string") {
         roll.formula = moreDice(roll.formula, sp.aimedDice);
         tag.aimedDice = sp.aimedDice;
+      }
+      if (sp?.ap && (Number(extra.ablationValue) || 0) < 2) {
+        extra.ablationValue = 2;
+        tag.ap = true;
+      }
+      if (sp?.critBonus) {
+        roll.bonusDamage = (Number(roll.bonusDamage) || 0) + sp.critBonus;
+        tag.critBonusRule = sp.critBonus;
       }
       if (sp?.ablate) {
         const more = state.fired && sp.ablate.charged ? sp.ablate.charged : sp.ablate.extra;
@@ -467,6 +480,8 @@ export const Arsenal = {
     if (a.kind === "attack" && a.specialMod) notes.push(L(`${LANG}.Arsenal.Note.specialMod`, { value: a.specialMod > 0 ? `+${a.specialMod}` : a.specialMod }));
     if (a.kind === "damage" && a.shortBurst) notes.push(L(`${LANG}.Arsenal.Note.shortBurstDamage`, { damage: a.shortBurst }));
     if (a.kind === "damage" && a.aimedDice) notes.push(L(`${LANG}.Arsenal.Note.aimedDice`, { dice: a.aimedDice }));
+    if (a.kind === "damage" && a.ap) notes.push(L(`${LANG}.Arsenal.Note.ap`));
+    if (a.kind === "damage" && a.critBonusRule) notes.push(L(`${LANG}.Arsenal.Note.critBonus`, { bonus: a.critBonusRule }));
     if (a.kind === "damage" && a.ablate) notes.push(L(`${LANG}.Arsenal.Note.ablate`, { extra: a.ablate }));
     if (a.kind === "damage" && a.ruleCrit) notes.push(L(`${LANG}.Arsenal.Note.ruleCrit`, { face: a.critRule?.face ?? 5, bonus: a.ruleCrit }));
     if (a.kind === "attack" && a.smartBonus) notes.push(L(`${LANG}.Arsenal.Note.smartBonus`, { value: a.smartBonus }));
@@ -617,6 +632,12 @@ export const Arsenal = {
   async toggle(actor, item, which, { token = null } = {}) {
     if (!actor?.isOwner || !item) return null;
     const t = token ?? this.tokenFor(actor);
+    if (which === "twoHands") {
+      const on = !Rebuilds.state(actor, item).twoHands;
+      await Rebuilds.setState(actor, item, { twoHands: on });
+      Hooks.callAll(`${MODULE_ID}.refreshUI`);
+      return on;
+    }
     if (which === "ricochet") {
       const on = await Rebuilds.toggleRicochet(actor, item);
       ui.notifications.info(L(`${LANG}.Arsenal.${on ? "RicochetOn" : "RicochetOff"}`, { weapon: item.name }));

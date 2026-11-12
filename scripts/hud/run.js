@@ -32,6 +32,14 @@ export const Run = {
       case "auto":
       case "supp": {
         if (!item) return null;
+        if (kind === "atk" || kind === "aim") {
+          const { specialsOf, singleShots } = await import("../arsenal/specials.js");
+          const { Rebuilds } = await import("../arsenal/rebuilds.js");
+          if (!singleShots(specialsOf(item), Rebuilds.isCharged(actor, item))) {
+            ui.notifications?.warn(L(`${LANG}.Arsenal.NoSingle`, { name: item.name }));
+            return null;
+          }
+        }
         if (kind === "aim" && (await import("../arsenal/specials.js")).specialsOf(item)?.noAimed) {
           ui.notifications?.warn(L(`${LANG}.Arsenal.NoAimed`, { name: item.name }));
           return null;
@@ -51,10 +59,11 @@ export const Run = {
         }, { event, token });
       }
       case "rico":
-      case "chg": {
+      case "chg":
+      case "2h": {
         if (!item) return null;
         const { Arsenal } = await import("../arsenal/arsenal.js");
-        return Arsenal.toggle(actor, item, kind === "rico" ? "ricochet" : "charge", { token });
+        return Arsenal.toggle(actor, item, kind === "rico" ? "ricochet" : kind === "chg" ? "charge" : "twoHands", { token });
       }
       case "chrome":
         return (await import("../neonfx/switches.js")).Switches.toggle(actor, `chrome:${id}`, { token });
