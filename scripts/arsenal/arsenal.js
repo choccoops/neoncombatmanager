@@ -21,6 +21,7 @@ import { Shots } from "./shots.js";
 import { Sync } from "./sync.js";
 import { Xray } from "./xray.js";
 import { Equipped, improvedSmart } from "./equipped.js";
+import { specialsOf, specialMods, moreDice, ruleCrit } from "./specials.js";
 import { Stakes } from "../stakes/stakes.js";
 import { L, esc } from "../util.js";
 
@@ -201,8 +202,13 @@ export const Arsenal = {
     if (!Array.isArray(roll.mods)) return null;
     const upgrades = Rebuilds.upgradesOf(item, actor);
     const info = classify(item, loadedAmmo(item, actor), upgrades);
-    if (!info.ranged || info.flavor !== "smart") return null;
-    const done = { unobscured: 0, split: false };
+    // The weapon's own rules (its card): a flat modifier by name, and what the magazine held before the shot.
+    const name = String(roll.constructor?.name ?? "");
+    const own = specialMods(specialsOf(item), { aimed: /Aimed/.test(name), autofire: /Autofire/.test(name), name: item.name, moduleId: MODULE_ID });
+    for (const m of own) if (!roll.mods.some((x) => x?.id === m.id)) roll.mods.push(m);
+    const done = { unobscured: 0, split: false, special: own.length > 0, magazine: Number(item.system?.magazine?.value) };
+    this.pre.set(roll, done);
+    if (!info.ranged || info.flavor !== "smart") return own.length ? done : null;
     const traits = traitsOf(info.flavor, upgrades);
     const linked = Rebuilds.linked(actor);
     if (traits.attackMod && !roll.mods.some((m) => m?.id === `${MODULE_ID}-smart`)) {
@@ -264,9 +270,21 @@ export const Arsenal = {
     }
     if (kind === "attack") {
       const aimed = mode === "aimed" || (Bridge.rolls?.CPRAimedAttackRoll && roll instanceof Bridge.rolls.CPRAimedAttackRoll);
+      // The weapon's own rules: a burst is named on the card; fired short, its damage is the card's.
+      const sp = specialsOf(item);
+      const pre0 = this.pre.get(roll) ?? {};
+      if (sp?.burst && info.ranged && (sp.burst.every || !["autofire", "suppressive"].includes(mode))) {
+        const had = Number.isFinite(pre0.magazine) ? pre0.magazine : Infinity;
+        const short = had < sp.burst.rounds;
+        tag.burst = { rounds: short ? Math.max(1, had) : sp.burst.rounds, short, damage: short ? sp.burst.shortDamage : null };
+        if (short && sp.burst.shortDamage) await Rebuilds.setState(actor, item, { shortBurst: sp.burst.shortDamage });
+        else if (state.shortBurst) await Rebuilds.setState(actor, item, { shortBurst: null });
+      }
+      if (sp?.autofire && mode === "autofire") tag.autofireRounds = sp.autofire;
+      if (pre0.special) tag.specialMod = (roll.mods ?? []).find((m) => m?.id === `${MODULE_ID}-special`)?.value ?? 0;
       if (rebuilds) {
-        const ricochet = !!state.ricochet && info.ranged && !info.explosive;
-        const pre = this.pre.get(roll) ?? {};
+        const ricochet = !!state.ricochet && info.ranged && !info.explosive && !sp?.noRicochet;
+        const pre = pre0;
         // The Smart +1 may be on the roll already, by name, since before its dialog (preDialog).
         const mods = attackMods(traits, { ranged: info.ranged, aimed, ricochet, linked: Rebuilds.linked(actor), baked: smartBaked(item, upgrades) && !pre.split })
           .filter((m) => !(roll.mods ?? []).some((x) => x?.id === m.id));
@@ -307,6 +325,25 @@ export const Arsenal = {
       const cover = targets.map((t) => ({ name: t.name, ...Cover.forShot(token, t, { throughThin: charged }) })).filter((c) => c.kind);
       if (cover.length) tag.cover = cover;
     }
+    if (kind === "damage") {
+      // The weapon's own rules on its damage: more dice on an Aimed Shot, a short burst's damage, SP ablated, its Critical Injury rule.
+      const sp = specialsOf(item);
+      const extra = (roll.rollCardExtraArgs ??= {});
+      if (state.shortBurst) {
+        roll.formula = state.shortBurst;
+        tag.shortBurst = state.shortBurst;
+        await Rebuilds.setState(actor, item, { shortBurst: null });
+      } else if (sp?.aimedDice && mode === "aimed" && typeof roll.formula === "string") {
+        roll.formula = moreDice(roll.formula, sp.aimedDice);
+        tag.aimedDice = sp.aimedDice;
+      }
+      if (sp?.ablate) {
+        const more = state.fired && sp.ablate.charged ? sp.ablate.charged : sp.ablate.extra;
+        extra.ablationValue = (Number(extra.ablationValue) || 0) + more;
+        tag.ablate = more;
+      }
+      if (sp?.crit) tag.critRule = { ...sp.crit, aimed: mode === "aimed" };
+    }
     if (kind === "damage" && rebuilds) {
       const charged = !!state.fired;
       const extra = (roll.rollCardExtraArgs ??= {});
@@ -327,6 +364,11 @@ export const Arsenal = {
     if (!p || userId !== game.user.id || Date.now() - p.at > PENDING_MS || !String(message.content ?? "").includes('class="rollcard"')) return;
     this.pending = null;
     const crit = p.tag.kind === "damage" ? rolledCrit(p.roll) : false;
+    // Not two 6s, but a Critical Injury by the weapon's own rule (5s count as 6s...).
+    if (p.tag.critRule && !crit) {
+      const faces = p.roll?.faces ?? p.roll?.terms?.[0]?.results?.map((r) => r.result) ?? [];
+      if (ruleCrit({ crit: p.tag.critRule }, faces, { aimed: p.tag.critRule.aimed })) p.tag.ruleCrit = Number(p.roll?.bonusDamage) || 5;
+    }
     message.updateSource({ [`flags.${MODULE_ID}.arsenal`]: { ...p.tag, total: Number(p.roll.resultTotal) || 0, penalty: penaltyOf(p.roll), crit, at: Date.now() } });
   },
 
@@ -420,6 +462,13 @@ export const Arsenal = {
     }
     if (a.kind === "attack" && a.ricochet) notes.push(L(`${LANG}.Arsenal.Note.ricochet`));
     if (a.kind === "attack" && a.charged) notes.push(L(`${LANG}.Arsenal.Note.chargedAttack`));
+    if (a.kind === "attack" && a.burst) notes.push(L(`${LANG}.Arsenal.Note.${a.burst.short ? (a.burst.damage ? "burstShortDamage" : "burstShort") : "burst"}`, { rounds: a.burst.rounds, damage: a.burst.damage ?? "" }));
+    if (a.kind === "attack" && a.autofireRounds) notes.push(L(`${LANG}.Arsenal.Note.autofireRounds`, { rounds: a.autofireRounds.rounds }));
+    if (a.kind === "attack" && a.specialMod) notes.push(L(`${LANG}.Arsenal.Note.specialMod`, { value: a.specialMod > 0 ? `+${a.specialMod}` : a.specialMod }));
+    if (a.kind === "damage" && a.shortBurst) notes.push(L(`${LANG}.Arsenal.Note.shortBurstDamage`, { damage: a.shortBurst }));
+    if (a.kind === "damage" && a.aimedDice) notes.push(L(`${LANG}.Arsenal.Note.aimedDice`, { dice: a.aimedDice }));
+    if (a.kind === "damage" && a.ablate) notes.push(L(`${LANG}.Arsenal.Note.ablate`, { extra: a.ablate }));
+    if (a.kind === "damage" && a.ruleCrit) notes.push(L(`${LANG}.Arsenal.Note.ruleCrit`, { face: a.critRule?.face ?? 5, bonus: a.ruleCrit }));
     if (a.kind === "attack" && a.smartBonus) notes.push(L(`${LANG}.Arsenal.Note.smartBonus`, { value: a.smartBonus }));
     if (a.kind === "attack" && a.smartNoLink) notes.push(L(`${LANG}.Arsenal.Note.smartNoLink`));
     if (a.kind === "attack" && a.unobscured) notes.push(L(`${LANG}.Arsenal.Note.unobscured`, { value: a.unobscured }));

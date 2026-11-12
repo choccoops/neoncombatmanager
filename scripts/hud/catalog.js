@@ -7,6 +7,7 @@ import { Hub } from "../hub/hub.js";
 import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
 import { flavorOf } from "../arsenal/kinds.js";
 import { Xray } from "../arsenal/xray.js";
+import { specialsOf } from "../arsenal/specials.js";
 import { Switches } from "../neonfx/switches.js";
 import { Hands } from "./hands.js";
 import { EncounterMode } from "../combat/mode.js";
@@ -88,7 +89,9 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     const ranged = !!s.isRanged;
     const mode = getProperty(actor, `flags.cyberpunk-red-core.firetype-${w.id}`) ?? "";
     const buttons = [{ key: `atk:${w.id}`, label: L(`${LANG}.Hud.Attack`), icon: "fa-solid fa-crosshairs", on: !mode }];
-    buttons.push({ key: `aim:${w.id}`, label: L(`${LANG}.Hud.Aimed`), icon: "fa-solid fa-bullseye", on: mode === "aimed" });
+    // The weapon's own rules (its card): some can't make Aimed Shots, some Power guns can't ricochet.
+    const own = specialsOf(w);
+    if (!own?.noAimed) buttons.push({ key: `aim:${w.id}`, label: L(`${LANG}.Hud.Aimed`), icon: "fa-solid fa-bullseye", on: mode === "aimed" });
     if (Number(s.fireModes?.autoFire) > 0) buttons.push({ key: `auto:${w.id}`, label: L(`${LANG}.Hud.Autofire`), icon: "fa-solid fa-burst", on: mode === "autofire" });
     if (s.fireModes?.suppressiveFire) buttons.push({ key: `supp:${w.id}`, label: L(`${LANG}.Hud.Suppressive`), icon: "fa-solid fa-wind", on: mode === "suppressive" });
     if (mode !== "suppressive") buttons.push({ key: `dmg:${w.id}`, label: L(`${LANG}.Hud.Damage`), icon: "fa-solid fa-droplet" });
@@ -100,7 +103,7 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     // Neon Arsenal's switches: a Power gun's ricochet, a Tech gun's charge.
     const upgrades = Rebuilds.upgradesOf(w, actor);
     const traits = traitsOf(ranged ? flavorOf(w, upgrades) : null, upgrades);
-    buttons.push(...Rebuilds.buttons(actor, w, traits));
+    buttons.push(...Rebuilds.buttons(actor, w, traits).filter((b) => !(own?.noRicochet && b.key.startsWith("rico:"))));
     // A Tech gun's scope: target whoever it shows behind thin cover (each press, the next one).
     if (traits.active.includes("charge") && Xray.on) {
       const seen = Xray.drawn.size;

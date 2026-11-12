@@ -30,6 +30,14 @@
   every piece of 2070 chrome open to Operating Systems and Enhancements and fixes the copies
   already in a world once; **Neon At Home 1.14.0** counts a piece as Borgware for Maximum
   Humanity (−4 in place of −2) while an Operating System or Enhancement that says so is in it.
+- **Weapons' own rules, first part.** The lines the Item Compendium words the same way on every
+  weapon that has them are read from the weapon's card and applied: 3-round (and 2-round) bursts
+  named on the attack card, with the short-magazine damage on the next damage roll; *Aimed Shots
+  deal +1d6*; *Ablates N extra SP*; *5s count as 6s for Critical Injuries*, called out on the
+  damage card; *−2 to every attack* as a named modifier before the dialog; *No Aimed Shots* and
+  *can't ricochet* on the Action HUD. 108 weapons in the catalog have at least one; weapons
+  already on sheets count. The rounds themselves are spent by Neon Hub 1.25.0. Conditional
+  lines, effects on targets, recoil and the Iconics' one-off rules are not automated yet.
 - **Chrome switches.** A *Chrome* group on the Action HUD and a chip button on the Token HUD
   list the chrome a character can switch on and off, lit while it runs: Sandevistan and Berserk
   (by their Operating System), Tactile Boost, Optical Camo, Microrotors, the KERS mask (three new
@@ -40,7 +48,8 @@
   System's +2 Initiative when that's fitted.
 - **Chrome on your own screen.** While your character's Sandevistan or Berserk runs, your screen
   alone shows it, in the Operating System's colour; a Kerenzikov cools the picture slightly all
-  the time. A layer over the map that takes no clicks and hides nothing. New per-player setting
+  the time. A GM sees it for an NPC while that NPC's token is selected. A layer over the map
+  that takes no clicks and hides nothing. New per-player setting
   *Chrome on my screen*; new world setting *Chrome switches on the Token HUD*.
 
 ## 1.27.0

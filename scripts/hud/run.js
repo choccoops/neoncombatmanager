@@ -32,6 +32,10 @@ export const Run = {
       case "auto":
       case "supp": {
         if (!item) return null;
+        if (kind === "aim" && (await import("../arsenal/specials.js")).specialsOf(item)?.noAimed) {
+          ui.notifications?.warn(L(`${LANG}.Arsenal.NoAimed`, { name: item.name }));
+          return null;
+        }
         // The mode sticks to the weapon, so its Damage roll knows it (Autofire's multiplier).
         if (kind === "atk") await actor.unsetFlag(SYSTEM_ID, `firetype-${item.id}`);
         else await actor.setFlag(SYSTEM_ID, `firetype-${item.id}`, MODES[kind]);

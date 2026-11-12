@@ -448,7 +448,8 @@ test("a Smart gun before its roll dialog: the +1 by name, and Improved Smart rou
     { id: `bonuses.ranged-${dark.id}`, key: "bonuses.ranged", value: -4, source: "Obscured" }
   ]);
   const done = Arsenal.preDialog(fury.items.get("w1"), roll);
-  assert.deepEqual(done, { unobscured: -4, split: true });
+  assert.equal(done.unobscured, -4);
+  assert.equal(done.split, true);
   assert.deepEqual(roll.mods.map((m) => [m.id ?? m.source, m.value]), [[`${M}-smart`, 1]], "the dialog opens with Smart weapon +1 and Obscured unticked");
   // The player ticks Obscured back on in the dialog: it still comes off, and the +1 isn't added twice.
   roll.mods.push({ id: `bonuses.ranged-${dark.id}`, key: "bonuses.ranged", value: -4, source: "Obscured" });
@@ -675,13 +676,14 @@ test("running chrome on its owner's screen only: Berserk over a Sandevistan over
   assert.deepEqual(screenLook([{ kerenzikov: true, sandevistan: "falcon" }]), { kind: "sandevistan", tint: "#00e5ff" });
   assert.deepEqual(screenLook([{ sandevistan: true }, { berserk: true }]), { kind: "berserk", tint: "#ff1744" });
   assert.equal(screenLook([{ berserk: true }], { enabled: false }), null, "the player's own switch");
-  // Whose eyes: your character; a player's selected tokens they own; never a GM's NPCs.
+  // Whose eyes: your character; selected tokens you own; a GM's NPC only while it's selected.
   const mine = { id: "a", isOwner: true };
   const npc = { id: "n", isOwner: true };
   const theirs = { id: "t", isOwner: false };
   assert.deepEqual(viewpoints({ character: mine, controlled: [npc, theirs], isGM: false }).map((a) => a.id), ["a", "n"]);
-  assert.deepEqual(viewpoints({ character: mine, controlled: [npc], isGM: true }).map((a) => a.id), ["a"]);
-  assert.deepEqual(viewpoints({ controlled: [npc], isGM: true }), []);
+  assert.deepEqual(viewpoints({ character: mine, controlled: [npc], isGM: true }).map((a) => a.id), ["a", "n"]);
+  assert.deepEqual(viewpoints({ controlled: [npc], isGM: true }).map((a) => a.id), ["n"]);
+  assert.deepEqual(viewpoints({ controlled: [], isGM: true }), []);
 
   // On a page: the layer goes up while it runs and comes down after, and never takes a click (the stylesheet).
   const made = [];
@@ -708,4 +710,104 @@ test("running chrome on its owner's screen only: Berserk over a Sandevistan over
   delete globalThis.document;
   const css = readFileSync(path.join(root, "styles/neon-combat.css"), "utf8");
   assert.match(css, /#ncm-screen-fx \{[^}]*pointer-events: none/);
+});
+
+/* ---------------------------------------- */
+/*  A weapon's own rules, from its card     */
+/* ---------------------------------------- */
+
+test("a weapon's own rules are read from its card: bursts, Autofire rounds, Aimed Shot dice, ablation, Critical Injuries, modifiers, limits", async () => {
+  const { parseSpecials, specialMods, moreDice, ruleCrit, ruleText } = await import("../scripts/arsenal/specials.js");
+  const card = (rule) => `<p>${rule}</p><p><strong>Class:</strong> Heavy Pistol • SMART <strong>Damage:</strong> 3d6/2d6</p><p><small>Item Compendium (2070) • Weapons</small></p>`;
+  assert.equal(ruleText(card("Aimed Shots deal +1d6 (6d6).")), "Aimed Shots deal +1d6 (6d6).", "the stat lines aren't rules");
+  assert.deepEqual(parseSpecials(card("Single Shot fires a 3-round burst. With fewer than 3 left, it empties the magazine for 2d6.")),
+    { burst: { rounds: 3, every: false, short: "empty", shortDamage: "2d6" } });
+  assert.deepEqual(parseSpecials(card("Single Shot fires a 2-round burst; with fewer than 2 left, it empties the magazine for 2d6.")).burst, { rounds: 2, every: false, short: "empty", shortDamage: "2d6" });
+  assert.deepEqual(parseSpecials(card("Every shot is a 3-round burst; it won't fire with fewer than 3 left. Ablates 1 extra SP (2, or 3 with Armor-Piercing).")),
+    { burst: { rounds: 3, every: true, short: "refuse", shortDamage: null }, ablate: { extra: 1, charged: null } });
+  assert.deepEqual(parseSpecials(card("Autofire uses 6 rounds instead of 10.")), { autofire: { rounds: 6, shells: false } });
+  assert.deepEqual(parseSpecials(card("Ablates 2 extra SP (3 charged).")), { ablate: { extra: 2, charged: 3 } });
+  assert.deepEqual(parseSpecials(card("No Aimed Shots. −2 to every attack. Its Power Rebuild can't ricochet.")), { attackMod: -2, noAimed: true, noRicochet: true });
+  assert.deepEqual(parseSpecials(card("On an Aimed Shot, 5s count as 6s for Critical Injuries. Still halves SP when thrown.")), { crit: { face: 5, when: "aimed" } });
+  assert.deepEqual(parseSpecials(card("+1 to Aimed Shots and Autofire.")), { aimedMod: 1, autofireMod: 1 });
+  // Lines that only sound alike are left to the table.
+  assert.equal(parseSpecials(card("Two-handed: +1 to Aimed Shots and Autofire.")), null, "a condition the module can't see");
+  assert.equal(parseSpecials(card("Loads only its own Armor-Piercing shells (100eb per 10), which ablate 1 extra SP.")), null, "the ammo's rule, not the gun's");
+  assert.equal(parseSpecials(card("Leg and Held Item Aimed Shots deal +1d6 (6d6); head Aimed Shots deal −1d6 (4d6).")), null);
+  assert.equal(parseSpecials("<p>Generic weapon (standard quality).</p>"), null);
+
+  assert.deepEqual(specialMods({ attackMod: -2, aimedMod: 1 }, { aimed: true, name: "Moron Labe", moduleId: M }), [{ id: `${M}-special`, value: -1, source: "Moron Labe", key: "bonuses.universalAttack", category: "combat" }]);
+  assert.deepEqual(specialMods({ aimedMod: 1 }, { aimed: false }), []);
+  assert.equal(moreDice("5d6", 1), "6d6");
+  assert.equal(moreDice("3d6+2", 2), "5d6+2");
+  const five = { crit: { face: 5, when: "always" } };
+  assert.ok(ruleCrit(five, [5, 6, 2]) && ruleCrit(five, [5, 5, 1]));
+  assert.ok(!ruleCrit(five, [6, 6, 1]), "two 6s is the plain rule's");
+  assert.ok(!ruleCrit(five, [5, 4, 4]));
+  assert.ok(!ruleCrit({ crit: { face: 5, when: "aimed" } }, [5, 6]) && ruleCrit({ crit: { face: 5, when: "aimed" } }, [5, 6], { aimed: true }));
+});
+
+test("on the rolls: a burst named on the card and its short damage, Aimed Shot dice, extra ablation, the weapon's Critical Injury rule, its modifier; no Aimed button where it can't", async () => {
+  const SYS = "cyberpunk-red-core";
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
+  game.user.targets = new Set();
+
+  // The Yukimura: a 3-round burst; with 2 left it empties the magazine for 2d6.
+  const fury = crew("Fury", [weapon("w1", "Arasaka HJKE-11 Yukimura", { weaponType: "heavyPistol", damage: "3d6", magazine: { value: 2, max: 21 }, description: desc("Single Shot fires a 3-round burst. With fewer than 3 left, it empties the magazine for 2d6.") })]);
+  const gun = fury.items.get("w1");
+  const atk = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, atk);
+  await Arsenal.preRoll(gun, atk);
+  assert.deepEqual(Arsenal.pending.tag.burst, { rounds: 2, short: true, damage: "2d6" });
+  const dmg = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(gun, dmg);
+  assert.equal(dmg.formula, "2d6", "fired short: the card's damage");
+  assert.equal(Arsenal.pending.tag.shortBurst, "2d6");
+  gun.system.magazine.value = 9;
+  const full = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, full);
+  await Arsenal.preRoll(gun, full);
+  assert.deepEqual(Arsenal.pending.tag.burst, { rounds: 3, short: false, damage: null });
+  const dmg2 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(gun, dmg2);
+  assert.equal(dmg2.formula, "3d6", "a full burst: its own damage again");
+
+  // Aimed Shots +1d6, 1 extra SP ablated, 5s count as 6s, −2 to every attack.
+  const sable = crew("Sable", [weapon("w1", "Dezerter", { weaponType: "shotgun", damage: "5d6", description: desc("Aimed Shots deal +1d6 (6d6). Ablates 1 extra SP. 5s count as 6s for Critical Injuries. −2 to every attack. No Aimed Shots.") })]);
+  const sg = sable.items.get("w1");
+  const a2 = new CPRAttackRoll([]);
+  assert.ok(Arsenal.preDialog(sg, a2).special);
+  assert.deepEqual(a2.mods.map((m) => [m.id, m.value, m.source]), [[`${M}-special`, -2, "Dezerter"]], "on the roll before its dialog, by the weapon's name");
+  await Arsenal.preRoll(sg, a2);
+  assert.equal(a2.mods.length, 1, "once");
+  assert.equal(Arsenal.pending.tag.specialMod, -2);
+  sable.flags[SYS] = { "firetype-w1": "aimed" };
+  const d3 = new CPRDamageRoll("5d6");
+  await Arsenal.preRoll(sg, d3);
+  assert.equal(d3.formula, "6d6");
+  assert.equal(d3.rollCardExtraArgs.ablationValue, 2);
+  assert.deepEqual(Arsenal.pending.tag.critRule, { face: 5, when: "always", aimed: true });
+  // The card: a 5 and a 6 is a Critical Injury by this weapon's rule; two 6s is the plain rule's.
+  const msg = (roll) => {
+    const m = { content: '<div class="rollcard"></div>', flags: {}, updateSource(u) { Object.assign(this.flags, u); } };
+    Arsenal.pending.roll = roll;
+    Arsenal.tag(m, game.user.id);
+    return m.flags[`flags.${M}.arsenal`];
+  };
+  d3.faces = [5, 6, 1, 2, 3, 4];
+  assert.equal(msg(d3).ruleCrit, 5);
+  await Arsenal.preRoll(sg, d3);
+  d3.faces = [6, 6, 1, 2, 3, 4];
+  assert.equal(msg(d3).ruleCrit, undefined);
+  sable.flags[SYS] = {};
+  const d4 = new CPRDamageRoll("5d6");
+  await Arsenal.preRoll(sg, d4);
+  assert.equal(d4.formula, "5d6", "not an Aimed Shot: no extra die");
+
+  // The Action HUD: no Aimed button on a weapon that can't; an ordinary gun keeps it.
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  assert.ok(!catalog(sable).weapons[0].buttons.some((b) => b.key === "aim:w1"));
+  assert.ok(catalog(fury).weapons[0].buttons.some((b) => b.key === "aim:w1"));
+  for (const k of ["burst", "burstShort", "burstShortDamage", "autofireRounds", "specialMod", "shortBurstDamage", "aimedDice", "ablate", "ruleCrit"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Note.${k}`), `NEONCOMBAT.Arsenal.Note.${k}`, k);
 });

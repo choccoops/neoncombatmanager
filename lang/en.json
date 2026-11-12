@@ -2455,6 +2455,7 @@
         "noLink": "Smart weapon without a link"
       },
       "Ricochet": "Ricochet",
+      "NoAimed": "{name} can't make Aimed Shots.",
       "ScopeTarget": "Target through cover",
       "ScopeNone": "The scope shows nobody behind thin cover.",
       "Charge": "Charge",
@@ -2465,6 +2466,15 @@
       "ChargeBody": "That's the Move Action. It holds for 20 Rounds or until fired: the next non-explosive attack is ROF1, goes through Thin cover without damaging it, and ignores half the target's SP (2070 Core Rules, Ch07).",
       "Note": {
         "ricochet": "Ricochet (−4): bounced off cover at a target the shooter knows is there. It can't be dodged, unless the target can follow the bounce (speedware that's on, or low-light, IR or UV optics in the dark): then at −4 (2070 Core Rules, Ch07, Ricochets in Play).",
+        "burst": "A {rounds}-round burst.",
+        "burstShort": "A short burst: the last {rounds} in the magazine.",
+        "burstShortDamage": "A short burst: the last {rounds} in the magazine, for {damage}.",
+        "autofireRounds": "This weapon's Autofire spends {rounds}.",
+        "specialMod": "This weapon's own rule: {value} to the attack.",
+        "shortBurstDamage": "Fired short of a full burst: {damage}.",
+        "aimedDice": "Aimed Shot with this weapon: +{dice}d6.",
+        "ablate": "This weapon ablates {extra} more SP.",
+        "ruleCrit": "A Critical Injury by this weapon's rule ({face}s count as 6s): roll the injury and add its {bonus} Bonus Damage, which the total above doesn't include.",
         "smartBonus": "Smart weapon: +{value} to this attack (linked).",
         "smartNoLink": "Smart weapon without a Personal Link or Subdermal Grip: no +1.",
         "unobscured": "Improved Smart: ignores {value} from obscurement (darkness, smoke, fog).",

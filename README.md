@@ -683,8 +683,8 @@ and only yours: for a Sandevistan the world drains of colour and the rim glows a
 Operating System's colour; for Berserk the rim beats red. A Kerenzikov cools the picture very
 slightly, all the time, as if everything else ran a touch slow. Berserk wins over a Sandevistan,
 which wins over a Kerenzikov. It's a layer over the map that never takes a click and hides
-nothing. You get it for your assigned character and, as a player, for tokens you own and have
-selected; a GM never gets it for NPCs. *Chrome on my screen* (each player's own setting) turns it
+nothing. You get it for your assigned character and for tokens you own and have selected; a GM
+gets it for an NPC while that NPC's token is selected. *Chrome on my screen* (each player's own setting) turns it
 off, and it holds still with token motion off or reduced motion asked for. No new sounds.
 
 **Tactile Boost** (Cyberpunk RED p.359). The chipware feels motion within 20 m/yds through a hand
@@ -896,6 +896,25 @@ on the scene. A damage roll for an area draws no Tarot card.
   beside *Smart Weapon* (an Active Effect with its own icon, on the token and the Effects tab).
   The penalties come off that gun's attacks only, so the condition itself holds no numbers: a
   second gun in the other hand still takes them.
+- **A weapon's own rules** (Item Compendium, Weapons and Iconics). Where a weapon's card has
+  one of the lines below, Neon Arsenal reads it from the card's text and applies it, so weapons
+  already on sheets count, and so does one you write in the same words. 108 of the catalog's
+  weapons have at least one.
+
+  | The card says | What happens |
+  | --- | --- |
+  | *Single Shot fires a 3-round burst* / *Every shot is a 3-round burst* | The attack card names the burst. Neon Hub 1.25.0 spends the rounds; a gun that *won't fire with fewer* is refused by Cyberpunk RED's ammo check; one that *empties the magazine for 2d6* fires what's left, and its next damage roll is that 2d6 |
+  | *Autofire uses 6 rounds instead of 10* | Named on the card; spent by Neon Hub 1.25.0 |
+  | *Aimed Shots deal +1d6* | An Aimed Shot's damage roll gets the extra dice |
+  | *Ablates 1 extra SP* (and *(3 charged)*) | Added to the damage card's ablation, so Cyberpunk RED's own damage button takes it off the armor |
+  | *5s count as 6s for Critical Injuries* (always, or *On an Aimed Shot, ...*) | When the dice make a Critical Injury only by that rule, the damage card says so and how much Bonus Damage to add (Cyberpunk RED's total doesn't include it) |
+  | *−2 to every attack*, *+1 to Aimed Shots (and Autofire)* | A modifier in the weapon's name, on the roll before its dialog opens |
+  | *No Aimed Shots* | No Aimed button on the Action HUD (the sheet's own tick box is Cyberpunk RED's) |
+  | *Its Power Rebuild can't ricochet* | No Ricochet switch |
+
+  A line with a condition the module can't see (*Two-handed: +1...*, *Leg Aimed Shots deal...*,
+  *within 6m...*), a rule of the ammo rather than the gun, effects on whoever is hit, recoil and
+  BODY requirements, and each Iconic's one-off rules are still the table's to run.
 - **Smart's +1 by name.** A Smart gun's +1 is on the roll before its dialog opens as
   *Smart weapon +1*, and the card says so. Neon Hub's Smart guns keep the +1 in their own attack
   modifier: it's taken out of that line and shown by name instead, never counted twice. Without a
