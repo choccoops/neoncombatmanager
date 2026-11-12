@@ -432,6 +432,58 @@ test("Improved Smart rounds ignore visual obscurement: darkness, smoke and weath
   assert.ok(r2.mods.some((m) => m.source === "Darkness"), "ordinary rounds still take it");
 });
 
+test("a Smart gun before its roll dialog: the +1 by name, and Improved Smart rounds take obscurement off; both show as conditions and on the card", async () => {
+  const HUB = "cpr-neon-hub";
+  const ammo = { _id: "a1", name: "Improved Smart Ammunition (Rifle)", type: "ammo", system: { variety: "rifle", type: "smart", amount: 10 } };
+  const port = { _id: "n1", name: "Neuroport", type: "cyberware", system: { isInstalled: true } };
+  const hubGun = (extra = {}) => ({ ...weapon("w1", "Kang Tao G-58 Dian", { weaponType: "smg", attackmod: 1, ...extra }), flags: { [HUB]: { weaponType2070: "smart" } } });
+  game.user.targets = new Set();
+
+  // Neon Hub's Smart gun (the +1 is in its own attack modifier), linked, Improved Smart loaded, in the dark.
+  const fury = crew("Fury", [hubGun({ installedItems: { list: ["a1"] } }), ammo, port]);
+  for (const i of fury.items) if (i.flags?.[HUB]) i.flags = { [HUB]: { weaponType2070: "smart" } };
+  const [dark] = await Conditions.add("obscured", fury);
+  const roll = new CPRAttackRoll([
+    { value: 1, source: "Kang Tao G-58 Dian", key: "bonuses.universalAttack", category: "combat" },
+    { id: `bonuses.ranged-${dark.id}`, key: "bonuses.ranged", value: -4, source: "Obscured" }
+  ]);
+  const done = Arsenal.preDialog(fury.items.get("w1"), roll);
+  assert.deepEqual(done, { unobscured: -4, split: true });
+  assert.deepEqual(roll.mods.map((m) => [m.id ?? m.source, m.value]), [[`${M}-smart`, 1]], "the dialog opens with Smart weapon +1 and Obscured unticked");
+  // The player ticks Obscured back on in the dialog: it still comes off, and the +1 isn't added twice.
+  roll.mods.push({ id: `bonuses.ranged-${dark.id}`, key: "bonuses.ranged", value: -4, source: "Obscured" });
+  await Arsenal.preRoll(fury.items.get("w1"), roll);
+  assert.deepEqual(roll.mods.map((m) => [m.id, m.value]), [[`${M}-smart`, 1]]);
+  assert.equal(Arsenal.pending.tag.unobscured, -8);
+  assert.equal(Arsenal.pending.tag.smartBonus, 1);
+
+  // Without a link the +1 comes out of the gun's modifier and nothing takes its place.
+  const nolink = crew("Rook", [hubGun(), { ...ammo }]);
+  for (const i of nolink.items) if (i.name.startsWith("Kang")) i.flags = { [HUB]: { weaponType2070: "smart" } };
+  const r2 = new CPRAttackRoll([{ value: 1, source: "Kang Tao G-58 Dian", key: "bonuses.universalAttack" }]);
+  Arsenal.preDialog(nolink.items.get("w1"), r2);
+  await Arsenal.preRoll(nolink.items.get("w1"), r2);
+  assert.deepEqual(r2.mods, [], "no link: no +1, and not taken off twice");
+
+  // A Smart gun that isn't Neon Hub's: the +1 is added by name.
+  const other = crew("Lattice", [weapon("w1", "Assault Rifle (Smart)", { weaponType: "assaultRifle" }), { ...port }]);
+  const r3 = new CPRAttackRoll([]);
+  Arsenal.preDialog(other.items.get("w1"), r3);
+  assert.deepEqual(r3.mods.map((m) => [m.id, m.value]), [[`${M}-smart`, 1]]);
+  // A Tech gun, or a damage roll: untouched.
+  const tech = crew("Sable", [weapon("w1", "Heavy Pistol (Tech)")]);
+  assert.equal(Arsenal.preDialog(tech.items.get("w1"), new CPRAttackRoll([])), null);
+
+  // The conditions: Smart Weapon, and Improved Smart Loaded only with the rounds in a Smart gun.
+  assert.deepEqual([...flavorsInHand(fury)].sort(), ["improved", "smart"]);
+  assert.deepEqual([...flavorsInHand(nolink)], ["smart"], "the rounds aren't loaded");
+  const linkGun = crew("V", [weapon("w1", "Assault Rifle", { weaponType: "assaultRifle", installedItems: { list: ["a1"] } }), { ...ammo }]);
+  assert.deepEqual([...flavorsInHand(linkGun)], [], "Improved Smart in a gun that isn't Smart does nothing");
+  await Equipped.sync(fury);
+  assert.ok(Conditions.has("improvedSmart", fury) && Conditions.has("smartRebuild", fury));
+  assert.match(game.i18n.localize("NEONCOMBAT.Condition.improvedSmart.hint"), /obscurement/);
+});
+
 test("a ricochet can be dodged at -4 by whoever can follow it: speedware that's on, or optics in the dark", () => {
   const kz = [{ name: "Kerenzikov", installed: true }];
   const sande = (disabled) => [{ name: "Militech Sandevistan", installed: true, effects: [{ name: "Sandevistan (active)", disabled }] }];

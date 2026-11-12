@@ -19,6 +19,13 @@
   character is selected, their player sees an amber ripple where anyone out of sight moves within
   20 m/yds, through any wall, and a faint ring showing the reach. It marks where motion was last
   felt, not who it is. New setting *Tactile Boost ripples*.
+- **Improved Smart Ammunition, where you can see it.** The obscurement penalties used to come off
+  after the roll dialog, so the dialog still showed Obscured −4 and a total that was wrong until
+  the dice. They now come off before it opens (listed unticked), and a new condition, **Improved
+  Smart Loaded**, sits on the character while the rounds are in a Smart gun in hand.
+- **Smart's +1 by name.** The +1 is on the roll before its dialog as *Smart weapon +1* (taken out
+  of the gun's own attack modifier on Neon Hub's Smart guns, so it's never counted twice), and on
+  the attack card. No link: no +1, and the card says so.
 
 ## 1.27.0
 

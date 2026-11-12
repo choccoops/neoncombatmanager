@@ -177,6 +177,7 @@ export const CONDITIONS = [
   { id: "smartRebuild", category: "combat", img: `${A}/smart-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
   { id: "techRebuild", category: "combat", img: `${A}/tech-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
   { id: "monoRebuild", category: "combat", img: `${A}/mono-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
+  { id: "improvedSmart", category: "combat", img: `${A}/improved-smart.svg`, page: "2070", mirror: "rebuild", hud: false },
 
   /* ------------------------------------------------------------------ */
   /*  Raising the Stakes (2070): the Plot Die. Each rides one Check.    */

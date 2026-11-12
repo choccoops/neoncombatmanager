@@ -591,7 +591,11 @@
       },
       "smartRebuild": {
         "name": "Smart Weapon",
-        "hint": "A Smart gun in hand: +1 to its attacks with a Personal Link or Subdermal Grip. Improved Smart Ammunition ignores visual obscurement, and a miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK), the first shot's penalties still applying."
+        "hint": "A Smart gun in hand: +1 to its attacks with a Personal Link or Subdermal Grip, on the roll as Smart weapon. Improved Smart Ammunition ignores visual obscurement, and a miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK), the first shot's penalties still applying."
+      },
+      "improvedSmart": {
+        "name": "Improved Smart Loaded",
+        "hint": "Improved Smart Ammunition in a Smart gun in hand. Its attacks ignore every visual obscurement penalty (Low Light, Darkness, Obscured, smoke, pop-ups, weather's sight penalties): they come off the roll before its dialog opens, and the card says how much. A miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK). The gun's own +1 shows on the roll as Smart weapon."
       },
       "monoRebuild": {
         "name": "Mono-edge Weapon",
@@ -2433,6 +2437,8 @@
       "ChargeBody": "That's the Move Action. It holds for 20 Rounds or until fired: the next non-explosive attack is ROF1, goes through Thin cover without damaging it, and ignores half the target's SP (2070 Core Rules, Ch07).",
       "Note": {
         "ricochet": "Ricochet (−4): bounced off cover at a target the shooter knows is there. It can't be dodged, unless the target can follow the bounce (speedware that's on, or low-light, IR or UV optics in the dark): then at −4 (2070 Core Rules, Ch07, Ricochets in Play).",
+        "smartBonus": "Smart weapon: +{value} to this attack (linked).",
+        "smartNoLink": "Smart weapon without a Personal Link or Subdermal Grip: no +1.",
         "unobscured": "Improved Smart: ignores {value} from obscurement (darkness, smoke, fog).",
         "powerCrit": "Power: the Critical Injury's Bonus Damage is +5 more.",
         "chargedAttack": "Charged Tech shot: ROF1, through Thin cover without damaging it.",

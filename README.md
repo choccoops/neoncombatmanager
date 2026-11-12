@@ -860,7 +860,16 @@ on the scene. A damage roll for an area draws no Tarot card.
 
 - **Improved Smart vs obscurement.** Improved Smart rounds ignore visual obscurement penalties
   (2070 Ch07), so Low Light, Darkness, Obscured, smoke, pop-ups and weather's sight penalties come
-  off that roll. The card says how much.
+  off that roll, **before its dialog opens**: the dialog lists them unticked and its total leaves
+  them out (ticked back on, they still come off). The card says how much. While the rounds are
+  loaded in a Smart gun in hand, the character carries **Improved Smart Loaded**, a condition
+  beside *Smart Weapon* (an Active Effect with its own icon, on the token and the Effects tab).
+  The penalties come off that gun's attacks only, so the condition itself holds no numbers: a
+  second gun in the other hand still takes them.
+- **Smart's +1 by name.** A Smart gun's +1 is on the roll before its dialog opens as
+  *Smart weapon +1*, and the card says so. Neon Hub's Smart guns keep the +1 in their own attack
+  modifier: it's taken out of that line and shown by name instead, never counted twice. Without a
+  Personal Link or Subdermal Grip there's no +1, and the card says why.
 - **Following a ricochet.** A ricochet can't be dodged, unless the target can follow the bounce: a
   Kerenzikov, a running Sandevistan or other speedware, or low-light, IR or UV optics while they're
   in the dark. Then their Evade card takes −4 (Ch07, Ricochets in Play; a setting).

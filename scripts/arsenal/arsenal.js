@@ -20,7 +20,7 @@ import { Defense } from "./defense.js";
 import { Shots } from "./shots.js";
 import { Sync } from "./sync.js";
 import { Xray } from "./xray.js";
-import { Equipped } from "./equipped.js";
+import { Equipped, improvedSmart } from "./equipped.js";
 import { Stakes } from "../stakes/stakes.js";
 import { L, esc } from "../util.js";
 
@@ -156,6 +156,19 @@ export const Arsenal = {
     proto[`${MODULE_ID}Arsenal`] = true;
     const confirm = proto.confirmRoll;
     const self = this;
+    // And createRoll: what a Smart gun and its Improved Smart rounds change is on the roll before its dialog opens.
+    if (typeof proto.createRoll === "function") {
+      const create = proto.createRoll;
+      proto.createRoll = function (...args) {
+        const roll = create.apply(this, args);
+        try {
+          if (roll && typeof roll.then !== "function") self.preDialog(this, roll);
+        } catch (err) {
+          console.error(`${MODULE_ID} | arsenal (before the roll dialog)`, err);
+        }
+        return roll;
+      };
+    }
     proto.confirmRoll = async function (cprRoll, ...rest) {
       const out = (await confirm.call(this, cprRoll, ...rest)) ?? cprRoll;
       try {
@@ -171,6 +184,54 @@ export const Arsenal = {
   tokenFor(actor) {
     const controlled = (canvas?.tokens?.controlled ?? []).find((t) => t.actor?.id === actor.id);
     return controlled ?? actor.getActiveTokens?.()?.[0] ?? null;
+  },
+
+  /** What preDialog did to each roll, for the card: roll -> { unobscured, split }. */
+  pre: new WeakMap(),
+
+  /**
+   * Before the roll dialog opens, so the player sees it there: a Smart gun's +1 as a line of its
+   * own ("Smart weapon"; taken out of the weapon's own modifier where Neon Hub put it), and, with
+   * Improved Smart Ammunition loaded, the visual obscurement penalties off the roll (the dialog
+   * lists them unticked).
+   */
+  preDialog(item, roll) {
+    const actor = item?.actor;
+    if (!actor || rollKind(roll) !== "attack" || !["weapon", "cyberware"].includes(item.type) || !Settings.get("arsenalRebuilds")) return null;
+    if (!Array.isArray(roll.mods)) return null;
+    const upgrades = Rebuilds.upgradesOf(item, actor);
+    const info = classify(item, loadedAmmo(item, actor), upgrades);
+    if (!info.ranged || info.flavor !== "smart") return null;
+    const done = { unobscured: 0, split: false };
+    const traits = traitsOf(info.flavor, upgrades);
+    const linked = Rebuilds.linked(actor);
+    if (traits.attackMod && !roll.mods.some((m) => m?.id === `${MODULE_ID}-smart`)) {
+      // Neon Hub's Smart guns hold the +1 in their own attack modifier: it comes out, to be shown by name.
+      if (smartBaked(item, upgrades)) {
+        const own = roll.mods.find((m) => m && !m.id && m.key === "bonuses.universalAttack" && Number(m.value) >= traits.attackMod);
+        if (own) {
+          own.value = Number(own.value) - traits.attackMod;
+          if (!own.value) roll.mods.splice(roll.mods.indexOf(own), 1);
+          done.split = true;
+        }
+      }
+      if ((done.split || !smartBaked(item, upgrades)) && (!traits.needsLink || linked)) {
+        roll.mods.push({ id: `${MODULE_ID}-smart`, value: traits.attackMod, source: L(`${LANG}.Arsenal.Mod.smart`), key: "bonuses.ranged", category: "combat" });
+      }
+    }
+    if (improvedSmart(info)) done.unobscured = this.unobscure(actor, roll);
+    this.pre.set(roll, done);
+    return done;
+  },
+
+  /** Take the visual obscurement penalties off a roll (Improved Smart rounds): the sum that came off. */
+  unobscure(actor, roll) {
+    const off = obscurementMods(roll.mods, (id) => Registry.ofEffect(actor.effects?.get?.(id)));
+    for (const m of off) {
+      const i = roll.mods.indexOf(m);
+      if (i >= 0) roll.mods.splice(i, 1);
+    }
+    return off.reduce((sum, m) => sum + Number(m.value), 0);
   },
 
   /** Before the dice: traits on the roll, an area placed, the DV it faces. */
@@ -205,15 +266,20 @@ export const Arsenal = {
       const aimed = mode === "aimed" || (Bridge.rolls?.CPRAimedAttackRoll && roll instanceof Bridge.rolls.CPRAimedAttackRoll);
       if (rebuilds) {
         const ricochet = !!state.ricochet && info.ranged && !info.explosive;
-        const mods = attackMods(traits, { ranged: info.ranged, aimed, ricochet, linked: Rebuilds.linked(actor), baked: smartBaked(item, upgrades) });
+        const pre = this.pre.get(roll) ?? {};
+        // The Smart +1 may be on the roll already, by name, since before its dialog (preDialog).
+        const mods = attackMods(traits, { ranged: info.ranged, aimed, ricochet, linked: Rebuilds.linked(actor), baked: smartBaked(item, upgrades) && !pre.split })
+          .filter((m) => !(roll.mods ?? []).some((x) => x?.id === m.id));
         if (mods.length && typeof roll.addMod === "function") roll.addMod(mods);
+        if ((roll.mods ?? []).some((m) => m?.id === `${MODULE_ID}-smart` && Number(m.value) > 0)) tag.smartBonus = traits.attackMod;
+        else if (info.ranged && info.flavor === "smart" && traits.needsLink && !Rebuilds.linked(actor)) tag.smartNoLink = true;
         tag.ricochet = ricochet;
         if (state.ricochet) await Rebuilds.setState(actor, item, { ricochet: false });
         // Improved Smart rounds ignore visual obscurement: those penalties come off the roll.
-        if (info.flavor === "smart" && info.ammoType === "smart" && info.ranged && typeof roll.removeMod === "function") {
-          const off = obscurementMods(roll.mods, (id) => Registry.ofEffect(actor.effects?.get?.(id)));
-          for (const m of off) roll.removeMod(m.id);
-          if (off.length) tag.unobscured = off.reduce((sum, m) => sum + Number(m.value), 0);
+        if (improvedSmart(info)) {
+          // Those ticked back on in the dialog come off too: the rounds ignore them.
+          const off = (pre.unobscured ?? 0) + this.unobscure(actor, roll);
+          if (off) tag.unobscured = off;
         }
         if (traits.active.includes("charge") && Rebuilds.isCharged(actor, item) && !info.explosive) {
           tag.charged = true;
@@ -354,6 +420,8 @@ export const Arsenal = {
     }
     if (a.kind === "attack" && a.ricochet) notes.push(L(`${LANG}.Arsenal.Note.ricochet`));
     if (a.kind === "attack" && a.charged) notes.push(L(`${LANG}.Arsenal.Note.chargedAttack`));
+    if (a.kind === "attack" && a.smartBonus) notes.push(L(`${LANG}.Arsenal.Note.smartBonus`, { value: a.smartBonus }));
+    if (a.kind === "attack" && a.smartNoLink) notes.push(L(`${LANG}.Arsenal.Note.smartNoLink`));
     if (a.kind === "attack" && a.unobscured) notes.push(L(`${LANG}.Arsenal.Note.unobscured`, { value: a.unobscured }));
     if (a.kind === "damage" && a.crit && a.critBonus) notes.push(L(`${LANG}.Arsenal.Note.powerCrit`));
     if (a.kind === "damage" && a.charged) notes.push(L(`${LANG}.Arsenal.Note.chargedDamage`));
