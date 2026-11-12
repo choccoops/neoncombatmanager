@@ -6,8 +6,19 @@ import { CPR } from "../cpr.js";
 import { Cards } from "../combat/cards.js";
 import { L, esc, debounce } from "../util.js";
 import {
-  MATERIALS, THICKNESS, LEAN_METRES, VAS, coverHp, readWallCover, readPieceCover, readGlassCover, seatOf, coverFor, hitCover, splitAt, coverLabel, areaPlan
+  MATERIALS, THICKNESS, LEAN_METRES, VAS, coverHp, readWallCover, readPieceCover, readGlassCover, seatOf, coverFor, hitCover, splitAt, coverLabel, areaPlan, pieceWalls
 } from "./data.js";
+
+/**
+ * A move's wall hits (Foundry's collision vertices, nearest first), without those that are only on
+ * the moving piece's own walls. `tokenOf(edge)` names the piece an edge belongs to.
+ */
+export function ownWallFilter(hits, tokenId, tokenOf) {
+  return hits.filter((v) => {
+    const edges = [...(v?.edges ?? [])];
+    return !edges.length || edges.some((e) => tokenOf(e) !== tokenId);
+  });
+}
 
 /** The senses a destroyed section stops blocking (Foundry's NONE), so tokens walk and see through it. */
 const OPEN = { move: 0, sight: 0, light: 0, sound: 0 };
@@ -34,6 +45,19 @@ export const Cover = {
     for (const h of ["canvasReady", "createWall", "updateWall", "deleteWall", `${MODULE_ID}.coverChanged`]) Hooks.on(h, () => soon());
     Hooks.on("canvasTearDown", () => this.clearLabels());
     Hooks.on("preUpdateToken", (doc, changes, options, userId) => this.moveWarning(doc, changes, userId));
+    // Cover pieces as barriers: the GM's client keeps each piece's walls in step with its token.
+    const pieces = debounce(() => this.syncPieces(), 100);
+    Hooks.on("canvasReady", () => pieces());
+    Hooks.on(`${MODULE_ID}.coverChanged`, (scene) => (scene && scene !== canvas?.scene ? this.syncPieces(scene) : pieces()));
+    for (const h of ["createToken", "updateToken", "deleteToken"]) {
+      Hooks.on(h, (doc) => {
+        // A deleted token may no longer know its actor: any deletion checks for walls left behind.
+        if (h !== "deleteToken" && !this.isPiece(doc)) return;
+        if (doc.parent === canvas?.scene) pieces();
+        else this.syncPieces(doc.parent);
+      });
+    }
+    Hooks.once("ready", () => this.wrapCollision());
     Socket.on("coverDamage", (data) => this.damageAsGM(data));
     Socket.on("coverRepair", (data) => this.repairAsGM(data));
     Socket.on("coverTag", (data) => this.tagAsGM(data));
@@ -139,6 +163,90 @@ export const Cover = {
     const { walls, pieces } = this.scan(scene);
     const piecesInside = pieces.filter((p) => inside.includes(p.id));
     return areaPlan({ origin, people, walls, pieces, piecesInside, damage, explosive, bunkerBuster, exclude });
+  },
+
+  /* ---------------------------------------- */
+  /*  Cover pieces as barriers                */
+  /* ---------------------------------------- */
+
+  /** The piece a wall belongs to: { token, i } or null. */
+  pieceOf(wall) {
+    return (wall?.document ?? wall)?.flags?.[MODULE_ID]?.piece ?? null;
+  },
+
+  /**
+   * GM: make every cover piece on a scene a barrier, as its wall equivalent would be. Each piece's
+   * token gets walls of its own (see pieceWalls), moved, turned and removed with it; a destroyed
+   * piece has none, so people walk through until it's repaired. Returns how many walls changed.
+   */
+  syncPieces(scene = canvas?.scene) {
+    // One at a time, so two quick changes never both create a piece's walls.
+    this._pieceSync = (this._pieceSync ?? Promise.resolve()).then(() => this.syncPiecesNow(scene)).catch((err) => {
+      console.error(`${MODULE_ID} | cover piece walls`, err);
+      return 0;
+    });
+    return this._pieceSync;
+  },
+
+  async syncPiecesNow(scene) {
+    if (!scene || !Compat.isActiveGM) return 0;
+    const on = this.on && !!Settings.get("coverPieceWalls");
+    const grid = this.grid(scene);
+    const have = new Map();
+    for (const w of scene.walls ?? []) {
+      const p = this.pieceOf(w);
+      if (!p) continue;
+      if (!have.has(p.token)) have.set(p.token, []);
+      have.get(p.token).push(w);
+    }
+    const create = [];
+    const update = [];
+    const remove = [];
+    for (const tok of scene.tokens ?? []) {
+      const want = on && this.isPiece(tok) ? pieceWalls(tok, grid) : [];
+      const old = (have.get(tok.id) ?? []).sort((a, b) => this.pieceOf(a).i - this.pieceOf(b).i);
+      have.delete(tok.id);
+      if (!want.length && !old.length) continue;
+      const data = (w, i) => ({ c: w.c, move: w.move, sight: w.sight, light: w.light, sound: w.sound, door: 0, dir: 0, flags: { [MODULE_ID]: { piece: { token: tok.id, i }, thinCover: w.thin } } });
+      if (want.length !== old.length) {
+        remove.push(...old.map((w) => w.id));
+        create.push(...want.map(data));
+        continue;
+      }
+      want.forEach((w, i) => {
+        const o = old[i];
+        const same = w.c.every((v, k) => v === o.c[k]) && ["move", "sight", "light", "sound"].every((k) => Number(o[k]) === w[k]) && !!o.flags?.[MODULE_ID]?.thinCover === w.thin;
+        if (!same) update.push({ _id: o.id, c: w.c, move: w.move, sight: w.sight, light: w.light, sound: w.sound, [`flags.${MODULE_ID}.thinCover`]: w.thin });
+      });
+    }
+    // Walls whose piece has left the scene.
+    for (const list of have.values()) remove.push(...list.map((w) => w.id));
+    if (remove.length) await scene.deleteEmbeddedDocuments("Wall", remove);
+    if (update.length) await scene.updateEmbeddedDocuments("Wall", update);
+    if (create.length) await scene.createEmbeddedDocuments("Wall", create);
+    return remove.length + update.length + create.length;
+  },
+
+  /**
+   * A player dragging a cover piece mustn't be stopped by the piece's own walls. Foundry asks the
+   * token whether its move hits a wall; for a piece, hits on its own walls don't count.
+   */
+  wrapCollision() {
+    const proto = CONFIG.Token?.objectClass?.prototype;
+    if (!proto || typeof proto.checkCollision !== "function" || proto.checkCollision._ncmCover) return;
+    const original = proto.checkCollision;
+    const cover = this;
+    proto.checkCollision = function (destination, options = {}) {
+      if (!cover.isPiece(this.document) || (options.type ?? "move") !== "move") return original.call(this, destination, options);
+      const mode = options.mode ?? "any";
+      const all = original.call(this, destination, { ...options, mode: "all" });
+      if (!Array.isArray(all)) return original.call(this, destination, options);
+      const others = ownWallFilter(all, this.document.id, (edge) => cover.pieceOf(edge?.object)?.token);
+      if (mode === "any") return others.length > 0;
+      if (mode === "closest") return others[0] ?? null;
+      return others;
+    };
+    proto.checkCollision._ncmCover = true;
   },
 
   /* ---------------------------------------- */
@@ -300,6 +408,7 @@ export const Cover = {
     const scene = game.scenes?.get(sceneId) ?? canvas?.scene;
     if (!scene) return 0;
     const picked = [...(scene.walls ?? [])].filter((w) => {
+      if (this.pieceOf(w)) return false;
       if (scope === "selected") return ids.includes(w.id);
       if (scope === "untagged") return !w.flags?.[MODULE_ID]?.cover?.material;
       return true;

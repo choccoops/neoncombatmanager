@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.28.0
+
+**From the first playtest.**
+
+- **Cover pieces are barriers.** A cover piece was only a token, so people walked through it.
+  Each piece now has walls of its own, kept by the GM's client: its outline stops movement, and a
+  tall piece (a wall section, a fence, a partition) also blocks sight and light, Thin ones still
+  showing outlines to a Tech scope. They move, turn and go with the token; a destroyed piece opens
+  until it's repaired. Pieces already on a map get theirs when the GM opens the scene. New setting
+  *Cover pieces are barriers*.
+
 ## 1.27.0
 
 **The Alert.** The Awareness Ladder (2070 Core Rules, Chapter 06) comes out onto the map.

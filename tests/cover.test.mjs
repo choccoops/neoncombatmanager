@@ -7,8 +7,8 @@ import { makeActor, registerSettings, asGM, chat, root } from "./helpers/foundry
 
 const M = "cpr-neon-combat-manager";
 await registerSettings();
-const { coverHp, sectionCount, sectionAt, readWallCover, readPieceCover, coverOnLine, hitCover, splitAt, areaPlan, isVehicle, seatOf, readGlassCover, coverFor } = await import("../scripts/cover/data.js");
-const { Cover } = await import("../scripts/cover/cover.js");
+const { coverHp, sectionCount, sectionAt, readWallCover, readPieceCover, coverOnLine, hitCover, splitAt, areaPlan, isVehicle, seatOf, readGlassCover, coverFor, pieceWalls, pieceBlocksSight } = await import("../scripts/cover/data.js");
+const { Cover, ownWallFilter } = await import("../scripts/cover/cover.js");
 const { CPR } = await import("../scripts/cpr.js");
 const { readWall } = await import("../scripts/arsenal/xray.js");
 
@@ -55,6 +55,7 @@ function scene({ walls = [], tokens = [] } = {}) {
   for (const w of walls) wrap(w);
   let n = 0;
   s.createEmbeddedDocuments = async (type, list) => list.map((d) => wrap({ ...d, id: `new${++n}` }));
+  s.deleteEmbeddedDocuments = async (type, ids) => ids.forEach((id) => s.walls.delete(id));
   s.updateEmbeddedDocuments = async (type, list) => Promise.all(list.map(({ _id, ...u }) => s.walls.get(_id).update(u)));
   for (const t of tokens) s.tokens.set(t.id, { parent: s, alpha: 1, flags: {}, async update(u) {
     for (const [k, v] of Object.entries(u)) {
@@ -344,4 +345,76 @@ test("the GM's damage to a ride goes through CPR's own (a rocket hands it SP plu
   assert.equal(van.flags[VAS].positions.find((p) => p.id === "drv").glassHp, 6);
   assert.equal(van.flags[VAS].positions.find((p) => p.id === "back").occupants[0], "Actor.vee", "the other seats untouched");
   game.scenes.delete("s1");
+});
+
+/* ---------------------------------------- */
+/*  Cover pieces as barriers                */
+/* ---------------------------------------- */
+
+const pieceActor = (name, material, thickness, hp = 20) => {
+  const a = makeActor({ name, type: "mook", system: { derivedStats: { hp: { value: hp, max: hp } } } });
+  a.flags[M] = { cover: { material, thickness } };
+  return a;
+};
+
+test("a cover piece's walls: its outline stops movement only; a tall piece adds a sight line down its length; none when destroyed", () => {
+  const table = { id: "t", x: 100, y: 100, width: 1, height: 1, rotation: 0, actor: pieceActor("Overturned Table", "wood", "thin", 5) };
+  const walls = pieceWalls(table, GRID);
+  assert.equal(walls.length, 4, "a low piece: the outline only");
+  assert.ok(walls.every((w) => w.move === 20 && w.sight === 0 && w.light === 0), "you see over a table");
+  assert.deepEqual(walls[0].c, [110, 110, 190, 110], "pulled in a tenth of a square, so its corners can be passed");
+  // Someone walking from the square on its left into it crosses the outline; someone walking past doesn't.
+  const crosses = (a, b) => walls.some((w) => coverOnLine(a, b, { walls: [{ c: w.c, n: 1, hp: [1], thickness: "thick" }] }).length);
+  assert.ok(crosses({ x: 50, y: 150 }, { x: 150, y: 150 }));
+  assert.ok(!crosses({ x: 50, y: 150 }, { x: 50, y: 250 }));
+  assert.ok(!crosses({ x: 50, y: 150 }, { x: 150, y: 50 }), "a diagonal step past its corner");
+
+  const fence = { id: "f", x: 0, y: 0, width: 2, height: 1, rotation: 0, actor: pieceActor("Wooden Fence", "wood", "thin", 5) };
+  const tall = pieceWalls(fence, GRID);
+  assert.equal(tall.length, 5);
+  assert.deepEqual(tall[4], { c: [10, 50, 190, 50], move: 0, sight: 20, light: 20, sound: 0, thin: true }, "sight and light, marked thin for Tech scopes");
+  assert.deepEqual(pieceWalls({ ...fence, rotation: 90 }, GRID)[4].c, [100, -40, 100, 140], "turned with the token");
+  assert.ok(readWall({ c: tall[4].c, sight: 20, flags: { [M]: { thinCover: true } } }).thin);
+
+  assert.ok(!pieceBlocksSight(pieceActor("Armored Glass Barrier", "glass", "thick")), "glass is seen through");
+  const flagged = pieceActor("Crate", "wood", "thick");
+  flagged.flags[M].cover.sight = true;
+  assert.ok(pieceBlocksSight(flagged), "a piece's own flag wins");
+  assert.deepEqual(pieceWalls({ ...table, flags: { [M]: { coverDestroyed: true } } }, GRID), []);
+  assert.deepEqual(pieceWalls({ id: "p", x: 0, y: 0, actor: makeActor({ name: "V" }) }, GRID), [], "a person is no barrier");
+});
+
+test("the GM keeps each piece's walls in step: placed, moved, destroyed (opens), repaired, removed", async () => {
+  asGM();
+  const table = pieceActor("Overturned Table", "wood", "thin", 5);
+  const s = scene({ walls: [wallDoc("w", [0, 0, 100, 0])], tokens: [{ id: "t1", name: "Overturned Table", x: 0, y: 0, width: 1, height: 1, actor: table }] });
+  game.scenes.set("s1", s);
+  const mine = () => [...s.walls].filter((w) => w.flags?.[M]?.piece);
+  assert.equal(await Cover.syncPiecesNow(s), 4);
+  assert.equal(mine().length, 4);
+  assert.ok(mine().every((w) => w.move === 20 && w.sight === 0 && w.flags[M].piece.token === "t1"));
+  assert.equal(await Cover.syncPiecesNow(s), 0, "nothing to do twice");
+  s.tokens.get("t1").x = 200;
+  assert.equal(await Cover.syncPiecesNow(s), 4, "moved with the token");
+  assert.deepEqual(mine().find((w) => w.flags[M].piece.i === 0).c, [210, 10, 290, 10]);
+  assert.equal(await Cover.tagAsGM({ scene: "s1", scope: "all", material: "steel" }), 1, "a piece's walls are never tagged as cover");
+  await Cover.damageAsGM({ scene: "s1", kind: "piece", id: "t1", amount: 9, quiet: true });
+  await Cover.syncPiecesNow(s);
+  assert.equal(mine().length, 0, "destroyed: people walk through");
+  await Cover.repairAsGM({ scene: "s1" });
+  await Cover.syncPiecesNow(s);
+  assert.equal(mine().length, 4, "repaired: a barrier again");
+  s.tokens.delete("t1");
+  await Cover.syncPiecesNow(s);
+  assert.equal(mine().length, 0);
+  assert.equal(s.walls.size, 1, "the map's own walls are left alone");
+  game.scenes.delete("s1");
+});
+
+test("a piece being dragged isn't stopped by its own walls, only by others", () => {
+  const edge = (token) => ({ object: token ? { document: { flags: { [M]: { piece: { token, i: 0 } } } } } : { document: { flags: {} } } });
+  const tokenOf = (e) => Cover.pieceOf(e.object)?.token;
+  const hits = [{ edges: new Set([edge("t1")]) }, { edges: new Set([edge(null)]) }, { edges: new Set([edge("t2")]) }];
+  assert.equal(ownWallFilter(hits, "t1", tokenOf).length, 2, "the map's wall and another piece's still stop it");
+  assert.equal(ownWallFilter([hits[0]], "t1", tokenOf).length, 0);
 });

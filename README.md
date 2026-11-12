@@ -893,7 +893,13 @@ Dataterm (Concrete), Teller Glass and Armored Glass Barrier (Bulletproof glass),
 thickness the pieces don't already draw as a wall: Interior Wall (Plaster, Thick), Wooden Fence and
 Timber Wall (Wood), Concrete Barrier (Concrete, Thick), Low Stone Wall and Fieldstone Wall (Stone),
 Corrugated Fence and Blast Wall (Steel). Drag one onto the map; its HP bar is the piece's HP,
-seen by the GM. A destroyed piece fades. A player who moves Thick cover without BODY 10+ is
+seen by the GM. **A piece is a barrier**, like the wall it stands for: the GM's client gives each
+one walls of its own (its outline, turned with the token), so nobody walks through it, and a tall
+piece (Office Partition, Interior Wall, the fences, Timber, Fieldstone and Blast Walls) also blocks
+sight and light along its length; a Thin one of those still shows outlines to a Tech scope. You
+see over the low ones and through glass. The walls move, turn and go with the token; pieces already
+on a map get theirs when the GM next opens the scene. A destroyed piece fades and opens: people
+walk and see through it until *Repair cover* (a setting turns the barriers off). A player who moves Thick cover without BODY 10+ is
 reminded of the rule. Cover pieces aren't people: no Wound States, Biomon or death saves.
 
 **Your ride as cover** (HOUSE RULE, 2070 Core Rules Ch07). Every vehicle actor is cover: MMuton's

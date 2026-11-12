@@ -1243,6 +1243,10 @@
         "name": "Doors are Wood (Thin) cover",
         "hint": "A door with no cover of its own counts as Wood (Thin): 5 HP. Off: only walls you tag are cover."
       },
+      "coverPieceWalls": {
+        "name": "Cover pieces are barriers",
+        "hint": "Each cover piece on the map gets walls of its own, kept by the GM's client: nobody walks through it, and a tall piece (a wall section, a fence, a partition) also blocks sight and light. A destroyed piece opens until it's repaired. Off: pieces are plain tokens."
+      },
       "coverLabels": {
         "name": "Show cover damage on the map (GM)",
         "hint": "The GM sees each damaged wall section's HP on the map, and an ✕ where one is destroyed."

@@ -112,6 +112,52 @@ export function readPieceCover(tok, { size = 100, sp = 0 } = {}) {
   };
 }
 
+/** The cover pieces tall enough to block sight and light (the rest you see over). A piece's own `sight` flag wins. */
+export const TALL_PIECES = ["Office Partition", "Interior Wall", "Wooden Fence", "Timber Wall", "Fieldstone Wall", "Corrugated Fence", "Blast Wall"];
+/** Glass you see through: it stops people and bullets, not sight. */
+const CLEAR = ["glass"];
+
+/** Does this cover piece block sight: its actor's `cover.sight` flag, else whether it's one of the tall ones (never glass). */
+export function pieceBlocksSight(actor) {
+  const flag = flagOf(actor);
+  if (!flag) return false;
+  if (typeof flag.sight === "boolean") return flag.sight;
+  if (CLEAR.includes(flag.material)) return false;
+  const name = String(actor.name ?? "");
+  return TALL_PIECES.some((n) => name.includes(n));
+}
+
+/**
+ * The walls that make a cover piece a barrier, as plain wall data: its outline (four walls that
+ * stop movement only, turned with the token and pulled in a little so people still pass its
+ * corners), and for a tall piece one more along its length that stops sight and light (down the
+ * middle, so the piece itself stays in view from either side). `thin` marks that one for Tech
+ * scopes. Nothing for a ride, a person or a destroyed piece.
+ * @returns {{ c: number[], move: number, sight: number, light: number, sound: number, thin: boolean }[]}
+ */
+export function pieceWalls(tok, { size = 100, sight = null } = {}) {
+  const actor = tok?.actor;
+  const flag = flagOf(actor);
+  if (!flag || tok.flags?.[MODULE_ID]?.coverDestroyed) return [];
+  if (!(Number(actor.system?.derivedStats?.hp?.value ?? 1) > 0)) return [];
+  const w = (Number(tok.width) || 1) * size;
+  const h = (Number(tok.height) || 1) * size;
+  const cx = (Number(tok.x) || 0) + w / 2;
+  const cy = (Number(tok.y) || 0) + h / 2;
+  const inset = Math.round(size * 0.1);
+  const hw = Math.max(1, w / 2 - inset);
+  const hh = Math.max(1, h / 2 - inset);
+  const a = ((Number(tok.rotation) || 0) * Math.PI) / 180;
+  const at = (dx, dy) => [Math.round(cx + dx * Math.cos(a) - dy * Math.sin(a)), Math.round(cy + dx * Math.sin(a) + dy * Math.cos(a))];
+  const corners = [at(-hw, -hh), at(hw, -hh), at(hw, hh), at(-hw, hh)];
+  const out = corners.map((p, i) => ({ c: [...p, ...corners[(i + 1) % 4]], move: 20, sight: 0, light: 0, sound: 0, thin: false }));
+  if (sight ?? pieceBlocksSight(actor)) {
+    const line = w >= h ? [...at(-hw, 0), ...at(hw, 0)] : [...at(0, -hh), ...at(0, hh)];
+    out.push({ c: line, move: 0, sight: 20, light: 20, sound: 0, thin: flag.thickness === "thin" });
+  }
+  return out;
+}
+
 /**
  * The seat someone rides in, on MMuton's vehicle sheet: { position, index } or null. Seats list
  * their occupants by actor UUID.
