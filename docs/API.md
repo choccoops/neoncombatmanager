@@ -60,7 +60,7 @@ Hooks.on("cpr-neon-combat-manager.registerConditions", (conditions) => {
     hint: "MYMODULE.OverloadedHint",
     img: "modules/my-module/overloaded.svg",
     page: "My Book p.12",                  // shown in the Lab and the effect's description
-    category: "situation",                 // wound | critical | combat | hazard | situation | drug | chrome | quickhack | weather | visibility | custom
+    category: "situation",                 // wound | critical | combat | hazard | situation | drug | chrome | quickhack | awareness | weather | visibility | custom
     changes: [{ key: "system.stats.move.value", value: -2 }],
     duration: null,                        // seconds
     group: null,                           // only one condition of a group at a time
@@ -130,6 +130,22 @@ read the raw flags (`effect.flags["condition-lab-triggler"]?.conditionId`) or mo
 
 Kept on the combat (`flags.cpr-neon-combat-manager.mode`). Hook
 `cpr-neon-combat-manager.encounterMode` (combat, mode) when a combat under way switches.
+
+## The Alert: `ncm.alert`
+
+| | |
+| --- | --- |
+| `state(combat?)` | the Alert on a combat: `{ id, at, round, rounds, total, endsAt, endRound, called, dismissed }`, or `null` |
+| `remaining(combat?)` | seconds left before the response is called |
+| `dismiss(combat?)` | GM: wave the countdown away (the Alert stays) |
+| `restart(combat?, rounds?)` | GM: start the countdown again from now |
+| `call(combat?)` | GM: call the response now |
+| `sync(combat?)` | GM: bring the enemies' Awareness conditions in step with the Ladder |
+
+Kept on the combat (`flags.cpr-neon-combat-manager.alert`), written by the active GM when the
+Ladder (`flags.cpr-neon-combat-manager.ladder`) climbs to Alert and removed when it drops below.
+The conditions are `awareSuspicious`, `awareSearching`, `awareAlert` and `awareSpotted`, placed
+with `managed: "ladder"`.
 
 ## Combat time: `ncm.time`
 

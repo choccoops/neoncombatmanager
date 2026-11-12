@@ -99,7 +99,8 @@ begins a *stealth segment*, with the carousel in violet and a **STEALTH** chip b
   queue, same Round, same Turn. Everyone gets a card, and the Ladder goes up to Alert if it's
   lower. That happens once: the GM can lower it again, and the next Round won't put it back.
   Click the **COMBAT** chip to go back to stealth.
-- **Players see** the mode chip (they know they're sneaking), but not the Ladder. In their Action
+- **Players see** the mode chip (they know they're sneaking), but not the Ladder below Alert
+  (see [The Alert](#the-alert)). In their Action
   HUD, their **Stealth** roll joins the Turn group for the segment.
 - When a stealth segment ends, the summary card says *Stealth segment over* instead of *Combat
   over*.
@@ -108,6 +109,35 @@ Settings: **Begin a combat as** (Combat) is the mode a combat begun from Foundry
 macro gets, and which of Sneak and Start is the carousel's main button. **Full combat puts the
 enemies at Alert** (Table rules) can stop a fight from moving the Ladder at all. Macros:
 `api.encounter.begin("stealth")`, `setMode("combat")`, `toggle()`, `mode()`.
+
+### The Alert
+
+The Awareness Ladder shows on the map once the enemies know someone's there.
+
+- **On the tokens.** Each enemy in the encounter (every combatant that isn't a player's
+  character) carries the Ladder's step as a condition, an Active Effect with a status icon:
+  **Alert** and **Spotted** by default, so everything below stays the GM's and sneaking keeps
+  its tension. Below Alert the GM alone gets a **?** over each enemy as the Ladder moves. A
+  setting shows every step (Suspicious, Searching too) for everyone, or none. Someone dead, out
+  cold or asleep carries nothing. The conditions follow the Ladder; they post no cards.
+- **Reaching Alert.** A red **!** jumps over each enemy (**!!** at Spotted), **ALERT** flashes
+  across everyone's screen, and one quiet sting plays (not one per enemy).
+- **The countdown.** A timer appears for everyone: the seconds until the security response is
+  called, 20 Rounds by default. It runs on the game clock, 3 seconds a Round in a fight or a
+  stealth segment, and turns yellow in its last quarter. The GM can wave it away with its ✕ (the
+  Alert stays, and the clock then calls nothing), or wind it back with `api.alert.restart()`.
+- **An Alert is kept until something is done about it.**
+  - Put every enemy down (dead, out cold, asleep) **before** the response is called and the
+    alarm never goes out: the Ladder drops to Unaware, the conditions go, **ALERT CLEARED**.
+  - At zero the response **is called**: the GM gets a card (roll the district's Security Code;
+    Heat goes up), everyone sees **RESPONSE CALLED**, and the enemies stay at Alert until the GM
+    moves the Ladder. Putting them down after that doesn't call it back.
+  - The GM lowering the Ladder below Alert ends it at any time.
+
+Settings (Table rules): **Awareness on the tokens**, **Alert: Rounds until the response is
+called** (0: no countdown), **An Alert clears when no one's left to raise it**. Each player can
+turn the banner and timer off (**Alert on screen**); the sounds follow their Neon FX volume. The
+marks over the tokens need Sequencer.
 
 ## Action HUD
 

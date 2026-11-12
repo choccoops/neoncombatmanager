@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.27.0
+
+**The Alert.** The Awareness Ladder (2070 Core Rules, Chapter 06) comes out onto the map.
+
+- **Awareness on the tokens.** An encounter's enemies carry the Ladder's step as a condition
+  (new **Awareness** category: Suspicious, Searching, Alert, Spotted), placed and removed as the
+  GM moves the Ladder. By default only Alert and Spotted show; below that the GM alone gets a
+  **?** over each enemy. A setting shows every step to everyone, or none.
+- **Reaching Alert.** A **!** over each enemy, **ALERT** across everyone's screen, and one quiet
+  sting.
+- **A countdown to the security response**, Metal Gear style: a timer for everyone that runs on
+  the game clock (20 Rounds by default, 3 seconds a Round). The GM can wave it away.
+- **An Alert is kept until something is done about it.** Every enemy dead or out before the
+  response is called: the alarm never goes out, and the Ladder drops to Unaware. At zero the
+  response is called, the GM gets a card, and the enemies stay at Alert.
+- Three quiet sounds made with ElevenLabs: the alert sting, the response being called, and the
+  all-clear.
+- Settings: Awareness on the tokens, Rounds until the response is called, whether an Alert
+  clears, and each player's own switch for the banner and timer.
+
 ## 1.26.0
 
 **Quickhacking, and chrome that runs.**

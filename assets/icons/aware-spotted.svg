@@ -1,0 +1,4 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Neon Combat Manager: Awareness Ladder, Spotted. Sized like CPR's status icons. -->
+  <path d="M256 28 454 142v228L256 484 58 370V142z" fill="#0b0b12" stroke="#ff4b4b" stroke-width="22" stroke-linejoin="round"/><path d="M206 132v168" fill="none" stroke="#ff4b4b" stroke-width="40" stroke-linecap="round"/><circle cx="206" cy="368" r="24" fill="#ff4b4b"/><path d="M306 132v168" fill="none" stroke="#ff4b4b" stroke-width="40" stroke-linecap="round"/><circle cx="306" cy="368" r="24" fill="#ff4b4b"/>
+</svg>

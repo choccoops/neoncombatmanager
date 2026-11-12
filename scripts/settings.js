@@ -10,7 +10,7 @@ export const MENUS = {
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxChrome", "hackFx", "hackGhostFx", "fxMacros"],
   arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels"],
-  rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "hackFlow"],
+  rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
     "weatherSource", "weatherFx", "weatherEveryone", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
@@ -95,6 +95,11 @@ const DEFS = [
   ["fxEnabled", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxConditions", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxMacros", "world", Boolean, true, {}],
+  // The Awareness Ladder on the tokens, and the Alert: its countdown to the response, and whether it clears
+  ["awarenessTokens", "world", String, "alert", { choices: { alert: K("AwarenessTokens.alert"), all: K("AwarenessTokens.all"), off: K("AwarenessTokens.off") }, onChange: () => Hooks.callAll(`${MODULE_ID}.awarenessChanged`) }],
+  ["alertTimer", "world", Number, 20, { range: { min: 0, max: 60, step: 1 } }],
+  ["alertClears", "world", Boolean, true, {}],
+  ["alertBanner", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   // Speedware, Berserk and their Operating Systems light up while their "(active)" effect is on
   ["fxChrome", "world", Boolean, true, {}],
   // Quickhacking (2070 ch.10): the flow on the Action HUD, its animations, and who sees a Ghost's

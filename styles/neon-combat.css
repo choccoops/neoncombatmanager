@@ -1265,3 +1265,49 @@ li.dialog-item.ncm-hide-luck { display: none !important; }
 li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; line-height: 1.3; opacity: 0.8; font-style: italic; white-space: normal; }
 .ncm-arsenal .ncm-hit.is-hit b { color: #2d9f36; }
 .ncm-arsenal .ncm-hit.is-miss b { color: #e03a3a; }
+
+/* ==========================================================================
+   The Alert (Awareness Ladder): the words across the screen and the countdown
+   to the security response. On the page itself, so the colours are its own.
+   ========================================================================== */
+#ncm-alert-banner {
+  position: fixed; left: 0; right: 0; top: 22vh; z-index: 95; pointer-events: none;
+  display: flex; align-items: center; justify-content: center; gap: 18px; padding: 14px 0;
+  font-family: "Neon Combat Tektur", "Signika", sans-serif; text-transform: uppercase; letter-spacing: 0.5em;
+  color: #fff; background: linear-gradient(90deg, transparent, rgba(255, 23, 68, 0.82) 22%, rgba(255, 23, 68, 0.82) 78%, transparent);
+  border-top: 2px solid #ff1744; border-bottom: 2px solid #ff1744;
+  animation: ncm-alert-in 0.18s ease-out, ncm-alert-flash 0.28s steps(2) 4;
+  transition: opacity 0.7s ease;
+}
+#ncm-alert-banner b { font-weight: 700; font-size: clamp(28px, 5vw, 64px); text-shadow: 0 0 18px rgba(0, 0, 0, 0.7); }
+#ncm-alert-banner .ncm-alert-mark { font-size: clamp(36px, 6vw, 80px); font-weight: 900; line-height: 1; }
+#ncm-alert-banner.is-called { background: linear-gradient(90deg, transparent, rgba(255, 138, 31, 0.85) 22%, rgba(255, 138, 31, 0.85) 78%, transparent); border-color: #ff8a1f; letter-spacing: 0.3em; }
+#ncm-alert-banner.is-clear { background: linear-gradient(90deg, transparent, rgba(5, 217, 232, 0.6) 22%, rgba(5, 217, 232, 0.6) 78%, transparent); border-color: #05d9e8; letter-spacing: 0.3em; animation: ncm-alert-in 0.18s ease-out; }
+#ncm-alert-banner.is-out { opacity: 0; }
+#ncm-alert-banner.is-still { animation: none; }
+@keyframes ncm-alert-in { from { transform: scaleY(0.2); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes ncm-alert-flash { 0% { filter: brightness(1.8); } 100% { filter: brightness(1); } }
+
+#ncm-alert-timer {
+  position: fixed; top: 150px; right: calc(var(--sidebar-width, 300px) + 28px); z-index: 61; pointer-events: all;
+  min-width: 168px; padding: 6px 10px 8px; color: #fff; font-family: "Neon Combat Tektur", "Signika", sans-serif;
+  background: rgba(7, 7, 11, 0.86); border: 1px solid #ff1744; box-shadow: 0 0 18px rgba(255, 23, 68, 0.35);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+#ncm-alert-timer .ncm-alert-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#ncm-alert-timer .ncm-alert-label { font-size: 11px; letter-spacing: 0.34em; text-transform: uppercase; color: #ff1744; animation: ncm-alert-pulse 1s steps(2) infinite; }
+#ncm-alert-timer .ncm-alert-x { width: auto; padding: 0 4px; line-height: 1; font-size: 11px; background: transparent; border: 0; color: #6e7290; cursor: pointer; }
+#ncm-alert-timer .ncm-alert-x:hover { color: #fff; box-shadow: none; }
+#ncm-alert-timer .ncm-alert-clock { font-size: 34px; line-height: 1.05; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; text-shadow: 0 0 12px rgba(255, 23, 68, 0.8); }
+#ncm-alert-timer .ncm-alert-bar { height: 4px; margin-top: 4px; background: #26263a; }
+#ncm-alert-timer .ncm-alert-bar i { display: block; height: 100%; width: 100%; background: #ff1744; transition: width 0.7s linear; }
+#ncm-alert-timer.is-low .ncm-alert-clock { color: #f3e600; }
+#ncm-alert-timer.is-low .ncm-alert-bar i { background: #f3e600; }
+#ncm-alert-timer.is-called { border-color: #ff8a1f; box-shadow: 0 0 18px rgba(255, 138, 31, 0.35); }
+#ncm-alert-timer.is-called .ncm-alert-label { color: #ff8a1f; }
+#ncm-alert-timer.is-called .ncm-alert-clock { font-size: 20px; color: #ff8a1f; text-shadow: none; }
+@keyframes ncm-alert-pulse { 0% { opacity: 1; } 100% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  #ncm-alert-banner, #ncm-alert-timer .ncm-alert-label { animation: none; }
+  #ncm-alert-timer .ncm-alert-bar i { transition: none; }
+}

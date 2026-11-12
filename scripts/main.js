@@ -37,6 +37,7 @@ import { NeonFX } from "./neonfx/neonfx.js";
 import { Landing } from "./neonfx/landing.js";
 import { Arsenal } from "./arsenal/arsenal.js";
 import { Hack } from "./hack/hack.js";
+import { Alert } from "./stealth/alert.js";
 import { HackFx } from "./hack/fx.js";
 import { Cover } from "./cover/cover.js";
 import { AA } from "./arsenal/aa.js";
@@ -135,6 +136,21 @@ const api = {
     dv: (item, distance, options) => Dv.forWeapon(item, distance, options),
     /** GM: apply an area (a template Neon Arsenal placed) to everyone in it. */
     applyArea: (templateUuid) => Blast.askAndApply(templateUuid)
+  },
+  /** The Alert that follows the Awareness Ladder (2070 ch.06): its countdown to the security response. */
+  alert: {
+    /** The Alert on a combat (default: the one being viewed): { id, at, total, endsAt, endRound, called, dismissed }, or null. */
+    state: (combat = game.combat) => Alert.of(combat),
+    /** Seconds left before the response is called. */
+    remaining: (combat = game.combat) => (Alert.context(combat)?.left ?? 0),
+    /** GM: wave the countdown away (the Alert stays). */
+    dismiss: (combat) => Alert.dismiss(combat),
+    /** GM: start the countdown again from now, for `rounds` Rounds (default: the setting). */
+    restart: (combat, rounds) => Alert.restart(combat, rounds),
+    /** GM: call the response now. */
+    call: (combat = game.combat) => Alert.call(combat),
+    /** GM: bring the enemies' Awareness conditions in step with the Ladder. */
+    sync: (combat = game.combat) => Alert.syncConditions(combat)
   },
   /** Quickhacking in the field (2070 ch.10): the steps the Action HUD runs, for macros. */
   hack: {
@@ -401,6 +417,7 @@ Hooks.once("init", () => {
   NeonFX.init();
   Arsenal.init();
   Hack.init();
+  Alert.init();
   Cover.init();
   NeonRuler.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
@@ -450,6 +467,7 @@ Hooks.once("ready", async () => {
   NcmSpam.apply().catch((err) => console.error(`${MODULE_ID} | spam`, err));
   SceneSignal.sync().catch((err) => console.error(`${MODULE_ID} | dead zones`, err));
   await Roller.ready().catch((err) => console.error(`${MODULE_ID} | roller`, err));
+  Alert.ready();
   await NeonFX.ready().catch((err) => console.error(`${MODULE_ID} | Neon FX`, err));
   await Arsenal.ready().catch((err) => console.error(`${MODULE_ID} | Neon Arsenal`, err));
   try {

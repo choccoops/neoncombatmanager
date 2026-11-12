@@ -8,7 +8,7 @@
  *
  * A condition:
  *   id          status id (Foundry's own id where the meaning matches: dead, unconscious, prone, blind, deaf, sleep)
- *   category    wound | critical | combat | hazard | situation | drug | chrome | quickhack | weather | visibility
+ *   category    wound | critical | combat | hazard | situation | drug | chrome | quickhack | awareness | weather | visibility
  *   img         icon (Cyberpunk RED's own status icons where it has one)
  *   page        rulebook reference shown in the Condition Lab
  *   changes     [{ key, value, situational?, onByDefault?, mode? }] in CPR roll keys (see cpr-flags.js);
@@ -59,7 +59,7 @@ const ds = (n = 1) => ({ key: "bonuses.deathSavePenalty", value: n });
 const move = (n) => [{ key: "system.stats.move.value", value: n }, MOVE_MIN];
 const MOVE_MIN = { key: "system.stats.move.value", value: 1, mode: 4 };
 
-export const CATEGORIES = ["wound", "critical", "combat", "hazard", "situation", "drug", "chrome", "quickhack", "weather", "visibility"];
+export const CATEGORIES = ["wound", "critical", "combat", "hazard", "situation", "drug", "chrome", "quickhack", "awareness", "weather", "visibility"];
 
 const R3 = 9; // 3 Rounds
 const R20 = 60; // 20 Rounds
@@ -228,6 +228,15 @@ export const CONDITIONS = [
   { id: "chromeBaldur", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 12, group: "berserk", chrome: { kind: "berserk", os: "baldur" } },
   { id: "chromeMatterhorn", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 30, group: "berserk", chrome: { kind: "berserk", os: "matterhorn" } },
   { id: "chromeBrawler", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", chrome: { kind: "berserk", os: "brawler" } },
+
+  /* ------------------------------------------------------------------ */
+  /*  The Awareness Ladder (2070 ch.06) on an encounter's enemies:      */
+  /*  placed and removed as the Ladder moves (scripts/stealth/alert.js) */
+  /* ------------------------------------------------------------------ */
+  { id: "awareSuspicious", category: "awareness", img: `${A}/aware-suspicious.svg`, page: "2070", group: "awareness" },
+  { id: "awareSearching", category: "awareness", img: `${A}/aware-searching.svg`, page: "2070", group: "awareness" },
+  { id: "awareAlert", category: "awareness", img: `${A}/aware-alert.svg`, page: "2070", group: "awareness" },
+  { id: "awareSpotted", category: "awareness", img: `${A}/aware-spotted.svg`, page: "2070", group: "awareness" },
 
   /* ------------------------------------------------------------------ */
   /*  Pharmaceuticals (p.150) and Street Drugs (p.227-228)              */
