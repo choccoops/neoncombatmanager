@@ -10,6 +10,10 @@
   showing outlines to a Tech scope. They move, turn and go with the token; a destroyed piece opens
   until it's repaired. Pieces already on a map get theirs when the GM opens the scene. New setting
   *Cover pieces are barriers*.
+- **Target a Tech scope's outline.** The outline of someone behind thin cover can now be
+  targeted for a Charged Shot: click it (Shift adds), hover it and press the Target key, or press
+  *Target through cover* on the Tech gun's Action HUD entry (nearest first, then the next). Cyan
+  brackets mark the target, since Foundry draws none on a token out of sight.
 
 ## 1.27.0
 

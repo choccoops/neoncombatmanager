@@ -828,7 +828,11 @@ on the scene. A damage roll for an area draws no Tarot card.
 - **Tech scope.** While a character with a Tech Weapon is selected, their player sees a glowing
   cyan outline of anyone behind thin cover they can't otherwise see, within 50 m/yds. Thin cover
   is a wall ticked *Thin cover* in its settings, and closed doors (a setting). Only that player
-  sees the outlines, and GM-hidden tokens never show.
+  sees the outlines, and GM-hidden tokens never show. **An outline can be targeted**, for a
+  Charged Shot through the cover: click it (Shift-click adds a target), hover it and press the
+  Target key, or use *Target through cover* beside the Tech gun's switches on the Action HUD,
+  which takes the nearest and then the next with each press. Cyan brackets mark a target you
+  can't otherwise see.
 - **Ricochet.** A ricochet shot flies to a bounce point and on to the target. The bounce point is
   on the nearest wall that faces both the shooter and the target with a clear line to each, or
   off to one side when there's no such wall. Sparks fly at the bounce (JB2A's impact where it's
@@ -847,8 +851,8 @@ on the scene. A damage roll for an area draws no Tarot card.
   Kerenzikov, a running Sandevistan or other speedware, or low-light, IR or UV optics while they're
   in the dark. Then their Evade card takes −4 (Ch07, Ricochets in Play; a setting).
 - **Charged Tech shot.** A blue line runs to the target, with a ripple where it punches through
-  each piece of thin cover. The *Weapon Rebuilds* macro lists whoever the Tech scope shows behind
-  cover, so you can target them.
+  each piece of thin cover. The *Weapon Rebuilds* macro also lists whoever the Tech scope shows
+  behind cover, so you can target them from there.
 - **Power Critical Injury.** A heavy hit and an orange shockwave on the target, and a note on the
   card that the Bonus Damage is +5 more.
 - **Smartgun Link** on a Power or Tech gun: the lock-on reticle, over the gun's own shot.

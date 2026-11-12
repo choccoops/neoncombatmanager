@@ -87,7 +87,7 @@ function tokenAt(actor, x, y, { visible = true, hidden = false } = {}) {
 
 const { Registry } = await import("../scripts/conditions/registry.js");
 const { Conditions } = await import("../scripts/conditions/engine.js");
-const { segmentsCross, throughThinCover, readWall, Xray } = await import("../scripts/arsenal/xray.js");
+const { segmentsCross, throughThinCover, readWall, Xray, nextScopeTarget } = await import("../scripts/arsenal/xray.js");
 const { bouncePoint, shotLook, shotWall, Shots, flightMs, crossings } = await import("../scripts/arsenal/shots.js");
 const { Equipped, flavorsInHand, inHand, REBUILD_CONDITION } = await import("../scripts/arsenal/equipped.js");
 const { Arsenal, penaltyOf, retryFormula, obscurementMods, rolledCrit } = await import("../scripts/arsenal/arsenal.js");
@@ -207,6 +207,50 @@ test("a selected Tech shooter sees outlines behind thin cover, on their screen o
   assert.deepEqual(ended.map((e) => e.name), [`ncm-xray-${behindThin.id}`]);
   canvas.tokens.controlled = [];
   assert.deepEqual(Xray.wanted(), []);
+});
+
+test("an outline can be targeted: a click on it, the Target key over it, or the Action HUD's button, for a shot through the cover", async () => {
+  const shooter = crew("Lattice", [weapon("w1", "Heavy Pistol (Tech)")]);
+  await Conditions.add("techRebuild", shooter);
+  const me = tokenAt(shooter, 100, 500);
+  canvas.tokens.controlled = [me];
+  const targets = new Set();
+  const saved = game.user.targets;
+  game.user.targets = targets;
+  const far = tokenAt(makeActor({ name: "Far" }), 900, 500, { visible: false });
+  const near = tokenAt(makeActor({ name: "Near" }), 700, 500, { visible: false });
+  for (const t of [far, near]) t.setTarget = (on, { releaseOthers = true } = {}) => {
+    if (releaseOthers) targets.clear();
+    if (on) targets.add(t);
+    else targets.delete(t);
+  };
+  canvas.tokens.get = (id) => canvas.tokens.placeables.find((t) => t.id === id);
+  canvas.walls.placeables = [wall([500, 0, 500, 1000], { flags: { [M]: { thinCover: true } } })];
+  Xray.refresh();
+  assert.deepEqual(Xray.seen().map((t) => t.name), ["Near", "Far"], "nearest first");
+
+  assert.equal(Xray.target(far), true);
+  assert.deepEqual([...targets].map((t) => t.name), ["Far"]);
+  Xray.target(near, { add: true });
+  assert.equal(targets.size, 2, "Shift keeps the others");
+  Xray.target(far);
+  assert.deepEqual([...targets].map((t) => t.name), [], "a second click lets go (and, without Shift, of the others)");
+  assert.equal(Xray.target(me), false, "only what the scope shows");
+
+  // The HUD's button walks through them.
+  assert.equal(Xray.cycle().name, "Near");
+  assert.equal(Xray.cycle().name, "Far");
+  assert.equal(Xray.cycle().name, "Near");
+  assert.equal(nextScopeTarget([], []), null);
+
+  // The Tech gun's HUD entry has the button, lit up while the scope shows someone.
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  const entry = catalog(shooter).weapons.find((w) => w.label === "Heavy Pistol (Tech)");
+  const scope = entry.buttons.find((b) => b.key === "scope:w1");
+  assert.ok(scope && !scope.off && scope.sub === "2");
+  Xray.drawn.clear();
+  assert.ok(catalog(shooter).weapons.find((w) => w.label === "Heavy Pistol (Tech)").buttons.find((b) => b.key === "scope:w1").off);
+  game.user.targets = saved;
 });
 
 /* ---------------------------------------- */

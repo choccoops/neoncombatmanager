@@ -6,6 +6,7 @@ import { Phone } from "../comms/phone.js";
 import { Hub } from "../hub/hub.js";
 import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
 import { flavorOf } from "../arsenal/kinds.js";
+import { Xray } from "../arsenal/xray.js";
 import { Hands } from "./hands.js";
 import { EncounterMode } from "../combat/mode.js";
 import { Hack } from "../hack/hack.js";
@@ -97,7 +98,13 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     }
     // Neon Arsenal's switches: a Power gun's ricochet, a Tech gun's charge.
     const upgrades = Rebuilds.upgradesOf(w, actor);
-    buttons.push(...Rebuilds.buttons(actor, w, traitsOf(ranged ? flavorOf(w, upgrades) : null, upgrades)));
+    const traits = traitsOf(ranged ? flavorOf(w, upgrades) : null, upgrades);
+    buttons.push(...Rebuilds.buttons(actor, w, traits));
+    // A Tech gun's scope: target whoever it shows behind thin cover (each press, the next one).
+    if (traits.active.includes("charge") && Xray.on) {
+      const seen = Xray.drawn.size;
+      buttons.push({ key: `scope:${w.id}`, label: L(`${LANG}.Arsenal.ScopeTarget`), icon: "fa-solid fa-binoculars", sub: seen ? String(seen) : "", off: !seen });
+    }
     const mag = s.magazine;
     out.weapons.push({
       key: `weapon:${slug(w.name)}`, label: w.name, img: w.img,

@@ -2415,6 +2415,8 @@
         "noLink": "Smart weapon without a link"
       },
       "Ricochet": "Ricochet",
+      "ScopeTarget": "Target through cover",
+      "ScopeNone": "The scope shows nobody behind thin cover.",
       "Charge": "Charge",
       "Charged": "Charged",
       "RicochetOn": "{weapon}: the next shot ricochets (−4, can't be dodged).",

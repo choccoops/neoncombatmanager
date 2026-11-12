@@ -52,6 +52,8 @@ export const Run = {
         const { Arsenal } = await import("../arsenal/arsenal.js");
         return Arsenal.toggle(actor, item, kind === "rico" ? "ricochet" : "charge", { token });
       }
+      case "scope":
+        return (await import("../arsenal/xray.js")).Xray.cycle();
       case "rld":
         if (!item?.doAction) return null;
         // As the sheet's reload button: loaded ammo tops up, none opens the load dialog.

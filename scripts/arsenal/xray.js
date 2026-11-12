@@ -15,6 +15,17 @@ export const XRAY = "ncm-xray";
 const CYAN = 0x00e5ff;
 /** How far the scope picks people out, in metres/yards. */
 export const XRAY_RANGE = 50;
+const PADS = "ncm-xray-pads";
+
+/**
+ * The next token to target from the scope: the one after the current target in the list (nearest
+ * first), or the first. Null when the scope shows nobody.
+ */
+export function nextScopeTarget(seen, targetedIds = []) {
+  if (!seen.length) return null;
+  const at = seen.findIndex((t) => targetedIds.includes(t.id));
+  return seen[(at + 1) % seen.length];
+}
 
 /** Do segments ab and cd cross (touching ends count)? */
 export function segmentsCross(a, b, c, d) {
@@ -69,7 +80,11 @@ export const Xray = {
       this.drawn.clear();
       soon();
     });
-    Hooks.on("canvasTearDown", () => this.drawn.clear());
+    Hooks.on("canvasTearDown", () => {
+      this.drawn.clear();
+      this.clearPads();
+    });
+    Hooks.on("targetToken", (user) => user?.id === game.user?.id && this.drawPads());
     Hooks.on("renderWallConfig", (app, html) => this.wallConfig(app, html));
   },
 
@@ -110,6 +125,7 @@ export const Xray = {
       }
     }
     const add = want.filter((t) => !this.drawn.has(t.id));
+    this.drawPads(want);
     if (!add.length) return want;
     const seq = new Sequence({ moduleName: MODULE_ID, softFail: true });
     for (const t of add) {
@@ -122,6 +138,87 @@ export const Xray = {
     }
     seq.play();
     return want;
+  },
+
+  /* ---------------------------------------- */
+  /*  Targeting an outline                    */
+  /* ---------------------------------------- */
+
+  /** The outlined tokens, nearest the viewer first. */
+  seen() {
+    const [v] = this.viewers();
+    const list = [...this.drawn.keys()].map((id) => canvas.tokens?.get?.(id) ?? canvas.tokens?.placeables?.find((t) => t.id === id)).filter(Boolean);
+    const d = (t) => (v ? Math.hypot(t.center.x - v.center.x, t.center.y - v.center.y) : 0);
+    return list.sort((a, b) => d(a) - d(b));
+  },
+
+  /** Target (or let go of) someone the scope shows; `add` keeps the other targets, as Shift does. */
+  target(token, { add = false } = {}) {
+    if (!token || !this.drawn.has(token.id)) return false;
+    const on = !game.user.targets?.has?.(token);
+    if (typeof token.setTarget === "function") token.setTarget(on, { releaseOthers: !add });
+    else Compat.setTargets(on ? [token.id] : []);
+    this.drawPads();
+    return on;
+  },
+
+  /** From the Action HUD: target the next person the scope shows (nearest first, round and round). */
+  cycle() {
+    const next = nextScopeTarget(this.seen(), [...(game.user.targets ?? [])].map((t) => t.id));
+    if (!next) {
+      ui.notifications?.info(L(`${LANG}.Arsenal.ScopeNone`));
+      return null;
+    }
+    if (!game.user.targets?.has?.(next)) this.target(next);
+    return next;
+  },
+
+  clearPads() {
+    const old = canvas?.interface?.getChildByName?.(PADS);
+    if (old) old.destroy({ children: true });
+  },
+
+  /**
+   * A token nobody can see can't be clicked, so each outline gets a pad of its own over it: click
+   * to target (Shift adds), hover and press the Target key as on any token. Foundry draws no
+   * target marker on a token that's out of sight, so the pad draws the brackets.
+   */
+  drawPads(want = this.seen()) {
+    this.clearPads();
+    if (!want.length || !canvas?.interface || typeof PIXI === "undefined") return;
+    const box = new PIXI.Container();
+    box.name = PADS;
+    box.eventMode = "passive";
+    for (const t of want) {
+      const w = t.w ?? 100;
+      const h = t.h ?? 100;
+      const pad = new PIXI.Graphics();
+      pad.position.set(t.center.x - w / 2, t.center.y - h / 2);
+      pad.hitArea = new PIXI.Rectangle(0, 0, w, h);
+      pad.eventMode = "static";
+      pad.cursor = "crosshair";
+      if (game.user.targets?.has?.(t)) {
+        const k = Math.max(8, Math.round(Math.min(w, h) * 0.22));
+        pad.lineStyle(3, CYAN, 0.95);
+        for (const [x, y, dx, dy] of [[0, 0, 1, 1], [w, 0, -1, 1], [w, h, -1, -1], [0, h, 1, -1]]) {
+          pad.moveTo(x + dx * k, y).lineTo(x, y).lineTo(x, y + dy * k);
+        }
+      }
+      // The click stays here: the canvas would otherwise let go of the selected shooter, and the scope with it.
+      pad.on("pointerdown", (event) => {
+        if (event.button !== undefined && event.button !== 0) return;
+        event.stopPropagation?.();
+        this.target(t, { add: !!event.shiftKey });
+      });
+      pad.on("pointerover", () => {
+        if (canvas.tokens) canvas.tokens.hover = t;
+      });
+      pad.on("pointerout", () => {
+        if (canvas.tokens?.hover === t) canvas.tokens.hover = null;
+      });
+      box.addChild(pad);
+    }
+    canvas.interface.addChild(box);
   },
 
   /** A "Thin cover" box in the wall's settings. */
