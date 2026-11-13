@@ -193,9 +193,11 @@ export const Chrome = {
       const given = this.given(actor, kind);
       if (given.length && (c.rawChanges ?? []).some((ch) => given.includes(ch.key))) await Conditions.add(c.id, actor, { changes: withoutGiven(c.rawChanges, given) });
       await this._flag(actor, kind, os ?? true);
+      // Whose Turn it is, read before the Initiative moves (the order re-sorts under it).
+      const current = game.combat?.combatant?.id ?? null;
       await this._initiative(actor, bonus);
       // An Apogee switched on during someone else's Turn can interrupt them.
-      if (os === "apogee") await Interrupt.check(actor);
+      if (os === "apogee") await Interrupt.check(actor, { currentId: current });
       return;
     }
     if (this.running(actor, kind)) return; // another of its kind took over

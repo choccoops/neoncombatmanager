@@ -1459,6 +1459,7 @@ test("an Apogee interrupt: by Initiative or by a Held Action; the table is told,
   const savedCombat = game.combat;
   const cbSolo = { id: "c1", actor: solo, actorId: solo.id, name: "Fury", initiative: 12, isOwner: true, async update(u) { Object.assign(this, u); } };
   const cbGanger = { id: "c2", actor: ganger, actorId: ganger.id, name: "Ganger", initiative: 15 };
+  await Settings.set("interruptTurn", false);
   game.combat = {
     id: "fight", started: true, round: 2, turn: 0, combatants: [cbGanger, cbSolo], combatant: cbGanger, flags: { [M]: flags },
     getFlag: (scope, key) => flags[key],
@@ -1502,4 +1503,77 @@ test("an Apogee interrupt: by Initiative or by a Held Action; the table is told,
   assert.match(css, /#ncm-interrupt-banner \{[^}]*pointer-events: none/);
   assert.match(readFileSync(path.join(root, "templates/carousel.hbs"), "utf8"), /is-interrupting/);
   for (const k of ["Banner", "Title", "Body.held", "Body.initiative", "Kicker"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Interrupt.${k}`), `NEONCOMBAT.Interrupt.${k}`);
+});
+
+test("an Apogee interrupt takes the Turn and hands it back: to the interrupter at once, then to whoever was cut into, with no Turn starting or ending", async () => {
+  const { Interrupt, INTERRUPT_FLAG } = await import("../scripts/neonfx/interrupt.js");
+  const { Chrome } = await import("../scripts/neonfx/chrome.js");
+  const { Turns } = await import("../scripts/combat/turns.js");
+  await Settings.set("fxChrome", true);
+  await Settings.set("interruptTurn", true);
+  const solo = crew("Fury", []);
+  const flags = {};
+  const updates = [];
+  const mk = (id, name, initiative, actor = makeActor({ name })) => ({ id, name, initiative, actor, actorId: actor.id, isOwner: true, async update(u) { Object.assign(this, u); } });
+  const a = mk("c1", "Boss", 20);
+  const b = mk("c2", "Ganger", 15);
+  const c = mk("c3", "Fury", 12, solo);
+  const d = mk("c4", "Mook", 8);
+  const savedCombat = game.combat;
+  const combat = {
+    id: "fight2", started: true, round: 3, turn: 1, combatants: [a, b, c, d], flags: { [M]: flags },
+    get turns() { return [...this.combatants].sort((x, y) => y.initiative - x.initiative); },
+    get combatant() { return this.turns[this.turn]; },
+    getFlag: (scope, key) => flags[key],
+    async setFlag(scope, key, value) { flags[key] = value; },
+    async unsetFlag(scope, key) { delete flags[key]; },
+    async update(changes, options = {}) { updates.push([{ ...changes }, options]); Object.assign(this, changes); }
+  };
+  game.combat = combat;
+  assert.equal(combat.combatant.name, "Ganger");
+  // Fury's Apogee goes on in the Ganger's Turn: 12 + 6 = 18, ahead of 15. Foundry keeps the Ganger current as the order re-sorts.
+  await Conditions.add("chromeApogee", solo);
+  c.initiative = 18;
+  combat.turn = combat.turns.findIndex((t) => t.id === "c2");
+  const flag = await Interrupt.check(solo);
+  assert.equal(flag.by, "initiative");
+  assert.equal(combat.combatant.name, "Fury", "the Turn is the interrupter's");
+  assert.equal(flag.returnTo, "c2");
+  assert.equal(updates[0][1][M].interrupt, "to", "marked, so nobody's Turn starts or ends by it");
+  assert.equal(Interrupt.active()?.combatantId, "c3", "still the interrupt under way, on the Turn it moved to");
+  // Fury ends the Turn: Foundry would go on to the next in the order; it goes back to the Ganger instead, same Round.
+  const next = { turn: combat.turn + 1 };
+  const opts = { direction: 1 };
+  assert.equal(Interrupt.returnTurn(combat, next, opts), true);
+  assert.equal(combat.turns[next.turn].name, "Ganger");
+  assert.equal(next.round, 3);
+  assert.equal(opts[M].interrupt, "back");
+  // At the end of the order it would have been a new Round: still back to the Ganger, this Round.
+  const wrap = { round: 4, turn: 0 };
+  Interrupt.returnTurn(combat, wrap, { direction: 1 });
+  assert.deepEqual([wrap.round, combat.turns[wrap.turn].name], [3, "Ganger"]);
+  // Stepping back a Turn by hand, or an update that isn't a Turn change, is left alone.
+  assert.equal(Interrupt.returnTurn(combat, { turn: 0 }, { direction: -1 }), false);
+  assert.equal(Interrupt.returnTurn(combat, { flags: {} }, {}), false);
+  // The turn automation stands aside for both moves.
+  let ran = 0;
+  const run = Turns._run;
+  Turns._run = async () => { ran++; };
+  Turns.onUpdate(combat, { turn: 1 }, { [M]: { interrupt: "to" } });
+  Turns.onUpdate(combat, { turn: 2 }, { [M]: { interrupt: "back" } });
+  assert.equal(ran, 0);
+  Turns._run = run;
+  // With the setting off, the interrupt is only announced.
+  await Settings.set("interruptTurn", false);
+  delete flags[INTERRUPT_FLAG];
+  updates.length = 0;
+  combat.turn = combat.turns.findIndex((t) => t.id === "c2");
+  const told = await Interrupt.check(solo);
+  assert.equal(told.returnTo, undefined);
+  assert.equal(updates.length, 0);
+  assert.equal(combat.combatant.name, "Ganger");
+  await Settings.set("interruptTurn", true);
+  await Conditions.remove("chromeApogee", solo);
+  game.combat = savedCombat;
+  assert.notEqual(game.i18n.localize("NEONCOMBAT.Settings.interruptTurn.name"), "NEONCOMBAT.Settings.interruptTurn.name");
 });

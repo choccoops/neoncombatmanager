@@ -10,8 +10,10 @@
   time shows the world stopped (drained and held); the Apogee's player keeps their own view.
   It ends on the next Turn, when the Sandevistan goes off, or with the combat, and follows each
   player's *Chrome on my screen* setting.
-- The turn order itself is left to the GM: the module announces the interrupt, it doesn't move
-  the Turn.
+- **The Turn goes with it.** The Turn passes to the interrupter at once and, when they end it,
+  back to whoever was cut into, in the same Round. Neither move counts as a Turn starting or
+  ending, so start- and end-of-Turn conditions don't fire twice. New setting *An Apogee
+  interrupt takes the Turn* (on) to only announce instead.
 
 ## 1.30.2
 

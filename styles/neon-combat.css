@@ -1361,3 +1361,4 @@ li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; li
 .ncm-card.is-interrupting { outline: 2px solid #ffd23f; box-shadow: 0 0 16px rgba(255, 210, 63, 0.75); }
 .ncm-card.is-interrupting::after { content: "\f0e7"; font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro"; font-weight: 900; position: absolute; top: 2px; right: 4px; color: #ffd23f; text-shadow: 0 0 6px #000; }
 @media (prefers-reduced-motion: reduce) { #ncm-interrupt-banner { animation: none; } }
+.ncm-card.is-interrupted { outline: 2px dashed #9ecbff; filter: saturate(0.4); }

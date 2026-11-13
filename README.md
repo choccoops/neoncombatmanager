@@ -701,9 +701,16 @@ that happens the whole table is told:
 
 It ends when the Turn changes, when the Sandevistan is switched off, or with the combat; it's
 kept on the combat itself, so nobody is left frozen. Like the other screen effects it takes no
-clicks, hides nothing, and follows each player's *Chrome on my screen* setting. The module
-doesn't change whose Turn it is: the interrupter acts, then the GM carries on with the Turn that
-was cut into. It plays no sound of its own beyond the Sandevistan's.
+clicks, hides nothing, and follows each player's *Chrome on my screen* setting. It plays no
+sound of its own beyond the Sandevistan's.
+
+**The Turn goes with it.** The Turn passes to the interrupter at once. When they end it (End
+Turn, by them or the GM), it goes back to whoever was cut into, in the same Round, and the fight
+carries on from there; the carousel shows that combatant with a dashed outline while they wait.
+Nobody's Turn counts as starting or ending by either move, so conditions that act at the start
+or end of a Turn (On Fire and the like) don't fire twice or early. The interrupter doesn't get
+another Turn that Round. A setting (*An Apogee interrupt takes the Turn*) leaves the turn order
+alone and only announces.
 
 **Tactile Boost** (Cyberpunk RED p.359). The chipware feels motion within 20 m/yds through a hand
 on a surface. That's the **Feeling for Motion** condition (Chrome running; on the Token HUD, and

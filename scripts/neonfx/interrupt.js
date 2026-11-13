@@ -9,8 +9,8 @@ import { L, esc } from "../util.js";
 /**
  * An Apogee interrupt (Item Compendium, Militech 'Apogee' OS, "Out of turn"): switched on during
  * someone else's Turn, it interrupts them when it puts your Initiative ahead of theirs, and always
- * when you Held your Action to do it. The module doesn't move the turn for you; it makes the
- * moment plain to the whole table: a banner, a card, a mark on the carousel, and time standing
+ * when you Held your Action to do it. The Turn goes to the interrupter and, when they end it, back
+ * to whoever was cut into (a setting); and the moment is made plain to the whole table: a banner, a card, a mark on the carousel, and time standing
  * still on every screen that isn't in Sandevistan time (scripts/neonfx/screen.js) until the next
  * Turn begins. The interrupt lives on the combat (flag `interrupt`), so a client that joins late
  * sees it and nothing outlasts the Turn it happened in.
@@ -34,6 +34,9 @@ export function interruptLive(flag, { round = 0, turn = 0, started = false } = {
   return !!flag && started && flag.round === round && flag.turn === turn;
 }
 
+/** Where a combatant sits in the turn order, or -1. */
+const turnIndex = (combat, id) => [...(combat?.turns ?? [])].findIndex((t) => t.id === id);
+
 export const Interrupt = {
   _shown: null,
 
@@ -45,6 +48,9 @@ export const Interrupt = {
       }
       this.sync(combat);
     });
+    // The interrupter ends their Turn (on whichever client presses it): the Turn goes back to
+    // whoever was cut into, in the same Round, instead of on to the next in the order.
+    Hooks.on("preUpdateCombat", (combat, changes, options) => this.returnTurn(combat, changes, options));
     Hooks.on("deleteCombat", () => this.sync(null));
     Hooks.on("deleteActiveEffect", () => this.dropIfOver());
   },
@@ -59,18 +65,46 @@ export const Interrupt = {
    * The Apogee has just been switched on (the active GM's client, after its Initiative moved):
    * if that interrupts the Turn under way, say so on the combat.
    */
-  async check(actor) {
+  async check(actor, { currentId = null } = {}) {
     const combat = game.combat;
     if (!combat?.started || !Compat.isActiveGM) return null;
-    const mine = [...(combat.combatants ?? [])].find((cb) => cb.actor === actor || cb.actorId === actor?.id);
-    const now = combat.combatant;
+    const all = [...(combat.combatants ?? [])];
+    const mine = all.find((cb) => cb.actor === actor || cb.actorId === actor?.id);
+    // Whose Turn it was as the Apogee went on (the caller read it before the Initiative moved).
+    const now = (currentId ? all.find((cb) => cb.id === currentId) : null) ?? combat.combatant;
     if (!mine || !now) return null;
     const by = interruptBy({ ownTurn: now.id === mine.id, held: Conditions.has(HELD, actor), initiative: mine.initiative, current: now.initiative });
     if (!by) return null;
-    const flag = { combatantId: mine.id, actorId: actor.id, name: mine.name ?? actor.name, target: now.name ?? "", by, round: combat.round, turn: combat.turn, at: Date.now() };
+    const at = turnIndex(combat, now.id);
+    const flag = { combatantId: mine.id, actorId: actor.id, name: mine.name ?? actor.name, target: now.name ?? "", by, round: combat.round, turn: at >= 0 ? at : combat.turn ?? 0, stamp: Date.now() };
+    // The Turn goes to the interrupter now, and back to whoever was cut into when they're done.
+    const to = turnIndex(combat, mine.id);
+    if (Settings.get("interruptTurn") && to >= 0 && mine.id !== now.id) {
+      await combat.update({ turn: to }, { [MODULE_ID]: { interrupt: "to" } });
+      flag.turn = to;
+      flag.returnTo = now.id;
+    }
     await combat.setFlag(MODULE_ID, INTERRUPT_FLAG, flag);
     await Cards.post({ actor, kicker: L(`${LANG}.Interrupt.Kicker`), title: L(`${LANG}.Interrupt.Title`, { name: esc(flag.name), target: esc(flag.target) }), tone: "yellow", body: `<p>${L(`${LANG}.Interrupt.Body.${by}`)}</p>` });
     return flag;
+  },
+
+  /**
+   * A Turn change while an interrupt holds the Turn: forward, it becomes the return to whoever was
+   * cut into (same Round, marked so nothing treats it as a new Turn starting). Going back a Turn
+   * by hand is left alone.
+   */
+  returnTurn(combat, changes, options = {}) {
+    const flag = combat?.flags?.[MODULE_ID]?.[INTERRUPT_FLAG];
+    if (!flag?.returnTo || options?.[MODULE_ID]?.interrupt) return false;
+    if (!("turn" in (changes ?? {})) && !("round" in (changes ?? {}))) return false;
+    if (!interruptLive(flag, { round: combat.round, turn: combat.turn, started: !!combat.started }) || (options.direction ?? 1) < 0) return false;
+    const back = turnIndex(combat, flag.returnTo);
+    if (back < 0) return false;
+    changes.turn = back;
+    changes.round = flag.round;
+    options[MODULE_ID] = { ...(options[MODULE_ID] ?? {}), interrupt: "back" };
+    return true;
   },
 
   /** The Sandevistan went off before the Turn ended: the world moves again. */
@@ -86,8 +120,8 @@ export const Interrupt = {
   /** This client: announce a new interrupt once, and let the screen and the carousel catch up. */
   sync(combat) {
     const flag = this.active(combat ?? undefined);
-    if (flag && this._shown !== flag.at) {
-      this._shown = flag.at;
+    if (flag && this._shown !== flag.stamp) {
+      this._shown = flag.stamp;
       this.banner(flag);
     }
     if (!flag) this._shown = null;
