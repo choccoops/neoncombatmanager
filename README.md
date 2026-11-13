@@ -1185,7 +1185,9 @@ their target is while they have one (setting):
   on, a flashlight, a lit token next to them). Bright light means no penalty; dim light is low
   light. Walls block light as Foundry draws it. Darkness sources make a spot dark.
 - **Weather** obscurement adds on, up to a cap (4 by default: dark and foggy are both just
-  "obscured").
+  "obscured"). The weather's own penalty (Heavy Rain -2, Inversion Smog -4...) doesn't wait for
+  a fight: everyone the weather reaches carries it as **Obscured (-2)**, in an encounter or not.
+  Only the light and darkness above are read for the encounter alone.
 
 The result is one condition per character: **Low Light** (-1, night or poor lighting, p.129),
 **Darkness** (-4, a task obscured by darkness, p.129) or **Obscured** (weather, smoke). Its

@@ -195,7 +195,7 @@ test("roofs, awnings and Suppress Weather regions keep characters out of the wea
 /*  Who the weather reaches                 */
 /* ---------------------------------------- */
 
-test("the weather reaches every character on the scene, out of combat too; visibility stays with the encounter", () => {
+test("the weather reaches every character on the scene, out of combat too, with its obscurement; light and darkness stay with the encounter", () => {
   const doc = (name, x = 2000) => {
     const actor = makeActor({ name, hasPlayerOwner: false });
     return { id: name, name, actor, x, y: 2000, width: 1, height: 1, elevation: 0, texture: {} };
@@ -207,7 +207,11 @@ test("the weather reaches every character on the scene, out of combat too; visib
   assert.deepEqual(Environment.weatherScope().map((d) => d.id).sort(), ["Bystander", "Ganger"]);
   const { desired } = Environment.evaluate(a, Sources.weather(), { visibility: false });
   assert.ok(desired.has("wxAcidRain") && desired.has("wxHeavyRain"), "the weather's conditions");
-  assert.ok(![...desired.keys()].some((id) => ["lowLight", "darkness", "obscured"].includes(id)), "no visibility outside the encounter");
+  assert.ok(![...desired.keys()].some((id) => ["lowLight", "darkness"].includes(id)), "light and darkness are read for the encounter only");
+  // The rain itself is in the way of everyone it falls on, in a fight or not: Obscured at the weather's own penalty.
+  assert.ok(desired.has("obscured"), "the weather's obscurement, outside the encounter too");
+  assert.deepEqual(desired.get("obscured").changes.map((c) => [c.key, c.value]), [["bonuses.perceptionSight", -2], ["bonuses.ranged", -2], ["bonuses.melee", -2]]);
+  assert.match(desired.get("obscured").name, /\(-2\)/, "named for what it takes off");
 
   // Under a roof: nothing.
   scene.tiles = [{ x: 1900, y: 1900, width: 300, height: 300, rotation: 0, elevation: 10, restrictions: { weather: true }, flags: {} }];

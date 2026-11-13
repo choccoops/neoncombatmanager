@@ -5,6 +5,11 @@
 - **Smart Weapon says only what it does.** The Smart Weapon condition's description no longer
   mentions visual obscurement: that belongs to Improved Smart Loaded alone, which is on only
   while Improved Smart rounds are in a Smart gun in hand.
+- **Rain gets in the way outside a fight too.** The weather's sight penalty (Heavy Rain -2,
+  Inversion Smog -4...) used to be placed only on tokens in the active encounter, so a character
+  standing in Heavy Rain out of combat had the rain's condition but no Obscured. Everyone the
+  weather reaches now carries Obscured at the weather's penalty, in an encounter or not. Light
+  and darkness are still read for the encounter only.
 - When obscurement penalties come off a roll, the attack card now names the round that was
   loaded, so it's plain which ammo did it.
 

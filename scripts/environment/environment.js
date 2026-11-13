@@ -121,9 +121,10 @@ export const Environment = {
     const outdoors = mode === "outdoor" && !Sources.sheltered(doc);
     const gear = Sources.gear(actor);
     const w = outdoors && weather.keys.length ? weatherFor(weather.keys, gear, { armorPenalty: CPR.armorPenalty(actor) }) : { conditions: [], sight: 0, extra: [], hazards: [] };
-    // Visibility (light and the weather's obscurement) is for the encounter only.
+    // Light and darkness are read for the encounter only; the weather's own obscurement goes to
+    // everyone the weather reaches, in a fight or not.
     const level = visibility && Settings.get("visibilityEnabled") && canvas?.ready ? this.levelFor(doc) : "bright";
-    const sp = sightPenalty({ level, weather: visibility ? w.sight : 0, vision: gear.vision, cap: Number(Settings.get("visibilityCap")) || 0 });
+    const sp = sightPenalty({ level, weather: w.sight, vision: gear.vision, cap: Number(Settings.get("visibilityCap")) || 0 });
 
     const desired = new Map();
     for (const c of w.conditions) desired.set(c.id, { changes: c.changes });
