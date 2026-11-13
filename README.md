@@ -953,6 +953,25 @@ on the scene. A damage roll for an area draws no Tarot card.
   (*Each Critical Injury also rolls 1d6: 1 ...; 2 ...*) gets a button on that card that rolls it
   and posts what came up.
 
+  **Weapons of their own kind.**
+
+  - **BudgetArms R.N.Geezus!** Every Attack opens the Blind Box by itself: 1d100 on the
+    Compendium's table (34 kinds of round), posted for the table. Junk Ammo rolls a weapon
+    Malfunction (Core Rules, Chapter 12); a Combo Casing draws two more; a Critical Success is
+    GACHA! whatever was in the box; a Critical Failure is a dud, a jam and two Malfunctions. What
+    the round does is still applied by hand.
+  - **Chaos (Royce's Pistol).** Every reload rerolls it: capacity 1d20 (2 at least; a 20 is 26),
+    damage 1d8 d6s and ablation 1d4 SP, written onto the weapon and posted. Its damage card uses
+    that ablation.
+  - **Gris Gris.** Its damage card has a button that rolls the NET-linked round: 2d6 (3d6 with a
+    Critical Injury) plus Interface for a Netrunner, the highest quickhack DV that lands.
+  - **Magazines and barrels of several ammo types** (Hoichi Airgun, Double-Boom, Satara,
+    EarthBreaker, Uragan, Aero-Killer, Hurricane). A **Next round** button on the Action HUD
+    chambers the next kind of ammo the character carries for the weapon; that shot's cards go
+    by that round (its type and ablation), one comes off its stack and the loaded stack gets its
+    round back. The number of kinds a weapon can hold isn't checked, and a round's own damage
+    dice aren't swapped in.
+
   Still the table's to run (a reminder at most): a rule tied to the Round a weapon is drawn, to
   a kill or to what happened to one particular target; dice rerolled; a charge that lasts to the end of the Turn; weapons with two modes
   (the IronWind); magazines and barrels holding several ammo types (Cyberpunk RED loads one:

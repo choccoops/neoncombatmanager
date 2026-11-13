@@ -60,10 +60,11 @@ export const Run = {
       }
       case "rico":
       case "chg":
-      case "2h": {
+      case "2h":
+      case "rnd": {
         if (!item) return null;
         const { Arsenal } = await import("../arsenal/arsenal.js");
-        return Arsenal.toggle(actor, item, kind === "rico" ? "ricochet" : kind === "chg" ? "charge" : "twoHands", { token });
+        return Arsenal.toggle(actor, item, { rico: "ricochet", chg: "charge", "2h": "twoHands", rnd: "round" }[kind], { token });
       }
       case "chrome":
         return (await import("../neonfx/switches.js")).Switches.toggle(actor, `chrome:${id}`, { token });

@@ -1225,3 +1225,113 @@ test("third part: one-off rules come up as reminders on the roll that triggers t
   game.combat = savedCombat;
   for (const k of ["Note.remind", "Note.critRemind", "TableButton", "TableTitle"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.${k}`), `NEONCOMBAT.Arsenal.${k}`);
 });
+
+/* ---------------------------------------- */
+/*  Weapons of their own kind               */
+/* ---------------------------------------- */
+
+test("the R.N.Geezus! Blind Box, Chaos's reloads, Gris Gris's NET-linked rounds and magazines of several kinds of ammo", async () => {
+  const { parseSpecials } = await import("../scripts/arsenal/specials.js");
+  const { Iconics, BLIND_BOX, blindBoxRound, openBlindBox, chaosStats, netRoundFormula, roundsFor, nextRound } = await import("../scripts/arsenal/iconics.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.ok(P("No Aimed Shots. Loads only 2nd Amendment Blind Box Magazines, and comes fully loaded.").blindBox);
+  assert.ok(P("Every reload, reroll its stats: capacity 1d20 (min 2; a 20 means 26), damage 1d8 d6s, ablation 1d4 SP.").chaos);
+  assert.ok(P("Loads only its own NET-linked rounds (50eb per 10).").netRounds);
+  assert.equal(P("The magazine holds up to 4 ammo types at once; pick one each shot.").mixed, 4);
+  assert.equal(P("Each of its two barrels can hold a different ammo type; pick one each shot.").mixed, 2);
+  assert.equal(P("Its magazine takes any number of ammo types at once; pick one each shot.").mixed, 99);
+
+  // The Blind Box: every number from 1 to 100 draws exactly one round; the odds are the Compendium's.
+  let covered = 0;
+  for (const [lo, hi] of BLIND_BOX) covered += hi - lo + 1;
+  assert.equal(covered, 100);
+  assert.equal(blindBoxRound(1), "junk");
+  assert.equal(blindBoxRound(36), "basic");
+  assert.equal(blindBoxRound(100), "gacha");
+  for (const [, , k] of BLIND_BOX) {
+    assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.BlindBox.Round.${k}.name`), `NEONCOMBAT.Arsenal.BlindBox.Round.${k}.name`, k);
+    assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.BlindBox.Round.${k}.effect`), `NEONCOMBAT.Arsenal.BlindBox.Round.${k}.effect`, k);
+  }
+  for (let n = 1; n <= 6; n++) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Malfunction.${n}`), `NEONCOMBAT.Arsenal.Malfunction.${n}`);
+  const seq = (...ns) => () => ns.shift();
+  assert.deepEqual(openBlindBox(seq(20)), { rounds: ["basic"], malfunctions: 0, jam: false });
+  assert.deepEqual(openBlindBox(seq(3)), { rounds: ["junk"], malfunctions: 1, jam: false }, "Junk rolls a Malfunction");
+  assert.deepEqual(openBlindBox(seq(87, 2, 88, 99, 41, 47)), { rounds: ["emp", "incendiary"], malfunctions: 0, jam: false }, "a Combo draws two more that aren't Junk, Combo or GACHA!");
+  assert.deepEqual(openBlindBox(seq(3), { critSuccess: true }), { rounds: ["gacha"], malfunctions: 0, jam: false }, "a Critical Success is GACHA! whatever the table says");
+  assert.deepEqual(openBlindBox(seq(50), { critFail: true }), { rounds: ["junk"], malfunctions: 2, jam: true });
+
+  // On an attack: the box opens by itself and the card says what came out.
+  game.user.targets = new Set();
+  const punk = crew("Rebecca", [weapon("w1", "BudgetArms R.N.Geezus!", { weaponType: "medPistol", description: desc("No Aimed Shots. Loads only 2nd Amendment Blind Box Magazines, and comes fully loaded.") })]);
+  game.actors.set(punk.id, punk);
+  await Arsenal.preRoll(punk.items.get("w1"), new CPRAttackRoll([]));
+  assert.equal(Arsenal.pending.tag.blindBox, true);
+  chat.length = 0;
+  dice.length = 0;
+  dice.push(3, 5);
+  const out = await Iconics.blindBox({ actorId: punk.id, itemId: "w1" });
+  assert.deepEqual(out.rounds, ["junk"]);
+  assert.deepEqual(out.faults, [5]);
+  assert.equal(chat.length, 1);
+  dice.length = 0;
+
+  // Chaos: a reload rerolls it.
+  assert.deepEqual(chaosStats(20, 8, 4), { capacity: 26, damage: "8d6", ablation: 4 });
+  assert.deepEqual(chaosStats(1, 1, 1), { capacity: 2, damage: "1d6", ablation: 1 });
+  const royce = crew("Royce", [weapon("w1", "Chaos", { weaponType: "heavyPistol", damage: "3d6", magazine: { value: 20, max: 20 }, description: desc("Every reload, reroll its stats: capacity 1d20 (min 2; a 20 means 26), damage 1d8 d6s, ablation 1d4 SP.") })]);
+  const chaos = royce.items.get("w1");
+  dice.push(12, 5, 3);
+  chat.length = 0;
+  assert.deepEqual(await Iconics.chaosReload(royce, chaos), { capacity: 12, damage: "5d6", ablation: 3 });
+  assert.equal(chaos.system.magazine.max, 12);
+  assert.equal(chaos.system.magazine.value, 12, "no more in it than it now holds");
+  assert.equal(chaos.system.damage, "5d6");
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
+  const cd = new CPRDamageRoll("5d6");
+  await Arsenal.preRoll(chaos, cd);
+  assert.equal(cd.rollCardExtraArgs.ablationValue, 3, "this magazine's ablation");
+
+  // Gris Gris: 2d6, 3d6 with a Critical Injury, plus Interface for a Netrunner.
+  assert.equal(netRoundFormula(false, 0), "2d6");
+  assert.equal(netRoundFormula(true, 4), "3d6 + 4");
+  const runner = crew("Lattice", [weapon("w1", "Gris Gris", { weaponType: "medPistol", description: desc("Loads only its own NET-linked rounds (50eb per 10).") }), { _id: "r1", name: "Netrunner", type: "role", system: { rank: 4 } }]);
+  game.actors.set(runner.id, runner);
+  await Arsenal.preRoll(runner.items.get("w1"), new CPRDamageRoll("2d6"));
+  assert.equal(Arsenal.pending.tag.netRound, true);
+  dice.push(7);
+  chat.length = 0;
+  assert.equal(await Iconics.netRound({ actorId: runner.id, itemId: "w1", crit: false }), 11);
+  assert.equal(chat.length, 1);
+
+  // A magazine of several kinds: the Action HUD chambers the next kind carried; that shot is that round, and the stacks stay right.
+  const ammo = (id, name, type, amount, ablationValue = 1) => ({ _id: id, name, type: "ammo", system: { variety: "shotgunSlug", type, amount, ablationValue } });
+  const duo = crew("Stop Sign", [
+    weapon("w1", "Rostović DB-2 Satara", { weaponType: "shotgun", ammoVariety: ["shotgunSlug"], installedItems: { list: ["a1"] }, description: desc("Each of its two barrels can hold a different ammo type; pick one each shot.") }),
+    ammo("a1", "Slug (Basic)", "basic", 8), ammo("a2", "Slug (Armor-Piercing)", "armorPiercing", 4, 2), ammo("a3", "Slug (Incendiary)", "incendiary", 0)
+  ]);
+  duo.isOwner = true;
+  duo.updateEmbeddedDocuments = async (type, list) => { for (const { _id, ...u } of list) for (const [k, v] of Object.entries(u)) duo.items.get(_id).system[k.split(".").at(-1)] = v; };
+  const sg = duo.items.get("w1");
+  assert.deepEqual(roundsFor(sg, duo).map((i) => i.id), ["a1", "a2"], "what's loaded first; nothing that's run out");
+  assert.equal(nextRound(roundsFor(sg, duo), "a1").id, "a2");
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  const { Run } = await import("../scripts/hud/run.js");
+  assert.ok(catalog(duo).weapons[0].buttons.some((b) => b.key === "rnd:w1"));
+  await Run.action(duo, "rnd:w1");
+  assert.equal(Iconics.chambered(duo, sg).id, "a2");
+  await Arsenal.preRoll(sg, new CPRAttackRoll([]));
+  assert.equal(Arsenal.pending.tag.round, "Slug (Armor-Piercing)");
+  assert.equal(Arsenal.pending.tag.ammoType, "armorPiercing");
+  assert.equal(duo.items.get("a1").system.amount, 9, "the loaded stack gets its round back");
+  assert.equal(duo.items.get("a2").system.amount, 3, "the round fired comes off its own stack");
+  const md = new CPRDamageRoll("5d6");
+  await Arsenal.preRoll(sg, md);
+  assert.equal(md.rollCardExtraArgs.ammoType, "armorPiercing");
+  assert.equal(md.rollCardExtraArgs.ablationValue, 2);
+  await Run.action(duo, "rnd:w1");
+  assert.equal(Iconics.chambered(duo, sg).id, "a1", "round and round, back to what's loaded");
+  game.actors.delete(punk.id);
+  game.actors.delete(runner.id);
+  for (const k of ["Note.round", "BlindBox.Title", "Chaos.Body", "NetRound.Button", "Mixed.Button", "Mixed.Chambered"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.${k}`), `NEONCOMBAT.Arsenal.${k}`);
+});

@@ -23,10 +23,16 @@ weapons now have at least one rule applied.
 - **A weapon's own table.** Murphy's Law's *Each Critical Injury also rolls 1d6* is a button
   on the damage card that rolls it and posts the result.
 - **Nehan and Satori** count each other's Critical Injuries.
+- **The R.N.Geezus! Blind Box.** Every Attack rolls the Compendium's 1d100 table by itself and
+  posts the round, with Malfunctions for Junk Ammo, Combo Casings, GACHA! on a Critical Success
+  and the misfire on a Critical Failure.
+- **Chaos** rerolls its capacity, damage and ablation on every reload. **Gris Gris** has a
+  button for its NET-linked round's quickhack DV.
+- **Magazines of several ammo types.** A *Next round* button on the Action HUD picks the kind
+  the next shot fires, and the stacks are kept right.
 - Reminders only, not run: dice rerolled, rules tied to a kill or to one particular target,
   escalating Autofire ratings, multi-target Autofire, areas set off by a Critical Injury or a
-  kill. Not covered at all: the R.N.Geezus! Blind Box, Chaos's reload rolls, Gris Gris's
-  quickhack rounds, and magazines of several ammo types.
+  kill.
 
 ## 1.29.0
 

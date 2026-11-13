@@ -24,6 +24,7 @@ import { Equipped, improvedSmart } from "./equipped.js";
 import { specialsOf, specialMods, moreDice, ruleCrit, wielderCheck, CAPACITY, remember, lastRound } from "./specials.js";
 import { Stakes } from "../stakes/stakes.js";
 import { L, esc } from "../util.js";
+import { Iconics } from "./iconics.js";
 
 /** How long a roll waits for its card. */
 const PENDING_MS = 30000;
@@ -136,6 +137,7 @@ export const Arsenal = {
     Socket.on("arsenalPush", (data) => this.pushAsGM(data));
     Socket.on("arsenalConditions", (data) => this.conditionsAsGM(data));
     Hooks.on("updateItem", (item, changes, options, userId) => this.capacityCheck(item, changes, userId));
+    Iconics.init();
   },
 
   /** Modules add their rebuilds now (Neon At Home: the Melee Rebuilds, the Ricochet Compensator). */
@@ -259,7 +261,9 @@ export const Arsenal = {
     const actor = item?.actor;
     const kind = rollKind(roll);
     if (!actor || !kind || !["weapon", "cyberware"].includes(item.type)) return;
-    const ammo = loadedAmmo(item, actor);
+    // A magazine of several kinds of ammo fires the kind the shooter chambered.
+    const mixed = specialsOf(item)?.mixed ? Iconics.chambered(actor, item) : null;
+    const ammo = mixed ?? loadedAmmo(item, actor);
     const upgrades = Rebuilds.upgradesOf(item, actor);
     const info = classify(item, ammo, upgrades);
     const traits = traitsOf(info.flavor, upgrades);
@@ -305,6 +309,11 @@ export const Arsenal = {
         const mem = remember(state.mem, { ...now, kind: "attack", autofire: mode === "autofire" });
         if (sp?.autoLimit && mem.autoStreak >= sp.autoLimit) tag.autoStreak = { n: mem.autoStreak, over: mem.autoStreak > sp.autoLimit };
         await Rebuilds.setState(actor, item, { mem });
+      }
+      if (sp?.blindBox) tag.blindBox = true;
+      if (mixed && mixed.id !== loadedAmmo(item, actor)?.id) {
+        tag.round = mixed.name;
+        await Iconics.spendPicked(actor, item);
       }
       if (sp?.autofire && mode === "autofire") tag.autofireRounds = sp.autofire;
       // What the weapon asks of its shooter, and of its ammo.
@@ -416,6 +425,14 @@ export const Arsenal = {
         roll.bonusDamage = (Number(roll.bonusDamage) || 0) + sp.critBonus;
         tag.critBonusRule = sp.critBonus;
       }
+      if (sp?.netRounds) tag.netRound = true;
+      if (sp?.chaos && state.chaosAblation) extra.ablationValue = state.chaosAblation;
+      if (mixed && mixed.id !== loadedAmmo(item, actor)?.id) {
+        // The damage card goes by the round that was fired, not the one the magazine was filled with.
+        tag.round = mixed.name;
+        extra.ammoType = mixed.system?.type ?? extra.ammoType;
+        if (Number.isFinite(Number(mixed.system?.ablationValue))) extra.ablationValue = Number(mixed.system.ablationValue);
+      }
       if (sp?.effect) tag.effect = sp.effect;
       if (sp?.check) tag.check = sp.check.text;
       if (sp?.throughCover) tag.throughCover = true;
@@ -456,6 +473,11 @@ export const Arsenal = {
       const faces = p.roll?.faces ?? p.roll?.terms?.[0]?.results?.map((r) => r.result) ?? [];
       if (ruleCrit({ crit: p.tag.critRule }, faces, p.tag.critRule)) p.tag.ruleCrit = Number(p.roll?.bonusDamage) || 5;
     }
+    // The d10 itself, for a weapon that cares (the R.N.Geezus!).
+    if (p.tag.blindBox) {
+      p.tag.critSuccess = Number(p.roll?.initialRoll) === 10;
+      p.tag.critFail = Number(p.roll?.initialRoll) === 1;
+    }
     // A Critical Injury is remembered for next Round (weapons that build on one).
     if (p.tag.kind === "damage" && (crit || p.tag.ruleCrit) && this.now().combat) {
       const actor = game.actors?.get(p.tag.actorId);
@@ -484,6 +506,7 @@ export const Arsenal = {
     if (userId !== game.user.id) return;
     const a = message.flags?.[MODULE_ID]?.arsenal;
     if (!a) return;
+    if (a.kind === "attack" && a.blindBox) Iconics.blindBox(a).catch((err) => console.error(`${MODULE_ID} | Blind Box`, err));
     if (a.kind === "attack") {
       const keys = profileKeys({ kind: a.weapon, flavor: a.flavor, ammoType: a.ammoType });
       if (a.tags?.[0]) keys.unshift(`${keys.at(-1)} · ${a.tags[0]}`);
@@ -571,6 +594,7 @@ export const Arsenal = {
     if (a.kind === "damage" && a.ablate) notes.push(L(`${LANG}.Arsenal.Note.ablate`, { extra: a.ablate }));
     if (a.kind === "damage" && a.ruleCrit) notes.push(L(`${LANG}.Arsenal.Note.ruleCrit`, { face: a.critRule?.face ?? 5, bonus: a.ruleCrit }));
     const named = (id) => esc(Registry.get(id)?.name ?? id);
+    if (a.round) notes.push(L(`${LANG}.Arsenal.Note.round`, { ammo: esc(a.round) }));
     for (const text of a.remind ?? []) notes.push(L(`${LANG}.Arsenal.Note.remind`, { text: esc(text) }));
     if (a.kind === "damage" && (a.crit || a.ruleCrit)) for (const text of a.critRemind ?? []) notes.push(L(`${LANG}.Arsenal.Note.critRemind`, { text: esc(text) }));
     for (const text of a.memo ?? []) notes.push(L(`${LANG}.Arsenal.Note.memo`, { text: esc(text) }));
@@ -602,6 +626,9 @@ export const Arsenal = {
     if (a.kind === "damage" && a.table && (a.crit || a.ruleCrit) && (game.user.isGM || actor?.isOwner)) {
       buttons.push(`<button type="button" data-arsenal="table"><i class="fa-solid fa-dice-d6"></i> ${L(`${LANG}.Arsenal.TableButton`, { die: a.table.die })}</button>`);
     }
+    if (a.kind === "damage" && a.netRound && (game.user.isGM || actor?.isOwner)) {
+      buttons.push(`<button type="button" data-arsenal="net"><i class="fa-solid fa-network-wired"></i> ${L(`${LANG}.Arsenal.NetRound.Button`)}</button>`);
+    }
     if (a.kind === "damage" && a.cover?.length && game.user.isGM) {
       a.cover.forEach((c, i) => buttons.push(`<button type="button" data-arsenal="cover" data-i="${i}"><i class="fa-solid fa-shield-halved"></i> ${L(`${LANG}.Cover.HitButton`, { cover: esc(c.label), name: esc(c.name) })}</button>`));
     }
@@ -632,6 +659,11 @@ export const Arsenal = {
       ev.preventDefault();
       ev.currentTarget.disabled = true;
       this.rollTable(a).catch((err) => ui.notifications.error(err.message));
+    });
+    box.querySelector("[data-arsenal=net]")?.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.currentTarget.disabled = true;
+      Iconics.netRound(a).catch((err) => ui.notifications.error(err.message));
     });
     box.querySelector("[data-arsenal=retry]")?.addEventListener("click", (ev) => {
       ev.preventDefault();
@@ -771,6 +803,7 @@ export const Arsenal = {
   async toggle(actor, item, which, { token = null } = {}) {
     if (!actor?.isOwner || !item) return null;
     const t = token ?? this.tokenFor(actor);
+    if (which === "round") return Iconics.cycleRound(actor, item);
     if (which === "twoHands") {
       const on = !Rebuilds.state(actor, item).twoHands;
       await Rebuilds.setState(actor, item, { twoHands: on });

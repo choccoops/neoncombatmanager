@@ -8,6 +8,7 @@ import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
 import { flavorOf } from "../arsenal/kinds.js";
 import { Xray } from "../arsenal/xray.js";
 import { specialsOf, singleShots } from "../arsenal/specials.js";
+import { Iconics } from "../arsenal/iconics.js";
 import { Switches } from "../neonfx/switches.js";
 import { Hands } from "./hands.js";
 import { EncounterMode } from "../combat/mode.js";
@@ -104,6 +105,8 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     // Neon Arsenal's switches: a Power gun's ricochet, a Tech gun's charge.
     const upgrades = Rebuilds.upgradesOf(w, actor);
     const traits = traitsOf(ranged ? flavorOf(w, upgrades) : null, upgrades);
+    // A magazine of several kinds of ammo: the kind the next shot fires (each press, the next one carried).
+    if (own?.mixed) buttons.push({ key: `rnd:${w.id}`, label: L(`${LANG}.Arsenal.Mixed.Button`), icon: "fa-solid fa-shuffle", sub: Iconics.chambered(actor, w)?.name ?? "", on: !!Rebuilds.state(actor, w).round });
     if (own?.twoHanded) buttons.push({ key: `2h:${w.id}`, label: L(`${LANG}.Arsenal.TwoHands`), icon: "fa-solid fa-hands", on: !!Rebuilds.state(actor, w).twoHands });
     buttons.push(...Rebuilds.buttons(actor, w, traits).filter((b) => !(own?.noRicochet && b.key.startsWith("rico:"))));
     // A Tech gun's scope: target whoever it shows behind thin cover (each press, the next one).

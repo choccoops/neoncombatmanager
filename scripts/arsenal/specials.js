@@ -55,6 +55,8 @@
  *                Critical Injury ("Each Critical Injury ...", "A Head Critical Injury ...")
  *   table        "Each Critical Injury also rolls 1d6: 1 ...; 2 ...": a button that rolls it
  *   twin         a sister weapon whose Critical Injuries count as this one's (Nehan and Satori)
+ *   blindBox / chaos / netRounds / mixed   the R.N.Geezus!, Chaos, Gris Gris and magazines of
+ *                several ammo types (scripts/arsenal/iconics.js)
  *   noAimed      "No Aimed Shots."
  *   noRicochet   "Its Power Rebuild can't ricochet."
  */
@@ -229,6 +231,14 @@ export function parseSpecials(html) {
   // Two weapons that count each other's Critical Injuries ("If this blade or Satori gave...").
   const twin = t.match(/If this (?:blade|sword) or ([A-Z][a-z]+) gave/);
   if (twin) out.twin = twin[1];
+  // Weapons with rules of their own kind (scripts/arsenal/iconics.js).
+  if (/Blind Box Magazines/i.test(t)) out.blindBox = true;
+  if (/Every reload, reroll its stats/i.test(t)) out.chaos = true;
+  if (/NET-linked rounds/i.test(t)) out.netRounds = true;
+  const mixed = t.match(/(?:holds|[Ll]oads) up to (\d+) ammo types|up to (\d+) ammo types loaded at once/);
+  if (mixed) out.mixed = Number(mixed[1] ?? mixed[2]);
+  else if (/two barrels can hold a different ammo type/i.test(t)) out.mixed = 2;
+  else if (/any number of ammo types/i.test(t)) out.mixed = 99;
   if (new RegExp(`${START}No Aimed Shots[.,]`).test(t)) out.noAimed = true;
   if (/Power Rebuild can't ricochet/i.test(t)) out.noRicochet = true;
   return Object.keys(out).length ? out : null;
