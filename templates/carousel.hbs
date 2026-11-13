@@ -62,7 +62,7 @@
 {{#unless collapsed}}
 <ol class="ncm-car-track">
   {{#each cards}}
-  <li class="ncm-card wound-{{woundTone}}{{#if active}} is-active{{/if}}{{#if defeated}} is-defeated{{/if}}{{#if hidden}} is-hidden{{/if}}{{#if friendly}} is-friendly{{else}} is-hostile{{/if}}" data-combatant-id="{{id}}">
+  <li class="ncm-card wound-{{woundTone}}{{#if active}} is-active{{/if}}{{#if interrupting}} is-interrupting{{/if}}{{#if interrupted}} is-interrupted{{/if}}{{#if defeated}} is-defeated{{/if}}{{#if hidden}} is-hidden{{/if}}{{#if friendly}} is-friendly{{else}} is-hostile{{/if}}" data-combatant-id="{{id}}">
     <div class="ncm-card-frame">
       <img class="ncm-card-portrait" src="{{img}}" alt="">
       <div class="ncm-card-init">

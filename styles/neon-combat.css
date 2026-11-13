@@ -1342,3 +1342,23 @@ li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; li
 #token-hud .ncm-chrome-palette button { display: flex; align-items: center; gap: 6px; width: 100%; margin: 2px 0; padding: 3px 6px; line-height: 1.2; font-size: 12px; color: #d8dbe8; background: #14141f; border: 1px solid #26263a; cursor: pointer; }
 #token-hud .ncm-chrome-palette button img { width: 20px; height: 20px; border: 0; flex: none; }
 #token-hud .ncm-chrome-palette button.active { color: #fff; border-color: #00e5ff; box-shadow: inset 0 0 8px rgba(0, 229, 255, 0.45); }
+
+/* An Apogee interrupt: time stands still on every screen not in Sandevistan time, a banner says who cut in, the carousel marks them. */
+#ncm-screen-fx[data-kind="frozen"] .ncm-screen-tone { backdrop-filter: saturate(0.12) brightness(0.92) contrast(1.12); background: rgba(150, 190, 255, 0.07); }
+#ncm-screen-fx[data-kind="frozen"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 46%, rgba(190, 215, 255, 0.3) 78%, color-mix(in srgb, var(--ncm-screen-tint) 34%, transparent) 100%); }
+#ncm-screen-fx[data-kind="frozen"] .ncm-screen-streaks { display: none; }
+#ncm-interrupt-banner {
+  position: fixed; left: 0; right: 0; top: 24%; z-index: 62; pointer-events: none; padding: 10px 0 12px; text-align: center; color: #fff;
+  font-family: "Neon Combat Tektur", "Signika", sans-serif; text-transform: uppercase;
+  background: linear-gradient(90deg, transparent, rgba(255, 210, 63, 0.82) 22%, rgba(255, 210, 63, 0.82) 78%, transparent);
+  border-top: 2px solid #ffd23f; border-bottom: 2px solid #ffd23f; animation: ncm-interrupt-in 0.16s ease-out;
+}
+#ncm-interrupt-banner b { display: block; font-size: 44px; line-height: 1; letter-spacing: 0.4em; color: #14100a; }
+#ncm-interrupt-banner span { display: block; margin-top: 4px; font-size: 15px; letter-spacing: 0.18em; color: #14100a; }
+#ncm-interrupt-banner.is-out { opacity: 0; transition: opacity 0.7s; }
+#ncm-interrupt-banner.is-still { animation: none; }
+@keyframes ncm-interrupt-in { from { transform: scaleX(0.2); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
+.ncm-card.is-interrupting { outline: 2px solid #ffd23f; box-shadow: 0 0 16px rgba(255, 210, 63, 0.75); }
+.ncm-card.is-interrupting::after { content: "\f0e7"; font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro"; font-weight: 900; position: absolute; top: 2px; right: 4px; color: #ffd23f; text-shadow: 0 0 6px #000; }
+@media (prefers-reduced-motion: reduce) { #ncm-interrupt-banner { animation: none; } }
+.ncm-card.is-interrupted { outline: 2px dashed #9ecbff; filter: saturate(0.4); }

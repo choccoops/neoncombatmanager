@@ -1334,6 +1334,10 @@
       "arsenalDefenseVisibility": {
         "name": "Defense: who sees the result",
         "hint": "Everyone, or the GM and the target's players."
+      },
+      "interruptTurn": {
+        "name": "An Apogee interrupt takes the Turn",
+        "hint": "When an Apogee interrupts, the Turn goes to the interrupter at once and, when they end it, back to whoever was cut into, in the same Round. Nobody's Turn counts as starting or ending by it. Off: the interrupt is only announced."
       }
     },
     "SceneWeather": {
@@ -2850,6 +2854,15 @@
       "Shielded": "shielded by {cover}",
       "Through": "the blast goes through {cover}",
       "AreaHint": "Cover in the area, and cover between it and anyone inside, takes the damage (a rocket's double). Untick what it doesn't reach."
+    },
+    "Interrupt": {
+      "Kicker": "Apogee",
+      "Banner": "Interrupt",
+      "Title": "{name} interrupts {target}",
+      "Body": {
+        "held": "A Held Action spent on the Apogee: the interrupt is automatic, whatever the Initiative. The Turn is theirs now; when they end it, it goes back to the Turn they cut into.",
+        "initiative": "The Apogee put their Initiative ahead of the Turn under way. The Turn is theirs now; when they end it, it goes back to the Turn they cut into."
+      }
     }
   }
 }

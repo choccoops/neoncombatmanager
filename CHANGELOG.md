@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.31.0
+
+- **The Apogee interrupt.** When an Apogee is switched on during someone else's Turn and its
+  Initiative lands ahead of theirs, or it was switched on from a Held Action, the table is told:
+  **INTERRUPT** across every screen with who cuts in on whom, a card in chat, and a gold ring
+  on the interrupter's carousel entry.
+- **Time stands still.** Until the next Turn begins, every screen that isn't in Sandevistan
+  time shows the world stopped (drained and held); the Apogee's player keeps their own view.
+  It ends on the next Turn, when the Sandevistan goes off, or with the combat, and follows each
+  player's *Chrome on my screen* setting.
+- **The Turn goes with it.** The Turn passes to the interrupter at once and, when they end it,
+  back to whoever was cut into, in the same Round. Neither move counts as a Turn starting or
+  ending, so start- and end-of-Turn conditions don't fire twice. New setting *An Apogee
+  interrupt takes the Turn* (on) to only announce instead.
+
 ## 1.30.2
 
 - **Smart Weapon says only what it does.** The Smart Weapon condition's description no longer

@@ -13,6 +13,7 @@ import { Chrome, tintOf } from "./chrome.js";
 import { Tactile } from "./tactile.js";
 import { Switches } from "./switches.js";
 import { Screen } from "./screen.js";
+import { Interrupt } from "./interrupt.js";
 import { HackFx } from "../hack/fx.js";
 
 /** The effects a token can have switched on by hand (the macros), as token flags. */
@@ -70,6 +71,7 @@ export const NeonFX = {
     Tactile.init();
     Switches.init();
     Screen.init();
+    Interrupt.init();
   },
 
   async ready() {

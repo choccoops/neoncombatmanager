@@ -42,6 +42,8 @@ export const Turns = {
     const prev = this.last.get(combat.id) ?? (combat.previous?.combatantId ? { ...combat.previous } : null);
     const cur = this.state(combat);
     this.last.set(combat.id, cur);
+    // An interrupt takes the Turn and hands it back: nobody's Turn starts or ends by it.
+    if (options?.[MODULE_ID]?.interrupt) return;
     const back = (options?.direction ?? 1) < 0 || (prev && (cur.round < prev.round || (cur.round === prev.round && cur.turn < prev.turn)));
     if (back || (prev && prev.combatantId === cur.combatantId && prev.round === cur.round)) return;
     this._run(combat, prev, cur).catch((err) => console.error(`${MODULE_ID} | turn automation failed`, err));

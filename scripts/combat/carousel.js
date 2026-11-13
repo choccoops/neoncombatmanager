@@ -1,3 +1,4 @@
+import { Interrupt } from "../neonfx/interrupt.js";
 import { MODULE_ID, TEMPLATE_PATH, LANG } from "../constants.js";
 import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
@@ -153,6 +154,9 @@ export const Carousel = {
         hasInit: cb.initiative !== null && cb.initiative !== undefined,
         canRoll: (owner || gm) && (cb.initiative === null || cb.initiative === undefined),
         active: combat.combatant?.id === cb.id && combat.started,
+        // An Apogee interrupt under way: this is who cut in.
+        interrupting: Interrupt.active(combat)?.combatantId === cb.id,
+        interrupted: Interrupt.active(combat)?.returnTo === cb.id,
         defeated: dead,
         hidden: cb.hidden || token?.hidden,
         owner,
