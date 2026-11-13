@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.31.0
+
+- **The Apogee interrupt.** When an Apogee is switched on during someone else's Turn and its
+  Initiative lands ahead of theirs, or it was switched on from a Held Action, the table is told:
+  **INTERRUPT** across every screen with who cuts in on whom, a card in chat, and a gold ring
+  on the interrupter's carousel entry.
+- **Time stands still.** Until the next Turn begins, every screen that isn't in Sandevistan
+  time shows the world stopped (drained and held); the Apogee's player keeps their own view.
+  It ends on the next Turn, when the Sandevistan goes off, or with the combat, and follows each
+  player's *Chrome on my screen* setting.
+- The turn order itself is left to the GM: the module announces the interrupt, it doesn't move
+  the Turn.
+
 ## 1.30.2
 
 - **Smart Weapon says only what it does.** The Smart Weapon condition's description no longer

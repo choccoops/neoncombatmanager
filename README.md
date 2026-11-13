@@ -687,6 +687,24 @@ nothing. You get it for your assigned character and for tokens you own and have 
 gets it for an NPC while that NPC's token is selected. *Chrome on my screen* (each player's own setting) turns it
 off, and it holds still with token motion off or reduced motion asked for. No new sounds.
 
+**The Apogee interrupt** (Item Compendium, Militech 'Apogee' OS). Switched on during someone
+else's Turn, the Apogee interrupts them when its +6 puts your Initiative ahead of theirs, and
+always when you were Holding Action (the *Holding Action* condition) as you switched it on. When
+that happens the whole table is told:
+
+- **INTERRUPT** across every screen, with who cuts in on whom, and a card in chat saying whether
+  it was Initiative or a Held Action;
+- the interrupter's entry on the carousel is ringed in gold with a bolt;
+- **time stands still** on every screen that isn't in Sandevistan time: the picture drains to
+  near grey under a cold rim and holds, until the next Turn begins. The Apogee's own player
+  keeps their Sandevistan view, and so does anyone else with a Sandevistan running.
+
+It ends when the Turn changes, when the Sandevistan is switched off, or with the combat; it's
+kept on the combat itself, so nobody is left frozen. Like the other screen effects it takes no
+clicks, hides nothing, and follows each player's *Chrome on my screen* setting. The module
+doesn't change whose Turn it is: the interrupter acts, then the GM carries on with the Turn that
+was cut into. It plays no sound of its own beyond the Sandevistan's.
+
 **Tactile Boost** (Cyberpunk RED p.359). The chipware feels motion within 20 m/yds through a hand
 on a surface. That's the **Feeling for Motion** condition (Chrome running; on the Token HUD, and
 in the Action HUD's Chrome group for anyone with a Tactile Boost installed). While a character

@@ -2850,6 +2850,15 @@
       "Shielded": "shielded by {cover}",
       "Through": "the blast goes through {cover}",
       "AreaHint": "Cover in the area, and cover between it and anyone inside, takes the damage (a rocket's double). Untick what it doesn't reach."
+    },
+    "Interrupt": {
+      "Kicker": "Apogee",
+      "Banner": "Interrupt",
+      "Title": "{name} interrupts {target}",
+      "Body": {
+        "held": "A Held Action spent on the Apogee: the interrupt is automatic, whatever the Initiative. They act now, then the Turn they cut into goes on.",
+        "initiative": "The Apogee put their Initiative ahead of the Turn under way: they act now, then that Turn goes on."
+      }
     }
   }
 }

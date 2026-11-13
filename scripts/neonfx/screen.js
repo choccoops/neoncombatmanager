@@ -5,6 +5,7 @@ import { Conditions } from "../conditions/engine.js";
 import { debounce } from "../util.js";
 import { Chrome, CHROME_TINT } from "./chrome.js";
 import { KERENZIKOV } from "./switches.js";
+import { Interrupt } from "./interrupt.js";
 
 /**
  * What running chrome does to its owner's view. While your character's Sandevistan or Berserk
@@ -46,10 +47,19 @@ export function viewpoints({ character = null, controlled = [], isGM = false } =
   return [...out.values()];
 }
 
+/**
+ * Time standing still, pure: while an Apogee interrupt is under way, every screen that isn't in
+ * Sandevistan time itself shows the world stopped, in place of whatever else it showed.
+ */
+export function withFreeze(own, frozen, { enabled = true } = {}) {
+  if (!frozen || !enabled || own?.kind === "sandevistan") return own;
+  return { kind: "frozen", tint: hex(CHROME_TINT.apogee) };
+}
+
 export const Screen = {
   init() {
     const soon = debounce(() => this.refresh(), 120);
-    for (const h of ["createActiveEffect", "deleteActiveEffect", "updateActiveEffect", "controlToken", "canvasReady", `${MODULE_ID}.fxChanged`, `${MODULE_ID}.refreshUI`]) Hooks.on(h, () => soon());
+    for (const h of ["updateCombat", "deleteCombat", "createActiveEffect", "deleteActiveEffect", "updateActiveEffect", "controlToken", "canvasReady", `${MODULE_ID}.fxChanged`, `${MODULE_ID}.refreshUI`]) Hooks.on(h, () => soon());
   },
 
   /** What this client's characters have running. */
@@ -69,7 +79,8 @@ export const Screen = {
   },
 
   look() {
-    return screenLook(this.state(), { enabled: !!Settings.get("fxScreen") && !!Settings.get("fxEnabled") && Chrome.on });
+    const enabled = !!Settings.get("fxScreen") && !!Settings.get("fxEnabled") && Chrome.on;
+    return withFreeze(screenLook(this.state(), { enabled }), Interrupt.active(), { enabled });
   },
 
   /** Put the layer up, change it or take it down (this client only). */

@@ -1416,3 +1416,90 @@ test("a Smart gun alone never takes obscurement off: only Improved Smart rounds 
   assert.doesNotMatch(game.i18n.localize("NEONCOMBAT.Condition.smartRebuild.hint"), /obscur/i, "the Smart Weapon condition doesn't claim it");
   assert.match(game.i18n.localize("NEONCOMBAT.Condition.improvedSmart.hint"), /obscurement/);
 });
+
+/* ---------------------------------------- */
+/*  The Apogee interrupt                    */
+/* ---------------------------------------- */
+
+test("an Apogee interrupt: by Initiative or by a Held Action; the table is told, and time stands still for everyone not in Sandevistan time until the next Turn", async () => {
+  const { Interrupt, interruptBy, interruptLive, INTERRUPT_FLAG } = await import("../scripts/neonfx/interrupt.js");
+  const { withFreeze, screenLook } = await import("../scripts/neonfx/screen.js");
+  const { Chrome } = await import("../scripts/neonfx/chrome.js");
+  // Switch the Apogee on or off the way the module's own hooks do, on the active GM's client.
+  const apogee = async (actor, on) => {
+    const c = Registry.get("chromeApogee");
+    if (on) await Conditions.add("chromeApogee", actor);
+    else await Conditions.remove("chromeApogee", actor);
+    await Chrome._after(actor, c, null, on);
+  };
+  // The rule, pure.
+  assert.equal(interruptBy({ initiative: 18, current: 15 }), "initiative");
+  assert.equal(interruptBy({ initiative: 15, current: 15 }), null, "level with them isn't ahead");
+  assert.equal(interruptBy({ initiative: 9, current: 15 }), null);
+  assert.equal(interruptBy({ initiative: 9, current: 15, held: true }), "held", "a Held Action interrupts whatever the Initiative");
+  assert.equal(interruptBy({ initiative: 30, current: 15, ownTurn: true }), null, "on your own Turn there's nobody to interrupt");
+  assert.ok(interruptLive({ round: 2, turn: 1 }, { round: 2, turn: 1, started: true }));
+  assert.ok(!interruptLive({ round: 2, turn: 1 }, { round: 2, turn: 2, started: true }), "the next Turn: over");
+  assert.ok(!interruptLive({ round: 2, turn: 1 }, { round: 2, turn: 1, started: false }));
+  // The screens: everyone gets the frozen look, except whoever is in Sandevistan time themselves.
+  assert.deepEqual(withFreeze(null, true), { kind: "frozen", tint: "#ffd23f" });
+  assert.equal(withFreeze(screenLook([{ berserk: true }]), true).kind, "frozen", "Berserk doesn't keep you moving");
+  assert.equal(withFreeze(screenLook([{ kerenzikov: true }]), true).kind, "frozen");
+  assert.equal(withFreeze(screenLook([{ sandevistan: "apogee" }]), true).kind, "sandevistan", "the Apogee's own view stays");
+  assert.equal(withFreeze(screenLook([{ sandevistan: true }]), true).kind, "sandevistan", "another Sandevistan keeps up");
+  assert.equal(withFreeze(null, false), null);
+  assert.equal(withFreeze(null, true, { enabled: false }), null, "the player's own switch");
+
+  // In a fight: the Solo's Apogee goes on during the Ganger's Turn.
+  await Settings.set("fxChrome", true);
+  await Settings.set("fxScreen", true);
+  const solo = crew("Fury", []);
+  const ganger = makeActor({ name: "Ganger" });
+  const flags = {};
+  const savedCombat = game.combat;
+  const cbSolo = { id: "c1", actor: solo, actorId: solo.id, name: "Fury", initiative: 12, isOwner: true, async update(u) { Object.assign(this, u); } };
+  const cbGanger = { id: "c2", actor: ganger, actorId: ganger.id, name: "Ganger", initiative: 15 };
+  game.combat = {
+    id: "fight", started: true, round: 2, turn: 0, combatants: [cbGanger, cbSolo], combatant: cbGanger, flags: { [M]: flags },
+    getFlag: (scope, key) => flags[key],
+    async setFlag(scope, key, value) { flags[key] = value; },
+    async unsetFlag(scope, key) { delete flags[key]; }
+  };
+  chat.length = 0;
+  await apogee(solo, true);
+  assert.equal(cbSolo.initiative, 18, "the Apogee's +6");
+  const flag = flags[INTERRUPT_FLAG];
+  assert.ok(flag, "the interrupt is on the combat, for every client");
+  assert.equal(flag.by, "initiative");
+  assert.equal(flag.combatantId, "c1");
+  assert.equal(flag.target, "Ganger");
+  assert.ok(chat.some((m) => /Fury interrupts Ganger/.test(JSON.stringify(m))), "a card for the table");
+  assert.equal(Interrupt.active()?.combatantId, "c1");
+  // The next Turn: it's over, on the combat and on every screen.
+  game.combat.turn = 1;
+  assert.equal(Interrupt.active(), null, "stale at once, even before the flag is cleared");
+  game.combat.turn = 0;
+  // Switched off early: the world moves again.
+  await apogee(solo, false);
+  Interrupt.dropIfOver();
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(flags[INTERRUPT_FLAG], undefined);
+
+  // A Held Action: behind on Initiative, it interrupts all the same.
+  cbSolo.initiative = 3;
+  await Conditions.add("readiedAction", solo);
+  await apogee(solo, true);
+  assert.equal(flags[INTERRUPT_FLAG]?.by, "held");
+  await apogee(solo, false);
+  delete flags[INTERRUPT_FLAG];
+  // On their own Turn: an ordinary activation.
+  game.combat.combatant = cbSolo;
+  await apogee(solo, true);
+  assert.equal(flags[INTERRUPT_FLAG], undefined);
+  await apogee(solo, false);
+  game.combat = savedCombat;
+  const css = readFileSync(path.join(root, "styles/neon-combat.css"), "utf8");
+  assert.match(css, /#ncm-interrupt-banner \{[^}]*pointer-events: none/);
+  assert.match(readFileSync(path.join(root, "templates/carousel.hbs"), "utf8"), /is-interrupting/);
+  for (const k of ["Banner", "Title", "Body.held", "Body.initiative", "Kicker"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Interrupt.${k}`), `NEONCOMBAT.Interrupt.${k}`);
+});
