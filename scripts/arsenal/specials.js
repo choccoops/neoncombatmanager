@@ -28,6 +28,21 @@
  *   aimedDrop / autofireDrop   dice that drop the lowest, as a formula ("6d6dl1")
  *   chargeCost   a Tech charge that's free or costs half the MOVE: the charge card says so
  *   aimedDodge   "Dodging its Aimed Shots takes −2": on the target's Evade
+ *   effect       "Sets what it damages Strongly On Fire", "Anyone it hits must beat DV15 Athletics
+ *                or go Prone": a button on the damage card that puts the condition on the targets
+ *   bodyReq      "BODY 11+ unless mounted" (and its Prone / cyberarm variants): a warning on the card
+ *   recoil / recoilAuto   "Without BODY 8+ or a cyberarm, firing gives you Torn Muscle": the
+ *                injury goes on the shooter
+ *   ammoOnly     "Improved Smart Ammunition only", "Armor-Piercing only": a warning with other ammo
+ *   noCapacity   "No capacity attachments": a warning when one is fitted
+ *   reload       "Reloading takes two Reload Actions", "reload by giving up your Move Action": said on reload
+ *   throughCover "Its rounds carry damage through cover like an Explosive"
+ *   heldPenalty  "Without BODY 10+ or paired cyberarms, −1 DEX and MOVE while held": a condition on
+ *                whoever holds it without the BODY for it
+ *   (own rounds) "Loads only its own Armor-Piercing rounds, which ablate 1 extra SP...": the
+ *                rounds' rules count as the gun's (ap, ablate, effect, throughCover)
+ *   check        "must beat DV17 Resist Torture/Drugs or ...": the card's sentence on the damage card
+ *   area         "Its grenades burst in a 6×6m area": the size of its template
  *   noAimed      "No Aimed Shots."
  *   noRicochet   "Its Power Rebuild can't ricochet."
  */
@@ -101,6 +116,63 @@ export function parseSpecials(html) {
   if (/charged[^.]*can only Autofire/i.test(t)) out.chargedAutoOnly = true;
   if (/can't see or fire through cover/i.test(t)) out.noThrough = true;
   if (/scope sees outlines through one layer of Thin or Thick cover/i.test(t)) out.scopeThick = true;
+  // What it does to whoever it damages.
+  const fire = t.match(/Sets (?:what|anything) it damages (Mildly|Strongly|Deadly) On Fire/i);
+  if (fire) out.effect = { id: { mildly: "onFireMild", strongly: "onFireStrong", deadly: "onFireDeadly" }[fire[1].toLowerCase()] };
+  const prone = t.match(/Anyone it hits must beat DV(\d+) ([A-Z][A-Za-z/ ]*?) or go Prone/);
+  if (prone && !out.effect) out.effect = { id: "prone", dv: Number(prone[1]), skill: prone[2] };
+  // What it asks of whoever fires it.
+  const req = t.match(new RegExp(`${START}(?:Requires |Needs )?BODY (\\d+)\\+(?: \\(or (\\d+)\\+ (?:and )?Prone\\))?( or Prone)?( or a cyberarm)?(?: unless mounted| or a mount)?[.;]`));
+  if (req) out.bodyReq = { body: Number(req[1]), proneBody: req[2] ? Number(req[2]) : null, prone: !!req[3], cyberarm: !!req[4] };
+  const INJ = { "broken arm": "brokenArm", "torn muscle": "tornMuscle" };
+  const rec = t.match(/(?:Without BODY (\d+)\+ or (a cyberarm|paired cyberarms), firing (?:it )?gives you|Fire it without BODY (\d+)\+ or (a cyberarm|paired cyberarms) and you suffer) (?:a )?(Broken Arm|Torn Muscle)/i);
+  if (rec) out.recoil = { body: Number(rec[1] ?? rec[3]), arms: /paired/i.test(rec[2] ?? rec[4]) ? 2 : 1, injury: INJ[rec[5].toLowerCase()] };
+  const recAuto = t.match(/on Autofire without BODY (\d+)\+ or (a cyberarm|paired cyberarms), (?:a )?(Broken Arm|Torn Muscle)/i);
+  if (recAuto) out.recoilAuto = { body: Number(recAuto[1]), arms: /paired/i.test(recAuto[2]) ? 2 : 1, injury: INJ[recAuto[3].toLowerCase()] };
+  // Ammo, attachments and reloading.
+  if (/Improved Smart Ammunition only/i.test(t)) out.ammoOnly = "smart";
+  else if (/Armor-Piercing only/i.test(t)) out.ammoOnly = "armorPiercing";
+  else if (/Loads only Expansive ammo/i.test(t)) out.ammoOnly = "expansive";
+  if (/No capacity attachments/i.test(t)) out.noCapacity = true;
+  const WORDS = { two: 2, three: 3, four: 4 };
+  const rl = t.match(/Reloading takes (two|three|four|\d+) (?:Reload )?Actions|(Two|Three|Four) Reload Actions to reload/i);
+  const rlMove = /reload by giving up your Move Action/i.test(t);
+  if (rl || rlMove) {
+    const w = (rl?.[1] ?? rl?.[2] ?? "").toLowerCase();
+    out.reload = { actions: rl ? WORDS[w] ?? Number(w) : 1, move: rlMove ? (/Held two-handed, reload/i.test(t) ? "twoHanded" : /one hand free/i.test(t) ? "oneHand" : "always") : null };
+  }
+  if (/carry damage through cover like an Explosive/i.test(t)) out.throughCover = true;
+  // Too heavy to hold: stat penalties while it's in hand, for someone without the BODY (or the cyberarms).
+  const held = t.match(/(?:[Ww]ithout BODY (\d+)\+((?:,| or) paired cyberarms)?(?: or a mount)?,|BODY (\d+)\+ or)?\s*[−-](\d) ((?:REF, )?(?:DEX and )?MOVE) while (?:held|you hold it)(?: \(min (\d+)\))?( and (Torn Muscle|Broken Arm) when fired)?/);
+  if (held) {
+    const body = held[1] ?? held[3] ?? null;
+    out.heldPenalty = { body: body ? Number(body) : null, arms: held[2] ? 2 : 0, value: -Number(held[4]), stats: held[5].replace("and ", "").split(/,? /).map((x) => x.toLowerCase()) };
+    // "(min 4)": the penalty never takes the stat below that (someone already under it loses nothing).
+    if (held[6]) out.heldPenalty.min = Number(held[6]);
+    if (held[8] && body && !out.recoil) out.recoil = { body: Number(body), arms: held[2] ? 2 : 99, injury: INJ[held[8].toLowerCase()] };
+  }
+  // A gun that loads only its own rounds: what those rounds do is the gun's rule.
+  const ownRounds = t.match(/(?:Loads|Fires) (?:only )?its own [^.]*/i)?.[0] ?? t.match(/Its own Armor-Piercing rounds[^.]*/i)?.[0];
+  if (ownRounds) {
+    if (/Armor-Piercing/i.test(ownRounds)) out.ap = true;
+    const more = ownRounds.match(/ablate (\d+) extra SP/i);
+    if (more && !out.ablate) out.ablate = { extra: Number(more[1]), charged: null };
+    const burn = ownRounds.match(/set targets (Mildly|Strongly|Deadly) On Fire/i);
+    if (burn && !out.effect) out.effect = { id: { mildly: "onFireMild", strongly: "onFireStrong", deadly: "onFireDeadly" }[burn[1].toLowerCase()] };
+    if (/carry(?:ing)? damage (?:past destroyed|through) cover/i.test(ownRounds)) out.throughCover = true;
+  }
+  // A check the target makes, worded for this weapon: the card's own sentence goes on the damage card,
+  // with a button where what follows is a condition the module has.
+  const chk = t.match(/[^.;:]*(?:must (?:also )?beat|forces|makes|rolls) DV(\d+) ([A-Z][A-Za-z/]+(?: [A-Z][A-Za-z/]+)*),? or ([^.;]+)[.;]/);
+  if (chk && !out.effect?.dv) {
+    out.check = { dv: Number(chk[1]), skill: chk[2], text: chk[0].trim() };
+    const then = chk[3];
+    const id = /\bProne\b/.test(then) ? "prone" : /Damaged Ear/.test(then) ? "damagedEar" : /Unconscious/.test(then) ? "unconscious" : null;
+    if (id && !out.effect) out.effect = { id, dv: Number(chk[1]), skill: chk[2], own: true };
+  }
+  // Explosives that burst in an area of their own.
+  const area = t.match(/(?:explosives|grenades|rockets) burst in a (\d+)×\1m area/i);
+  if (area) out.area = Number(area[1]);
   if (new RegExp(`${START}No Aimed Shots[.,]`).test(t)) out.noAimed = true;
   if (/Power Rebuild can't ricochet/i.test(t)) out.noRicochet = true;
   return Object.keys(out).length ? out : null;
@@ -140,3 +212,49 @@ export function ruleCrit(sp, faces = [], { aimed = false, head = false, distance
 
 /** Can the weapon make Single and Aimed Shots now? Not one that only Autofires, or only does while charged. */
 export const singleShots = (sp, charged = false) => !(sp?.autoOnly || (sp?.chargedAutoOnly && charged));
+
+/**
+ * Can this shooter fire the weapon as its card asks? { short: { need, have } | null, injury: id | null }.
+ * `short`: under its BODY requirement (a mount is the table's call); `injury`: what firing it does
+ * to someone without the BODY or the cyberarms.
+ * @param {object} who - { body, cyberarms, prone }
+ */
+export function wielderCheck(sp, { body = 0, cyberarms = 0, prone = false } = {}, { autofire = false } = {}) {
+  const out = { short: null, injury: null };
+  const r = sp?.bodyReq;
+  if (r) {
+    const need = prone && r.proneBody ? r.proneBody : r.body;
+    const ok = body >= need || (r.prone && prone) || (r.cyberarm && cyberarms >= 1);
+    if (!ok) out.short = { need, have: body };
+  }
+  for (const rule of [autofire ? sp?.recoilAuto : null, sp?.recoil]) {
+    if (!rule || out.injury) continue;
+    if (body < rule.body && cyberarms < rule.arms) out.injury = rule.injury;
+  }
+  return out;
+}
+
+/** Attachments a weapon with "No capacity attachments" can't take. */
+export const CAPACITY = /\b(extended|drum) magazine\b/i;
+
+/**
+ * The stat penalties a character takes for the weapons they hold without the BODY (or the paired
+ * cyberarms) for them: { ref, dex, move } with the worst of each, or null.
+ * @param {object[]} rules - each weapon's heldPenalty
+ * @param {object} who - { body, cyberarms, stats: { ref, dex, move } as they are without this strain }
+ */
+export function strainOf(rules = [], { body = 0, cyberarms = 0, stats = {} } = {}) {
+  const out = {};
+  for (const r of rules) {
+    if (!r) continue;
+    if (r.body !== null && (body >= r.body || (r.arms && cyberarms >= r.arms))) continue;
+    for (const st of r.stats) {
+      // A floor on the card: only as much of the penalty as keeps the stat (without it) at the floor or above.
+      const base = Number(stats[st]);
+      const value = Number.isFinite(r.min) && Number.isFinite(base) ? Math.max(r.value, Math.min(0, r.min - base)) : r.value;
+      out[st] = Math.min(out[st] ?? 0, value);
+    }
+  }
+  for (const st of Object.keys(out)) if (!out[st]) delete out[st];
+  return Object.keys(out).length ? out : null;
+}

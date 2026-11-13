@@ -7,6 +7,7 @@
  * card ("Built-in: Power Rebuild", "• POWER"), and a converted RED-era gun has a Power, Smart or
  * Tech Rebuild installed (Edgerunners Mission Kit). The first of these that answers wins.
  */
+import { parseSpecials } from "./specials.js";
 
 export const NEON_HUB = "cpr-neon-hub";
 export const FLAVORS = ["power", "smart", "tech"];
@@ -150,7 +151,7 @@ export function classify(weapon, ammo = null, upgrades = []) {
     ammoType,
     ranged,
     explosive,
-    area: areaOf({ kind, explosive, ammo: a })
+    area: areaOf({ kind, explosive, ammo: a, own: parseSpecials(s.description?.value)?.area })
   };
 }
 
@@ -161,7 +162,7 @@ export function classify(weapon, ammo = null, upgrades = []) {
  * 2070 Core Rules Ch07 (Firing Modes): explosives cover 10×10m and Shotgun Shells everything in
  * front of you within 6m; an ammo card that names its own area ("a 6×6m area", "14×14m") wins.
  */
-export function areaOf({ kind, explosive, ammo }) {
+export function areaOf({ kind, explosive, ammo, own = null }) {
   const text = String(ammo?.system?.description?.value ?? "").replace(/<[^>]+>/g, " ");
   const cone = /(\d+)\s*[×x]\s*\1\s*m(?:\/yds?)?\s+cone/i.exec(text);
   if (cone) return { shape: "cone", size: Number(cone[1]), angle: 90 };
@@ -170,7 +171,8 @@ export function areaOf({ kind, explosive, ammo }) {
   if (!explosive) return null;
   const sq = /(\d+)\s*[×x]\s*(\d+)\s*m(?:\/yds?)?(?:\s+(?:area|square|blast))?/i.exec(text);
   if (sq && sq[1] === sq[2]) return { shape: "rect", size: Number(sq[1]) };
-  return { shape: "rect", size: 10 };
+  // The weapon's own card ("Its grenades burst in a 6×6m area"), then the book's 10×10m.
+  return { shape: "rect", size: own || 10 };
 }
 
 /**

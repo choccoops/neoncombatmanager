@@ -316,6 +316,7 @@ export const RECIPES = {
   powerRebuild: { layers: [Layers.aura(C.orange, { scale: 1.45, min: 0.06, max: 0.18, period: 2200 })] },
   smartRebuild: { layers: [Layers.ring(img("reticle-white.webp"), { scale: 1.45, tint: C.pink, opacity: 0.22, spin: 16000 })] },
   improvedSmart: { layers: [Layers.ring(img("reticle-white.webp"), { scale: 1.2, tint: C.cyan, opacity: 0.2, spin: -11000 })] },
+  weaponStrain: { layers: [Layers.glow(C.amber ?? 0xffb300, { min: 0.1, max: 0.3, period: 1600 })] },
   monoRebuild: { layers: [Layers.glow(C.cyan, { min: 0.08, max: 0.22, period: 1800, distance: 6 })] },
   techRebuild: { layers: [Layers.ring(img("data-ring-white.webp"), { scale: 1.55, tint: C.blue, opacity: 0.25, spin: 12000 })] },
   intoTheWall: { once: [Once.hit()] },

@@ -69,10 +69,13 @@ export const Run = {
         return (await import("../neonfx/switches.js")).Switches.toggle(actor, `chrome:${id}`, { token });
       case "scope":
         return (await import("../arsenal/xray.js")).Xray.cycle();
-      case "rld":
+      case "rld": {
         if (!item?.doAction) return null;
-        // As the sheet's reload button: loaded ammo tops up, none opens the load dialog.
+        // The weapon's own reload rule (its card), said as it's reloaded.
+        const rl = (await import("../arsenal/specials.js")).specialsOf(item)?.reload;
+        if (rl) ui.notifications?.info(`${item.name}: ${[rl.actions > 1 ? L(`${LANG}.Arsenal.ReloadRule.actions`, { count: rl.actions }) : "", rl.move ? L(`${LANG}.Arsenal.ReloadRule.${rl.move}`) : ""].filter(Boolean).join(" ")}`);
         return item.doAction(actor, { "data-action": { nodeValue: "reload-ammo" } });
+      }
       case "ammo":
         if (!item?.doAction) return null;
         // The sheet's Change Ammo: CPR's load dialog (another ammo, or unload).
