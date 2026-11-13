@@ -14,7 +14,7 @@ export const MENUS = {
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
     "weatherSource", "weatherFx", "weatherEveryone", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
-    "lowLightAt", "darkAt", "sightKeys", "visibilityCap", "visibilityFrom", "envOutsideCombat",
+    "lowLightAt", "darkAt", "sightKeys", "visibilityFrom", "envOutsideCombat",
     "gearBreathing", "gearRadiation", "gearRain", "gearCold", "gearHeat", "gearVision"
   ]
 };
@@ -172,7 +172,6 @@ const DEFS = [
   ["lowLightAt", "world", Number, 0.3, { range: { min: 0, max: 1, step: 0.05 }, onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
   ["darkAt", "world", Number, 0.7, { range: { min: 0, max: 1, step: 0.05 }, onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
   ["sightKeys", "world", String, "perceptionSight, ranged, melee", { onChange: () => Hooks.callAll(`${MODULE_ID}.conditionsChanged`) }],
-  ["visibilityCap", "world", Number, 4, { range: { min: 0, max: 8, step: 1 }, onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
   ["visibilityFrom", "world", String, "target", { choices: { target: K("VisibilityFrom.target"), self: K("VisibilityFrom.self") }, onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
   ["envOutsideCombat", "world", Boolean, false, { onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
   ["gearBreathing", "world", String, "Nasal Filters, Anti-Smog Breathing Mask, Anti-Smog Mask", {}],

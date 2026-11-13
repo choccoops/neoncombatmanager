@@ -124,18 +124,19 @@ export const Environment = {
     // Light and darkness are read for the encounter only; the weather's own obscurement goes to
     // everyone the weather reaches, in a fight or not.
     const level = visibility && Settings.get("visibilityEnabled") && canvas?.ready ? this.levelFor(doc) : "bright";
-    const sp = sightParts({ level, weather: w.sight, vision: gear.vision, cap: Number(Settings.get("visibilityCap")) || 0 });
+    // Light and weather add in full: there is no cap (the user's ruling; Cyberpunk RED has none).
+    const sp = sightParts({ level, weather: w.sight, vision: gear.vision, cap: 0 });
 
     const desired = new Map();
     for (const c of w.conditions) desired.set(c.id, { changes: c.changes });
     for (const id of w.extra) desired.set(id, { changes: null });
     // Two conditions, each for what it is: the light's (Low Light or Darkness) and the weather's (Obscured).
-    const named = (id, value, capped = false) => `${Registry.get(id)?.name ?? id} (${value}${capped ? `, ${L(`${LANG}.Visibility.Capped`)}` : ""})`;
+    const named = (id, value) => `${Registry.get(id)?.name ?? id} (${value})`;
     if (sp.light) desired.set(sp.light.id, { changes: sightChanges(sp.light.value), name: named(sp.light.id, sp.light.value) });
     if (sp.obscured) {
       // Weather follows the "on by default" setting; darkness always counts.
       const changes = sightChanges(sp.obscured).map((ch) => ({ ...ch, onByDefault: !!Settings.get("weatherOnByDefault") }));
-      desired.set("obscured", { changes, name: named("obscured", sp.obscured, sp.capped) });
+      desired.set("obscured", { changes, name: named("obscured", sp.obscured) });
     }
     const row = {
       token: doc,

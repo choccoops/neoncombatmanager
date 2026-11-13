@@ -819,10 +819,6 @@
         "name": "Checks that need sight",
         "hint": "Cyberpunk RED roll keys a sight penalty applies to (comma-separated), shown as situational modifiers in the roll dialog."
       },
-      "visibilityCap": {
-        "name": "Most a sight penalty can be",
-        "hint": "Darkness and weather add up to at most this (both count as being obscured). 0: no limit."
-      },
       "visibilityFrom": {
         "name": "Light that counts",
         "hint": "The light where the target is (while a target is picked), or where the character stands."
@@ -2854,9 +2850,6 @@
       "Shielded": "shielded by {cover}",
       "Through": "the blast goes through {cover}",
       "AreaHint": "Cover in the area, and cover between it and anyone inside, takes the damage (a rocket's double). Untick what it doesn't reach."
-    },
-    "Visibility": {
-      "Capped": "capped"
     }
   }
 }

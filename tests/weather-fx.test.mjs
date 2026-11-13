@@ -226,11 +226,12 @@ test("the weather reaches every character on the scene, out of combat too, with 
   assert.match(d.get("lowLight").name, /\(-1\)$/);
   assert.match(d.get("obscured").name, /\(-2\)$/);
   assert.ok(!d.has("darkness"));
-  // In the dark the cap (4) is all darkness: Darkness -4, and the rain adds nothing more.
+  // In the dark, in the rain: both in full. Nothing caps a sight penalty.
   Environment.levelFor = () => "dark";
   d = Environment.evaluate(a, Sources.weather(), { visibility: true }).desired;
   assert.equal(sight(d, "darkness"), -4);
-  assert.ok(!d.has("obscured") && !d.has("lowLight"));
+  assert.equal(sight(d, "obscured"), -2, "-6 in all");
+  assert.ok(!d.has("lowLight"));
   Environment.levelFor = () => "bright";
   d = Environment.evaluate(a, Sources.weather(), { visibility: true }).desired;
   assert.equal(sight(d, "obscured"), -2);

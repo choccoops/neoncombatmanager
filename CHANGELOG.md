@@ -13,9 +13,10 @@
 - **Light and weather show separately.** Poor light and weather used to be folded into one
   condition, so rain in low light read as a single *Obscured (-3)* with no Low Light in sight.
   A character now carries each for what it is: **Low Light (-1)** or **Darkness (-4)** from the
-  light, and **Obscured (-2)** from the weather, side by side. The two still never add up past
-  the cap (4 by default; the 2070 Core Rules' Visibility cap, a house rule, and a setting): the
-  light counts in full and the weather takes what's left, marked *capped*.
+  light, and **Obscured (-2)** from the weather, side by side.
+- **No cap on sight penalties.** Darkness and weather used to add up to -4 at most (a house
+  rule); they now add in full, so rain in the dark is -6. The setting *Most a sight penalty can
+  be* is gone.
 - When obscurement penalties come off a roll, the attack card now names the round that was
   loaded, so it's plain which ammo did it.
 
