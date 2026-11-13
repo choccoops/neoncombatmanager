@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.30.0
+
+**Weapons' own rules, third part: weapons that remember the fight.** 217 of the catalog's 466
+weapons now have at least one rule applied.
+
+- **Last Round.** A weapon keeps, for the combat it's in, the Round it last fired, Autofired,
+  rolled an Aimed Shot's damage and caused a Critical Injury. A card that says *If it Autofired
+  last Round...*, *ROF2 if it fired last Round* or *If it caused a Critical Injury last Round...*
+  gets that sentence on the roll's card when it applies; *Excellent Quality this Round* is +1 on
+  the attack and *its next one deals +5 Bonus Damage* is on the damage roll.
+- **The first roll.** *Its first damage roll each fight counts 5s as 6s* and *Its first attack
+  each Round...* call the Critical Injury on that roll only.
+- **Autofire streaks.** *Autofire it more than twice in a row and it's Destroyed Beyond Repair*
+  warns on the second and says so on the third.
+- **A wounded wielder.** Rules for *Seriously or Mortally Wounded* (more or fewer Aimed Shot
+  dice, +1 to hit) follow the shooter's Wound State.
+- **One-off rules as reminders.** What belongs to a single Iconic and can't be run is brought
+  up when it matters, in the card's own words: on the Autofire attack (*On Autofire, ...*), on
+  the damage card (*Against a target ...*, *A kill ...*), or when the dice make a Critical
+  Injury (*Each Critical Injury ...*, *A Head Critical Injury ...*). 29 weapons have one.
+- **A weapon's own table.** Murphy's Law's *Each Critical Injury also rolls 1d6* is a button
+  on the damage card that rolls it and posts the result.
+- **Nehan and Satori** count each other's Critical Injuries.
+- **The R.N.Geezus! Blind Box.** Every Attack rolls the Compendium's 1d100 table by itself and
+  posts the round, with Malfunctions for Junk Ammo, Combo Casings, GACHA! on a Critical Success
+  and the misfire on a Critical Failure.
+- **Chaos** rerolls its capacity, damage and ablation on every reload. **Gris Gris** has a
+  button for its NET-linked round's quickhack DV.
+- **Magazines of several ammo types.** A *Next round* button on the Action HUD picks the kind
+  the next shot fires, and the stacks are kept right.
+- Reminders only, not run: dice rerolled, rules tied to a kill or to one particular target,
+  escalating Autofire ratings, multi-target Autofire, areas set off by a Critical Injury or a
+  kill.
+
 ## 1.29.0
 
 **Weapons' own rules, second part.** More of the lines a weapon's card carries are read and

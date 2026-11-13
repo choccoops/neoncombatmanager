@@ -2459,6 +2459,8 @@
         "noLink": "Smart weapon without a link"
       },
       "Ricochet": "Ricochet",
+      "TableButton": "Roll this weapon's 1d{die}",
+      "TableTitle": "{weapon}: {total}",
       "EffectButton": "{effect}: the {count} targeted",
       "NoCapacity": "{name} takes no capacity attachments: {upgrade} doesn't belong on it.",
       "AmmoOnly": {
@@ -2499,6 +2501,11 @@
         "critBonus": "This weapon's Critical Injuries deal +{bonus} Bonus Damage (counted if the dice make one).",
         "ablate": "This weapon ablates {extra} more SP.",
         "ruleCrit": "A Critical Injury by this weapon's rule ({face}s count as 6s): roll the injury and add its {bonus} Bonus Damage, which the total above doesn't include.",
+        "remind": "This weapon's own rule: {text}",
+        "critRemind": "On this Critical Injury, this weapon's own rule: {text}",
+        "memo": "From last Round, this weapon's own rule: {text}",
+        "autoStreak": "Autofire {count} in a row: once more and this weapon is Destroyed Beyond Repair.",
+        "autoStreakOver": "Autofire {count} in a row: this weapon is Destroyed Beyond Repair.",
         "bodyShort": "This weapon asks for BODY {need}; the shooter has {have}. Unless it's mounted, that's the GM's call.",
         "recoil": "Fired without the BODY or the cyberarm for it: {injury} on the shooter.",
         "wrongAmmo": "This weapon takes {ammo} only.",
@@ -2513,7 +2520,8 @@
         "chargedAttack": "Charged Tech shot: ROF1, through Thin cover without damaging it.",
         "chargedDamage": "Charged Tech shot: ignores half the target's SP (on the Apply Damage button).",
         "traits": "Weapon traits on this roll: {list}.",
-        "push": "Propulsion Impact: whoever this hits is pushed {metres} m/yds away (done)."
+        "push": "Propulsion Impact: whoever this hits is pushed {metres} m/yds away (done).",
+        "round": "This shot's round: {ammo}."
       },
       "SmartRetry": "Improved Smart retry (vs DV{dv})",
       "SmartRetryFlavor": "Improved Smart Ammunition: 14 + 1d10, with the first shot's penalties",
@@ -2619,6 +2627,173 @@
         "Me": "Just me",
         "Now": "Reload now",
         "Later": "Later"
+      },
+      "BlindBox": {
+        "Title": "{weapon}: the Blind Box",
+        "Combo": "A Combo Casing: one round with both effects.",
+        "CritSuccess": "A Critical Success: it's GACHA! whatever was in the box.",
+        "Jam": "A Critical Failure: a dud, and the gun jams.",
+        "Malfunction": "Malfunction ({n})",
+        "Round": {
+          "junk": {
+            "name": "Junk Ammo",
+            "effect": "a dud. No damage, and the gun rolls a Malfunction."
+          },
+          "basic": {
+            "name": "Basic Ammunition",
+            "effect": "fires as normal."
+          },
+          "armorPiercing": {
+            "name": "Armor-Piercing",
+            "effect": "as Armor-Piercing ammo."
+          },
+          "biotoxin": {
+            "name": "Biotoxin",
+            "effect": "as Biotoxin ammo."
+          },
+          "emp": {
+            "name": "EMP",
+            "effect": "as EMP ammo."
+          },
+          "expansive": {
+            "name": "Expansive",
+            "effect": "as Expansive ammo."
+          },
+          "flashbang": {
+            "name": "Flashbang",
+            "effect": "bursts where it hits, as Flashbang ammo."
+          },
+          "incendiary": {
+            "name": "Incendiary",
+            "effect": "as Incendiary ammo."
+          },
+          "poison": {
+            "name": "Poison",
+            "effect": "as Poison ammo."
+          },
+          "rubber": {
+            "name": "Rubber",
+            "effect": "as Rubber ammo."
+          },
+          "sleep": {
+            "name": "Sleep",
+            "effect": "as Sleep ammo."
+          },
+          "smoke": {
+            "name": "Smoke",
+            "effect": "bursts where it hits, as Smoke ammo."
+          },
+          "teargas": {
+            "name": "Teargas",
+            "effect": "bursts where it hits, as Teargas ammo."
+          },
+          "burrowing": {
+            "name": "Burrowing",
+            "effect": "as Burrowing ammo."
+          },
+          "highPrecision": {
+            "name": "High Precision",
+            "effect": "as High Precision ammo."
+          },
+          "explosive": {
+            "name": "Explosive",
+            "effect": "as Explosive ammo."
+          },
+          "highVelocity": {
+            "name": "High Velocity",
+            "effect": "as High Velocity ammo."
+          },
+          "hyperExpansive": {
+            "name": "Hyper Expansive",
+            "effect": "as Hyper Expansive ammo."
+          },
+          "hollowPoint": {
+            "name": "Hollow Point",
+            "effect": "as Hollow Point ammo."
+          },
+          "tracer": {
+            "name": "Tracer",
+            "effect": "as Tracer ammo."
+          },
+          "arrowhypo": {
+            "name": "Arrowhypo",
+            "effect": "delivers a dose of a Street Drug, the GM's pick."
+          },
+          "airburst": {
+            "name": "Airburst",
+            "effect": "bursts where it hits, as Airburst ammo."
+          },
+          "improvedSmart": {
+            "name": "Improved Smart",
+            "effect": "Smart weapons only, so here it fires as Basic."
+          },
+          "co2": {
+            "name": "CO2",
+            "effect": "no damage; puts out every fire where it bursts."
+          },
+          "hvap": {
+            "name": "HVAP",
+            "effect": "Armor-Piercing, High Precision and High Velocity at once."
+          },
+          "overpressure": {
+            "name": "Overpressure",
+            "effect": "the shot fires, and the gun is Destroyed (not beyond repair)."
+          },
+          "subsonic": {
+            "name": "Subsonic",
+            "effect": "as Subsonic ammo."
+          },
+          "combo": {
+            "name": "Combo Casing",
+            "effect": "two rounds in one."
+          },
+          "dazzle": {
+            "name": "Dazzle Dazzle ModBall",
+            "effect": "as its entry."
+          },
+          "megaOuchie": {
+            "name": "Mega Ouchie ModBall",
+            "effect": "as its entry."
+          },
+          "ouchie": {
+            "name": "Ouchie ModBall",
+            "effect": "as its entry."
+          },
+          "slippy": {
+            "name": "Slippy ModBall",
+            "effect": "no damage, as its entry."
+          },
+          "splashie": {
+            "name": "Splashie ModBall",
+            "effect": "no damage, as its entry."
+          },
+          "gacha": {
+            "name": "GACHA! Ammunition",
+            "effect": "+1d6 damage on a hit, and a 2nd Amendment prize ticket."
+          }
+        }
+      },
+      "Malfunction": {
+        "1": "dirty barrel: it deals 1d6 less damage, for 1 minute.",
+        "2": "accident: the next Attack targets an ally within 6 m/yds of the target.",
+        "3": "off target: −2 to the next Attack Check with it.",
+        "4": "gunked up: it can't cause a Critical Injury through its damage roll, for 1 minute.",
+        "5": "jam: it jams after the next Attack Check, whatever its Quality.",
+        "6": "neglected parts: the ammunition loaded in it is Destroyed Beyond Repair."
+      },
+      "Chaos": {
+        "Title": "{weapon}: reloaded",
+        "Body": "New for this magazine: {capacity} rounds, {damage} damage, {ablation} SP ablated. Reloaded too often (the GM's call), it's Damaged.",
+        "Back": "{count} that didn't fit went back to {ammo}."
+      },
+      "NetRound": {
+        "Button": "NET-linked round: roll the quickhack DV",
+        "Title": "{weapon}: quickhack DV {total}",
+        "Body": "{formula} = {total}: the highest quickhack DV that lands on the target with this hit, on top of the damage. It needs no Netrunner and skips their Passwalls."
+      },
+      "Mixed": {
+        "Button": "Next round",
+        "Chambered": "{weapon}: the next shot fires {ammo}."
       }
     },
     "Ruler": {

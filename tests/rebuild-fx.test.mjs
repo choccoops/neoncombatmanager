@@ -787,7 +787,7 @@ test("on the rolls: a burst named on the card and its short damage, Aimed Shot d
   await Arsenal.preRoll(sg, d3);
   assert.equal(d3.formula, "6d6");
   assert.equal(d3.rollCardExtraArgs.ablationValue, 2);
-  assert.deepEqual(Arsenal.pending.tag.critRule, { face: 5, when: "always", aimed: true, head: false, distance: null });
+  assert.deepEqual(Arsenal.pending.tag.critRule, { face: 5, when: "always", aimed: true, head: false, first: false, distance: null });
   // The card: a 5 and a 6 is a Critical Injury by this weapon's rule; two 6s is the plain rule's.
   const msg = (roll) => {
     const m = { content: '<div class="rollcard"></div>', flags: {}, updateSource(u) { Object.assign(this.flags, u); } };
@@ -817,7 +817,9 @@ test("the rest of the first part: Bonus Damage, Armor-Piercing rounds, the first
   const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
   const P = (rule) => parseSpecials(desc(rule).value);
   assert.deepEqual(P("Critical Injuries deal +3 Bonus Damage (8)."), { critBonus: 3 });
-  assert.deepEqual(P("Its Critical Injuries deal +5 Bonus Damage (10) and −2 MOVE (min 1) for 1 Round."), { critBonus: 5 });
+  const bfc = P("Its Critical Injuries deal +5 Bonus Damage (10) and −2 MOVE (min 1) for 1 Round.");
+  assert.equal(bfc.critBonus, 5);
+  assert.equal(bfc.remind[0].on, "crit", "the rest of the sentence is brought up on a Critical Injury");
   assert.equal(P("In the Round you draw it: head Aimed Shots count 5s as 6s for Critical Injuries."), null, "tied to the Round it's drawn: the table's");
   assert.deepEqual(P("An Aimed Shot fires 2 rounds for +1d6 (6d6)."), { aimedRounds: 2, aimedDice: 1 });
   assert.deepEqual(P("+1 to hit on its first Single Shot of a fight."), { firstShot: 1 });
@@ -1072,4 +1074,266 @@ test("second part, the rest: Weapon Strain while a heavy weapon is held, a gun's
   assert.match(Arsenal.pending.tag.check, /DV15 Resist Torture\/Drugs/);
   assert.equal(Arsenal.pending.tag.effect.id, "damagedEar");
   assert.ok(existsSync(path.join(root, "assets/icons/weapon-strain.svg")));
+});
+
+/* ---------------------------------------- */
+/*  Weapons' own rules, third part          */
+/* ---------------------------------------- */
+
+test("third part: weapons that remember the fight (last Round, the first roll, an Autofire streak) and a wounded wielder", async () => {
+  const { parseSpecials, remember, lastRound, ruleCrit, specialMods } = await import("../scripts/arsenal/specials.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.deepEqual(P("Its first damage roll each fight counts 5s as 6s."), { crit: { face: 5, when: "firstDamage" } });
+  assert.deepEqual(P("Its first attack each Round counts 5s as 6s for Critical Injuries."), { crit: { face: 5, when: "firstRound" } });
+  assert.deepEqual(P("If it Autofired last Round, reroll one of its 2d6 Autofire damage dice (keep the new roll)."), { memo: [{ when: "auto", text: "If it Autofired last Round, reroll one of its 2d6 Autofire damage dice (keep the new roll)." }] });
+  assert.equal(P("ROF2 if it fired last Round, or give up your Move Action to make it ROF2 anyway.").memo[0].when, "fired");
+  const cleaver = P("If it caused or attacked a Critical Injury last Round, it's ROF2 and Excellent Quality this Round.");
+  assert.equal(cleaver.memo[0].when, "crit");
+  assert.equal(cleaver.critLastMod, 1);
+  assert.equal(P("If this blade or Satori gave the target a Critical Injury last Round, its next one deals +5 Bonus Damage (10) and heals you 5 HP.").critLastBonus, 5);
+  assert.deepEqual(P("Autofire it more than twice in a row and it's Destroyed Beyond Repair."), { autoLimit: 2 });
+  const chingona = P("Aimed Shots deal +1d6 (4d6), or +2d6 (5d6) if an Aimed Shot from it dealt damage last Round.");
+  assert.equal(chingona.aimedDice, 1);
+  assert.equal(chingona.aimedStreakDice, 2);
+  assert.deepEqual(P("While you're Seriously or Mortally Wounded it overclocks: Aimed Shots deal +1d6 (4d6), and a charge lasts until the end of the Turn you fire."), { wounded: { aimedDice: 1, aimedDiceInstead: null, attackMod: 0 } });
+  const pride = P("Aimed Shots deal +2d6 (5d6), or +1d6 (4d6) while you're Seriously or Mortally Wounded.");
+  assert.equal(pride.aimedDice, 2);
+  assert.equal(pride.wounded.aimedDiceInstead, 1);
+  assert.equal(P("Seriously or Mortally Wounded, it overclocks: +1 to hit and damage 1s are rerolled until they don't.").wounded.attackMod, 1);
+
+  // Memory, pure: one combat, counted in Rounds.
+  let m = remember({}, { combat: "c1", round: 1, kind: "attack", autofire: true });
+  m = remember(m, { combat: "c1", round: 2, kind: "attack", autofire: true });
+  assert.equal(m.autoStreak, 2);
+  assert.deepEqual(lastRound(m, { combat: "c1", round: 3 }), { auto: true, fired: true, crit: false, aimedDamage: false });
+  assert.equal(lastRound(m, { combat: "c1", round: 4 }).auto, false, "two Rounds ago");
+  assert.equal(lastRound(m, { combat: null, round: 3 }).auto, false, "outside a fight: nothing is remembered");
+  assert.equal(remember(m, { combat: "c1", round: 3, kind: "attack" }).autoStreak, 0, "a Single Shot breaks the streak");
+  assert.deepEqual(remember(m, { combat: "c2", round: 1, kind: "crit" }), { combat: "c2", critRound: 1 }, "a new fight starts clean");
+  const firstRule = { crit: { face: 5, when: "firstDamage" } };
+  assert.ok(ruleCrit(firstRule, [5, 6], { first: true }) && !ruleCrit(firstRule, [5, 6], { first: false }));
+  assert.equal(specialMods({ wounded: { attackMod: 1 }, critLastMod: 1 }, { wounded: true, critLast: true })[0].value, 2);
+
+  // In a fight.
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
+  game.user.targets = new Set();
+  const savedCombat = game.combat;
+  game.combat = { id: "f1", started: true, round: 1, combatants: [] };
+  const solo = crew("Rogue", [
+    weapon("w1", "Guillotine", { weaponType: "heavySmg", fireModes: { autoFire: 4 }, description: desc("Autofire it more than twice in a row and it's Destroyed Beyond Repair. If it Autofired last Round, reroll one of its 2d6 Autofire damage dice (keep the new roll).") }),
+    weapon("w2", "Pride", { weaponType: "heavyPistol", description: desc("Aimed Shots deal +2d6 (5d6), or +1d6 (4d6) while you're Seriously or Mortally Wounded. Its first damage roll each fight counts 5s as 6s.") }),
+    weapon("w3", "Nehan", { weaponType: "heavyMelee", isRanged: false, description: desc("If this blade or Satori gave the target a Critical Injury last Round, its next one deals +5 Bonus Damage (10) and heals you 5 HP.") })
+  ]);
+  solo.system.derivedStats = { hp: { value: 40, max: 40 } };
+  const smg = solo.items.get("w1");
+  solo.flags["cyberpunk-red-core"] = { "firetype-w1": "autofire" };
+  await Arsenal.preRoll(smg, new CPRAttackRoll([]));
+  assert.ok(!Arsenal.pending.tag.autoStreak && !Arsenal.pending.tag.memo);
+  game.combat.round = 2;
+  await Arsenal.preRoll(smg, new CPRAttackRoll([]));
+  assert.deepEqual(Arsenal.pending.tag.autoStreak, { n: 2, over: false }, "a warning at two");
+  assert.match(Arsenal.pending.tag.memo[0], /reroll one of its 2d6/, "it Autofired last Round: the card's rule is on the card");
+  game.combat.round = 3;
+  await Arsenal.preRoll(smg, new CPRAttackRoll([]));
+  assert.deepEqual(Arsenal.pending.tag.autoStreak, { n: 3, over: true });
+
+  // Pride: the first damage roll of the fight counts 5s as 6s, not the second; +2d6 aimed, +1d6 when wounded.
+  const pistol = solo.items.get("w2");
+  solo.flags["cyberpunk-red-core"]["firetype-w2"] = "aimed";
+  const d1 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(pistol, d1);
+  assert.equal(d1.formula, "5d6");
+  assert.equal(Arsenal.pending.tag.critRule.first, true);
+  solo.system.derivedStats.hp.value = 5;
+  solo.system.derivedStats.currentWoundState = "seriouslyWounded";
+  const d2 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(pistol, d2);
+  assert.equal(d2.formula, "4d6", "Seriously Wounded: one die, not two");
+  assert.equal(Arsenal.pending.tag.critRule.first, false);
+
+  // Nehan: a Critical Injury this Round is remembered; next Round its Bonus Damage is +5 and the card says why.
+  const blade = solo.items.get("w3");
+  const d3 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(blade, d3);
+  assert.equal(d3.bonusDamage, 5);
+  d3.faces = [6, 6, 1];
+  game.actors.set(solo.id, solo);
+  Arsenal.tag({ content: '<div class="rollcard"></div>', updateSource() {} }, game.user.id);
+  await new Promise((r) => setTimeout(r, 5));
+  game.actors.delete(solo.id);
+  assert.equal(Rebuilds.state(solo, blade).mem.critRound, 3);
+  game.combat.round = 4;
+  const d4 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(blade, d4);
+  assert.equal(d4.bonusDamage, 10);
+  assert.match(Arsenal.pending.tag.memo[0], /heals you 5 HP/);
+  game.combat = savedCombat;
+  for (const k of ["memo", "autoStreak", "autoStreakOver"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Note.${k}`), `NEONCOMBAT.Arsenal.Note.${k}`);
+});
+
+test("third part: one-off rules come up as reminders on the roll that triggers them; a weapon's own table is rolled; sister blades share a memory", async () => {
+  const { parseSpecials } = await import("../scripts/arsenal/specials.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.deepEqual(P("On Autofire, add up to 4 more visible targets within 10m of the first, 1 extra round each.").remind.map((r) => r.on), ["autofire"]);
+  assert.deepEqual(P("Against a target it already damaged this Round, 5s count as 6s for Critical Injuries.").remind.map((r) => r.on), ["target"]);
+  assert.deepEqual(P("A kill bursts like a Poison Grenade on the body.").remind.map((r) => r.on), ["kill"]);
+  assert.deepEqual(P("A Head Critical Injury also bursts like Improved EMP ammo (only 4d6) in a 6×6m area around the victim.").remind.map((r) => r.on), ["headCrit"]);
+  assert.equal(P("Critical Injuries deal +3 Bonus Damage (8).").remind, undefined, "already applied: no reminder");
+  const murphy = P("Aimed Shots deal +1d6 (4d6). Each Critical Injury also rolls 1d6: 1 roll twice more for two different results above 1, both apply; 2 −3 MOVE for 3 Rounds; 3 Strongly On Fire; 4 Prone and Cracked Skull, wherever it hit; 5 −2 REF and DEX and no dodging ranged attacks for 3 Rounds; 6 your next attack with it gets +5. With Tarot Criticals, draw three and pick one.");
+  assert.equal(murphy.table.die, 6);
+  assert.equal(Object.keys(murphy.table.entries).length, 6);
+  assert.equal(murphy.table.entries[3], "Strongly On Fire");
+  assert.equal(P("If this blade or Satori gave the target a Critical Injury last Round, its next one deals +5 Bonus Damage (10) and heals you 5 HP.").twin, "Satori");
+
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; this.location = "body"; } }
+  game.user.targets = new Set();
+  const savedCombat = game.combat;
+  game.combat = { id: "f9", started: true, round: 1, combatants: [] };
+  const sab = crew("Saburo", [
+    weapon("w1", "Nehan (Saburo’s Kaiken)", { weaponType: "heavyMelee", isRanged: false, description: desc("If this blade or Satori gave the target a Critical Injury last Round, its next one deals +5 Bonus Damage (10) and heals you 5 HP.") }),
+    weapon("w2", "Satori (Saburo’s Sword)", { weaponType: "heavyMelee", isRanged: false, description: desc("If this sword or Nehan gave the target a Critical Injury last Round, its next one deals +10 Bonus Damage (15) and heals you 5 HP.") }),
+    weapon("w3", "Murphy’s Law", { weaponType: "heavyMelee", isRanged: false, description: desc("Each Critical Injury also rolls 1d6: 1 roll twice more, both apply; 2 −3 MOVE for 3 Rounds; 3 Strongly On Fire; 4 Prone and Cracked Skull; 5 −2 REF and DEX for 3 Rounds; 6 your next attack with it gets +5. A kill makes everyone nervous.") })
+  ]);
+  game.actors.set(sab.id, sab);
+  // Nehan crits this Round; next Round it's Satori that gets its +10.
+  const d1 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(sab.items.get("w1"), d1);
+  d1.faces = [6, 6, 2];
+  Arsenal.tag({ content: '<div class="rollcard"></div>', updateSource() {} }, game.user.id);
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(Rebuilds.state(sab, sab.items.get("w2")).mem.critRound, 1, "the sister blade remembers it too");
+  game.combat.round = 2;
+  const d2 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(sab.items.get("w2"), d2);
+  assert.equal(d2.bonusDamage, 15);
+
+  // Murphy's Law: its table is on the damage card, and the kill line comes up as a reminder.
+  const d3 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(sab.items.get("w3"), d3);
+  const t = Arsenal.pending.tag;
+  assert.equal(t.table.die, 6);
+  assert.deepEqual(t.remind, ["A kill makes everyone nervous."]);
+  assert.equal(t.critRemind.length, 1, "kept for when the dice make a Critical Injury");
+  dice.push(3);
+  chat.length = 0;
+  const rolled = await Arsenal.rollTable({ ...t, actorId: sab.id, itemId: "w3" });
+  assert.deepEqual(rolled, { total: 3, text: "Strongly On Fire" });
+  assert.equal(chat.length, 1, "posted for the table");
+  game.actors.delete(sab.id);
+  game.combat = savedCombat;
+  for (const k of ["Note.remind", "Note.critRemind", "TableButton", "TableTitle"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.${k}`), `NEONCOMBAT.Arsenal.${k}`);
+});
+
+/* ---------------------------------------- */
+/*  Weapons of their own kind               */
+/* ---------------------------------------- */
+
+test("the R.N.Geezus! Blind Box, Chaos's reloads, Gris Gris's NET-linked rounds and magazines of several kinds of ammo", async () => {
+  const { parseSpecials } = await import("../scripts/arsenal/specials.js");
+  const { Iconics, BLIND_BOX, blindBoxRound, openBlindBox, chaosStats, netRoundFormula, roundsFor, nextRound } = await import("../scripts/arsenal/iconics.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.ok(P("No Aimed Shots. Loads only 2nd Amendment Blind Box Magazines, and comes fully loaded.").blindBox);
+  assert.ok(P("Every reload, reroll its stats: capacity 1d20 (min 2; a 20 means 26), damage 1d8 d6s, ablation 1d4 SP.").chaos);
+  assert.ok(P("Loads only its own NET-linked rounds (50eb per 10).").netRounds);
+  assert.equal(P("The magazine holds up to 4 ammo types at once; pick one each shot.").mixed, 4);
+  assert.equal(P("Each of its two barrels can hold a different ammo type; pick one each shot.").mixed, 2);
+  assert.equal(P("Its magazine takes any number of ammo types at once; pick one each shot.").mixed, 99);
+
+  // The Blind Box: every number from 1 to 100 draws exactly one round; the odds are the Compendium's.
+  let covered = 0;
+  for (const [lo, hi] of BLIND_BOX) covered += hi - lo + 1;
+  assert.equal(covered, 100);
+  assert.equal(blindBoxRound(1), "junk");
+  assert.equal(blindBoxRound(36), "basic");
+  assert.equal(blindBoxRound(100), "gacha");
+  for (const [, , k] of BLIND_BOX) {
+    assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.BlindBox.Round.${k}.name`), `NEONCOMBAT.Arsenal.BlindBox.Round.${k}.name`, k);
+    assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.BlindBox.Round.${k}.effect`), `NEONCOMBAT.Arsenal.BlindBox.Round.${k}.effect`, k);
+  }
+  for (let n = 1; n <= 6; n++) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Malfunction.${n}`), `NEONCOMBAT.Arsenal.Malfunction.${n}`);
+  const seq = (...ns) => () => ns.shift();
+  assert.deepEqual(openBlindBox(seq(20)), { rounds: ["basic"], malfunctions: 0, jam: false });
+  assert.deepEqual(openBlindBox(seq(3)), { rounds: ["junk"], malfunctions: 1, jam: false }, "Junk rolls a Malfunction");
+  assert.deepEqual(openBlindBox(seq(87, 2, 88, 99, 41, 47)), { rounds: ["emp", "incendiary"], malfunctions: 0, jam: false }, "a Combo draws two more that aren't Junk, Combo or GACHA!");
+  assert.deepEqual(openBlindBox(seq(3), { critSuccess: true }), { rounds: ["gacha"], malfunctions: 0, jam: false }, "a Critical Success is GACHA! whatever the table says");
+  assert.deepEqual(openBlindBox(seq(50), { critFail: true }), { rounds: ["junk"], malfunctions: 2, jam: true });
+
+  // On an attack: the box opens by itself and the card says what came out.
+  game.user.targets = new Set();
+  const punk = crew("Rebecca", [weapon("w1", "BudgetArms R.N.Geezus!", { weaponType: "medPistol", description: desc("No Aimed Shots. Loads only 2nd Amendment Blind Box Magazines, and comes fully loaded.") })]);
+  game.actors.set(punk.id, punk);
+  await Arsenal.preRoll(punk.items.get("w1"), new CPRAttackRoll([]));
+  assert.equal(Arsenal.pending.tag.blindBox, true);
+  chat.length = 0;
+  dice.length = 0;
+  dice.push(3, 5);
+  const out = await Iconics.blindBox({ actorId: punk.id, itemId: "w1" });
+  assert.deepEqual(out.rounds, ["junk"]);
+  assert.deepEqual(out.faults, [5]);
+  assert.equal(chat.length, 1);
+  dice.length = 0;
+
+  // Chaos: a reload rerolls it.
+  assert.deepEqual(chaosStats(20, 8, 4), { capacity: 26, damage: "8d6", ablation: 4 });
+  assert.deepEqual(chaosStats(1, 1, 1), { capacity: 2, damage: "1d6", ablation: 1 });
+  const royce = crew("Royce", [weapon("w1", "Chaos", { weaponType: "heavyPistol", damage: "3d6", magazine: { value: 20, max: 20 }, installedItems: { list: ["hp"] }, description: desc("Every reload, reroll its stats: capacity 1d20 (min 2; a 20 means 26), damage 1d8 d6s, ablation 1d4 SP.") }),
+    { _id: "hp", name: "Heavy Pistol Ammo (Basic)", type: "ammo", system: { variety: "heavyPistol", type: "basic", amount: 30 } }]);
+  const chaos = royce.items.get("w1");
+  dice.push(12, 5, 3);
+  chat.length = 0;
+  assert.deepEqual(await Iconics.chaosReload(royce, chaos), { capacity: 12, damage: "5d6", ablation: 3, back: 8 });
+  assert.equal(royce.items.get("hp").system.amount, 38, "the 8 that don't fit go back to their stack");
+  assert.equal(chaos.system.magazine.max, 12);
+  assert.equal(chaos.system.magazine.value, 12, "no more in it than it now holds");
+  assert.equal(chaos.system.damage, "5d6");
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
+  const cd = new CPRDamageRoll("5d6");
+  await Arsenal.preRoll(chaos, cd);
+  assert.equal(cd.rollCardExtraArgs.ablationValue, 3, "this magazine's ablation");
+
+  // Gris Gris: 2d6, 3d6 with a Critical Injury, plus Interface for a Netrunner.
+  assert.equal(netRoundFormula(false, 0), "2d6");
+  assert.equal(netRoundFormula(true, 4), "3d6 + 4");
+  const runner = crew("Lattice", [weapon("w1", "Gris Gris", { weaponType: "medPistol", description: desc("Loads only its own NET-linked rounds (50eb per 10).") }), { _id: "r1", name: "Netrunner", type: "role", system: { rank: 4 } }]);
+  game.actors.set(runner.id, runner);
+  await Arsenal.preRoll(runner.items.get("w1"), new CPRDamageRoll("2d6"));
+  assert.equal(Arsenal.pending.tag.netRound, true);
+  dice.push(7);
+  chat.length = 0;
+  assert.equal(await Iconics.netRound({ actorId: runner.id, itemId: "w1", crit: false }), 11);
+  assert.equal(chat.length, 1);
+
+  // A magazine of several kinds: the Action HUD chambers the next kind carried; that shot is that round, and the stacks stay right.
+  const ammo = (id, name, type, amount, ablationValue = 1) => ({ _id: id, name, type: "ammo", system: { variety: "shotgunSlug", type, amount, ablationValue } });
+  const duo = crew("Stop Sign", [
+    weapon("w1", "Rostović DB-2 Satara", { weaponType: "shotgun", ammoVariety: ["shotgunSlug"], installedItems: { list: ["a1"] }, description: desc("Each of its two barrels can hold a different ammo type; pick one each shot.") }),
+    ammo("a1", "Slug (Basic)", "basic", 8), ammo("a2", "Slug (Armor-Piercing)", "armorPiercing", 4, 2), ammo("a3", "Slug (Incendiary)", "incendiary", 0)
+  ]);
+  duo.isOwner = true;
+  duo.updateEmbeddedDocuments = async (type, list) => { for (const { _id, ...u } of list) for (const [k, v] of Object.entries(u)) duo.items.get(_id).system[k.split(".").at(-1)] = v; };
+  const sg = duo.items.get("w1");
+  assert.deepEqual(roundsFor(sg, duo).map((i) => i.id), ["a1", "a2"], "what's loaded first; nothing that's run out");
+  assert.equal(nextRound(roundsFor(sg, duo), "a1").id, "a2");
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  const { Run } = await import("../scripts/hud/run.js");
+  assert.ok(catalog(duo).weapons[0].buttons.some((b) => b.key === "rnd:w1"));
+  await Run.action(duo, "rnd:w1");
+  assert.equal(Iconics.chambered(duo, sg).id, "a2");
+  await Arsenal.preRoll(sg, new CPRAttackRoll([]));
+  assert.equal(Arsenal.pending.tag.round, "Slug (Armor-Piercing)");
+  assert.equal(Arsenal.pending.tag.ammoType, "armorPiercing");
+  assert.equal(duo.items.get("a1").system.amount, 9, "the loaded stack gets its round back");
+  assert.equal(duo.items.get("a2").system.amount, 3, "the round fired comes off its own stack");
+  const md = new CPRDamageRoll("5d6");
+  await Arsenal.preRoll(sg, md);
+  assert.equal(md.rollCardExtraArgs.ammoType, "armorPiercing");
+  assert.equal(md.rollCardExtraArgs.ablationValue, 2);
+  await Run.action(duo, "rnd:w1");
+  assert.equal(Iconics.chambered(duo, sg).id, "a1", "round and round, back to what's loaded");
+  game.actors.delete(punk.id);
+  game.actors.delete(runner.id);
+  for (const k of ["Note.round", "BlindBox.Title", "Chaos.Body", "NetRound.Button", "Mixed.Button", "Mixed.Chambered"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.${k}`), `NEONCOMBAT.Arsenal.${k}`);
 });
