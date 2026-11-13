@@ -628,6 +628,71 @@ test("Berserk from the macro: the condition, the token's red look and a burst; i
   assert.ok(!live.some((e) => e.name === `ncm-fx-berserk-${token.id}`));
 });
 
+test("a Sandevistan switched on and off again and again leaves Initiative where it was (chrome and its Operating System both switch)", async () => {
+  await Settings.set("fxChrome", true);
+  const actor = makeActor({ name: "Rogue" }, [
+    { _id: "sande", name: "Sandevistan", type: "cyberware", system: { isInstalled: true } },
+    { _id: "falcon", name: "MILITECH ‘FALCON’ OS", type: "cyberware", system: { isInstalled: true } }
+  ]);
+  const token = makeToken(actor);
+  const mk = (item, id, name) => {
+    const sw = { documentName: "ActiveEffect", id, name, disabled: true, changes: [{ key: "bonuses.initiative", value: "3" }], parent: item, statuses: new Set(), flags: {},
+      async update(u) {
+        Object.assign(this, u);
+        Hooks.callAll("updateActiveEffect", this, u, {}, game.user.id);
+      } };
+    item.effects = [sw];
+    item.documentName = "Item";
+    return sw;
+  };
+  const a = mk(actor.items.get("sande"), "sw1", "Sandevistan (active)");
+  const b = mk(actor.items.get("falcon"), "sw2", "Falcon OS (active)");
+  // Every write takes a trip to the server, as it does at the table.
+  const lag = (obj, fn) => {
+    const real = obj[fn].bind(obj);
+    obj[fn] = async (...args) => {
+      await settle(4);
+      return real(...args);
+    };
+  };
+  lag(actor, "createEmbeddedDocuments");
+  lag(actor, "deleteEmbeddedDocuments");
+  lag(a, "update");
+  lag(b, "update");
+  const combat = makeCombat([actor]);
+  game.combat = combat;
+  const cb = combat.turns[0];
+  lag(cb, "update");
+  const start = cb.initiative;
+  let up = null;
+  for (let i = 0; i < 4; i++) {
+    await NeonFX.activate("sandevistan", [token]);
+    await settle(120);
+    assert.equal(a.disabled, false);
+    assert.equal(b.disabled, false);
+    assert.ok(Chrome.running(actor, "sandevistan"), `on, time ${i + 1}`);
+    up ??= cb.initiative;
+    assert.ok(up > start, "up while it runs");
+    assert.equal(cb.initiative, up, `the same bonus, time ${i + 1}`);
+    await NeonFX.activate("sandevistan", [token]);
+    await settle(120);
+    assert.equal(a.disabled, true);
+    assert.equal(b.disabled, true);
+    assert.equal(Chrome.running(actor, "sandevistan"), null, `off, time ${i + 1}`);
+    assert.equal(cb.initiative, start, `back where it was, time ${i + 1}`);
+  }
+  assert.equal(Conditions.effects(actor, "chromeFalcon").length, 0);
+
+  // The sum itself: on twice adds once, off twice takes back once.
+  const { initiativeMove } = await import("../scripts/neonfx/chrome.js");
+  assert.deepEqual(initiativeMove({ initiative: 12, had: undefined, bonus: 6, on: true }), { initiative: 18, keep: 6 });
+  assert.equal(initiativeMove({ initiative: 18, had: 6, bonus: 6, on: true }), null, "already in");
+  assert.deepEqual(initiativeMove({ initiative: 18, had: 6, bonus: 6, on: false }), { initiative: 12, keep: 0 });
+  assert.equal(initiativeMove({ initiative: 12, had: 0, bonus: 6, on: false }), null, "already taken back");
+  assert.deepEqual(initiativeMove({ initiative: 20, had: undefined, bonus: 6, on: false }), { initiative: 14, keep: 0 }, "rolled while it ran");
+  assert.equal(initiativeMove({ initiative: null, had: undefined, bonus: 6, on: true }), null, "not rolled yet");
+});
+
 test("a Sandevistan's \"(active)\" effect, the condition and Initiative move together, and nothing counts twice", async () => {
   const actor = makeActor({ name: "Fury" }, [{ _id: "sande", name: "Sandevistan", type: "cyberware", system: { isInstalled: true } }]);
   const token = makeToken(actor);
