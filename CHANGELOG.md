@@ -10,6 +10,8 @@
   standing in Heavy Rain out of combat had the rain's condition but no Obscured. Everyone the
   weather reaches now carries Obscured at the weather's penalty, in an encounter or not. Light
   and darkness are still read for the encounter only.
+- **A sight penalty says what it's made of.** When weather and poor light add up, the
+  condition's name shows the split: *Obscured (-3: weather -2, light -1)*.
 - When obscurement penalties come off a roll, the attack card now names the round that was
   loaded, so it's plain which ammo did it.
 

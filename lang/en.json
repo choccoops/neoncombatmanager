@@ -2854,6 +2854,9 @@
       "Shielded": "shielded by {cover}",
       "Through": "the blast goes through {cover}",
       "AreaHint": "Cover in the area, and cover between it and anyone inside, takes the damage (a rocket's double). Untick what it doesn't reach."
+    },
+    "Visibility": {
+      "Split": "weather {weather}, light {light}"
     }
   }
 }

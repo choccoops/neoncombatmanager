@@ -213,6 +213,19 @@ test("the weather reaches every character on the scene, out of combat too, with 
   assert.deepEqual(desired.get("obscured").changes.map((c) => [c.key, c.value]), [["bonuses.perceptionSight", -2], ["bonuses.ranged", -2], ["bonuses.melee", -2]]);
   assert.match(desired.get("obscured").name, /\(-2\)/, "named for what it takes off");
 
+  // In the encounter, in poor light as well: the two add up, and the name says how much is each.
+  const savedLevel = Environment.levelFor;
+  const savedReady = canvas.ready;
+  canvas.ready = true;
+  Environment.levelFor = () => "dim";
+  const both = Environment.evaluate(a, Sources.weather(), { visibility: true }).desired.get("obscured");
+  assert.match(both.name, /\(-3: weather -2, light -1\)/);
+  assert.equal(both.changes[0].value, -3);
+  Environment.levelFor = () => "bright";
+  assert.match(Environment.evaluate(a, Sources.weather(), { visibility: true }).desired.get("obscured").name, /\(-2\)$/, "rain alone: just the number");
+  Environment.levelFor = savedLevel;
+  canvas.ready = savedReady;
+
   // Under a roof: nothing.
   scene.tiles = [{ x: 1900, y: 1900, width: 300, height: 300, rotation: 0, elevation: 10, restrictions: { weather: true }, flags: {} }];
   assert.equal(Environment.evaluate(a, Sources.weather(), { visibility: false }).desired.size, 0);

@@ -133,7 +133,9 @@ export const Environment = {
       const c = Registry.get(sp.condition);
       // Weather alone (no darkness) follows the "on by default" setting; darkness always counts.
       const changes = sightChanges(sp.total).map((ch) => ({ ...ch, onByDefault: sp.darkness < 0 || !!Settings.get("weatherOnByDefault") }));
-      desired.set(sp.condition, { changes, name: `${c?.name ?? sp.condition} (${sp.total})` });
+      // Weather and poor light together: the name says how much is each, so a -3 in rain explains itself.
+      const split = sp.weather < 0 && sp.darkness < 0 ? `: ${L(`${LANG}.Visibility.Split`, { weather: sp.weather, light: sp.darkness })}` : "";
+      desired.set(sp.condition, { changes, name: `${c?.name ?? sp.condition} (${sp.total}${split})` });
     }
     const row = {
       token: doc,
