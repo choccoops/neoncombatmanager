@@ -21,7 +21,7 @@ import { Shots } from "./shots.js";
 import { Sync } from "./sync.js";
 import { Xray } from "./xray.js";
 import { Equipped, improvedSmart } from "./equipped.js";
-import { specialsOf, specialMods, moreDice, ruleCrit, wielderCheck, CAPACITY } from "./specials.js";
+import { specialsOf, specialMods, moreDice, ruleCrit, wielderCheck, CAPACITY, remember, lastRound } from "./specials.js";
 import { Stakes } from "../stakes/stakes.js";
 import { L, esc } from "../util.js";
 
@@ -209,7 +209,7 @@ export const Arsenal = {
     const st = Rebuilds.state(actor, item);
     // "Its first Single Shot of a fight": once per combat (outside one, every shot is a first).
     const firstShot = !!sp?.firstShot && !/Aimed|Autofire|Suppressive/.test(name) && (!game.combat?.id || st.firstShot !== game.combat.id);
-    const own = specialMods(sp, { aimed: /Aimed/.test(name), autofire: /Autofire/.test(name), twoHands: !!st.twoHands, firstShot, name: item.name, moduleId: MODULE_ID });
+    const own = specialMods(sp, { aimed: /Aimed/.test(name), autofire: /Autofire/.test(name), twoHands: !!st.twoHands, firstShot, wounded: this.wounded(actor), critLast: lastRound(st.mem, this.now()).crit, name: item.name, moduleId: MODULE_ID });
     for (const m of own) if (!roll.mods.some((x) => x?.id === m.id)) roll.mods.push(m);
     const done = { unobscured: 0, split: false, special: own.length > 0, firstShot, magazine: Number(item.system?.magazine?.value) };
     this.pre.set(roll, done);
@@ -243,6 +243,15 @@ export const Arsenal = {
       if (i >= 0) roll.mods.splice(i, 1);
     }
     return off.reduce((sum, m) => sum + Number(m.value), 0);
+  },
+
+  /** The combat and Round a weapon's memory counts in. */
+  now() {
+    return { combat: game.combat?.started ? game.combat.id : null, round: Number(game.combat?.round) || 0 };
+  },
+
+  wounded(actor) {
+    return ["seriouslyWounded", "mortallyWounded"].includes(CPR.woundState(actor));
   },
 
   /** Before the dice: traits on the roll, an area placed, the DV it faces. */
@@ -284,6 +293,16 @@ export const Arsenal = {
         tag.burst = { rounds: short ? Math.max(1, had) : sp.burst.rounds, short, damage: short ? sp.burst.shortDamage : null };
         if (short && sp.burst.shortDamage) await Rebuilds.setState(actor, item, { shortBurst: sp.burst.shortDamage });
         else if (state.shortBurst) await Rebuilds.setState(actor, item, { shortBurst: null });
+      }
+      // What the weapon remembers of this fight: last Round's Autofire, shot or Critical Injury, and a streak of Autofire.
+      const now = this.now();
+      const last = lastRound(state.mem, now);
+      const memo = (sp?.memo ?? []).filter((m) => (m.when === "auto" && last.auto && mode === "autofire") || (m.when === "fired" && last.fired) || (m.when === "crit" && last.crit));
+      if (memo.length) tag.memo = memo.map((m) => m.text);
+      if (now.combat) {
+        const mem = remember(state.mem, { ...now, kind: "attack", autofire: mode === "autofire" });
+        if (sp?.autoLimit && mem.autoStreak >= sp.autoLimit) tag.autoStreak = { n: mem.autoStreak, over: mem.autoStreak > sp.autoLimit };
+        await Rebuilds.setState(actor, item, { mem });
       }
       if (sp?.autofire && mode === "autofire") tag.autofireRounds = sp.autofire;
       // What the weapon asks of its shooter, and of its ammo.
@@ -357,10 +376,30 @@ export const Arsenal = {
       } else if (sp?.autofireDrop && roll.isAutofire) {
         roll.formula = sp.autofireDrop;
         tag.dropLowest = sp.autofireDrop;
-      } else if (sp?.aimedDice && mode === "aimed" && typeof roll.formula === "string") {
-        roll.formula = moreDice(roll.formula, sp.aimedDice);
-        tag.aimedDice = sp.aimedDice;
+      } else if (mode === "aimed" && typeof roll.formula === "string") {
+        // More dice on an Aimed Shot: the card's, changed by a wound or by last Round's Aimed Shot.
+        const hurt = this.wounded(actor);
+        let dice = sp?.aimedDice || 0;
+        if (hurt && sp?.wounded?.aimedDice) dice = Math.max(dice, sp.wounded.aimedDice);
+        if (hurt && sp?.wounded?.aimedDiceInstead) dice = sp.wounded.aimedDiceInstead;
+        else if (sp?.aimedStreakDice && lastRound(state.mem, this.now()).aimedDamage) dice = sp.aimedStreakDice;
+        if (dice) {
+          roll.formula = moreDice(roll.formula, dice);
+          tag.aimedDice = dice;
+        }
       }
+      const now = this.now();
+      const before = state.mem?.combat === now.combat ? state.mem : {};
+      const last = lastRound(state.mem, now);
+      if (sp?.critLastBonus && last.crit) {
+        roll.bonusDamage = (Number(roll.bonusDamage) || 0) + sp.critLastBonus;
+        tag.critBonusRule = (tag.critBonusRule || 0) + sp.critLastBonus;
+      }
+      const dmgMemo = (sp?.memo ?? []).filter((m) => (m.when === "auto" && last.auto && roll.isAutofire) || (m.when === "crit" && last.crit));
+      if (dmgMemo.length) tag.memo = dmgMemo.map((m) => m.text);
+      // The first damage roll of the fight, or of the Round.
+      const first = sp?.crit?.when === "firstDamage" ? !!now.combat && !before.damageRolls : sp?.crit?.when === "firstRound" ? !!now.combat && before.damageRound !== now.round : false;
+      if (now.combat) await Rebuilds.setState(actor, item, { mem: remember(state.mem, { ...now, kind: "damage", aimed: mode === "aimed" }) });
       if (sp?.ap && (Number(extra.ablationValue) || 0) < 2) {
         extra.ablationValue = 2;
         tag.ap = true;
@@ -382,7 +421,7 @@ export const Arsenal = {
         roll.bonusDamage = (Number(roll.bonusDamage) || 0) + sp.critBonusHead;
         tag.critBonusRule = (tag.critBonusRule || 0) + sp.critBonusHead;
       }
-      if (sp?.crit) tag.critRule = { ...sp.crit, aimed: mode === "aimed", head, distance: token && targets[0] ? Dv.distance(token, targets[0]) : null };
+      if (sp?.crit) tag.critRule = { ...sp.crit, aimed: mode === "aimed", head, first, distance: token && targets[0] ? Dv.distance(token, targets[0]) : null };
     }
     if (kind === "damage" && rebuilds) {
       const charged = !!state.fired;
@@ -408,6 +447,12 @@ export const Arsenal = {
     if (p.tag.critRule && !crit) {
       const faces = p.roll?.faces ?? p.roll?.terms?.[0]?.results?.map((r) => r.result) ?? [];
       if (ruleCrit({ crit: p.tag.critRule }, faces, p.tag.critRule)) p.tag.ruleCrit = Number(p.roll?.bonusDamage) || 5;
+    }
+    // A Critical Injury is remembered for next Round (weapons that build on one).
+    if (p.tag.kind === "damage" && (crit || p.tag.ruleCrit) && this.now().combat) {
+      const actor = game.actors?.get(p.tag.actorId);
+      const item = actor?.items?.get(p.tag.itemId);
+      if (item && specialsOf(item)) Rebuilds.setState(actor, item, { mem: remember(Rebuilds.state(actor, item).mem, { ...this.now(), kind: "crit" }) }).catch(() => {});
     }
     message.updateSource({ [`flags.${MODULE_ID}.arsenal`]: { ...p.tag, total: Number(p.roll.resultTotal) || 0, penalty: penaltyOf(p.roll), crit, at: Date.now() } });
   },
@@ -513,6 +558,8 @@ export const Arsenal = {
     if (a.kind === "damage" && a.ablate) notes.push(L(`${LANG}.Arsenal.Note.ablate`, { extra: a.ablate }));
     if (a.kind === "damage" && a.ruleCrit) notes.push(L(`${LANG}.Arsenal.Note.ruleCrit`, { face: a.critRule?.face ?? 5, bonus: a.ruleCrit }));
     const named = (id) => esc(Registry.get(id)?.name ?? id);
+    for (const text of a.memo ?? []) notes.push(L(`${LANG}.Arsenal.Note.memo`, { text: esc(text) }));
+    if (a.kind === "attack" && a.autoStreak) notes.push(L(`${LANG}.Arsenal.Note.${a.autoStreak.over ? "autoStreakOver" : "autoStreak"}`, { count: a.autoStreak.n }));
     if (a.kind === "attack" && a.bodyShort) notes.push(L(`${LANG}.Arsenal.Note.bodyShort`, a.bodyShort));
     if (a.kind === "attack" && a.recoil) notes.push(L(`${LANG}.Arsenal.Note.recoil`, { injury: named(a.recoil) }));
     if (a.kind === "attack" && a.wrongAmmo) notes.push(L(`${LANG}.Arsenal.Note.wrongAmmo`, { ammo: L(`${LANG}.Arsenal.AmmoOnly.${a.wrongAmmo}`) }));

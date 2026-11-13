@@ -787,7 +787,7 @@ test("on the rolls: a burst named on the card and its short damage, Aimed Shot d
   await Arsenal.preRoll(sg, d3);
   assert.equal(d3.formula, "6d6");
   assert.equal(d3.rollCardExtraArgs.ablationValue, 2);
-  assert.deepEqual(Arsenal.pending.tag.critRule, { face: 5, when: "always", aimed: true, head: false, distance: null });
+  assert.deepEqual(Arsenal.pending.tag.critRule, { face: 5, when: "always", aimed: true, head: false, first: false, distance: null });
   // The card: a 5 and a 6 is a Critical Injury by this weapon's rule; two 6s is the plain rule's.
   const msg = (roll) => {
     const m = { content: '<div class="rollcard"></div>', flags: {}, updateSource(u) { Object.assign(this.flags, u); } };
@@ -1072,4 +1072,100 @@ test("second part, the rest: Weapon Strain while a heavy weapon is held, a gun's
   assert.match(Arsenal.pending.tag.check, /DV15 Resist Torture\/Drugs/);
   assert.equal(Arsenal.pending.tag.effect.id, "damagedEar");
   assert.ok(existsSync(path.join(root, "assets/icons/weapon-strain.svg")));
+});
+
+/* ---------------------------------------- */
+/*  Weapons' own rules, third part          */
+/* ---------------------------------------- */
+
+test("third part: weapons that remember the fight (last Round, the first roll, an Autofire streak) and a wounded wielder", async () => {
+  const { parseSpecials, remember, lastRound, ruleCrit, specialMods } = await import("../scripts/arsenal/specials.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.deepEqual(P("Its first damage roll each fight counts 5s as 6s."), { crit: { face: 5, when: "firstDamage" } });
+  assert.deepEqual(P("Its first attack each Round counts 5s as 6s for Critical Injuries."), { crit: { face: 5, when: "firstRound" } });
+  assert.deepEqual(P("If it Autofired last Round, reroll one of its 2d6 Autofire damage dice (keep the new roll)."), { memo: [{ when: "auto", text: "If it Autofired last Round, reroll one of its 2d6 Autofire damage dice (keep the new roll)." }] });
+  assert.equal(P("ROF2 if it fired last Round, or give up your Move Action to make it ROF2 anyway.").memo[0].when, "fired");
+  const cleaver = P("If it caused or attacked a Critical Injury last Round, it's ROF2 and Excellent Quality this Round.");
+  assert.equal(cleaver.memo[0].when, "crit");
+  assert.equal(cleaver.critLastMod, 1);
+  assert.equal(P("If this blade or Satori gave the target a Critical Injury last Round, its next one deals +5 Bonus Damage (10) and heals you 5 HP.").critLastBonus, 5);
+  assert.deepEqual(P("Autofire it more than twice in a row and it's Destroyed Beyond Repair."), { autoLimit: 2 });
+  const chingona = P("Aimed Shots deal +1d6 (4d6), or +2d6 (5d6) if an Aimed Shot from it dealt damage last Round.");
+  assert.equal(chingona.aimedDice, 1);
+  assert.equal(chingona.aimedStreakDice, 2);
+  assert.deepEqual(P("While you're Seriously or Mortally Wounded it overclocks: Aimed Shots deal +1d6 (4d6), and a charge lasts until the end of the Turn you fire."), { wounded: { aimedDice: 1, aimedDiceInstead: null, attackMod: 0 } });
+  const pride = P("Aimed Shots deal +2d6 (5d6), or +1d6 (4d6) while you're Seriously or Mortally Wounded.");
+  assert.equal(pride.aimedDice, 2);
+  assert.equal(pride.wounded.aimedDiceInstead, 1);
+  assert.equal(P("Seriously or Mortally Wounded, it overclocks: +1 to hit and damage 1s are rerolled until they don't.").wounded.attackMod, 1);
+
+  // Memory, pure: one combat, counted in Rounds.
+  let m = remember({}, { combat: "c1", round: 1, kind: "attack", autofire: true });
+  m = remember(m, { combat: "c1", round: 2, kind: "attack", autofire: true });
+  assert.equal(m.autoStreak, 2);
+  assert.deepEqual(lastRound(m, { combat: "c1", round: 3 }), { auto: true, fired: true, crit: false, aimedDamage: false });
+  assert.equal(lastRound(m, { combat: "c1", round: 4 }).auto, false, "two Rounds ago");
+  assert.equal(lastRound(m, { combat: null, round: 3 }).auto, false, "outside a fight: nothing is remembered");
+  assert.equal(remember(m, { combat: "c1", round: 3, kind: "attack" }).autoStreak, 0, "a Single Shot breaks the streak");
+  assert.deepEqual(remember(m, { combat: "c2", round: 1, kind: "crit" }), { combat: "c2", critRound: 1 }, "a new fight starts clean");
+  const firstRule = { crit: { face: 5, when: "firstDamage" } };
+  assert.ok(ruleCrit(firstRule, [5, 6], { first: true }) && !ruleCrit(firstRule, [5, 6], { first: false }));
+  assert.equal(specialMods({ wounded: { attackMod: 1 }, critLastMod: 1 }, { wounded: true, critLast: true })[0].value, 2);
+
+  // In a fight.
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
+  game.user.targets = new Set();
+  const savedCombat = game.combat;
+  game.combat = { id: "f1", started: true, round: 1, combatants: [] };
+  const solo = crew("Rogue", [
+    weapon("w1", "Guillotine", { weaponType: "heavySmg", fireModes: { autoFire: 4 }, description: desc("Autofire it more than twice in a row and it's Destroyed Beyond Repair. If it Autofired last Round, reroll one of its 2d6 Autofire damage dice (keep the new roll).") }),
+    weapon("w2", "Pride", { weaponType: "heavyPistol", description: desc("Aimed Shots deal +2d6 (5d6), or +1d6 (4d6) while you're Seriously or Mortally Wounded. Its first damage roll each fight counts 5s as 6s.") }),
+    weapon("w3", "Nehan", { weaponType: "heavyMelee", isRanged: false, description: desc("If this blade or Satori gave the target a Critical Injury last Round, its next one deals +5 Bonus Damage (10) and heals you 5 HP.") })
+  ]);
+  solo.system.derivedStats = { hp: { value: 40, max: 40 } };
+  const smg = solo.items.get("w1");
+  solo.flags["cyberpunk-red-core"] = { "firetype-w1": "autofire" };
+  await Arsenal.preRoll(smg, new CPRAttackRoll([]));
+  assert.ok(!Arsenal.pending.tag.autoStreak && !Arsenal.pending.tag.memo);
+  game.combat.round = 2;
+  await Arsenal.preRoll(smg, new CPRAttackRoll([]));
+  assert.deepEqual(Arsenal.pending.tag.autoStreak, { n: 2, over: false }, "a warning at two");
+  assert.match(Arsenal.pending.tag.memo[0], /reroll one of its 2d6/, "it Autofired last Round: the card's rule is on the card");
+  game.combat.round = 3;
+  await Arsenal.preRoll(smg, new CPRAttackRoll([]));
+  assert.deepEqual(Arsenal.pending.tag.autoStreak, { n: 3, over: true });
+
+  // Pride: the first damage roll of the fight counts 5s as 6s, not the second; +2d6 aimed, +1d6 when wounded.
+  const pistol = solo.items.get("w2");
+  solo.flags["cyberpunk-red-core"]["firetype-w2"] = "aimed";
+  const d1 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(pistol, d1);
+  assert.equal(d1.formula, "5d6");
+  assert.equal(Arsenal.pending.tag.critRule.first, true);
+  solo.system.derivedStats.hp.value = 5;
+  solo.system.derivedStats.currentWoundState = "seriouslyWounded";
+  const d2 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(pistol, d2);
+  assert.equal(d2.formula, "4d6", "Seriously Wounded: one die, not two");
+  assert.equal(Arsenal.pending.tag.critRule.first, false);
+
+  // Nehan: a Critical Injury this Round is remembered; next Round its Bonus Damage is +5 and the card says why.
+  const blade = solo.items.get("w3");
+  const d3 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(blade, d3);
+  assert.equal(d3.bonusDamage, 5);
+  d3.faces = [6, 6, 1];
+  game.actors.set(solo.id, solo);
+  Arsenal.tag({ content: '<div class="rollcard"></div>', updateSource() {} }, game.user.id);
+  await new Promise((r) => setTimeout(r, 5));
+  game.actors.delete(solo.id);
+  assert.equal(Rebuilds.state(solo, blade).mem.critRound, 3);
+  game.combat.round = 4;
+  const d4 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(blade, d4);
+  assert.equal(d4.bonusDamage, 10);
+  assert.match(Arsenal.pending.tag.memo[0], /heals you 5 HP/);
+  game.combat = savedCombat;
+  for (const k of ["memo", "autoStreak", "autoStreakOver"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Note.${k}`), `NEONCOMBAT.Arsenal.Note.${k}`);
 });

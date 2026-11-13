@@ -43,6 +43,13 @@
  *                rounds' rules count as the gun's (ap, ablate, effect, throughCover)
  *   check        "must beat DV17 Resist Torture/Drugs or ...": the card's sentence on the damage card
  *   area         "Its grenades burst in a 6×6m area": the size of its template
+ *   crit "firstDamage" / "firstRound"   "Its first damage roll each fight counts 5s as 6s"
+ *   memo         "If it Autofired last Round, ...", "ROF2 if it fired last Round", "If it caused a
+ *                Critical Injury last Round, ...": the card's sentence, on the card when it applies
+ *   critLastMod / critLastBonus   Excellent Quality (+1) or more Bonus Damage the Round after a crit
+ *   aimedStreakDice   more Aimed Shot dice the Round after an Aimed Shot's damage
+ *   autoLimit    "Autofire it more than twice in a row and it's Destroyed Beyond Repair"
+ *   wounded      what changes while the wielder is Seriously or Mortally Wounded
  *   noAimed      "No Aimed Shots."
  *   noRicochet   "Its Power Rebuild can't ricochet."
  */
@@ -173,6 +180,28 @@ export function parseSpecials(html) {
   // Explosives that burst in an area of their own.
   const area = t.match(/(?:explosives|grenades|rockets) burst in a (\d+)×\1m area/i);
   if (area) out.area = Number(area[1]);
+  // Rules that remember the fight: what the weapon did last Round, the first roll of a fight, a streak.
+  const firstDmg = t.match(/Its first (damage roll each fight|attack each Round) counts (\d)s as 6s/i);
+  if (firstDmg && !out.crit) out.crit = { face: Number(firstDmg[2]), when: /fight/i.test(firstDmg[1]) ? "firstDamage" : "firstRound" };
+  const memo = [];
+  for (const sentence of t.split(/(?<=[.;])\s+/)) {
+    const when = /^If it Autofired last Round/i.test(sentence) ? "auto" : /if it fired last Round/i.test(sentence) ? "fired"
+      : /Critical Injury last Round/i.test(sentence) && /^If (?:it|this)/i.test(sentence) ? "crit" : null;
+    if (when) memo.push({ when, text: sentence.replace(/[;]$/, ".") });
+  }
+  if (memo.length) out.memo = memo;
+  if (/Excellent Quality this Round/i.test(t) && memo.some((m) => m.when === "crit")) out.critLastMod = 1;
+  const critLast = t.match(/Critical Injury last Round, its next one deals \+(\d+) Bonus Damage/i);
+  if (critLast) out.critLastBonus = Number(critLast[1]);
+  const streak = t.match(/Aimed Shots deal \+\d+d6 \(\d+d6\), or \+(\d+)d6 \(\d+d6\) if an Aimed Shot from it dealt damage last Round/i);
+  if (streak) out.aimedStreakDice = Number(streak[1]);
+  if (/Autofire it more than twice in a row/i.test(t)) out.autoLimit = 2;
+  // Rules for a wounded wielder (Seriously or Mortally Wounded).
+  const wAimed = t.match(/Seriously or Mortally Wounded it overclocks: Aimed Shots deal \+(\d+)d6/i);
+  const wLess = t.match(/Aimed Shots deal \+\d+d6 \(\d+d6\), or \+(\d+)d6 \(\d+d6\) while you're Seriously or Mortally Wounded/i);
+  const wHit = t.match(/Seriously or Mortally Wounded, it overclocks: \+(\d+) to hit/i);
+  if (wAimed || wLess || wHit) out.wounded = { aimedDice: wAimed ? Number(wAimed[1]) : null, aimedDiceInstead: wLess ? Number(wLess[1]) : null, attackMod: wHit ? Number(wHit[1]) : 0 };
+  if (wAimed && out.aimedDice === Number(wAimed[1]) && !new RegExp(`${START}Aimed Shots deal`).test(t)) delete out.aimedDice;
   if (new RegExp(`${START}No Aimed Shots[.,]`).test(t)) out.noAimed = true;
   if (/Power Rebuild can't ricochet/i.test(t)) out.noRicochet = true;
   return Object.keys(out).length ? out : null;
@@ -182,9 +211,9 @@ export function parseSpecials(html) {
 export const specialsOf = (item) => parseSpecials(item?.system?.description?.value);
 
 /** The modifiers a weapon's rules put on an attack roll: [{ id, value, source }]. */
-export function specialMods(sp, { aimed = false, autofire = false, twoHands = false, firstShot = false, name = "", moduleId = "ncm" } = {}) {
+export function specialMods(sp, { aimed = false, autofire = false, twoHands = false, firstShot = false, wounded = false, critLast = false, name = "", moduleId = "ncm" } = {}) {
   if (!sp) return [];
-  let value = (sp.attackMod || 0) + (aimed ? sp.aimedMod || 0 : 0) + (autofire ? sp.autofireMod || 0 : 0);
+  let value = (wounded ? sp.wounded?.attackMod || 0 : 0) + (critLast ? sp.critLastMod || 0 : 0) + (sp.attackMod || 0) + (aimed ? sp.aimedMod || 0 : 0) + (autofire ? sp.autofireMod || 0 : 0);
   // Held in two hands (the shooter's switch): Excellent Quality's +1, or the card's own bonus.
   if (twoHands && sp.twoHanded) value += sp.twoHanded.attack + (aimed ? sp.twoHanded.aimed : 0) + (autofire ? sp.twoHanded.autofire : 0);
   if (firstShot && !aimed && !autofire) value += sp.firstShot || 0;
@@ -201,8 +230,9 @@ export function moreDice(formula, extra) {
  * Do the dice make a Critical Injury by the weapon's own rule when the plain rule (two 6s) says no?
  * Two or more dice showing a 6 or the face that counts as one.
  */
-export function ruleCrit(sp, faces = [], { aimed = false, head = false, distance = null } = {}) {
+export function ruleCrit(sp, faces = [], { aimed = false, head = false, distance = null, first = false } = {}) {
   const c = sp?.crit;
+  if (c && ["firstDamage", "firstRound"].includes(c.when) && !first) return false;
   if (!c || (c.when === "aimed" && !aimed) || (c.when === "head" && !(aimed && head))) return false;
   if (c.when === "within" && !(Number.isFinite(distance) && distance <= c.range)) return false;
   const list = faces.map(Number);
@@ -257,4 +287,31 @@ export function strainOf(rules = [], { body = 0, cyberarms = 0, stats = {} } = {
   }
   for (const st of Object.keys(out)) if (!out[st]) delete out[st];
   return Object.keys(out).length ? out : null;
+}
+
+/**
+ * What a weapon remembers of the fight, moved on by one roll, pure. Memory belongs to one combat
+ * (a new one starts it clean) and counts in its Rounds.
+ * @param {object} mem - { combat, firedRound, autoRound, autoStreak, aimedDamageRound, critRound, damageRolls, damageRound }
+ * @param {object} now - { combat, round, kind: "attack"|"damage"|"crit", autofire, aimed }
+ */
+export function remember(mem = {}, { combat = null, round = 0, kind = "attack", autofire = false, aimed = false } = {}) {
+  const m = mem?.combat === combat ? { ...mem } : { combat };
+  if (kind === "attack") {
+    m.firedRound = round;
+    m.autoStreak = autofire ? (m.autoStreak || 0) + 1 : 0;
+    if (autofire) m.autoRound = round;
+  } else if (kind === "damage") {
+    m.damageRolls = (m.damageRolls || 0) + 1;
+    m.damageRound = round;
+    if (aimed) m.aimedDamageRound = round;
+  } else if (kind === "crit") m.critRound = round;
+  return m;
+}
+
+/** What the weapon did last Round, from its memory: { auto, fired, crit, aimedDamage }. */
+export function lastRound(mem = {}, { combat = null, round = 0 } = {}) {
+  const ok = !!combat && mem?.combat === combat && round > 0;
+  const was = (r) => ok && Number.isFinite(r) && r === round - 1;
+  return { auto: was(mem.autoRound), fired: was(mem.firedRound), crit: was(mem.critRound), aimedDamage: was(mem.aimedDamageRound) };
 }

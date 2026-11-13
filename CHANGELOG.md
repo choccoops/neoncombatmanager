@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.30.0
+
+**Weapons' own rules, third part: weapons that remember the fight.** 211 of the catalog's 466
+weapons now have at least one rule applied.
+
+- **Last Round.** A weapon keeps, for the combat it's in, the Round it last fired, Autofired,
+  rolled an Aimed Shot's damage and caused a Critical Injury. A card that says *If it Autofired
+  last Round...*, *ROF2 if it fired last Round* or *If it caused a Critical Injury last Round...*
+  gets that sentence on the roll's card when it applies; *Excellent Quality this Round* is +1 on
+  the attack and *its next one deals +5 Bonus Damage* is on the damage roll.
+- **The first roll.** *Its first damage roll each fight counts 5s as 6s* and *Its first attack
+  each Round...* call the Critical Injury on that roll only.
+- **Autofire streaks.** *Autofire it more than twice in a row and it's Destroyed Beyond Repair*
+  warns on the second and says so on the third.
+- **A wounded wielder.** Rules for *Seriously or Mortally Wounded* (more or fewer Aimed Shot
+  dice, +1 to hit) follow the shooter's Wound State.
+- Not automated: dice rerolled, rules tied to a kill or to one particular target, per-weapon
+  tables (Murphy's Law, the R.N.Geezus! Blind Box, Chaos), escalating Autofire ratings,
+  multi-target Autofire, areas set off by a Critical Injury or a kill, and magazines of several
+  ammo types.
+
 ## 1.29.0
 
 **Weapons' own rules, second part.** More of the lines a weapon's card carries are read and
