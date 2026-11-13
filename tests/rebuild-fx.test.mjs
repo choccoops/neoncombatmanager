@@ -1337,3 +1337,48 @@ test("the R.N.Geezus! Blind Box, Chaos's reloads, Gris Gris's NET-linked rounds 
   game.actors.delete(runner.id);
   for (const k of ["Note.round", "BlindBox.Title", "Chaos.Body", "NetRound.Button", "Mixed.Button", "Mixed.Chambered"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.${k}`), `NEONCOMBAT.Arsenal.${k}`);
 });
+
+test("a click on a Tech scope's outline is caught at the token layer: it targets, and never reaches the click that lets go of the shooter", async () => {
+  const shooter = crew("Lattice", [weapon("w1", "Heavy Pistol (Tech)")]);
+  await Conditions.add("techRebuild", shooter);
+  const me = tokenAt(shooter, 100, 500);
+  canvas.tokens.controlled = [me];
+  const targets = new Set();
+  const saved = game.user.targets;
+  game.user.targets = targets;
+  const hidden = tokenAt(makeActor({ name: "Ganger" }), 900, 500, { visible: false });
+  hidden.setTarget = (on, { releaseOthers = true } = {}) => {
+    if (releaseOthers) targets.clear();
+    if (on) targets.add(hidden);
+    else targets.delete(hidden);
+  };
+  canvas.walls.placeables = [wall([500, 0, 500, 1000], { flags: { [M]: { thinCover: true } } })];
+  Xray.refresh();
+  assert.equal(Xray.at({ x: 930, y: 520 })?.name, "Ganger", "anywhere in its square");
+  assert.equal(Xray.at({ x: 700, y: 500 }), null);
+
+  // The token layer's own click handler, as Foundry calls it.
+  let released = 0;
+  class Layer { _onClickLeft() { released++; } }
+  const savedLayers = CONFIG.Canvas?.layers;
+  CONFIG.Canvas = { ...(CONFIG.Canvas ?? {}), layers: { tokens: { layerClass: Layer } } };
+  Xray.wrapClicks();
+  const layer = new Layer();
+  layer._onClickLeft({ interactionData: { origin: { x: 900, y: 500 } } });
+  assert.deepEqual([...targets].map((t) => t.name), ["Ganger"], "targeted");
+  assert.equal(released, 0, "the shooter stays selected, so the scope and the target stay");
+  layer._onClickLeft({ interactionData: { origin: { x: 300, y: 300 } } });
+  assert.equal(released, 1, "a click anywhere else is Foundry's as before");
+  assert.equal(targets.size, 1);
+  // The Target key, with the pointer over the outline.
+  canvas.mousePosition = { x: 905, y: 495 };
+  assert.equal(Xray.onKey({ code: "KeyT", target: { tagName: "BODY" } }), true);
+  assert.equal(targets.size, 0, "pressed again: let go");
+  assert.equal(Xray.onKey({ code: "KeyT", target: { tagName: "INPUT" } }), false, "not while typing");
+  assert.equal(Xray.onKey({ code: "KeyX", target: { tagName: "BODY" } }), false);
+  canvas.mousePosition = { x: 300, y: 300 };
+  assert.equal(Xray.onKey({ code: "KeyT", target: { tagName: "BODY" } }), false);
+  delete canvas.mousePosition;
+  CONFIG.Canvas.layers = savedLayers;
+  game.user.targets = saved;
+});

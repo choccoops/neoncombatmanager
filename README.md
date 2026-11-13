@@ -873,8 +873,8 @@ on the scene. A damage roll for an area draws no Tarot card.
   cyan outline of anyone behind thin cover they can't otherwise see, within 50 m/yds. Thin cover
   is a wall ticked *Thin cover* in its settings, and closed doors (a setting). Only that player
   sees the outlines, and GM-hidden tokens never show. **An outline can be targeted**, for a
-  Charged Shot through the cover: click it (Shift-click adds a target), hover it and press the
-  Target key, or use *Target through cover* beside the Tech gun's switches on the Action HUD,
+  Charged Shot through the cover: click anywhere in its square (Shift-click adds a target; the
+  shooter stays selected), put the pointer over it and press the Target key, or use *Target through cover* beside the Tech gun's switches on the Action HUD,
   which takes the nearest and then the next with each press. Cyan brackets mark a target you
   can't otherwise see.
 - **Ricochet.** A ricochet shot flies to a bounce point and on to the target. The bounce point is
