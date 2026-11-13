@@ -140,7 +140,9 @@ export const Defense = {
       }
       const dv = a.hits?.find((h) => h.name === tok.name)?.dv ?? a.dv ?? null;
       const ab = this.ability(target, { attacker, ricochet: a.ricochet });
-      if (ab.can) await this.prompt(target, tok, { ...base, dv, why: ab.why, ...(ab.penalty ? { penalty: ab.penalty } : {}) });
+      // The weapon's own rule (its card): its Aimed Shots are harder to dodge.
+      const pen = ab.penalty ? { penalty: ab.penalty } : a.dodgePenalty ? { penalty: a.dodgePenalty, penaltyKey: "WeaponDodge" } : {};
+      if (ab.can) await this.prompt(target, tok, { ...base, dv, why: ab.why, ...pen });
     }
   },
 

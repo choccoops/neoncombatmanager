@@ -787,7 +787,7 @@ test("on the rolls: a burst named on the card and its short damage, Aimed Shot d
   await Arsenal.preRoll(sg, d3);
   assert.equal(d3.formula, "6d6");
   assert.equal(d3.rollCardExtraArgs.ablationValue, 2);
-  assert.deepEqual(Arsenal.pending.tag.critRule, { face: 5, when: "always", aimed: true });
+  assert.deepEqual(Arsenal.pending.tag.critRule, { face: 5, when: "always", aimed: true, head: false, distance: null });
   // The card: a 5 and a 6 is a Critical Injury by this weapon's rule; two 6s is the plain rule's.
   const msg = (roll) => {
     const m = { content: '<div class="rollcard"></div>', flags: {}, updateSource(u) { Object.assign(this.flags, u); } };
@@ -818,7 +818,7 @@ test("the rest of the first part: Bonus Damage, Armor-Piercing rounds, the first
   const P = (rule) => parseSpecials(desc(rule).value);
   assert.deepEqual(P("Critical Injuries deal +3 Bonus Damage (8)."), { critBonus: 3 });
   assert.deepEqual(P("Its Critical Injuries deal +5 Bonus Damage (10) and −2 MOVE (min 1) for 1 Round."), { critBonus: 5 });
-  assert.equal(P("Head Critical Injuries deal +5 Bonus Damage."), null, "by location: the table's");
+  assert.equal(P("In the Round you draw it: head Aimed Shots count 5s as 6s for Critical Injuries."), null, "tied to the Round it's drawn: the table's");
   assert.deepEqual(P("An Aimed Shot fires 2 rounds for +1d6 (6d6)."), { aimedRounds: 2, aimedDice: 1 });
   assert.deepEqual(P("+1 to hit on its first Single Shot of a fight."), { firstShot: 1 });
   assert.deepEqual(P("No capacity attachments; every round also counts as Armor-Piercing."), { ap: true });
@@ -889,4 +889,45 @@ test("the rest of the first part: Bonus Damage, Armor-Piercing rounds, the first
   assert.ok(!throughThinCover(a, { x: 900, y: 500 }, [solid, thin], { thick: 1 }), "one layer in all");
   assert.ok(!throughThinCover(a, { x: 900, y: 500 }, [solid, { ...solid, c: [800, 0, 800, 1000] }], { thick: 1 }));
   for (const k of ["ap", "critBonus"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Note.${k}`), `NEONCOMBAT.Arsenal.Note.${k}`);
+});
+
+test("the last of the first part: rules by the head or a range, dice that drop the lowest, what a charge costs, Aimed Shots that are hard to dodge", async () => {
+  const { parseSpecials, ruleCrit } = await import("../scripts/arsenal/specials.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.deepEqual(P("On a head Aimed Shot, 5s count as 6s for Critical Injuries."), { crit: { face: 5, when: "head" } });
+  assert.deepEqual(P("Within 6m, 5s count as 6s for Critical Injuries."), { crit: { face: 5, when: "within", range: 6 } });
+  assert.deepEqual(P("Head Critical Injuries deal +5 Bonus Damage."), { critBonusHead: 5 });
+  assert.deepEqual(P("Aimed Shots deal 6d6, dropping the lowest."), { aimedDrop: "6d6dl1" });
+  assert.deepEqual(P("Autofire damage: roll 3d6, drop the lowest, then multiply."), { autofireDrop: "3d6dl1" });
+  assert.deepEqual(P("Its Tech Rebuild charges without a Move Action."), { chargeCost: "free" });
+  assert.deepEqual(P("Charging takes only half your MOVE (round down), given up before you move."), { chargeCost: "half" });
+  assert.deepEqual(P("Dodging its Aimed Shots or Held Action shots takes −2."), { aimedDodge: -2 });
+  const head = { crit: { face: 5, when: "head" } };
+  assert.ok(ruleCrit(head, [5, 6], { aimed: true, head: true }) && !ruleCrit(head, [5, 6], { aimed: true, head: false }));
+  const near = { crit: { face: 5, when: "within", range: 6 } };
+  assert.ok(ruleCrit(near, [5, 5], { distance: 4 }) && !ruleCrit(near, [5, 5], { distance: 8 }) && !ruleCrit(near, [5, 5], {}));
+
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; this.location = "body"; } }
+  game.user.targets = new Set();
+  const solo = crew("Fury", [weapon("w1", "Death And Taxes", { weaponType: "heavyPistol", description: desc("Aimed Shots deal 4d6, dropping the lowest. Head Critical Injuries deal +5 Bonus Damage. Autofire damage: roll 3d6, drop the lowest, then multiply. Dodging its Aimed Shots or Held Action shots takes −2.") })]);
+  const gun = solo.items.get("w1");
+  solo.flags["cyberpunk-red-core"] = { "firetype-w1": "aimed" };
+  const d = new CPRDamageRoll("3d6");
+  d.location = "head";
+  await Arsenal.preRoll(gun, d);
+  assert.equal(d.formula, "4d6dl1");
+  assert.equal(d.bonusDamage, 10, "a head Aimed Shot");
+  const body = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(gun, body);
+  assert.equal(body.bonusDamage, 5, "an Aimed Shot elsewhere: the plain Bonus Damage");
+  const atk = new CPRAttackRoll([]);
+  await Arsenal.preRoll(gun, atk);
+  assert.equal(Arsenal.pending.tag.dodgePenalty, -2);
+  solo.flags["cyberpunk-red-core"] = { "firetype-w1": "autofire" };
+  const auto = new CPRDamageRoll("2d6");
+  auto.isAutofire = true;
+  await Arsenal.preRoll(gun, auto);
+  assert.equal(auto.formula, "3d6dl1");
+  for (const k of ["Arsenal.Note.dropLowest", "Arsenal.ChargeBodyFree", "Arsenal.ChargeBodyHalf", "Arsenal.Defense.WeaponDodge"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.${k}`), `NEONCOMBAT.${k}`, k);
 });

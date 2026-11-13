@@ -285,6 +285,7 @@ export const Arsenal = {
         else if (state.shortBurst) await Rebuilds.setState(actor, item, { shortBurst: null });
       }
       if (sp?.autofire && mode === "autofire") tag.autofireRounds = sp.autofire;
+      if (sp?.aimedDodge && mode === "aimed") tag.dodgePenalty = sp.aimedDodge;
       if (pre0.firstShot && game.combat?.id) await Rebuilds.setState(actor, item, { firstShot: game.combat.id });
       if (pre0.special) tag.specialMod = (roll.mods ?? []).find((m) => m?.id === `${MODULE_ID}-special`)?.value ?? 0;
       if (rebuilds) {
@@ -338,6 +339,12 @@ export const Arsenal = {
         roll.formula = state.shortBurst;
         tag.shortBurst = state.shortBurst;
         await Rebuilds.setState(actor, item, { shortBurst: null });
+      } else if (sp?.aimedDrop && mode === "aimed") {
+        roll.formula = sp.aimedDrop;
+        tag.dropLowest = sp.aimedDrop;
+      } else if (sp?.autofireDrop && roll.isAutofire) {
+        roll.formula = sp.autofireDrop;
+        tag.dropLowest = sp.autofireDrop;
       } else if (sp?.aimedDice && mode === "aimed" && typeof roll.formula === "string") {
         roll.formula = moreDice(roll.formula, sp.aimedDice);
         tag.aimedDice = sp.aimedDice;
@@ -355,7 +362,12 @@ export const Arsenal = {
         extra.ablationValue = (Number(extra.ablationValue) || 0) + more;
         tag.ablate = more;
       }
-      if (sp?.crit) tag.critRule = { ...sp.crit, aimed: mode === "aimed" };
+      const head = mode === "aimed" && roll.location === "head";
+      if (sp?.critBonusHead && head) {
+        roll.bonusDamage = (Number(roll.bonusDamage) || 0) + sp.critBonusHead;
+        tag.critBonusRule = (tag.critBonusRule || 0) + sp.critBonusHead;
+      }
+      if (sp?.crit) tag.critRule = { ...sp.crit, aimed: mode === "aimed", head, distance: token && targets[0] ? Dv.distance(token, targets[0]) : null };
     }
     if (kind === "damage" && rebuilds) {
       const charged = !!state.fired;
@@ -380,7 +392,7 @@ export const Arsenal = {
     // Not two 6s, but a Critical Injury by the weapon's own rule (5s count as 6s...).
     if (p.tag.critRule && !crit) {
       const faces = p.roll?.faces ?? p.roll?.terms?.[0]?.results?.map((r) => r.result) ?? [];
-      if (ruleCrit({ crit: p.tag.critRule }, faces, { aimed: p.tag.critRule.aimed })) p.tag.ruleCrit = Number(p.roll?.bonusDamage) || 5;
+      if (ruleCrit({ crit: p.tag.critRule }, faces, p.tag.critRule)) p.tag.ruleCrit = Number(p.roll?.bonusDamage) || 5;
     }
     message.updateSource({ [`flags.${MODULE_ID}.arsenal`]: { ...p.tag, total: Number(p.roll.resultTotal) || 0, penalty: penaltyOf(p.roll), crit, at: Date.now() } });
   },
@@ -479,6 +491,7 @@ export const Arsenal = {
     if (a.kind === "attack" && a.autofireRounds) notes.push(L(`${LANG}.Arsenal.Note.autofireRounds`, { rounds: a.autofireRounds.rounds }));
     if (a.kind === "attack" && a.specialMod) notes.push(L(`${LANG}.Arsenal.Note.specialMod`, { value: a.specialMod > 0 ? `+${a.specialMod}` : a.specialMod }));
     if (a.kind === "damage" && a.shortBurst) notes.push(L(`${LANG}.Arsenal.Note.shortBurstDamage`, { damage: a.shortBurst }));
+    if (a.kind === "damage" && a.dropLowest) notes.push(L(`${LANG}.Arsenal.Note.dropLowest`, { formula: a.dropLowest.replace("dl1", "") }));
     if (a.kind === "damage" && a.aimedDice) notes.push(L(`${LANG}.Arsenal.Note.aimedDice`, { dice: a.aimedDice }));
     if (a.kind === "damage" && a.ap) notes.push(L(`${LANG}.Arsenal.Note.ap`));
     if (a.kind === "damage" && a.critBonusRule) notes.push(L(`${LANG}.Arsenal.Note.critBonus`, { bonus: a.critBonusRule }));
@@ -648,7 +661,7 @@ export const Arsenal = {
       this.chargeLook(t, item, on);
       if (on) {
         Sound.play("techCharge");
-        await Cards.post({ actor, kicker: L(`${LANG}.Arsenal.Kicker`), title: L(`${LANG}.Arsenal.ChargeTitle`, { name: esc(actor.name), weapon: esc(item.name) }), tone: "cyan", body: `<p>${L(`${LANG}.Arsenal.ChargeBody`)}</p>` });
+        await Cards.post({ actor, kicker: L(`${LANG}.Arsenal.Kicker`), title: L(`${LANG}.Arsenal.ChargeTitle`, { name: esc(actor.name), weapon: esc(item.name) }), tone: "cyan", body: `<p>${L(`${LANG}.Arsenal.ChargeBody${{ free: "Free", half: "Half" }[specialsOf(item)?.chargeCost] ?? ""}`)}</p>` });
       }
       return on;
     }

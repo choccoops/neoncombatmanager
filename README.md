@@ -898,7 +898,7 @@ on the scene. A damage roll for an area draws no Tarot card.
   second gun in the other hand still takes them.
 - **A weapon's own rules** (Item Compendium, Weapons and Iconics). Where a weapon's card has
   one of the lines below, Neon Arsenal reads it from the card's text and applies it, so weapons
-  already on sheets count, and so does one you write in the same words. 134 of the catalog's
+  already on sheets count, and so does one you write in the same words. 144 of the catalog's
   weapons have at least one.
 
   | The card says | What happens |
@@ -914,16 +914,21 @@ on the scene. A damage roll for an area draws no Tarot card.
   | *every round also counts as Armor-Piercing* | Ablates 2 SP, as Armor-Piercing does |
   | *+1 to hit on its first Single Shot of a fight* | On the first Single Shot of each combat (outside one, on every shot) |
   | *Excellent Quality two-handed*, *Two-handed: +1 to Aimed Shots (and Autofire)* | A **Two hands** switch on the weapon's Action HUD entry: while it's on, the +1 is on the roll. The switch is yours to flip; it doesn't check for a free hand |
+  | *On a head Aimed Shot, 5s count as 6s*, *Within 6m, 5s count as 6s* | The same card note, only on a head Aimed Shot, or with the first target within that range |
+  | *Head Critical Injuries deal +5 Bonus Damage* | Added on a head Aimed Shot's damage roll |
+  | *Aimed Shots deal 6d6, dropping the lowest*, *Autofire damage: roll 3d6, drop the lowest* | The damage roll is made that way |
+  | *Charges without a Move Action*, *Charging takes only half your MOVE* | The charge card says what this weapon's charge costs |
+  | *Dodging its Aimed Shots takes −2* | On the target's Evade prompt |
   | *No Aimed Shots* | No Aimed button on the Action HUD (the sheet's own tick box is Cyberpunk RED's) |
   | *Autofire and Suppressive Fire only*, *No Autofire*, *While charged, it can only Autofire* | The Action HUD leaves out the buttons the weapon doesn't have right now |
   | *Its Power Rebuild can't ricochet* | No Ricochet switch |
   | *Charged, it can't see or fire through cover* | Its charged shot stops at Thin cover like any other |
   | *Its Tech scope sees outlines through one layer of Thin or Thick cover* | The Tech scope outlines people behind one wall of any kind |
 
-  Still the table's to run: a rule tied to a hit location, a range or a wound state; dice that
-  drop the lowest; Tech charges that cost half a Move or none; a rule of the ammo rather than
-  the gun; effects on whoever is hit; recoil and BODY requirements; and each Iconic's one-off
-  rules.
+  Still the table's to run: a rule tied to a wound state, to the Round a weapon is drawn or to
+  what happened last Round; a charge that lasts to the end of the Turn; weapons with two modes
+  (the IronWind); a rule of the ammo rather than the gun; effects on whoever is hit; recoil and
+  BODY requirements; and each Iconic's one-off rules.
 - **Smart's +1 by name.** A Smart gun's +1 is on the roll before its dialog opens as
   *Smart weapon +1*, and the card says so. Neon Hub's Smart guns keep the +1 in their own attack
   modifier: it's taken out of that line and shown by name instead, never counted twice. Without a

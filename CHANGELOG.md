@@ -39,10 +39,12 @@
   that *count as Armor-Piercing*; *+1 to hit on its first Single Shot of a fight*; a **Two
   hands** switch for *Excellent Quality two-handed* and *Two-handed: +1...*; Autofire-only guns
   and guns that only Autofire while charged; charged shots that stop at cover; Tech scopes that
-  read one layer of Thick cover. 134 weapons in the catalog have at least one; weapons already
-  on sheets count. The rounds themselves are spent by Neon Hub 1.25.0. Rules tied to a location,
-  range or wound state, effects on targets, recoil and the Iconics' one-off rules are not
-  automated yet.
+  read one layer of Thick cover; Critical Injury rules on a head Aimed Shot or within a range;
+  dice that drop the lowest; what a weapon's Tech charge costs, on the charge card; Aimed Shots
+  that are harder to dodge. 144 weapons in the catalog have at least one; weapons already on
+  sheets count. The rounds themselves are spent by Neon Hub 1.25.0. Rules tied to a wound state
+  or to an earlier Round, two-mode weapons, effects on targets, recoil and the Iconics' one-off
+  rules are not automated yet.
 - **Chrome switches.** A *Chrome* group on the Action HUD and a chip button on the Token HUD
   list the chrome a character can switch on and off, lit while it runs: Sandevistan and Berserk
   (by their Operating System), Tactile Boost, Optical Camo, Microrotors, the KERS mask (three new
