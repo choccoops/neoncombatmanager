@@ -18,7 +18,7 @@ applied; 205 of the catalog's 466 weapons now have at least one.
 - **Rounds that carry through cover** are treated as an explosive's by *Hit the cover*.
 - **Weapon Strain.** A weapon whose card gives penalties *while held* without the BODY or
   paired cyberarms puts a new condition on whoever holds it, with those penalties, until it's
-  stowed.
+  stowed. A card's floor (*−2 MOVE while held (min 4)*) is kept.
 - **A gun's own rounds.** Where a gun loads only its own rounds, what the card says of them
   (Armor-Piercing, extra SP ablated, On Fire, damage past cover) is applied as the gun's rule.
 - **Checks worded for one weapon** go on the damage card in the card's own words, with a button

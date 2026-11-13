@@ -1010,7 +1010,14 @@ test("second part, the rest: Weapon Strain while a heavy weapon is held, a gun's
   assert.deepEqual(P("Without BODY 10+ or paired cyberarms, −1 DEX and MOVE while held.").heldPenalty, { body: 10, arms: 2, value: -1, stats: ["dex", "move"] });
   assert.deepEqual(P("Without BODY 14+, −2 REF, DEX and MOVE while you hold it.").heldPenalty, { body: 14, arms: 0, value: -2, stats: ["ref", "dex", "move"] });
   assert.deepEqual(P("BODY 14+ or −2 MOVE while held.").heldPenalty, { body: 14, arms: 0, value: -2, stats: ["move"] });
-  assert.deepEqual(P("−2 MOVE while held (min 4).").heldPenalty, { body: null, arms: 0, value: -2, stats: ["move"] });
+  assert.deepEqual(P("−2 MOVE while held (min 4).").heldPenalty, { body: null, arms: 0, value: -2, stats: ["move"], min: 4 });
+  // The floor: MOVE 8 loses 2; MOVE 5 only goes down to 4; MOVE 4 or less loses nothing.
+  const guts = [{ body: null, arms: 0, value: -2, stats: ["move"], min: 4 }];
+  assert.deepEqual(strainOf(guts, { stats: { move: 8 } }), { move: -2 });
+  assert.deepEqual(strainOf(guts, { stats: { move: 5 } }), { move: -1 });
+  assert.equal(strainOf(guts, { stats: { move: 4 } }), null);
+  assert.equal(strainOf(guts, { stats: { move: 3 } }), null, "already under it: nothing lost");
+  assert.deepEqual(strainOf([{ body: null, arms: 0, value: -2, stats: ["dex", "move"], min: 2 }], { stats: { dex: 3, move: 6 } }), { dex: -1, move: -2 }, "each stat by itself");
   const osprey = P("Without BODY 10+ or paired cyberarms, −2 MOVE while held and Torn Muscle when fired.");
   assert.deepEqual(osprey.recoil, { body: 10, arms: 2, injury: "tornMuscle" });
   assert.deepEqual(strainOf([{ body: 10, arms: 2, value: -1, stats: ["dex", "move"] }, { body: 14, arms: 0, value: -2, stats: ["move"] }], { body: 9 }), { dex: -1, move: -2 }, "the worst of each");
@@ -1048,6 +1055,15 @@ test("second part, the rest: Weapon Strain while a heavy weapon is held, a gun's
   runner.system.stats.body.value = 11;
   await Equipped.sync(runner);
   assert.ok(!Conditions.has(STRAIN, runner), "with the BODY for it: nothing");
+  // Guts in the hands of someone with MOVE 5: down to 4 and no further, and it holds steady when looked at again.
+  const becca = crew("Rebecca", [weapon("w1", "Guts", { weaponType: "shotgun", description: desc("−2 MOVE while held (min 4).") })]);
+  becca.system.stats = { body: { value: 6 }, move: { value: 5 } };
+  await Equipped.sync(becca);
+  const held = () => Conditions.effects(becca, STRAIN)[0]?.changes.map((c) => [c.key, Number(c.value)]);
+  assert.deepEqual(held(), [["system.stats.move.value", -1]]);
+  becca.system.stats.move.value = 4; // as the sheet shows it with the strain on
+  await Equipped.sync(becca);
+  assert.deepEqual(held(), [["system.stats.move.value", -1]], "worked out from the MOVE without the strain");
   // The damage card carries the weapon's check in the card's words.
   class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
   game.user.targets = new Set();

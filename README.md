@@ -927,7 +927,7 @@ on the scene. A damage roll for an area draws no Tarot card.
   | *No capacity attachments* | A warning when an Extended or Drum Magazine is fitted |
   | *Reloading takes two Reload Actions*, *With one hand free, reload by giving up your Move Action* | Said as the weapon is reloaded from the Action HUD |
   | *Its rounds carry damage through cover like an Explosive* | The damage card's *Hit the cover* treats it as an explosive: destroyed cover lets it through |
-  | *Without BODY 10+ or paired cyberarms, −1 DEX and MOVE while held* (and *−2 MOVE while held*) | **Weapon Strain**, a condition on whoever holds it without the BODY or the cyberarms, with the card's penalties as an Active Effect; it goes when the weapon is stowed. A mount is the GM's call |
+  | *Without BODY 10+ or paired cyberarms, −1 DEX and MOVE while held* (and *−2 MOVE while held*) | **Weapon Strain**, a condition on whoever holds it without the BODY or the cyberarms, with the card's penalties as an Active Effect; it goes when the weapon is stowed. A floor on the card (*(min 4)*) is kept: the penalty never takes the stat below it. A mount is the GM's call |
   | *Loads only its own Armor-Piercing rounds, which ablate 1 extra SP* (or *set targets Strongly On Fire*, *carry damage past destroyed cover*) | The gun loads nothing else, so its rounds' rules are applied as the gun's |
   | *must beat DV17 Resist Torture/Drugs or ...* and other checks worded for one weapon | The card's own sentence goes on the damage card; where what follows is Prone, Damaged Ear or Unconscious, the button places it |
   | *Its grenades burst in a 6×6m area* | The weapon's template is that size |

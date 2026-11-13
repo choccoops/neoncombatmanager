@@ -143,11 +143,13 @@ export function parseSpecials(html) {
   }
   if (/carry damage through cover like an Explosive/i.test(t)) out.throughCover = true;
   // Too heavy to hold: stat penalties while it's in hand, for someone without the BODY (or the cyberarms).
-  const held = t.match(/(?:[Ww]ithout BODY (\d+)\+((?:,| or) paired cyberarms)?(?: or a mount)?,|BODY (\d+)\+ or)?\s*[−-](\d) ((?:REF, )?(?:DEX and )?MOVE) while (?:held|you hold it)( and (Torn Muscle|Broken Arm) when fired)?/);
+  const held = t.match(/(?:[Ww]ithout BODY (\d+)\+((?:,| or) paired cyberarms)?(?: or a mount)?,|BODY (\d+)\+ or)?\s*[−-](\d) ((?:REF, )?(?:DEX and )?MOVE) while (?:held|you hold it)(?: \(min (\d+)\))?( and (Torn Muscle|Broken Arm) when fired)?/);
   if (held) {
     const body = held[1] ?? held[3] ?? null;
     out.heldPenalty = { body: body ? Number(body) : null, arms: held[2] ? 2 : 0, value: -Number(held[4]), stats: held[5].replace("and ", "").split(/,? /).map((x) => x.toLowerCase()) };
-    if (held[7] && body && !out.recoil) out.recoil = { body: Number(body), arms: held[2] ? 2 : 99, injury: INJ[held[7].toLowerCase()] };
+    // "(min 4)": the penalty never takes the stat below that (someone already under it loses nothing).
+    if (held[6]) out.heldPenalty.min = Number(held[6]);
+    if (held[8] && body && !out.recoil) out.recoil = { body: Number(body), arms: held[2] ? 2 : 99, injury: INJ[held[8].toLowerCase()] };
   }
   // A gun that loads only its own rounds: what those rounds do is the gun's rule.
   const ownRounds = t.match(/(?:Loads|Fires) (?:only )?its own [^.]*/i)?.[0] ?? t.match(/Its own Armor-Piercing rounds[^.]*/i)?.[0];
@@ -239,13 +241,20 @@ export const CAPACITY = /\b(extended|drum) magazine\b/i;
  * The stat penalties a character takes for the weapons they hold without the BODY (or the paired
  * cyberarms) for them: { ref, dex, move } with the worst of each, or null.
  * @param {object[]} rules - each weapon's heldPenalty
+ * @param {object} who - { body, cyberarms, stats: { ref, dex, move } as they are without this strain }
  */
-export function strainOf(rules = [], { body = 0, cyberarms = 0 } = {}) {
+export function strainOf(rules = [], { body = 0, cyberarms = 0, stats = {} } = {}) {
   const out = {};
   for (const r of rules) {
     if (!r) continue;
     if (r.body !== null && (body >= r.body || (r.arms && cyberarms >= r.arms))) continue;
-    for (const st of r.stats) out[st] = Math.min(out[st] ?? 0, r.value);
+    for (const st of r.stats) {
+      // A floor on the card: only as much of the penalty as keeps the stat (without it) at the floor or above.
+      const base = Number(stats[st]);
+      const value = Number.isFinite(r.min) && Number.isFinite(base) ? Math.max(r.value, Math.min(0, r.min - base)) : r.value;
+      out[st] = Math.min(out[st] ?? 0, value);
+    }
   }
+  for (const st of Object.keys(out)) if (!out[st]) delete out[st];
   return Object.keys(out).length ? out : null;
 }

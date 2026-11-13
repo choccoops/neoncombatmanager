@@ -128,8 +128,11 @@ export const Equipped = {
     if (Registry.get(STRAIN)?.disabled) return null;
     const rules = Settings.get("arsenalRebuildConditions") ? [...(actor.items ?? [])].filter(inHand).map((i) => specialsOf(i)?.heldPenalty) : [];
     const arms = [...(actor.items ?? [])].filter((i) => i.type === "cyberware" && i.system?.type === "cyberArm" && i.system?.isInstalled).length;
-    const strain = strainOf(rules, { body: CPR.stat(actor, "body"), cyberarms: arms });
     const mine = Conditions.effects(actor, STRAIN).filter((e) => e.getFlag(MODULE_ID, FLAGS.managed) === MANAGED);
+    // The stats as they'd be without the strain already on them (for a card's "(min 4)").
+    const now = (st) => Number((mine[0]?.changes ?? []).find((c) => c.key === `system.stats.${st}.value`)?.value) || 0;
+    const stats = Object.fromEntries(["ref", "dex", "move"].map((st) => [st, CPR.stat(actor, st) - now(st)]));
+    const strain = strainOf(rules, { body: CPR.stat(actor, "body"), cyberarms: arms, stats });
     const want = strain ? Object.entries(strain).map(([st, value]) => ({ key: `system.stats.${st}.value`, value })) : [];
     const same = mine.length === 1 && want.length === (mine[0].changes ?? []).length && want.every((w) => (mine[0].changes ?? []).some((c) => c.key === w.key && Number(c.value) === w.value));
     if (same) return strain;
