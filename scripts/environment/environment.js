@@ -7,7 +7,7 @@ import { Conditions } from "../conditions/engine.js";
 import { Cards } from "../combat/cards.js";
 import { Sources } from "./sources.js";
 import { weatherFor, HAZARDS, WEATHER_CONDITION } from "./weather-data.js";
-import { sightPenalty, worse } from "./visibility-data.js";
+import { sightParts, worse } from "./visibility-data.js";
 import { debounce, L, esc } from "../util.js";
 
 const ENV = "env";
@@ -124,18 +124,18 @@ export const Environment = {
     // Light and darkness are read for the encounter only; the weather's own obscurement goes to
     // everyone the weather reaches, in a fight or not.
     const level = visibility && Settings.get("visibilityEnabled") && canvas?.ready ? this.levelFor(doc) : "bright";
-    const sp = sightPenalty({ level, weather: w.sight, vision: gear.vision, cap: Number(Settings.get("visibilityCap")) || 0 });
+    const sp = sightParts({ level, weather: w.sight, vision: gear.vision, cap: Number(Settings.get("visibilityCap")) || 0 });
 
     const desired = new Map();
     for (const c of w.conditions) desired.set(c.id, { changes: c.changes });
     for (const id of w.extra) desired.set(id, { changes: null });
-    if (sp.condition) {
-      const c = Registry.get(sp.condition);
-      // Weather alone (no darkness) follows the "on by default" setting; darkness always counts.
-      const changes = sightChanges(sp.total).map((ch) => ({ ...ch, onByDefault: sp.darkness < 0 || !!Settings.get("weatherOnByDefault") }));
-      // Weather and poor light together: the name says how much is each, so a -3 in rain explains itself.
-      const split = sp.weather < 0 && sp.darkness < 0 ? `: ${L(`${LANG}.Visibility.Split`, { weather: sp.weather, light: sp.darkness })}` : "";
-      desired.set(sp.condition, { changes, name: `${c?.name ?? sp.condition} (${sp.total}${split})` });
+    // Two conditions, each for what it is: the light's (Low Light or Darkness) and the weather's (Obscured).
+    const named = (id, value, capped = false) => `${Registry.get(id)?.name ?? id} (${value}${capped ? `, ${L(`${LANG}.Visibility.Capped`)}` : ""})`;
+    if (sp.light) desired.set(sp.light.id, { changes: sightChanges(sp.light.value), name: named(sp.light.id, sp.light.value) });
+    if (sp.obscured) {
+      // Weather follows the "on by default" setting; darkness always counts.
+      const changes = sightChanges(sp.obscured).map((ch) => ({ ...ch, onByDefault: !!Settings.get("weatherOnByDefault") }));
+      desired.set("obscured", { changes, name: named("obscured", sp.obscured, sp.capped) });
     }
     const row = {
       token: doc,

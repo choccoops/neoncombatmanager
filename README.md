@@ -1189,12 +1189,17 @@ their target is while they have one (setting):
   a fight: everyone the weather reaches carries it as **Obscured (-2)**, in an encounter or not.
   Only the light and darkness above are read for the encounter alone.
 
-The result is one condition per character: **Low Light** (-1, night or poor lighting, p.129),
-**Darkness** (-4, a task obscured by darkness, p.129) or **Obscured** (weather, smoke). Its
-penalty applies to the checks that need sight (Perception by sight, ranged and melee attacks
+The result is up to two conditions per character, each for what it is: from the light, **Low
+Light** (-1, night or poor lighting, p.129) or **Darkness** (-4, a task obscured by darkness,
+p.129); from the weather, **Obscured** at the weather's own penalty. Rain in low light shows
+as *Low Light (-1)* beside *Obscured (-2)*. Together they never pass the cap (the 2070 Core
+Rules' Visibility cap, a house rule; Cyberpunk RED itself has no such limit): the light counts
+in full and the weather takes what's left, so in the dark the rain adds nothing and smog in low
+light is *Obscured (-3, capped)*. Set the cap to 0 for no limit. Their
+penalties apply to the checks that need sight (Perception by sight, ranged and melee attacks
 by default; a setting), as situational modifiers shown ticked in the roll dialog, so a player
 with an Infrared Nightvision Scope can untick it for that shot. **Low Light/Infrared/UV
-cybereyes** cancel it entirely (p.360). Conditions the GM places by hand win over the
+cybereyes** cancel them entirely (p.360). Conditions the GM places by hand win over the
 automatic ones.
 
 ## Macros

@@ -295,7 +295,8 @@ export const CONDITIONS = [
   /* ------------------------------------------------------------------ */
   { id: "lowLight", category: "visibility", img: `${A}/low-light.svg`, page: 129, sight: -1, group: "visibility" },
   { id: "darkness", category: "visibility", img: `${A}/darkness.svg`, page: 129, sight: -4, group: "visibility" },
-  { id: "obscured", category: "visibility", img: `${A}/obscured.svg`, page: 129, sight: -4, group: "visibility" }
+  // Not in the visibility group: rain or smoke in the way sits beside Low Light or Darkness, each showing for what it is.
+  { id: "obscured", category: "visibility", img: `${A}/obscured.svg`, page: 129, sight: -4 }
 ];
 
 /** Built-in conditions by id. */

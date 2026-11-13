@@ -10,8 +10,12 @@
   standing in Heavy Rain out of combat had the rain's condition but no Obscured. Everyone the
   weather reaches now carries Obscured at the weather's penalty, in an encounter or not. Light
   and darkness are still read for the encounter only.
-- **A sight penalty says what it's made of.** When weather and poor light add up, the
-  condition's name shows the split: *Obscured (-3: weather -2, light -1)*.
+- **Light and weather show separately.** Poor light and weather used to be folded into one
+  condition, so rain in low light read as a single *Obscured (-3)* with no Low Light in sight.
+  A character now carries each for what it is: **Low Light (-1)** or **Darkness (-4)** from the
+  light, and **Obscured (-2)** from the weather, side by side. The two still never add up past
+  the cap (4 by default; the 2070 Core Rules' Visibility cap, a house rule, and a setting): the
+  light counts in full and the weather takes what's left, marked *capped*.
 - When obscurement penalties come off a roll, the attack card now names the round that was
   loaded, so it's plain which ammo did it.
 

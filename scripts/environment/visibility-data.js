@@ -79,3 +79,17 @@ export function litBy(point, sources) {
   }
   return best;
 }
+
+/**
+ * The same penalty as two conditions, so each shows for what it is: the light's (Low Light -1 or
+ * Darkness -4) and the weather's (Obscured). Together they never pass the cap (2070 Core Rules
+ * Ch07, Visibility cap: a house rule); the light counts in full and the weather takes what's left.
+ * @returns {{ total: number, light: { id: string, value: number } | null, obscured: number, capped: boolean }}
+ */
+export function sightParts(p) {
+  const sp = sightPenalty(p);
+  if (!sp.total) return { total: 0, light: null, obscured: 0, capped: false };
+  const light = sp.darkness < 0 ? { id: (p.level ?? "bright") === "dark" ? "darkness" : "lowLight", value: sp.darkness } : null;
+  const obscured = Math.min(0, sp.total - sp.darkness);
+  return { total: sp.total, light, obscured, capped: obscured !== sp.weather };
+}
