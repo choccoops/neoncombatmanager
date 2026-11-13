@@ -21,7 +21,7 @@ import { Shots } from "./shots.js";
 import { Sync } from "./sync.js";
 import { Xray } from "./xray.js";
 import { Equipped, improvedSmart } from "./equipped.js";
-import { specialsOf, specialMods, moreDice, ruleCrit } from "./specials.js";
+import { specialsOf, specialMods, moreDice, ruleCrit, wielderCheck, CAPACITY } from "./specials.js";
 import { Stakes } from "../stakes/stakes.js";
 import { L, esc } from "../util.js";
 
@@ -135,6 +135,7 @@ export const Arsenal = {
     Hooks.on(Compat.chatRenderHook, (message, html) => this.decorate(message, html));
     Socket.on("arsenalPush", (data) => this.pushAsGM(data));
     Socket.on("arsenalConditions", (data) => this.conditionsAsGM(data));
+    Hooks.on("updateItem", (item, changes, options, userId) => this.capacityCheck(item, changes, userId));
   },
 
   /** Modules add their rebuilds now (Neon At Home: the Melee Rebuilds, the Ricochet Compensator). */
@@ -285,6 +286,17 @@ export const Arsenal = {
         else if (state.shortBurst) await Rebuilds.setState(actor, item, { shortBurst: null });
       }
       if (sp?.autofire && mode === "autofire") tag.autofireRounds = sp.autofire;
+      // What the weapon asks of its shooter, and of its ammo.
+      if (sp?.bodyReq || sp?.recoil || sp?.recoilAuto) {
+        const arms = [...(actor.items ?? [])].filter((i) => i.type === "cyberware" && i.system?.type === "cyberArm" && i.system?.isInstalled).length;
+        const check = wielderCheck(sp, { body: CPR.stat(actor, "body"), cyberarms: arms, prone: Conditions.has("prone", actor) }, { autofire: mode === "autofire" });
+        if (check.short) tag.bodyShort = check.short;
+        if (check.injury) {
+          tag.recoil = check.injury;
+          if (!Conditions.has(check.injury, actor)) await Conditions.add(check.injury, actor);
+        }
+      }
+      if (sp?.ammoOnly && info.ranged && info.ammoType && info.ammoType !== sp.ammoOnly) tag.wrongAmmo = sp.ammoOnly;
       if (sp?.aimedDodge && mode === "aimed") tag.dodgePenalty = sp.aimedDodge;
       if (pre0.firstShot && game.combat?.id) await Rebuilds.setState(actor, item, { firstShot: game.combat.id });
       if (pre0.special) tag.specialMod = (roll.mods ?? []).find((m) => m?.id === `${MODULE_ID}-special`)?.value ?? 0;
@@ -357,6 +369,8 @@ export const Arsenal = {
         roll.bonusDamage = (Number(roll.bonusDamage) || 0) + sp.critBonus;
         tag.critBonusRule = sp.critBonus;
       }
+      if (sp?.effect) tag.effect = sp.effect;
+      if (sp?.throughCover) tag.throughCover = true;
       if (sp?.ablate) {
         const more = state.fired && sp.ablate.charged ? sp.ablate.charged : sp.ablate.extra;
         extra.ablationValue = (Number(extra.ablationValue) || 0) + more;
@@ -497,6 +511,12 @@ export const Arsenal = {
     if (a.kind === "damage" && a.critBonusRule) notes.push(L(`${LANG}.Arsenal.Note.critBonus`, { bonus: a.critBonusRule }));
     if (a.kind === "damage" && a.ablate) notes.push(L(`${LANG}.Arsenal.Note.ablate`, { extra: a.ablate }));
     if (a.kind === "damage" && a.ruleCrit) notes.push(L(`${LANG}.Arsenal.Note.ruleCrit`, { face: a.critRule?.face ?? 5, bonus: a.ruleCrit }));
+    const named = (id) => esc(Registry.get(id)?.name ?? id);
+    if (a.kind === "attack" && a.bodyShort) notes.push(L(`${LANG}.Arsenal.Note.bodyShort`, a.bodyShort));
+    if (a.kind === "attack" && a.recoil) notes.push(L(`${LANG}.Arsenal.Note.recoil`, { injury: named(a.recoil) }));
+    if (a.kind === "attack" && a.wrongAmmo) notes.push(L(`${LANG}.Arsenal.Note.wrongAmmo`, { ammo: L(`${LANG}.Arsenal.AmmoOnly.${a.wrongAmmo}`) }));
+    if (a.kind === "damage" && a.effect) notes.push(a.effect.dv ? L(`${LANG}.Arsenal.Note.effectDv`, { dv: a.effect.dv, skill: esc(a.effect.skill), effect: named(a.effect.id) }) : L(`${LANG}.Arsenal.Note.effect`, { effect: named(a.effect.id) }));
+    if (a.kind === "damage" && a.throughCover) notes.push(L(`${LANG}.Arsenal.Note.throughCover`));
     if (a.kind === "attack" && a.smartBonus) notes.push(L(`${LANG}.Arsenal.Note.smartBonus`, { value: a.smartBonus }));
     if (a.kind === "attack" && a.smartNoLink) notes.push(L(`${LANG}.Arsenal.Note.smartNoLink`));
     if (a.kind === "attack" && a.unobscured) notes.push(L(`${LANG}.Arsenal.Note.unobscured`, { value: a.unobscured }));
@@ -511,6 +531,9 @@ export const Arsenal = {
     if (a.kind === "damage" && a.area && game.user.isGM) {
       const doc = Blast.find(a.actorId, a.itemId);
       if (doc) buttons.push(`<button type="button" data-arsenal="apply" data-template="${esc(doc.uuid)}"><i class="fa-solid fa-burst"></i> ${L(`${LANG}.Arsenal.ApplyArea`)}</button>`);
+    }
+    if (a.kind === "damage" && a.effect && a.targets?.length && (game.user.isGM || actor?.isOwner)) {
+      buttons.push(`<button type="button" data-arsenal="effect"><i class="fa-solid fa-fire"></i> ${L(`${LANG}.Arsenal.EffectButton`, { effect: named(a.effect.id), count: a.targets.length })}</button>`);
     }
     if (a.kind === "damage" && a.cover?.length && game.user.isGM) {
       a.cover.forEach((c, i) => buttons.push(`<button type="button" data-arsenal="cover" data-i="${i}"><i class="fa-solid fa-shield-halved"></i> ${L(`${LANG}.Cover.HitButton`, { cover: esc(c.label), name: esc(c.name) })}</button>`));
@@ -530,14 +553,34 @@ export const Arsenal = {
         ev.currentTarget.disabled = true;
         const c = a.cover[Number(ev.currentTarget.dataset.i)];
         const dmg = damageFromHtml(message.content);
-        Cover.damage(c, dmg?.total ?? 0, { explosive: !!a.explosive }).catch((err) => ui.notifications.error(err.message));
+        Cover.damage(c, dmg?.total ?? 0, { explosive: !!a.explosive || !!a.throughCover }).catch((err) => ui.notifications.error(err.message));
       });
     }
+    box.querySelector("[data-arsenal=effect]")?.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.currentTarget.disabled = true;
+      this.applyEffect(a).catch((err) => ui.notifications.error(err.message));
+    });
     box.querySelector("[data-arsenal=retry]")?.addEventListener("click", (ev) => {
       ev.preventDefault();
       ev.currentTarget.disabled = true;
       this.promptRetry(message).catch((err) => ui.notifications.error(err.message));
     });
+  },
+
+  /** Put a weapon's effect (On Fire, Prone...) on the targets its damage card was rolled against (through the GM). */
+  applyEffect(a) {
+    if (!a?.effect?.id || !a.targets?.length) return Promise.resolve(0);
+    return Socket.request("arsenalConditions", { scene: canvas?.scene?.id, tokens: a.targets, ids: [a.effect.id] });
+  },
+
+  /** A weapon that takes no capacity attachments has one fitted: say so (whoever fitted it). */
+  capacityCheck(item, changes, userId) {
+    if (userId !== game.user.id || item?.type !== "weapon" || !item.actor) return;
+    const touched = changes?.system?.installedItems ?? changes?.["system.installedItems"] ?? changes?.["system.installedItems.list"];
+    if (!touched || !specialsOf(item)?.noCapacity) return;
+    const bad = Rebuilds.upgradesOf(item, item.actor).find((u) => CAPACITY.test(u.name ?? ""));
+    if (bad) ui.notifications?.warn(L(`${LANG}.Arsenal.NoCapacity`, { name: item.name, upgrade: bad.name }));
   },
 
   sourceLabel(s) {

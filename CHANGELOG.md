@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.29.0
+
+**Weapons' own rules, second part.** More of the lines a weapon's card carries are read and
+applied; 192 of the catalog's 466 weapons now have at least one.
+
+- **What it does to its targets.** *Sets what it damages Strongly On Fire* and *must beat DV15
+  Athletics or go Prone* put a button on the damage card that places the condition on the
+  targets the roll was made against.
+- **What it asks of its shooter.** *BODY 11+ unless mounted* (with its Prone and cyberarm
+  variants) warns on the attack card when the shooter is short. *Without BODY 8+ or a cyberarm,
+  firing gives you Torn Muscle* (and the Autofire *Broken Arm*) puts the injury on the shooter as
+  the shot is fired.
+- **Ammo and reloading.** A warning when a weapon that takes only Improved Smart, Armor-Piercing
+  or Expansive ammo has something else loaded, and when a capacity attachment is fitted to one
+  that takes none. A weapon's reload rule is said as it's reloaded from the Action HUD.
+- **Rounds that carry through cover** are treated as an explosive's by *Hit the cover*.
+- Not automated: stat penalties while a weapon is held, magazines of several ammo types, a
+  weapon's own priced rounds, effects worded for one weapon only, and areas set off by a
+  Critical Injury or a kill.
+
 ## 1.28.0
 
 **From the first playtest.**

@@ -821,7 +821,7 @@ test("the rest of the first part: Bonus Damage, Armor-Piercing rounds, the first
   assert.equal(P("In the Round you draw it: head Aimed Shots count 5s as 6s for Critical Injuries."), null, "tied to the Round it's drawn: the table's");
   assert.deepEqual(P("An Aimed Shot fires 2 rounds for +1d6 (6d6)."), { aimedRounds: 2, aimedDice: 1 });
   assert.deepEqual(P("+1 to hit on its first Single Shot of a fight."), { firstShot: 1 });
-  assert.deepEqual(P("No capacity attachments; every round also counts as Armor-Piercing."), { ap: true });
+  assert.deepEqual(P("No capacity attachments; every round also counts as Armor-Piercing."), { ap: true, noCapacity: true });
   assert.deepEqual(P("Excellent Quality two-handed."), { twoHanded: { attack: 1, aimed: 0, autofire: 0 } });
   assert.deepEqual(P("Autofire and Suppressive Fire only, 20 rounds each."), { autoOnly: true });
   assert.deepEqual(P("No Autofire."), { noAutofire: true });
@@ -930,4 +930,73 @@ test("the last of the first part: rules by the head or a range, dice that drop t
   await Arsenal.preRoll(gun, auto);
   assert.equal(auto.formula, "3d6dl1");
   for (const k of ["Arsenal.Note.dropLowest", "Arsenal.ChargeBodyFree", "Arsenal.ChargeBodyHalf", "Arsenal.Defense.WeaponDodge"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.${k}`), `NEONCOMBAT.${k}`, k);
+});
+
+/* ---------------------------------------- */
+/*  Weapons' own rules, second part         */
+/* ---------------------------------------- */
+
+test("second part: what a weapon does to its targets and asks of its shooter, its ammo and its reloading", async () => {
+  const { parseSpecials, wielderCheck, CAPACITY } = await import("../scripts/arsenal/specials.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.deepEqual(P("Sets what it damages Strongly On Fire."), { effect: { id: "onFireStrong" } });
+  assert.deepEqual(P("Anyone it hits must beat DV15 Athletics or go Prone."), { effect: { id: "prone", dv: 15, skill: "Athletics" } });
+  assert.deepEqual(P("BODY 11+ unless mounted."), { bodyReq: { body: 11, proneBody: null, prone: false, cyberarm: false } });
+  assert.deepEqual(P("BODY 13+ (or 11+ and Prone) unless mounted.").bodyReq, { body: 13, proneBody: 11, prone: false, cyberarm: false });
+  assert.deepEqual(P("BODY 9+ or Prone unless mounted.").bodyReq, { body: 9, proneBody: null, prone: true, cyberarm: false });
+  assert.deepEqual(P("BODY 9+ or a cyberarm unless mounted.").bodyReq, { body: 9, proneBody: null, prone: false, cyberarm: true });
+  assert.deepEqual(P("Without BODY 8+ or a cyberarm, firing gives you Torn Muscle; on Autofire without BODY 10+ or a cyberarm, a Broken Arm."),
+    { recoil: { body: 8, arms: 1, injury: "tornMuscle" }, recoilAuto: { body: 10, arms: 1, injury: "brokenArm" } });
+  assert.deepEqual(P("Fire it without BODY 12+ or paired cyberarms and you suffer Torn Muscle (if you don't have it already)."), { recoil: { body: 12, arms: 2, injury: "tornMuscle" } });
+  assert.equal(P("With BODY 10+, its Critical Injuries deal +3 Bonus Damage (8)."), null, "not a requirement");
+  assert.deepEqual(P("No capacity attachments, Improved Smart Ammunition only."), { ammoOnly: "smart", noCapacity: true });
+  assert.deepEqual(P("Armor-Piercing only, at the price of Basic (this gun only)."), { ammoOnly: "armorPiercing" });
+  assert.deepEqual(P("Reloading takes two Reload Actions."), { reload: { actions: 2, move: null } });
+  assert.deepEqual(P("With one hand free, reload by giving up your Move Action."), { reload: { actions: 1, move: "oneHand" } });
+  assert.deepEqual(P("Its rounds carry damage through cover like an Explosive."), { throughCover: true });
+  assert.ok(CAPACITY.test("Extended Magazine") && CAPACITY.test("Drum Magazine") && !CAPACITY.test("Smartgun Link"));
+
+  const heavy = { bodyReq: { body: 13, proneBody: 11, prone: false, cyberarm: false } };
+  assert.deepEqual(wielderCheck(heavy, { body: 12 }).short, { need: 13, have: 12 });
+  assert.equal(wielderCheck(heavy, { body: 12, prone: true }).short, null, "Prone, 11 is enough");
+  assert.equal(wielderCheck({ bodyReq: { body: 9, cyberarm: true } }, { body: 5, cyberarms: 1 }).short, null);
+  const kick = { recoil: { body: 8, arms: 1, injury: "tornMuscle" }, recoilAuto: { body: 10, arms: 1, injury: "brokenArm" } };
+  assert.equal(wielderCheck(kick, { body: 7 }).injury, "tornMuscle");
+  assert.equal(wielderCheck(kick, { body: 9 }).injury, null);
+  assert.equal(wielderCheck(kick, { body: 9 }, { autofire: true }).injury, "brokenArm", "Autofire asks for more");
+  assert.equal(wielderCheck(kick, { body: 5, cyberarms: 1 }, { autofire: true }).injury, null, "a cyberarm takes it");
+
+  // On the rolls.
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
+  game.user.targets = new Set();
+  const ammo = { _id: "a1", name: "Basic Shotgun Slugs", type: "ammo", system: { variety: "shotgunSlug", type: "basic", amount: 10 } };
+  const solo = crew("Fury", [weapon("w1", "Alabai", { weaponType: "shotgun", installedItems: { list: ["a1"] }, description: desc("Without BODY 8+ or a cyberarm, firing gives you Torn Muscle. BODY 11+ unless mounted. Sets what it damages Strongly On Fire. Armor-Piercing only, at the price of Basic. Its rounds carry damage through cover like an Explosive.") }), ammo]);
+  solo.system.stats = { body: { value: 6 } };
+  const gun = solo.items.get("w1");
+  await Arsenal.preRoll(gun, new CPRAttackRoll([]));
+  const t = Arsenal.pending.tag;
+  assert.deepEqual(t.bodyShort, { need: 11, have: 6 });
+  assert.equal(t.recoil, "tornMuscle");
+  assert.ok(Conditions.has("tornMuscle", solo), "the injury is on the shooter");
+  assert.equal(t.wrongAmmo, "armorPiercing");
+  await Arsenal.preRoll(gun, new CPRAttackRoll([]));
+  assert.equal(Conditions.effects(solo, "tornMuscle").length, 1, "not twice");
+  await Arsenal.preRoll(gun, new CPRDamageRoll("5d6"));
+  assert.deepEqual(Arsenal.pending.tag.effect, { id: "onFireStrong" });
+  assert.equal(Arsenal.pending.tag.throughCover, true);
+  // The damage card's button puts the condition on the targets, through the GM.
+  const asked = [];
+  const { Socket } = await import("../scripts/socket.js");
+  const request = Socket.request;
+  Socket.request = async (action, data) => asked.push([action, data]);
+  await Arsenal.applyEffect({ effect: { id: "onFireStrong" }, targets: ["t1", "t2"] });
+  Socket.request = request;
+  assert.deepEqual(asked, [["arsenalConditions", { scene: "sc1", tokens: ["t1", "t2"], ids: ["onFireStrong"] }]]);
+  // Someone with the BODY for it: nothing.
+  const big = crew("Stop Sign", [weapon("w1", "Alabai", { weaponType: "shotgun", description: gun.system.description })]);
+  big.system.stats = { body: { value: 12 } };
+  await Arsenal.preRoll(big.items.get("w1"), new CPRAttackRoll([]));
+  assert.ok(!Arsenal.pending.tag.bodyShort && !Arsenal.pending.tag.recoil && !Conditions.has("tornMuscle", big));
+  for (const k of ["Note.bodyShort", "Note.recoil", "Note.wrongAmmo", "Note.effect", "Note.effectDv", "Note.throughCover", "EffectButton", "NoCapacity", "AmmoOnly.smart", "ReloadRule.actions", "ReloadRule.oneHand", "ReloadRule.twoHanded", "ReloadRule.always"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.${k}`), `NEONCOMBAT.Arsenal.${k}`, k);
 });

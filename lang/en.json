@@ -2455,6 +2455,19 @@
         "noLink": "Smart weapon without a link"
       },
       "Ricochet": "Ricochet",
+      "EffectButton": "{effect}: the {count} targeted",
+      "NoCapacity": "{name} takes no capacity attachments: {upgrade} doesn't belong on it.",
+      "AmmoOnly": {
+        "smart": "Improved Smart Ammunition",
+        "armorPiercing": "Armor-Piercing ammo",
+        "expansive": "Expansive ammo"
+      },
+      "ReloadRule": {
+        "actions": "reloading takes {count} Reload Actions.",
+        "oneHand": "With one hand free, it reloads for your Move Action.",
+        "twoHanded": "Held in two hands, it reloads for your Move Action.",
+        "always": "It can reload for your Move Action."
+      },
       "NoAimed": "{name} can't make Aimed Shots.",
       "NoSingle": "{name} can only Autofire or lay down Suppressive Fire right now.",
       "TwoHands": "Two hands",
@@ -2482,6 +2495,12 @@
         "critBonus": "This weapon's Critical Injuries deal +{bonus} Bonus Damage (counted if the dice make one).",
         "ablate": "This weapon ablates {extra} more SP.",
         "ruleCrit": "A Critical Injury by this weapon's rule ({face}s count as 6s): roll the injury and add its {bonus} Bonus Damage, which the total above doesn't include.",
+        "bodyShort": "This weapon asks for BODY {need}; the shooter has {have}. Unless it's mounted, that's the GM's call.",
+        "recoil": "Fired without the BODY or the cyberarm for it: {injury} on the shooter.",
+        "wrongAmmo": "This weapon takes {ammo} only.",
+        "effect": "Whoever it damages: {effect}.",
+        "effectDv": "Whoever it hits must beat DV{dv} {skill} or be {effect}.",
+        "throughCover": "Its rounds carry their damage through cover, as an explosive's does.",
         "smartBonus": "Smart weapon: +{value} to this attack (linked).",
         "smartNoLink": "Smart weapon without a Personal Link or Subdermal Grip: no +1.",
         "unobscured": "Improved Smart: ignores {value} from obscurement (darkness, smoke, fog).",
