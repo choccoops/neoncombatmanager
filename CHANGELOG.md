@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.30.1
+
+- **Targeting a Tech scope's outline works.** The click on an outline was reaching Foundry as a
+  click on empty canvas, which let go of the shooter and of every target, so the outline could
+  never be targeted for a Charged Shot. The click and the Target key are now caught at the
+  token layer itself: a click on an outline (anywhere in its square) targets it, Shift-click
+  adds it, and the shooter stays selected.
+
 ## 1.30.0
 
 **Weapons' own rules, third part: weapons that remember the fight.** 217 of the catalog's 466

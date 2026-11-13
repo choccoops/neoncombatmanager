@@ -88,6 +88,7 @@ export const Xray = {
       this.clearPads();
     });
     Hooks.on("targetToken", (user) => user?.id === game.user?.id && this.drawPads());
+    Hooks.once("ready", () => this.wrapClicks());
     Hooks.on("renderWallConfig", (app, html) => this.wallConfig(app, html));
   },
 
@@ -186,15 +187,74 @@ export const Xray = {
     return next;
   },
 
+  /** The outlined token under a point on the canvas (its square), or null. */
+  at(point) {
+    if (!point || !this.drawn.size) return null;
+    return this.seen().find((t) => {
+      const w = t.w ?? 100;
+      const h = t.h ?? 100;
+      return Math.abs(point.x - t.center.x) <= w / 2 && Math.abs(point.y - t.center.y) <= h / 2;
+    }) ?? null;
+  },
+
+  /**
+   * A token nobody can see takes no clicks, so the click on its outline arrives at the token layer
+   * as a click on empty canvas, which would let go of the shooter (and of every target). The layer's
+   * own click handler is where it's caught: a click on an outline targets it and goes no further.
+   * The Target key works the same way, from where the pointer is.
+   */
+  wrapClicks() {
+    const proto = CONFIG.Canvas?.layers?.tokens?.layerClass?.prototype;
+    if (proto && typeof proto._onClickLeft === "function" && !proto._onClickLeft._ncmScope) {
+      const original = proto._onClickLeft;
+      const self = this;
+      proto._onClickLeft = function (event, ...rest) {
+        const hit = self.on ? self.at(self.pointOf(event)) : null;
+        if (!hit) return original.call(this, event, ...rest);
+        self.target(hit, { add: !!(event?.shiftKey ?? event?.data?.originalEvent?.shiftKey) });
+        return undefined;
+      };
+      proto._onClickLeft._ncmScope = true;
+    }
+    if (typeof document !== "undefined" && !this._keys) {
+      this._keys = true;
+      document.addEventListener("keydown", (event) => this.onKey(event));
+    }
+  },
+
+  /** Where a canvas click landed, in canvas coordinates. */
+  pointOf(event) {
+    const p = event?.interactionData?.origin ?? event?.data?.origin ?? canvas?.mousePosition ?? null;
+    return p ? { x: Number(p.x), y: Number(p.y) } : null;
+  },
+
+  /** The Target key with the pointer over an outline (and no token of its own under it). */
+  onKey(event) {
+    if (!this.on || !this.drawn.size || event.repeat || canvas?.tokens?.hover) return false;
+    const el = event.target;
+    if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName ?? ""))) return false;
+    let keys = ["KeyT"];
+    try {
+      const bound = (game.keybindings?.get("core", "target") ?? []).map((b) => b.key).filter(Boolean);
+      if (bound.length) keys = bound;
+    } catch {
+      /* the default */
+    }
+    if (!keys.includes(event.code)) return false;
+    const hit = this.at(canvas?.mousePosition);
+    if (!hit) return false;
+    this.target(hit, { add: !!event.shiftKey });
+    return true;
+  },
+
   clearPads() {
     const old = canvas?.interface?.getChildByName?.(PADS);
     if (old) old.destroy({ children: true });
   },
 
   /**
-   * A token nobody can see can't be clicked, so each outline gets a pad of its own over it: click
-   * to target (Shift adds), hover and press the Target key as on any token. Foundry draws no
-   * target marker on a token that's out of sight, so the pad draws the brackets.
+   * Foundry draws no target marker on a token that's out of sight, so each targeted outline gets
+   * brackets of its own, drawn here.
    */
   drawPads(want = this.seen()) {
     this.clearPads();
@@ -207,9 +267,8 @@ export const Xray = {
       const h = t.h ?? 100;
       const pad = new PIXI.Graphics();
       pad.position.set(t.center.x - w / 2, t.center.y - h / 2);
-      pad.hitArea = new PIXI.Rectangle(0, 0, w, h);
-      pad.eventMode = "static";
-      pad.cursor = "crosshair";
+      // Drawn only: the click and the Target key are caught at the token layer (wrapClicks), so nothing is handled twice.
+      pad.eventMode = "none";
       if (game.user.targets?.has?.(t)) {
         const k = Math.max(8, Math.round(Math.min(w, h) * 0.22));
         pad.lineStyle(3, CYAN, 0.95);
@@ -217,18 +276,6 @@ export const Xray = {
           pad.moveTo(x + dx * k, y).lineTo(x, y).lineTo(x, y + dy * k);
         }
       }
-      // The click stays here: the canvas would otherwise let go of the selected shooter, and the scope with it.
-      pad.on("pointerdown", (event) => {
-        if (event.button !== undefined && event.button !== 0) return;
-        event.stopPropagation?.();
-        this.target(t, { add: !!event.shiftKey });
-      });
-      pad.on("pointerover", () => {
-        if (canvas.tokens) canvas.tokens.hover = t;
-      });
-      pad.on("pointerout", () => {
-        if (canvas.tokens?.hover === t) canvas.tokens.hover = null;
-      });
       box.addChild(pad);
     }
     canvas.interface.addChild(box);
