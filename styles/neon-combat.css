@@ -1311,3 +1311,34 @@ li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; li
   #ncm-alert-banner, #ncm-alert-timer .ncm-alert-label { animation: none; }
   #ncm-alert-timer .ncm-alert-bar i { transition: none; }
 }
+
+/* Chrome on its owner's screen (scripts/neonfx/screen.js): over the map, under the interface, never in the way. */
+#ncm-screen-fx { position: fixed; inset: 0; z-index: 1; pointer-events: none; --ncm-screen-tint: #39ff14; }
+#ncm-screen-fx > div { position: absolute; inset: 0; pointer-events: none; }
+#ncm-screen-fx[data-kind="sandevistan"] .ncm-screen-tone { backdrop-filter: saturate(0.5) contrast(1.08); background: color-mix(in srgb, var(--ncm-screen-tint) 7%, transparent); }
+#ncm-screen-fx[data-kind="sandevistan"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 52%, color-mix(in srgb, var(--ncm-screen-tint) 30%, transparent) 100%); animation: ncm-screen-breathe 2.4s ease-in-out infinite alternate; }
+#ncm-screen-fx[data-kind="sandevistan"] .ncm-screen-streaks {
+  background: repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg 5deg, color-mix(in srgb, var(--ncm-screen-tint) 22%, transparent) 5.4deg 5.8deg, transparent 6.2deg 11deg);
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 58%, #000 100%); mask-image: radial-gradient(ellipse at center, transparent 58%, #000 100%);
+  animation: ncm-screen-rush 0.9s linear infinite;
+}
+#ncm-screen-fx[data-kind="berserk"] .ncm-screen-tone { backdrop-filter: saturate(1.25) contrast(1.12); background: rgba(255, 23, 68, 0.05); }
+#ncm-screen-fx[data-kind="berserk"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 44%, color-mix(in srgb, var(--ncm-screen-tint) 46%, transparent) 100%); animation: ncm-screen-beat 0.86s ease-in-out infinite; }
+#ncm-screen-fx[data-kind="berserk"] .ncm-screen-streaks { display: none; }
+#ncm-screen-fx[data-kind="kerenzikov"] .ncm-screen-tone { backdrop-filter: saturate(0.88); background: rgba(61, 139, 255, 0.025); }
+#ncm-screen-fx[data-kind="kerenzikov"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 70%, color-mix(in srgb, var(--ncm-screen-tint) 14%, transparent) 100%); animation: ncm-screen-breathe 6s ease-in-out infinite alternate; }
+#ncm-screen-fx[data-kind="kerenzikov"] .ncm-screen-streaks { display: none; }
+#ncm-screen-fx.still > div { animation: none !important; }
+@keyframes ncm-screen-breathe { from { opacity: 0.7; } to { opacity: 1; } }
+@keyframes ncm-screen-beat { 0%, 100% { opacity: 0.55; } 12% { opacity: 1; } 24% { opacity: 0.7; } 36% { opacity: 0.95; } }
+@keyframes ncm-screen-rush { from { opacity: 0.5; transform: scale(1); } to { opacity: 0.9; transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { #ncm-screen-fx > div { animation: none !important; } }
+
+/* The Token HUD's Chrome button and its list of switches. */
+#token-hud .ncm-chrome-hud { position: relative; }
+#token-hud .ncm-chrome-hud.active > i { color: #00e5ff; text-shadow: 0 0 8px #00e5ff; }
+#token-hud .ncm-chrome-palette { display: none; position: absolute; left: calc(100% + 6px); top: 0; min-width: 190px; padding: 4px; background: rgba(7, 7, 11, 0.92); border: 1px solid #00e5ff; text-align: left; }
+#token-hud .ncm-chrome-hud.open .ncm-chrome-palette { display: block; }
+#token-hud .ncm-chrome-palette button { display: flex; align-items: center; gap: 6px; width: 100%; margin: 2px 0; padding: 3px 6px; line-height: 1.2; font-size: 12px; color: #d8dbe8; background: #14141f; border: 1px solid #26263a; cursor: pointer; }
+#token-hud .ncm-chrome-palette button img { width: 20px; height: 20px; border: 0; flex: none; }
+#token-hud .ncm-chrome-palette button.active { color: #fff; border-color: #00e5ff; box-shadow: inset 0 0 8px rgba(0, 229, 255, 0.45); }

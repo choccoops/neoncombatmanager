@@ -6,6 +6,9 @@ import { Phone } from "../comms/phone.js";
 import { Hub } from "../hub/hub.js";
 import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
 import { flavorOf } from "../arsenal/kinds.js";
+import { Xray } from "../arsenal/xray.js";
+import { specialsOf, singleShots } from "../arsenal/specials.js";
+import { Switches } from "../neonfx/switches.js";
 import { Hands } from "./hands.js";
 import { EncounterMode } from "../combat/mode.js";
 import { Hack } from "../hack/hack.js";
@@ -59,7 +62,7 @@ export function weaponsOf(actor) {
  * @param {object} [ctx] - { token, combat }
  */
 export function catalog(actor, { token = null, combat = game.combat } = {}) {
-  const out = Object.fromEntries(["turn", "weapons", "skills", "role", "net", "status", "utility", "macros", "stats", "gear"].map((s) => [s, []]));
+  const out = Object.fromEntries(["turn", "weapons", "skills", "role", "net", "chrome", "status", "utility", "macros", "stats", "gear"].map((s) => [s, []]));
   if (!actor) return out;
   const items = [...(actor.items ?? [])];
 
@@ -85,9 +88,12 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     const s = w.system ?? {};
     const ranged = !!s.isRanged;
     const mode = getProperty(actor, `flags.cyberpunk-red-core.firetype-${w.id}`) ?? "";
-    const buttons = [{ key: `atk:${w.id}`, label: L(`${LANG}.Hud.Attack`), icon: "fa-solid fa-crosshairs", on: !mode }];
-    buttons.push({ key: `aim:${w.id}`, label: L(`${LANG}.Hud.Aimed`), icon: "fa-solid fa-bullseye", on: mode === "aimed" });
-    if (Number(s.fireModes?.autoFire) > 0) buttons.push({ key: `auto:${w.id}`, label: L(`${LANG}.Hud.Autofire`), icon: "fa-solid fa-burst", on: mode === "autofire" });
+    // The weapon's own rules (its card): fire modes it doesn't have, a two-handed grip that changes it.
+    const own = specialsOf(w);
+    const single = singleShots(own, Rebuilds.isCharged(actor, w));
+    const buttons = single ? [{ key: `atk:${w.id}`, label: L(`${LANG}.Hud.Attack`), icon: "fa-solid fa-crosshairs", on: !mode }] : [];
+    if (single && !own?.noAimed) buttons.push({ key: `aim:${w.id}`, label: L(`${LANG}.Hud.Aimed`), icon: "fa-solid fa-bullseye", on: mode === "aimed" });
+    if (Number(s.fireModes?.autoFire) > 0 && !own?.noAutofire) buttons.push({ key: `auto:${w.id}`, label: L(`${LANG}.Hud.Autofire`), icon: "fa-solid fa-burst", on: mode === "autofire" });
     if (s.fireModes?.suppressiveFire) buttons.push({ key: `supp:${w.id}`, label: L(`${LANG}.Hud.Suppressive`), icon: "fa-solid fa-wind", on: mode === "suppressive" });
     if (mode !== "suppressive") buttons.push({ key: `dmg:${w.id}`, label: L(`${LANG}.Hud.Damage`), icon: "fa-solid fa-droplet" });
     if (ranged) {
@@ -97,7 +103,14 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     }
     // Neon Arsenal's switches: a Power gun's ricochet, a Tech gun's charge.
     const upgrades = Rebuilds.upgradesOf(w, actor);
-    buttons.push(...Rebuilds.buttons(actor, w, traitsOf(ranged ? flavorOf(w, upgrades) : null, upgrades)));
+    const traits = traitsOf(ranged ? flavorOf(w, upgrades) : null, upgrades);
+    if (own?.twoHanded) buttons.push({ key: `2h:${w.id}`, label: L(`${LANG}.Arsenal.TwoHands`), icon: "fa-solid fa-hands", on: !!Rebuilds.state(actor, w).twoHands });
+    buttons.push(...Rebuilds.buttons(actor, w, traits).filter((b) => !(own?.noRicochet && b.key.startsWith("rico:"))));
+    // A Tech gun's scope: target whoever it shows behind thin cover (each press, the next one).
+    if (traits.active.includes("charge") && Xray.on) {
+      const seen = Xray.drawn.size;
+      buttons.push({ key: `scope:${w.id}`, label: L(`${LANG}.Arsenal.ScopeTarget`), icon: "fa-solid fa-binoculars", sub: seen ? String(seen) : "", off: !seen });
+    }
     const mag = s.magazine;
     out.weapons.push({
       key: `weapon:${slug(w.name)}`, label: w.name, img: w.img,
@@ -148,6 +161,11 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   // Status: this module's conditions, on or off.
   for (const c of Registry.all().filter((x) => STATUS_CATS.includes(x.category) && !/^(tarot|stakes)/.test(x.id))) {
     out.status.push({ key: `cond:${c.id}`, label: c.name, img: c.img, on: Conditions.has(c.id, actor) });
+  }
+
+  // Chrome that switches on and off (a Sandevistan, Berserk, their Operating Systems, Tactile Boost, Optical Camo...).
+  for (const sw of Switches.of(actor)) {
+    out.chrome.push({ key: sw.key, run: `chrome:${sw.key.slice(7)}`, label: sw.label, img: sw.img, icon: sw.img ? undefined : "fa-solid fa-microchip", on: sw.on, alert: sw.on });
   }
 
   // Utility: this module's windows for this character.

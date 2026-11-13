@@ -529,6 +529,26 @@
         "name": "Berserk",
         "hint": "Berserk running for a minute: no Seriously or Mortally Wounded penalties (the automatic Critical Injuries and Death Saves stay). An Action to start; 1-hour cooldown."
       },
+      "chromeKerenzikov": {
+        "name": "Kerenzikov",
+        "hint": "A Kerenzikov, always on from the day it's installed: you can dodge ranged attacks whatever your REF, and get +2 to notice an Ambush (a tick box on Perception rolls). With a Kerenzikov Boost System fitted it's Speedware, with +2 Initiative always. Its player's screen runs a shade cooler, as if the world were a touch slow."
+      },
+      "chromeOpticalCamo": {
+        "name": "Optical Camo",
+        "hint": "Optical Camo running for a minute, until you attack, Run or get hit: free Stealth Checks even in plain sight, Perception against you at −4, and nobody targets you without beating your Stealth with Perception. An Action to start; 10-minute recharge. The token stays where everyone can see it: who can see the character is the table's call."
+      },
+      "chromeMicrorotors": {
+        "name": "Microrotors",
+        "hint": "Microrotors running for 2 Rounds: two-handed and cyberlimb melee weapons go from ROF1 to ROF2, and ROF2 ones can make Aimed Shots at ROF2. An Action to start; 10-Round cooldown."
+      },
+      "chromeKers": {
+        "name": "KERS Mask",
+        "hint": "The reflection system is on: your face is masked, cameras included. −2 to Human Perception and Lip Reading against you. An Action to switch on or off."
+      },
+      "tactileBoost": {
+        "name": "Feeling for Motion",
+        "hint": "Tactile Boost, with a hand flat on a surface: you feel anything moving within 20 m/yds, walls or not, as a ripple where it last moved. That hand does nothing else while you do. Needs Sequencer for the ripples."
+      },
       "chromeBerserker": {
         "name": "Berserk: Berserker OS",
         "hint": "Biodyne 'Berserker' running for 5 Rounds: Berserk, with small jobs as half of a ROF2 Action; once a Round a melee hit for 4+ counts as two for Martial Arts. Without an FBC or Cyberspine: -4 to ranged attacks."
@@ -587,7 +607,11 @@
       },
       "smartRebuild": {
         "name": "Smart Weapon",
-        "hint": "A Smart gun in hand: +1 to its attacks with a Personal Link or Subdermal Grip. Improved Smart Ammunition ignores visual obscurement, and a miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK), the first shot's penalties still applying."
+        "hint": "A Smart gun in hand: +1 to its attacks with a Personal Link or Subdermal Grip, on the roll as Smart weapon. Improved Smart Ammunition ignores visual obscurement, and a miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK), the first shot's penalties still applying."
+      },
+      "improvedSmart": {
+        "name": "Improved Smart Loaded",
+        "hint": "Improved Smart Ammunition in a Smart gun in hand. Its attacks ignore every visual obscurement penalty (Low Light, Darkness, Obscured, smoke, pop-ups, weather's sight penalties): they come off the roll before its dialog opens, and the card says how much. A miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK). The gun's own +1 shows on the roll as Smart weapon."
       },
       "monoRebuild": {
         "name": "Mono-edge Weapon",
@@ -1141,6 +1165,18 @@
         "name": "Speedware and Berserk conditions",
         "hint": "A Sandevistan, Berserk or one of their Operating Systems running is a condition on the character (Chrome running), whose token shows it: a burst as it kicks in, a look while it runs (each Operating System in its own colour), a ring as it stops. Switching the chrome's \"(active)\" effect, the Neon FX macros and the condition itself all stay in step, and Initiative in a fight moves with it."
       },
+      "fxScreen": {
+        "name": "Chrome on my screen",
+        "hint": "While your own character's Sandevistan or Berserk runs, your screen shows it (the world drained and edged in the Operating System's colour; a red, beating rim for Berserk), and a Kerenzikov cools the picture slightly all the time. Only you see it; it never hides anything or takes a click. Off: no screen effect for you."
+      },
+      "chromeTokenHud": {
+        "name": "Chrome switches on the Token HUD",
+        "hint": "A chip button on the Token HUD's right column lists the chrome the character can switch on and off (Sandevistan and Berserk with their Operating Systems, Tactile Boost, Optical Camo and the rest), lit while it runs."
+      },
+      "fxTactile": {
+        "name": "Tactile Boost ripples",
+        "hint": "A selected character Feeling for Motion (Tactile Boost, a hand on a surface) shows their player an amber ripple where anyone out of sight moves within 20 m/yds, through walls. Only that player sees it; GM-hidden tokens never show."
+      },
       "hackFx": {
         "name": "Quickhack animations",
         "hint": "Jack In, Breach, quickhacks, Self-ICE, detection and Jack Out play on the map: a link between the Netrunner and the target, the upload, and how it lands. Needs Sequencer; uses JB2A when it's installed."
@@ -1242,6 +1278,10 @@
       "coverDoors": {
         "name": "Doors are Wood (Thin) cover",
         "hint": "A door with no cover of its own counts as Wood (Thin): 5 HP. Off: only walls you tag are cover."
+      },
+      "coverPieceWalls": {
+        "name": "Cover pieces are barriers",
+        "hint": "Each cover piece on the map gets walls of its own, kept by the GM's client: nobody walks through it, and a tall piece (a wall section, a fence, a partition) also blocks sight and light. A destroyed piece opens until it's repaired. Off: pieces are plain tokens."
       },
       "coverLabels": {
         "name": "Show cover damage on the map (GM)",
@@ -2093,7 +2133,8 @@
         "stats": "STATs",
         "gear": "Gear",
         "own": "My group",
-        "macros": "Macros"
+        "macros": "Macros",
+        "chrome": "Chrome"
       },
       "LayoutFor": "Layout for",
       "ScopeMe": "All my characters",
@@ -2337,6 +2378,9 @@
       "Right": "Right",
       "Empty": "No one on stage"
     },
+    "Chrome": {
+      "HudTitle": "Chrome: switch on or off"
+    },
     "FX": {
       "NoSequencer": "Neon FX needs the Sequencer module.",
       "SelectToken": "Select a token you own first.",
@@ -2411,14 +2455,35 @@
         "noLink": "Smart weapon without a link"
       },
       "Ricochet": "Ricochet",
+      "NoAimed": "{name} can't make Aimed Shots.",
+      "NoSingle": "{name} can only Autofire or lay down Suppressive Fire right now.",
+      "TwoHands": "Two hands",
+      "ScopeTarget": "Target through cover",
+      "ScopeNone": "The scope shows nobody behind thin cover.",
       "Charge": "Charge",
       "Charged": "Charged",
       "RicochetOn": "{weapon}: the next shot ricochets (−4, can't be dodged).",
       "RicochetOff": "{weapon}: no ricochet.",
       "ChargeTitle": "{name} charges the {weapon}",
+      "ChargeBodyFree": "This weapon charges without giving up the Move Action. It holds for 20 Rounds or until fired: the next non-explosive attack is ROF1, goes through Thin cover without damaging it, and ignores half the target's SP (2070 Core Rules, Ch07).",
+      "ChargeBodyHalf": "This weapon charges for half your MOVE (round down), given up before you move. It holds for 20 Rounds or until fired: the next non-explosive attack is ROF1, goes through Thin cover without damaging it, and ignores half the target's SP (2070 Core Rules, Ch07).",
       "ChargeBody": "That's the Move Action. It holds for 20 Rounds or until fired: the next non-explosive attack is ROF1, goes through Thin cover without damaging it, and ignores half the target's SP (2070 Core Rules, Ch07).",
       "Note": {
         "ricochet": "Ricochet (−4): bounced off cover at a target the shooter knows is there. It can't be dodged, unless the target can follow the bounce (speedware that's on, or low-light, IR or UV optics in the dark): then at −4 (2070 Core Rules, Ch07, Ricochets in Play).",
+        "burst": "A {rounds}-round burst.",
+        "burstShort": "A short burst: the last {rounds} in the magazine.",
+        "burstShortDamage": "A short burst: the last {rounds} in the magazine, for {damage}.",
+        "autofireRounds": "This weapon's Autofire spends {rounds}.",
+        "specialMod": "This weapon's own rule: {value} to the attack.",
+        "shortBurstDamage": "Fired short of a full burst: {damage}.",
+        "dropLowest": "This weapon rolls {formula} and drops the lowest.",
+        "aimedDice": "Aimed Shot with this weapon: +{dice}d6.",
+        "ap": "This weapon's rounds count as Armor-Piercing: 2 SP ablated.",
+        "critBonus": "This weapon's Critical Injuries deal +{bonus} Bonus Damage (counted if the dice make one).",
+        "ablate": "This weapon ablates {extra} more SP.",
+        "ruleCrit": "A Critical Injury by this weapon's rule ({face}s count as 6s): roll the injury and add its {bonus} Bonus Damage, which the total above doesn't include.",
+        "smartBonus": "Smart weapon: +{value} to this attack (linked).",
+        "smartNoLink": "Smart weapon without a Personal Link or Subdermal Grip: no +1.",
         "unobscured": "Improved Smart: ignores {value} from obscurement (darkness, smoke, fog).",
         "powerCrit": "Power: the Critical Injury's Bonus Damage is +5 more.",
         "chargedAttack": "Charged Tech shot: ROF1, through Thin cover without damaging it.",
@@ -2493,6 +2558,7 @@
         "MeleeBody": "Melee is always an opposed roll: DEX + Evasion + 1d10 against the attack roll.",
         "WhyChrome": "({chrome} lets you dodge bullets.)",
         "RicochetDodge": "It's a ricochet you can follow: Evade takes {penalty}.",
+        "WeaponDodge": "This weapon's Aimed Shots are hard to dodge: Evade takes {penalty}.",
         "ShellDodge": "It's a Shotgun Automatic Control Group's shell attack: Evade takes {penalty}.",
         "Evade": "Evade",
         "Tank": "Tank",

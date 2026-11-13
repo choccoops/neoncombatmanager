@@ -20,7 +20,8 @@ import { Defense } from "./defense.js";
 import { Shots } from "./shots.js";
 import { Sync } from "./sync.js";
 import { Xray } from "./xray.js";
-import { Equipped } from "./equipped.js";
+import { Equipped, improvedSmart } from "./equipped.js";
+import { specialsOf, specialMods, moreDice, ruleCrit } from "./specials.js";
 import { Stakes } from "../stakes/stakes.js";
 import { L, esc } from "../util.js";
 
@@ -156,6 +157,19 @@ export const Arsenal = {
     proto[`${MODULE_ID}Arsenal`] = true;
     const confirm = proto.confirmRoll;
     const self = this;
+    // And createRoll: what a Smart gun and its Improved Smart rounds change is on the roll before its dialog opens.
+    if (typeof proto.createRoll === "function") {
+      const create = proto.createRoll;
+      proto.createRoll = function (...args) {
+        const roll = create.apply(this, args);
+        try {
+          if (roll && typeof roll.then !== "function") self.preDialog(this, roll);
+        } catch (err) {
+          console.error(`${MODULE_ID} | arsenal (before the roll dialog)`, err);
+        }
+        return roll;
+      };
+    }
     proto.confirmRoll = async function (cprRoll, ...rest) {
       const out = (await confirm.call(this, cprRoll, ...rest)) ?? cprRoll;
       try {
@@ -171,6 +185,63 @@ export const Arsenal = {
   tokenFor(actor) {
     const controlled = (canvas?.tokens?.controlled ?? []).find((t) => t.actor?.id === actor.id);
     return controlled ?? actor.getActiveTokens?.()?.[0] ?? null;
+  },
+
+  /** What preDialog did to each roll, for the card: roll -> { unobscured, split }. */
+  pre: new WeakMap(),
+
+  /**
+   * Before the roll dialog opens, so the player sees it there: a Smart gun's +1 as a line of its
+   * own ("Smart weapon"; taken out of the weapon's own modifier where Neon Hub put it), and, with
+   * Improved Smart Ammunition loaded, the visual obscurement penalties off the roll (the dialog
+   * lists them unticked).
+   */
+  preDialog(item, roll) {
+    const actor = item?.actor;
+    if (!actor || rollKind(roll) !== "attack" || !["weapon", "cyberware"].includes(item.type) || !Settings.get("arsenalRebuilds")) return null;
+    if (!Array.isArray(roll.mods)) return null;
+    const upgrades = Rebuilds.upgradesOf(item, actor);
+    const info = classify(item, loadedAmmo(item, actor), upgrades);
+    // The weapon's own rules (its card): a flat modifier by name, and what the magazine held before the shot.
+    const name = String(roll.constructor?.name ?? "");
+    const sp = specialsOf(item);
+    const st = Rebuilds.state(actor, item);
+    // "Its first Single Shot of a fight": once per combat (outside one, every shot is a first).
+    const firstShot = !!sp?.firstShot && !/Aimed|Autofire|Suppressive/.test(name) && (!game.combat?.id || st.firstShot !== game.combat.id);
+    const own = specialMods(sp, { aimed: /Aimed/.test(name), autofire: /Autofire/.test(name), twoHands: !!st.twoHands, firstShot, name: item.name, moduleId: MODULE_ID });
+    for (const m of own) if (!roll.mods.some((x) => x?.id === m.id)) roll.mods.push(m);
+    const done = { unobscured: 0, split: false, special: own.length > 0, firstShot, magazine: Number(item.system?.magazine?.value) };
+    this.pre.set(roll, done);
+    if (!info.ranged || info.flavor !== "smart") return own.length ? done : null;
+    const traits = traitsOf(info.flavor, upgrades);
+    const linked = Rebuilds.linked(actor);
+    if (traits.attackMod && !roll.mods.some((m) => m?.id === `${MODULE_ID}-smart`)) {
+      // Neon Hub's Smart guns hold the +1 in their own attack modifier: it comes out, to be shown by name.
+      if (smartBaked(item, upgrades)) {
+        const own = roll.mods.find((m) => m && !m.id && m.key === "bonuses.universalAttack" && Number(m.value) >= traits.attackMod);
+        if (own) {
+          own.value = Number(own.value) - traits.attackMod;
+          if (!own.value) roll.mods.splice(roll.mods.indexOf(own), 1);
+          done.split = true;
+        }
+      }
+      if ((done.split || !smartBaked(item, upgrades)) && (!traits.needsLink || linked)) {
+        roll.mods.push({ id: `${MODULE_ID}-smart`, value: traits.attackMod, source: L(`${LANG}.Arsenal.Mod.smart`), key: "bonuses.ranged", category: "combat" });
+      }
+    }
+    if (improvedSmart(info)) done.unobscured = this.unobscure(actor, roll);
+    this.pre.set(roll, done);
+    return done;
+  },
+
+  /** Take the visual obscurement penalties off a roll (Improved Smart rounds): the sum that came off. */
+  unobscure(actor, roll) {
+    const off = obscurementMods(roll.mods, (id) => Registry.ofEffect(actor.effects?.get?.(id)));
+    for (const m of off) {
+      const i = roll.mods.indexOf(m);
+      if (i >= 0) roll.mods.splice(i, 1);
+    }
+    return off.reduce((sum, m) => sum + Number(m.value), 0);
   },
 
   /** Before the dice: traits on the roll, an area placed, the DV it faces. */
@@ -203,17 +274,36 @@ export const Arsenal = {
     }
     if (kind === "attack") {
       const aimed = mode === "aimed" || (Bridge.rolls?.CPRAimedAttackRoll && roll instanceof Bridge.rolls.CPRAimedAttackRoll);
+      // The weapon's own rules: a burst is named on the card; fired short, its damage is the card's.
+      const sp = specialsOf(item);
+      const pre0 = this.pre.get(roll) ?? {};
+      if (sp?.burst && info.ranged && (sp.burst.every || !["autofire", "suppressive"].includes(mode))) {
+        const had = Number.isFinite(pre0.magazine) ? pre0.magazine : Infinity;
+        const short = had < sp.burst.rounds;
+        tag.burst = { rounds: short ? Math.max(1, had) : sp.burst.rounds, short, damage: short ? sp.burst.shortDamage : null };
+        if (short && sp.burst.shortDamage) await Rebuilds.setState(actor, item, { shortBurst: sp.burst.shortDamage });
+        else if (state.shortBurst) await Rebuilds.setState(actor, item, { shortBurst: null });
+      }
+      if (sp?.autofire && mode === "autofire") tag.autofireRounds = sp.autofire;
+      if (sp?.aimedDodge && mode === "aimed") tag.dodgePenalty = sp.aimedDodge;
+      if (pre0.firstShot && game.combat?.id) await Rebuilds.setState(actor, item, { firstShot: game.combat.id });
+      if (pre0.special) tag.specialMod = (roll.mods ?? []).find((m) => m?.id === `${MODULE_ID}-special`)?.value ?? 0;
       if (rebuilds) {
-        const ricochet = !!state.ricochet && info.ranged && !info.explosive;
-        const mods = attackMods(traits, { ranged: info.ranged, aimed, ricochet, linked: Rebuilds.linked(actor), baked: smartBaked(item, upgrades) });
+        const ricochet = !!state.ricochet && info.ranged && !info.explosive && !sp?.noRicochet;
+        const pre = pre0;
+        // The Smart +1 may be on the roll already, by name, since before its dialog (preDialog).
+        const mods = attackMods(traits, { ranged: info.ranged, aimed, ricochet, linked: Rebuilds.linked(actor), baked: smartBaked(item, upgrades) && !pre.split })
+          .filter((m) => !(roll.mods ?? []).some((x) => x?.id === m.id));
         if (mods.length && typeof roll.addMod === "function") roll.addMod(mods);
+        if ((roll.mods ?? []).some((m) => m?.id === `${MODULE_ID}-smart` && Number(m.value) > 0)) tag.smartBonus = traits.attackMod;
+        else if (info.ranged && info.flavor === "smart" && traits.needsLink && !Rebuilds.linked(actor)) tag.smartNoLink = true;
         tag.ricochet = ricochet;
         if (state.ricochet) await Rebuilds.setState(actor, item, { ricochet: false });
         // Improved Smart rounds ignore visual obscurement: those penalties come off the roll.
-        if (info.flavor === "smart" && info.ammoType === "smart" && info.ranged && typeof roll.removeMod === "function") {
-          const off = obscurementMods(roll.mods, (id) => Registry.ofEffect(actor.effects?.get?.(id)));
-          for (const m of off) roll.removeMod(m.id);
-          if (off.length) tag.unobscured = off.reduce((sum, m) => sum + Number(m.value), 0);
+        if (improvedSmart(info)) {
+          // Those ticked back on in the dialog come off too: the rounds ignore them.
+          const off = (pre.unobscured ?? 0) + this.unobscure(actor, roll);
+          if (off) tag.unobscured = off;
         }
         if (traits.active.includes("charge") && Rebuilds.isCharged(actor, item) && !info.explosive) {
           tag.charged = true;
@@ -229,7 +319,7 @@ export const Arsenal = {
         for (const t of targets) {
           const dv = await Dv.forWeapon(item, Dv.distance(token, t), { autofire: mode === "autofire" });
           // Cover in the way (a charged Tech shot goes through Thin cover): the card says so, and the damage card can hit it.
-          const cover = Cover.forShot(token, t, { throughThin: tag.charged });
+          const cover = Cover.forShot(token, t, { throughThin: tag.charged && !sp?.noThrough });
           tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref"), dodge: Defense.ability(t.actor, { attacker: actor, ricochet: tag.ricochet }).can, ...(cover ? { cover } : {}) });
         }
         tag.dv = tag.hits[0]?.dv ?? null;
@@ -238,8 +328,46 @@ export const Arsenal = {
     }
     if (kind === "damage" && info.ranged && !info.area && token && targets.length) {
       const charged = !!Rebuilds.state(actor, item).fired;
-      const cover = targets.map((t) => ({ name: t.name, ...Cover.forShot(token, t, { throughThin: charged }) })).filter((c) => c.kind);
+      const cover = targets.map((t) => ({ name: t.name, ...Cover.forShot(token, t, { throughThin: charged && !specialsOf(item)?.noThrough }) })).filter((c) => c.kind);
       if (cover.length) tag.cover = cover;
+    }
+    if (kind === "damage") {
+      // The weapon's own rules on its damage: more dice on an Aimed Shot, a short burst's damage, SP ablated, its Critical Injury rule.
+      const sp = specialsOf(item);
+      const extra = (roll.rollCardExtraArgs ??= {});
+      if (state.shortBurst) {
+        roll.formula = state.shortBurst;
+        tag.shortBurst = state.shortBurst;
+        await Rebuilds.setState(actor, item, { shortBurst: null });
+      } else if (sp?.aimedDrop && mode === "aimed") {
+        roll.formula = sp.aimedDrop;
+        tag.dropLowest = sp.aimedDrop;
+      } else if (sp?.autofireDrop && roll.isAutofire) {
+        roll.formula = sp.autofireDrop;
+        tag.dropLowest = sp.autofireDrop;
+      } else if (sp?.aimedDice && mode === "aimed" && typeof roll.formula === "string") {
+        roll.formula = moreDice(roll.formula, sp.aimedDice);
+        tag.aimedDice = sp.aimedDice;
+      }
+      if (sp?.ap && (Number(extra.ablationValue) || 0) < 2) {
+        extra.ablationValue = 2;
+        tag.ap = true;
+      }
+      if (sp?.critBonus) {
+        roll.bonusDamage = (Number(roll.bonusDamage) || 0) + sp.critBonus;
+        tag.critBonusRule = sp.critBonus;
+      }
+      if (sp?.ablate) {
+        const more = state.fired && sp.ablate.charged ? sp.ablate.charged : sp.ablate.extra;
+        extra.ablationValue = (Number(extra.ablationValue) || 0) + more;
+        tag.ablate = more;
+      }
+      const head = mode === "aimed" && roll.location === "head";
+      if (sp?.critBonusHead && head) {
+        roll.bonusDamage = (Number(roll.bonusDamage) || 0) + sp.critBonusHead;
+        tag.critBonusRule = (tag.critBonusRule || 0) + sp.critBonusHead;
+      }
+      if (sp?.crit) tag.critRule = { ...sp.crit, aimed: mode === "aimed", head, distance: token && targets[0] ? Dv.distance(token, targets[0]) : null };
     }
     if (kind === "damage" && rebuilds) {
       const charged = !!state.fired;
@@ -261,6 +389,11 @@ export const Arsenal = {
     if (!p || userId !== game.user.id || Date.now() - p.at > PENDING_MS || !String(message.content ?? "").includes('class="rollcard"')) return;
     this.pending = null;
     const crit = p.tag.kind === "damage" ? rolledCrit(p.roll) : false;
+    // Not two 6s, but a Critical Injury by the weapon's own rule (5s count as 6s...).
+    if (p.tag.critRule && !crit) {
+      const faces = p.roll?.faces ?? p.roll?.terms?.[0]?.results?.map((r) => r.result) ?? [];
+      if (ruleCrit({ crit: p.tag.critRule }, faces, p.tag.critRule)) p.tag.ruleCrit = Number(p.roll?.bonusDamage) || 5;
+    }
     message.updateSource({ [`flags.${MODULE_ID}.arsenal`]: { ...p.tag, total: Number(p.roll.resultTotal) || 0, penalty: penaltyOf(p.roll), crit, at: Date.now() } });
   },
 
@@ -354,6 +487,18 @@ export const Arsenal = {
     }
     if (a.kind === "attack" && a.ricochet) notes.push(L(`${LANG}.Arsenal.Note.ricochet`));
     if (a.kind === "attack" && a.charged) notes.push(L(`${LANG}.Arsenal.Note.chargedAttack`));
+    if (a.kind === "attack" && a.burst) notes.push(L(`${LANG}.Arsenal.Note.${a.burst.short ? (a.burst.damage ? "burstShortDamage" : "burstShort") : "burst"}`, { rounds: a.burst.rounds, damage: a.burst.damage ?? "" }));
+    if (a.kind === "attack" && a.autofireRounds) notes.push(L(`${LANG}.Arsenal.Note.autofireRounds`, { rounds: a.autofireRounds.rounds }));
+    if (a.kind === "attack" && a.specialMod) notes.push(L(`${LANG}.Arsenal.Note.specialMod`, { value: a.specialMod > 0 ? `+${a.specialMod}` : a.specialMod }));
+    if (a.kind === "damage" && a.shortBurst) notes.push(L(`${LANG}.Arsenal.Note.shortBurstDamage`, { damage: a.shortBurst }));
+    if (a.kind === "damage" && a.dropLowest) notes.push(L(`${LANG}.Arsenal.Note.dropLowest`, { formula: a.dropLowest.replace("dl1", "") }));
+    if (a.kind === "damage" && a.aimedDice) notes.push(L(`${LANG}.Arsenal.Note.aimedDice`, { dice: a.aimedDice }));
+    if (a.kind === "damage" && a.ap) notes.push(L(`${LANG}.Arsenal.Note.ap`));
+    if (a.kind === "damage" && a.critBonusRule) notes.push(L(`${LANG}.Arsenal.Note.critBonus`, { bonus: a.critBonusRule }));
+    if (a.kind === "damage" && a.ablate) notes.push(L(`${LANG}.Arsenal.Note.ablate`, { extra: a.ablate }));
+    if (a.kind === "damage" && a.ruleCrit) notes.push(L(`${LANG}.Arsenal.Note.ruleCrit`, { face: a.critRule?.face ?? 5, bonus: a.ruleCrit }));
+    if (a.kind === "attack" && a.smartBonus) notes.push(L(`${LANG}.Arsenal.Note.smartBonus`, { value: a.smartBonus }));
+    if (a.kind === "attack" && a.smartNoLink) notes.push(L(`${LANG}.Arsenal.Note.smartNoLink`));
     if (a.kind === "attack" && a.unobscured) notes.push(L(`${LANG}.Arsenal.Note.unobscured`, { value: a.unobscured }));
     if (a.kind === "damage" && a.crit && a.critBonus) notes.push(L(`${LANG}.Arsenal.Note.powerCrit`));
     if (a.kind === "damage" && a.charged) notes.push(L(`${LANG}.Arsenal.Note.chargedDamage`));
@@ -500,6 +645,12 @@ export const Arsenal = {
   async toggle(actor, item, which, { token = null } = {}) {
     if (!actor?.isOwner || !item) return null;
     const t = token ?? this.tokenFor(actor);
+    if (which === "twoHands") {
+      const on = !Rebuilds.state(actor, item).twoHands;
+      await Rebuilds.setState(actor, item, { twoHands: on });
+      Hooks.callAll(`${MODULE_ID}.refreshUI`);
+      return on;
+    }
     if (which === "ricochet") {
       const on = await Rebuilds.toggleRicochet(actor, item);
       ui.notifications.info(L(`${LANG}.Arsenal.${on ? "RicochetOn" : "RicochetOff"}`, { weapon: item.name }));
@@ -510,7 +661,7 @@ export const Arsenal = {
       this.chargeLook(t, item, on);
       if (on) {
         Sound.play("techCharge");
-        await Cards.post({ actor, kicker: L(`${LANG}.Arsenal.Kicker`), title: L(`${LANG}.Arsenal.ChargeTitle`, { name: esc(actor.name), weapon: esc(item.name) }), tone: "cyan", body: `<p>${L(`${LANG}.Arsenal.ChargeBody`)}</p>` });
+        await Cards.post({ actor, kicker: L(`${LANG}.Arsenal.Kicker`), title: L(`${LANG}.Arsenal.ChargeTitle`, { name: esc(actor.name), weapon: esc(item.name) }), tone: "cyan", body: `<p>${L(`${LANG}.Arsenal.ChargeBody${{ free: "Free", half: "Half" }[specialsOf(item)?.chargeCost] ?? ""}`)}</p>` });
       }
       return on;
     }

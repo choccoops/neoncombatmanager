@@ -11,7 +11,7 @@
  * Keys are names, not ids, so a layout carries over to a player's other characters.
  */
 
-export const SOURCES = ["turn", "weapons", "skills", "role", "net", "status", "utility", "macros", "stats", "gear"];
+export const SOURCES = ["turn", "weapons", "skills", "role", "net", "chrome", "status", "utility", "macros", "stats", "gear"];
 
 /** The template every player starts from: what a character reaches for in a fight. */
 export const TEMPLATE = {
@@ -22,6 +22,8 @@ export const TEMPLATE = {
     { id: "skills", source: "skills", picks: ["skill:evasion", "skill:perception", "skill:brawling", "skill:meleeweapon", "skill:athletics", "skill:stealth", "skill:firstaid"] },
     { id: "role", source: "role", picks: null },
     { id: "net", source: "net", picks: null },
+    // chrome that switches on and off; a layout saved before it existed gets it shown, not hidden
+    { id: "chrome", source: "chrome", picks: null, show: true },
     { id: "status", source: "status", picks: ["cond:prone", "cond:cover", "cond:hidden", "cond:readiedAction", "cond:grappled", "cond:suppressed"] },
     { id: "utility", source: "utility", picks: null },
     // macros the player picks (or drops on the HUD); empty, it doesn't show
@@ -56,7 +58,8 @@ export function normalize(layout) {
   }
   for (const t of TEMPLATE.groups) {
     if (!groups.some((g) => g.source === t.source && g.id === t.id) && !seen.has(t.id)) {
-      groups.push({ ...clone(t), name: "", icon: "", hidden: true });
+      const { show, ...rest } = clone(t);
+      groups.push({ ...rest, name: "", icon: "", hidden: !show });
     }
   }
   return { v: 1, groups };

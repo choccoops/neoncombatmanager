@@ -87,12 +87,12 @@ function tokenAt(actor, x, y, { visible = true, hidden = false } = {}) {
 
 const { Registry } = await import("../scripts/conditions/registry.js");
 const { Conditions } = await import("../scripts/conditions/engine.js");
-const { segmentsCross, throughThinCover, readWall, Xray } = await import("../scripts/arsenal/xray.js");
+const { segmentsCross, throughThinCover, readWall, Xray, nextScopeTarget } = await import("../scripts/arsenal/xray.js");
 const { bouncePoint, shotLook, shotWall, Shots, flightMs, crossings } = await import("../scripts/arsenal/shots.js");
 const { Equipped, flavorsInHand, inHand, REBUILD_CONDITION } = await import("../scripts/arsenal/equipped.js");
 const { Arsenal, penaltyOf, retryFormula, obscurementMods, rolledCrit } = await import("../scripts/arsenal/arsenal.js");
 const { dodgeAbility, tracksRicochet } = await import("../scripts/arsenal/defense.js");
-const { RebuildRegistry } = await import("../scripts/arsenal/rebuilds.js");
+const { RebuildRegistry, Rebuilds } = await import("../scripts/arsenal/rebuilds.js");
 const { AA } = await import("../scripts/arsenal/aa.js");
 const { RECIPES, LAYERED } = await import("../scripts/neonfx/recipes.js");
 const { SOUNDS, soundFiles } = await import("../scripts/arsenal/profile.js");
@@ -207,6 +207,50 @@ test("a selected Tech shooter sees outlines behind thin cover, on their screen o
   assert.deepEqual(ended.map((e) => e.name), [`ncm-xray-${behindThin.id}`]);
   canvas.tokens.controlled = [];
   assert.deepEqual(Xray.wanted(), []);
+});
+
+test("an outline can be targeted: a click on it, the Target key over it, or the Action HUD's button, for a shot through the cover", async () => {
+  const shooter = crew("Lattice", [weapon("w1", "Heavy Pistol (Tech)")]);
+  await Conditions.add("techRebuild", shooter);
+  const me = tokenAt(shooter, 100, 500);
+  canvas.tokens.controlled = [me];
+  const targets = new Set();
+  const saved = game.user.targets;
+  game.user.targets = targets;
+  const far = tokenAt(makeActor({ name: "Far" }), 900, 500, { visible: false });
+  const near = tokenAt(makeActor({ name: "Near" }), 700, 500, { visible: false });
+  for (const t of [far, near]) t.setTarget = (on, { releaseOthers = true } = {}) => {
+    if (releaseOthers) targets.clear();
+    if (on) targets.add(t);
+    else targets.delete(t);
+  };
+  canvas.tokens.get = (id) => canvas.tokens.placeables.find((t) => t.id === id);
+  canvas.walls.placeables = [wall([500, 0, 500, 1000], { flags: { [M]: { thinCover: true } } })];
+  Xray.refresh();
+  assert.deepEqual(Xray.seen().map((t) => t.name), ["Near", "Far"], "nearest first");
+
+  assert.equal(Xray.target(far), true);
+  assert.deepEqual([...targets].map((t) => t.name), ["Far"]);
+  Xray.target(near, { add: true });
+  assert.equal(targets.size, 2, "Shift keeps the others");
+  Xray.target(far);
+  assert.deepEqual([...targets].map((t) => t.name), [], "a second click lets go (and, without Shift, of the others)");
+  assert.equal(Xray.target(me), false, "only what the scope shows");
+
+  // The HUD's button walks through them.
+  assert.equal(Xray.cycle().name, "Near");
+  assert.equal(Xray.cycle().name, "Far");
+  assert.equal(Xray.cycle().name, "Near");
+  assert.equal(nextScopeTarget([], []), null);
+
+  // The Tech gun's HUD entry has the button, lit up while the scope shows someone.
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  const entry = catalog(shooter).weapons.find((w) => w.label === "Heavy Pistol (Tech)");
+  const scope = entry.buttons.find((b) => b.key === "scope:w1");
+  assert.ok(scope && !scope.off && scope.sub === "2");
+  Xray.drawn.clear();
+  assert.ok(catalog(shooter).weapons.find((w) => w.label === "Heavy Pistol (Tech)").buttons.find((b) => b.key === "scope:w1").off);
+  game.user.targets = saved;
 });
 
 /* ---------------------------------------- */
@@ -388,6 +432,59 @@ test("Improved Smart rounds ignore visual obscurement: darkness, smoke and weath
   assert.ok(r2.mods.some((m) => m.source === "Darkness"), "ordinary rounds still take it");
 });
 
+test("a Smart gun before its roll dialog: the +1 by name, and Improved Smart rounds take obscurement off; both show as conditions and on the card", async () => {
+  const HUB = "cpr-neon-hub";
+  const ammo = { _id: "a1", name: "Improved Smart Ammunition (Rifle)", type: "ammo", system: { variety: "rifle", type: "smart", amount: 10 } };
+  const port = { _id: "n1", name: "Neuroport", type: "cyberware", system: { isInstalled: true } };
+  const hubGun = (extra = {}) => ({ ...weapon("w1", "Kang Tao G-58 Dian", { weaponType: "smg", attackmod: 1, ...extra }), flags: { [HUB]: { weaponType2070: "smart" } } });
+  game.user.targets = new Set();
+
+  // Neon Hub's Smart gun (the +1 is in its own attack modifier), linked, Improved Smart loaded, in the dark.
+  const fury = crew("Fury", [hubGun({ installedItems: { list: ["a1"] } }), ammo, port]);
+  for (const i of fury.items) if (i.flags?.[HUB]) i.flags = { [HUB]: { weaponType2070: "smart" } };
+  const [dark] = await Conditions.add("obscured", fury);
+  const roll = new CPRAttackRoll([
+    { value: 1, source: "Kang Tao G-58 Dian", key: "bonuses.universalAttack", category: "combat" },
+    { id: `bonuses.ranged-${dark.id}`, key: "bonuses.ranged", value: -4, source: "Obscured" }
+  ]);
+  const done = Arsenal.preDialog(fury.items.get("w1"), roll);
+  assert.equal(done.unobscured, -4);
+  assert.equal(done.split, true);
+  assert.deepEqual(roll.mods.map((m) => [m.id ?? m.source, m.value]), [[`${M}-smart`, 1]], "the dialog opens with Smart weapon +1 and Obscured unticked");
+  // The player ticks Obscured back on in the dialog: it still comes off, and the +1 isn't added twice.
+  roll.mods.push({ id: `bonuses.ranged-${dark.id}`, key: "bonuses.ranged", value: -4, source: "Obscured" });
+  await Arsenal.preRoll(fury.items.get("w1"), roll);
+  assert.deepEqual(roll.mods.map((m) => [m.id, m.value]), [[`${M}-smart`, 1]]);
+  assert.equal(Arsenal.pending.tag.unobscured, -8);
+  assert.equal(Arsenal.pending.tag.smartBonus, 1);
+
+  // Without a link the +1 comes out of the gun's modifier and nothing takes its place.
+  const nolink = crew("Rook", [hubGun(), { ...ammo }]);
+  for (const i of nolink.items) if (i.name.startsWith("Kang")) i.flags = { [HUB]: { weaponType2070: "smart" } };
+  const r2 = new CPRAttackRoll([{ value: 1, source: "Kang Tao G-58 Dian", key: "bonuses.universalAttack" }]);
+  Arsenal.preDialog(nolink.items.get("w1"), r2);
+  await Arsenal.preRoll(nolink.items.get("w1"), r2);
+  assert.deepEqual(r2.mods, [], "no link: no +1, and not taken off twice");
+
+  // A Smart gun that isn't Neon Hub's: the +1 is added by name.
+  const other = crew("Lattice", [weapon("w1", "Assault Rifle (Smart)", { weaponType: "assaultRifle" }), { ...port }]);
+  const r3 = new CPRAttackRoll([]);
+  Arsenal.preDialog(other.items.get("w1"), r3);
+  assert.deepEqual(r3.mods.map((m) => [m.id, m.value]), [[`${M}-smart`, 1]]);
+  // A Tech gun, or a damage roll: untouched.
+  const tech = crew("Sable", [weapon("w1", "Heavy Pistol (Tech)")]);
+  assert.equal(Arsenal.preDialog(tech.items.get("w1"), new CPRAttackRoll([])), null);
+
+  // The conditions: Smart Weapon, and Improved Smart Loaded only with the rounds in a Smart gun.
+  assert.deepEqual([...flavorsInHand(fury)].sort(), ["improved", "smart"]);
+  assert.deepEqual([...flavorsInHand(nolink)], ["smart"], "the rounds aren't loaded");
+  const linkGun = crew("V", [weapon("w1", "Assault Rifle", { weaponType: "assaultRifle", installedItems: { list: ["a1"] } }), { ...ammo }]);
+  assert.deepEqual([...flavorsInHand(linkGun)], [], "Improved Smart in a gun that isn't Smart does nothing");
+  await Equipped.sync(fury);
+  assert.ok(Conditions.has("improvedSmart", fury) && Conditions.has("smartRebuild", fury));
+  assert.match(game.i18n.localize("NEONCOMBAT.Condition.improvedSmart.hint"), /obscurement/);
+});
+
 test("a ricochet can be dodged at -4 by whoever can follow it: speedware that's on, or optics in the dark", () => {
   const kz = [{ name: "Kerenzikov", installed: true }];
   const sande = (disabled) => [{ name: "Militech Sandevistan", installed: true, effects: [{ name: "Sandevistan (active)", disabled }] }];
@@ -438,4 +535,399 @@ test("a Mono-edge blade in hand puts on Mono-edge Weapon", async () => {
   assert.ok(Conditions.has("monoRebuild", actor));
   assert.ok(LAYERED.has("monoRebuild"));
   RebuildRegistry.clear();
+});
+
+/* ---------------------------------------- */
+/*  Tactile Boost                           */
+/* ---------------------------------------- */
+
+test("Tactile Boost: a hand on a surface feels motion within 20 m/yds, through any wall, as a ripple where it last moved", async () => {
+  const { Tactile, ripples, feltBy, isTactileBoost, TACTILE_RANGE } = await import("../scripts/neonfx/tactile.js");
+  await Settings.set("fxTactile", true);
+  assert.equal(TACTILE_RANGE, 20);
+  assert.ok(isTactileBoost("Tactile Boost") && isTactileBoost("TACTILE  BOOST (Chipware)") && !isTactileBoost("Olfactory Boost"));
+  assert.ok(feltBy([{ x: 0, y: 0 }], { x: 600, y: 800 }, 1000) && !feltBy([{ x: 0, y: 0 }], { x: 800, y: 800 }, 1000));
+  // Pure: hidden by the GM, in plain view, the viewer, or out of range: no ripple.
+  const felt = new Map([["a", { x: 300, y: 0 }], ["b", { x: 300, y: 0 }], ["c", { x: 300, y: 0 }], ["d", { x: 5000, y: 0 }], ["me", { x: 0, y: 0 }]]);
+  const tokens = [{ id: "a", hidden: false, visible: false }, { id: "b", hidden: true, visible: false }, { id: "c", hidden: false, visible: true }, { id: "d", hidden: false, visible: false }, { id: "me", hidden: false, visible: true }];
+  assert.deepEqual(ripples(felt, tokens, [{ id: "me", x: 0, y: 0 }], 1000), [{ id: "a", x: 300, y: 0 }]);
+  assert.deepEqual(ripples(felt, tokens, [], 1000), [], "nobody feeling: nothing");
+
+  // On the canvas (100 px squares of 2 m/yds: 20 m/yds is 1000 px).
+  Tactile.reset();
+  const fixer = crew("Sable", [{ _id: "tb", name: "Tactile Boost", type: "cyberware", system: { isInstalled: true } }]);
+  const me = tokenAt(fixer, 100, 500);
+  canvas.tokens.controlled = [me];
+  const guard = tokenAt(makeActor({ name: "Guard" }), 600, 500, { visible: false });
+  const moveTo = (t, x, y) => {
+    t.center = { x: x + 50, y: y + 50 };
+    Tactile.moved({ id: t.id, x, y, width: 1, height: 1, parent: canvas.scene });
+  };
+  moveTo(guard, 600, 450);
+  assert.deepEqual(Tactile.wanted(), [], "no hand on the surface: nothing is felt");
+  await Conditions.add("tactileBoost", fixer);
+  moveTo(guard, 700, 450);
+  assert.deepEqual(Tactile.wanted(), [{ id: guard.id, x: 750, y: 500 }], "behind any wall: it's the surface that carries it");
+  Tactile.refresh();
+  const fx = played.filter((s) => call(s, "name")?.[0] === `ncm-tactile-${guard.id}`);
+  assert.equal(fx.length, 2, "two rings a beat apart");
+  assert.ok(fx.every((e) => call(e, "locally") && call(e, "persist") && call(e, "xray")), "this player's screen only, through vision");
+  assert.ok(!fx.some((e) => call(e, "copySprite")), "a ripple, not the person's outline");
+  assert.ok(played.some((s) => call(s, "name")?.[0] === `ncm-tactile-self-${me.id}`), "the reach of the sense, from the hand");
+
+  // They move again: the ripple moves with them. Out past 20 m/yds: gone.
+  moveTo(guard, 800, 450);
+  Tactile.refresh();
+  assert.deepEqual(ended.map((e) => e.name), [`ncm-tactile-${guard.id}`]);
+  assert.equal(Tactile.drawn.get(guard.id).x, 850);
+  moveTo(guard, 1500, 450);
+  assert.deepEqual(Tactile.wanted(), []);
+  // The hand comes off: everything goes, and nothing is remembered.
+  moveTo(guard, 700, 450);
+  await Conditions.remove("tactileBoost", fixer);
+  assert.deepEqual(Tactile.wanted(), []);
+  assert.equal(Tactile.felt.size, 0);
+
+  // With the chipware installed, the Action HUD's Chrome group has the switch.
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  assert.ok(catalog(fixer).chrome.some((e) => e.key === "chrome:tactileboost"));
+  assert.equal(catalog(crew("V", [])).chrome.length, 0);
+  assert.ok(existsSync(path.join(root, "assets/icons/tactile-boost.svg")));
+});
+
+/* ---------------------------------------- */
+/*  Chrome switches, Kerenzikov, the screen */
+/* ---------------------------------------- */
+
+test("chrome switches: what a character can switch on, by what's installed; a Kerenzikov has none", async () => {
+  const { switchesOf, kerenzikovOf } = await import("../scripts/neonfx/switches.js");
+  const { chromeConditions } = await import("../scripts/neonfx/chrome.js");
+  const cw = (id, name, extra = {}) => ({ id, name, type: "cyberware", installed: true, effects: [], in: null, ...extra });
+  const up = (id, name, host, extra = {}) => ({ id, name, type: "itemUpgrade", installed: false, effects: [], in: host, ...extra });
+  const items = [
+    cw("s", "Sandevistan", { effects: [{ name: "Sandevistan (active)", disabled: true }] }),
+    up("f", "Militech ‘Falcon’ OS", "s", { effects: [{ name: "Militech ‘Falcon’ OS (active)", disabled: true }] }),
+    cw("b", "Berserk"),
+    cw("k", "Kerenzikov"), up("kb", "Kerenzikov Boost System", "k"),
+    cw("t", "Tactile Boost"), cw("o", "Optical Camo"), cw("m", "Microrotors"), cw("x", "Kaleidoscopic Electric Reflection System (KERS)"),
+    cw("d", "DeathTrance", { effects: [{ name: "DeathTrance (active)", disabled: true }] }),
+    cw("a", "Adrenaline Convertor", { installed: false, effects: [{ name: "Adrenaline Convertor (active)", disabled: true }] }),
+    cw("e", "Cybereye"), up("loose", "Zetatech ‘Brawler’ OS", null)
+  ];
+  const list = switchesOf(items, chromeConditions());
+  assert.deepEqual(list.map((s) => [s.key, s.kind, s.id]), [
+    ["chrome:sandevistan", "chrome", "sandevistan"], ["chrome:berserk", "chrome", "berserk"],
+    ["chrome:tactileboost", "condition", "tactileBoost"], ["chrome:opticalcamo", "condition", "chromeOpticalCamo"],
+    ["chrome:microrotors", "condition", "chromeMicrorotors"], ["chrome:kaleidoscopicelectricreflectionsystemkers", "condition", "chromeKers"],
+    ["chrome:deathtrance", "effect", "d"]
+  ], "not the Kerenzikov, the Cybereye, chrome that isn't installed, or an Operating System lying loose");
+  assert.equal(list[0].label, "Militech ‘Falcon’ OS", "a Sandevistan's switch is named for the Operating System in it");
+  assert.equal(list[0].condition, "chromeFalcon");
+  assert.equal(list[1].condition, "chromeBerserk", "the loose Brawler OS doesn't run");
+  assert.deepEqual(kerenzikovOf(items), { installed: true, boost: true });
+  assert.deepEqual(kerenzikovOf([cw("k", "Kerenzikov"), up("kb", "Kerenzikov Boost System", null)]), { installed: true, boost: false });
+  assert.deepEqual(kerenzikovOf([cw("k", "Kerenzikov", { installed: false })]), { installed: false, boost: false });
+});
+
+test("switching chrome from the Action HUD puts its Active Effect on and takes it off; a Kerenzikov is on once installed", async () => {
+  await Settings.set("fxChrome", true);
+  const { Switches } = await import("../scripts/neonfx/switches.js");
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  const { Run } = await import("../scripts/hud/run.js");
+  const chromeItem = (id, name, extra = {}) => ({ _id: id, name, type: "cyberware", system: { isInstalled: true, installedItems: { list: [] }, ...extra } });
+  const solo = crew("Fury", [chromeItem("b", "Berserk"), chromeItem("o", "Optical Camo"), chromeItem("k", "Kerenzikov", { installedItems: { list: ["kb"] } }),
+    { _id: "kb", name: "Kerenzikov Boost System", type: "itemUpgrade", system: { type: "cyberware" } }]);
+  solo.isOwner = true;
+  const keys = () => catalog(solo).chrome.map((e) => [e.key, !!e.on]);
+  assert.deepEqual(keys(), [["chrome:berserk", false], ["chrome:opticalcamo", false]]);
+
+  await Run.action(solo, "chrome:berserk");
+  assert.ok(Conditions.has("chromeBerserk", solo), "Berserk runs as its Chrome running condition");
+  await Run.action(solo, "chrome:opticalcamo");
+  assert.ok(Conditions.has("chromeOpticalCamo", solo));
+  assert.deepEqual(keys(), [["chrome:berserk", true], ["chrome:opticalcamo", true]]);
+  await Run.action(solo, "chrome:berserk");
+  await Switches.toggle(solo, "chrome:opticalcamo", { on: false });
+  assert.ok(!Conditions.has("chromeBerserk", solo) && !Conditions.has("chromeOpticalCamo", solo));
+  assert.equal(await Switches.toggle(solo, "chrome:nothing"), null);
+
+  // The Kerenzikov: no switch; the GM's client keeps its condition on, with the Boost System's +2 Initiative.
+  assert.equal(await Switches.syncKerenzikov(solo), true);
+  const [kz] = Conditions.effects(solo, "chromeKerenzikov");
+  assert.ok(kz, "on from the day it's installed");
+  assert.ok(kz.changes.some((c) => c.key === "bonuses.initiative" && Number(c.value) === 2), "the Boost System's +2 Initiative");
+  assert.equal(Registry.get("chromeKerenzikov").hud, false);
+  // The Boost System comes out: the condition stays, without the Initiative.
+  solo.items.get("k").system.installedItems.list = [];
+  await Switches.syncKerenzikov(solo);
+  const [plain] = Conditions.effects(solo, "chromeKerenzikov");
+  assert.ok(plain && !plain.changes.some((c) => c.key === "bonuses.initiative"));
+  assert.ok(plain.changes.some((c) => c.key === "bonuses.perception"), "+2 to notice an Ambush stays, as a tick box");
+  // The Kerenzikov comes out: gone.
+  solo.items.get("k").system.isInstalled = false;
+  assert.equal(await Switches.syncKerenzikov(solo), false);
+  assert.ok(!Conditions.has("chromeKerenzikov", solo));
+});
+
+test("running chrome on its owner's screen only: Berserk over a Sandevistan over a Kerenzikov, in the Operating System's colour, and a switch to turn it off", async () => {
+  const { screenLook, viewpoints, Screen, SCREEN_ID } = await import("../scripts/neonfx/screen.js");
+  assert.equal(screenLook([]), null);
+  assert.deepEqual(screenLook([{ kerenzikov: true }]), { kind: "kerenzikov", tint: "#3d8bff" });
+  assert.deepEqual(screenLook([{ kerenzikov: true, sandevistan: "falcon" }]), { kind: "sandevistan", tint: "#00e5ff" });
+  assert.deepEqual(screenLook([{ sandevistan: true }, { berserk: true }]), { kind: "berserk", tint: "#ff1744" });
+  assert.equal(screenLook([{ berserk: true }], { enabled: false }), null, "the player's own switch");
+  // Whose eyes: your character; selected tokens you own; a GM's NPC only while it's selected.
+  const mine = { id: "a", isOwner: true };
+  const npc = { id: "n", isOwner: true };
+  const theirs = { id: "t", isOwner: false };
+  assert.deepEqual(viewpoints({ character: mine, controlled: [npc, theirs], isGM: false }).map((a) => a.id), ["a", "n"]);
+  assert.deepEqual(viewpoints({ character: mine, controlled: [npc], isGM: true }).map((a) => a.id), ["a", "n"]);
+  assert.deepEqual(viewpoints({ controlled: [npc], isGM: true }).map((a) => a.id), ["n"]);
+  assert.deepEqual(viewpoints({ controlled: [], isGM: true }), []);
+
+  // On a page: the layer goes up while it runs and comes down after, and never takes a click (the stylesheet).
+  const made = [];
+  const el = () => ({ id: "", dataset: {}, style: { props: {}, setProperty(k, v) { this.props[k] = v; } }, classList: { set: new Set(), toggle(c, on) { on ? this.set.add(c) : this.set.delete(c); } }, setAttribute() {}, remove() { made.length = 0; } });
+  globalThis.document = { getElementById: (id) => made.find((e) => e.id === id) ?? null, createElement: () => el(), body: { append: (e) => made.push(e) } };
+  await Settings.set("fxScreen", true);
+  const solo = crew("Fury", []);
+  solo.isOwner = true;
+  const savedChar = game.user.character;
+  game.user.character = solo;
+  assert.equal(Screen.refresh(), null);
+  await Conditions.add("chromeFalcon", solo);
+  assert.deepEqual(Screen.refresh(), { kind: "sandevistan", tint: "#00e5ff" });
+  assert.equal(made[0].id, SCREEN_ID);
+  assert.equal(made[0].dataset.kind, "sandevistan");
+  assert.equal(made[0].style.props["--ncm-screen-tint"], "#00e5ff");
+  await Settings.set("fxScreen", false);
+  assert.equal(Screen.refresh(), null);
+  assert.equal(made.length, 0, "switched off: the layer is gone");
+  await Settings.set("fxScreen", true);
+  await Conditions.remove("chromeFalcon", solo);
+  assert.equal(Screen.refresh(), null);
+  game.user.character = savedChar;
+  delete globalThis.document;
+  const css = readFileSync(path.join(root, "styles/neon-combat.css"), "utf8");
+  assert.match(css, /#ncm-screen-fx \{[^}]*pointer-events: none/);
+});
+
+/* ---------------------------------------- */
+/*  A weapon's own rules, from its card     */
+/* ---------------------------------------- */
+
+test("a weapon's own rules are read from its card: bursts, Autofire rounds, Aimed Shot dice, ablation, Critical Injuries, modifiers, limits", async () => {
+  const { parseSpecials, specialMods, moreDice, ruleCrit, ruleText } = await import("../scripts/arsenal/specials.js");
+  const card = (rule) => `<p>${rule}</p><p><strong>Class:</strong> Heavy Pistol • SMART <strong>Damage:</strong> 3d6/2d6</p><p><small>Item Compendium (2070) • Weapons</small></p>`;
+  assert.equal(ruleText(card("Aimed Shots deal +1d6 (6d6).")), "Aimed Shots deal +1d6 (6d6).", "the stat lines aren't rules");
+  assert.deepEqual(parseSpecials(card("Single Shot fires a 3-round burst. With fewer than 3 left, it empties the magazine for 2d6.")),
+    { burst: { rounds: 3, every: false, short: "empty", shortDamage: "2d6" } });
+  assert.deepEqual(parseSpecials(card("Single Shot fires a 2-round burst; with fewer than 2 left, it empties the magazine for 2d6.")).burst, { rounds: 2, every: false, short: "empty", shortDamage: "2d6" });
+  assert.deepEqual(parseSpecials(card("Every shot is a 3-round burst; it won't fire with fewer than 3 left. Ablates 1 extra SP (2, or 3 with Armor-Piercing).")),
+    { burst: { rounds: 3, every: true, short: "refuse", shortDamage: null }, ablate: { extra: 1, charged: null } });
+  assert.deepEqual(parseSpecials(card("Autofire uses 6 rounds instead of 10.")), { autofire: { rounds: 6, shells: false } });
+  assert.deepEqual(parseSpecials(card("Ablates 2 extra SP (3 charged).")), { ablate: { extra: 2, charged: 3 } });
+  assert.deepEqual(parseSpecials(card("No Aimed Shots. −2 to every attack. Its Power Rebuild can't ricochet.")), { attackMod: -2, noAimed: true, noRicochet: true });
+  assert.deepEqual(parseSpecials(card("On an Aimed Shot, 5s count as 6s for Critical Injuries. Still halves SP when thrown.")), { crit: { face: 5, when: "aimed" } });
+  assert.deepEqual(parseSpecials(card("+1 to Aimed Shots and Autofire.")), { aimedMod: 1, autofireMod: 1 });
+  // Lines that only sound alike are left to the table.
+  assert.deepEqual(parseSpecials(card("Two-handed: +1 to Aimed Shots and Autofire.")), { twoHanded: { attack: 0, aimed: 1, autofire: 1 } }, "for the weapon's Two hands switch");
+  assert.equal(parseSpecials(card("Loads only its own Armor-Piercing shells (100eb per 10), which ablate 1 extra SP.")), null, "the ammo's rule, not the gun's");
+  assert.equal(parseSpecials(card("Leg and Held Item Aimed Shots deal +1d6 (6d6); head Aimed Shots deal −1d6 (4d6).")), null);
+  assert.equal(parseSpecials("<p>Generic weapon (standard quality).</p>"), null);
+
+  assert.deepEqual(specialMods({ attackMod: -2, aimedMod: 1 }, { aimed: true, name: "Moron Labe", moduleId: M }), [{ id: `${M}-special`, value: -1, source: "Moron Labe", key: "bonuses.universalAttack", category: "combat" }]);
+  assert.deepEqual(specialMods({ aimedMod: 1 }, { aimed: false }), []);
+  assert.equal(moreDice("5d6", 1), "6d6");
+  assert.equal(moreDice("3d6+2", 2), "5d6+2");
+  const five = { crit: { face: 5, when: "always" } };
+  assert.ok(ruleCrit(five, [5, 6, 2]) && ruleCrit(five, [5, 5, 1]));
+  assert.ok(!ruleCrit(five, [6, 6, 1]), "two 6s is the plain rule's");
+  assert.ok(!ruleCrit(five, [5, 4, 4]));
+  assert.ok(!ruleCrit({ crit: { face: 5, when: "aimed" } }, [5, 6]) && ruleCrit({ crit: { face: 5, when: "aimed" } }, [5, 6], { aimed: true }));
+});
+
+test("on the rolls: a burst named on the card and its short damage, Aimed Shot dice, extra ablation, the weapon's Critical Injury rule, its modifier; no Aimed button where it can't", async () => {
+  const SYS = "cyberpunk-red-core";
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
+  game.user.targets = new Set();
+
+  // The Yukimura: a 3-round burst; with 2 left it empties the magazine for 2d6.
+  const fury = crew("Fury", [weapon("w1", "Arasaka HJKE-11 Yukimura", { weaponType: "heavyPistol", damage: "3d6", magazine: { value: 2, max: 21 }, description: desc("Single Shot fires a 3-round burst. With fewer than 3 left, it empties the magazine for 2d6.") })]);
+  const gun = fury.items.get("w1");
+  const atk = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, atk);
+  await Arsenal.preRoll(gun, atk);
+  assert.deepEqual(Arsenal.pending.tag.burst, { rounds: 2, short: true, damage: "2d6" });
+  const dmg = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(gun, dmg);
+  assert.equal(dmg.formula, "2d6", "fired short: the card's damage");
+  assert.equal(Arsenal.pending.tag.shortBurst, "2d6");
+  gun.system.magazine.value = 9;
+  const full = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, full);
+  await Arsenal.preRoll(gun, full);
+  assert.deepEqual(Arsenal.pending.tag.burst, { rounds: 3, short: false, damage: null });
+  const dmg2 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(gun, dmg2);
+  assert.equal(dmg2.formula, "3d6", "a full burst: its own damage again");
+
+  // Aimed Shots +1d6, 1 extra SP ablated, 5s count as 6s, −2 to every attack.
+  const sable = crew("Sable", [weapon("w1", "Dezerter", { weaponType: "shotgun", damage: "5d6", description: desc("Aimed Shots deal +1d6 (6d6). Ablates 1 extra SP. 5s count as 6s for Critical Injuries. −2 to every attack. No Aimed Shots.") })]);
+  const sg = sable.items.get("w1");
+  const a2 = new CPRAttackRoll([]);
+  assert.ok(Arsenal.preDialog(sg, a2).special);
+  assert.deepEqual(a2.mods.map((m) => [m.id, m.value, m.source]), [[`${M}-special`, -2, "Dezerter"]], "on the roll before its dialog, by the weapon's name");
+  await Arsenal.preRoll(sg, a2);
+  assert.equal(a2.mods.length, 1, "once");
+  assert.equal(Arsenal.pending.tag.specialMod, -2);
+  sable.flags[SYS] = { "firetype-w1": "aimed" };
+  const d3 = new CPRDamageRoll("5d6");
+  await Arsenal.preRoll(sg, d3);
+  assert.equal(d3.formula, "6d6");
+  assert.equal(d3.rollCardExtraArgs.ablationValue, 2);
+  assert.deepEqual(Arsenal.pending.tag.critRule, { face: 5, when: "always", aimed: true, head: false, distance: null });
+  // The card: a 5 and a 6 is a Critical Injury by this weapon's rule; two 6s is the plain rule's.
+  const msg = (roll) => {
+    const m = { content: '<div class="rollcard"></div>', flags: {}, updateSource(u) { Object.assign(this.flags, u); } };
+    Arsenal.pending.roll = roll;
+    Arsenal.tag(m, game.user.id);
+    return m.flags[`flags.${M}.arsenal`];
+  };
+  d3.faces = [5, 6, 1, 2, 3, 4];
+  assert.equal(msg(d3).ruleCrit, 5);
+  await Arsenal.preRoll(sg, d3);
+  d3.faces = [6, 6, 1, 2, 3, 4];
+  assert.equal(msg(d3).ruleCrit, undefined);
+  sable.flags[SYS] = {};
+  const d4 = new CPRDamageRoll("5d6");
+  await Arsenal.preRoll(sg, d4);
+  assert.equal(d4.formula, "5d6", "not an Aimed Shot: no extra die");
+
+  // The Action HUD: no Aimed button on a weapon that can't; an ordinary gun keeps it.
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  assert.ok(!catalog(sable).weapons[0].buttons.some((b) => b.key === "aim:w1"));
+  assert.ok(catalog(fury).weapons[0].buttons.some((b) => b.key === "aim:w1"));
+  for (const k of ["burst", "burstShort", "burstShortDamage", "autofireRounds", "specialMod", "shortBurstDamage", "aimedDice", "ablate", "ruleCrit"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Note.${k}`), `NEONCOMBAT.Arsenal.Note.${k}`, k);
+});
+
+test("the rest of the first part: Bonus Damage, Armor-Piercing rounds, the first shot of a fight, two hands, Autofire-only guns, charged shots that stop at cover, scopes that read Thick cover", async () => {
+  const { parseSpecials, specialMods, singleShots } = await import("../scripts/arsenal/specials.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.deepEqual(P("Critical Injuries deal +3 Bonus Damage (8)."), { critBonus: 3 });
+  assert.deepEqual(P("Its Critical Injuries deal +5 Bonus Damage (10) and −2 MOVE (min 1) for 1 Round."), { critBonus: 5 });
+  assert.equal(P("In the Round you draw it: head Aimed Shots count 5s as 6s for Critical Injuries."), null, "tied to the Round it's drawn: the table's");
+  assert.deepEqual(P("An Aimed Shot fires 2 rounds for +1d6 (6d6)."), { aimedRounds: 2, aimedDice: 1 });
+  assert.deepEqual(P("+1 to hit on its first Single Shot of a fight."), { firstShot: 1 });
+  assert.deepEqual(P("No capacity attachments; every round also counts as Armor-Piercing."), { ap: true });
+  assert.deepEqual(P("Excellent Quality two-handed."), { twoHanded: { attack: 1, aimed: 0, autofire: 0 } });
+  assert.deepEqual(P("Autofire and Suppressive Fire only, 20 rounds each."), { autoOnly: true });
+  assert.deepEqual(P("No Autofire."), { noAutofire: true });
+  assert.deepEqual(P("Charged, it can't see or fire through cover and can only Autofire."), { chargedAutoOnly: true, noThrough: true });
+  assert.deepEqual(P("Its Tech scope sees outlines through one layer of Thin or Thick cover."), { scopeThick: true });
+  assert.ok(singleShots(null) && !singleShots({ autoOnly: true }) && singleShots({ chargedAutoOnly: true }) && !singleShots({ chargedAutoOnly: true }, true));
+  const two = { twoHanded: { attack: 0, aimed: 1, autofire: 1 } };
+  assert.equal(specialMods(two, { aimed: true, twoHands: true })[0].value, 1);
+  assert.deepEqual(specialMods(two, { aimed: true, twoHands: false }), [], "one-handed: nothing");
+  assert.deepEqual(specialMods(two, { twoHands: true }), [], "a plain shot: nothing");
+  assert.equal(specialMods({ firstShot: 1 }, { firstShot: true })[0].value, 1);
+  assert.deepEqual(specialMods({ firstShot: 1 }, { firstShot: true, aimed: true }), []);
+
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
+  game.user.targets = new Set();
+  const solo = crew("Fury", [
+    weapon("w1", "Comrade’s Hammer", { weaponType: "vHeavyPistol", description: desc("Critical Injuries deal +3 Bonus Damage (8). Every round also counts as Armor-Piercing. +1 to hit on its first Single Shot of a fight. Excellent Quality two-handed.") }),
+    weapon("w2", "Militech Mk. 31 HMG", { weaponType: "assaultRifle", fireModes: { autoFire: 4, suppressiveFire: true }, description: desc("Autofire and Suppressive Fire only, 20 rounds each.") }),
+    weapon("w3", "Senkoh (Tech)", { weaponType: "heavySmg", fireModes: { autoFire: 3 }, description: desc("While its Tech Rebuild is charged, it can only Autofire.") })
+  ]);
+  solo.isOwner = true;
+  const gun = solo.items.get("w1");
+  const d = new CPRDamageRoll("4d6");
+  await Arsenal.preRoll(gun, d);
+  assert.equal(d.bonusDamage, 8);
+  assert.equal(d.rollCardExtraArgs.ablationValue, 2, "as Armor-Piercing ablates");
+
+  // The first Single Shot of a fight gets +1, once; two hands add Excellent Quality's +1 while the switch is on.
+  const savedCombat = game.combat;
+  game.combat = { id: "fight1", started: true, combatants: [] };
+  const first = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, first);
+  assert.equal(first.mods[0].value, 1);
+  await Arsenal.preRoll(gun, first);
+  const second = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, second);
+  assert.equal(second.mods.length, 0, "not the second shot");
+  assert.equal(await Arsenal.toggle(solo, gun, "twoHands"), true);
+  const third = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, third);
+  assert.equal(third.mods[0].value, 1, "Excellent Quality in two hands");
+  game.combat = { id: "fight2", started: true, combatants: [] };
+  const again = new CPRAttackRoll([]);
+  Arsenal.preDialog(gun, again);
+  assert.equal(again.mods[0].value, 2, "a new fight: the first shot again, and still two hands");
+  game.combat = savedCombat;
+
+  // The Action HUD: Two hands on the pistol; no Attack or Aimed on an Autofire-only gun, or on one that's charged.
+  const { catalog } = await import("../scripts/hud/catalog.js");
+  const { Run } = await import("../scripts/hud/run.js");
+  const keys = (name) => catalog(solo).weapons.find((w) => w.label === name).buttons.map((b) => b.key.split(":")[0]);
+  assert.ok(keys("Comrade’s Hammer").includes("2h"));
+  assert.ok(!keys("Militech Mk. 31 HMG").includes("atk") && !keys("Militech Mk. 31 HMG").includes("aim") && keys("Militech Mk. 31 HMG").includes("auto"));
+  assert.equal(await Run.action(solo, "atk:w2"), null, "refused, with the reason");
+  assert.ok(keys("Senkoh (Tech)").includes("atk"));
+  await Rebuilds.toggleCharge(solo, solo.items.get("w3"));
+  assert.ok(!keys("Senkoh (Tech)").includes("atk") && keys("Senkoh (Tech)").includes("auto"), "charged: Autofire only");
+
+  // A scope that reads one layer of Thick cover: one solid wall, not two; an ordinary scope, thin only.
+  const solid = { c: [500, 0, 500, 1000], blocks: true, thin: false };
+  const thin = { c: [700, 0, 700, 1000], blocks: true, thin: true };
+  const a = { x: 100, y: 500 };
+  assert.ok(!throughThinCover(a, { x: 600, y: 500 }, [solid]));
+  assert.ok(throughThinCover(a, { x: 600, y: 500 }, [solid], { thick: 1 }));
+  assert.ok(!throughThinCover(a, { x: 900, y: 500 }, [solid, thin], { thick: 1 }), "one layer in all");
+  assert.ok(!throughThinCover(a, { x: 900, y: 500 }, [solid, { ...solid, c: [800, 0, 800, 1000] }], { thick: 1 }));
+  for (const k of ["ap", "critBonus"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Note.${k}`), `NEONCOMBAT.Arsenal.Note.${k}`);
+});
+
+test("the last of the first part: rules by the head or a range, dice that drop the lowest, what a charge costs, Aimed Shots that are hard to dodge", async () => {
+  const { parseSpecials, ruleCrit } = await import("../scripts/arsenal/specials.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.deepEqual(P("On a head Aimed Shot, 5s count as 6s for Critical Injuries."), { crit: { face: 5, when: "head" } });
+  assert.deepEqual(P("Within 6m, 5s count as 6s for Critical Injuries."), { crit: { face: 5, when: "within", range: 6 } });
+  assert.deepEqual(P("Head Critical Injuries deal +5 Bonus Damage."), { critBonusHead: 5 });
+  assert.deepEqual(P("Aimed Shots deal 6d6, dropping the lowest."), { aimedDrop: "6d6dl1" });
+  assert.deepEqual(P("Autofire damage: roll 3d6, drop the lowest, then multiply."), { autofireDrop: "3d6dl1" });
+  assert.deepEqual(P("Its Tech Rebuild charges without a Move Action."), { chargeCost: "free" });
+  assert.deepEqual(P("Charging takes only half your MOVE (round down), given up before you move."), { chargeCost: "half" });
+  assert.deepEqual(P("Dodging its Aimed Shots or Held Action shots takes −2."), { aimedDodge: -2 });
+  const head = { crit: { face: 5, when: "head" } };
+  assert.ok(ruleCrit(head, [5, 6], { aimed: true, head: true }) && !ruleCrit(head, [5, 6], { aimed: true, head: false }));
+  const near = { crit: { face: 5, when: "within", range: 6 } };
+  assert.ok(ruleCrit(near, [5, 5], { distance: 4 }) && !ruleCrit(near, [5, 5], { distance: 8 }) && !ruleCrit(near, [5, 5], {}));
+
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; this.location = "body"; } }
+  game.user.targets = new Set();
+  const solo = crew("Fury", [weapon("w1", "Death And Taxes", { weaponType: "heavyPistol", description: desc("Aimed Shots deal 4d6, dropping the lowest. Head Critical Injuries deal +5 Bonus Damage. Autofire damage: roll 3d6, drop the lowest, then multiply. Dodging its Aimed Shots or Held Action shots takes −2.") })]);
+  const gun = solo.items.get("w1");
+  solo.flags["cyberpunk-red-core"] = { "firetype-w1": "aimed" };
+  const d = new CPRDamageRoll("3d6");
+  d.location = "head";
+  await Arsenal.preRoll(gun, d);
+  assert.equal(d.formula, "4d6dl1");
+  assert.equal(d.bonusDamage, 10, "a head Aimed Shot");
+  const body = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(gun, body);
+  assert.equal(body.bonusDamage, 5, "an Aimed Shot elsewhere: the plain Bonus Damage");
+  const atk = new CPRAttackRoll([]);
+  await Arsenal.preRoll(gun, atk);
+  assert.equal(Arsenal.pending.tag.dodgePenalty, -2);
+  solo.flags["cyberpunk-red-core"] = { "firetype-w1": "autofire" };
+  const auto = new CPRDamageRoll("2d6");
+  auto.isAutofire = true;
+  await Arsenal.preRoll(gun, auto);
+  assert.equal(auto.formula, "3d6dl1");
+  for (const k of ["Arsenal.Note.dropLowest", "Arsenal.ChargeBodyFree", "Arsenal.ChargeBodyHalf", "Arsenal.Defense.WeaponDodge"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.${k}`), `NEONCOMBAT.${k}`, k);
 });

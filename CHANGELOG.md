@@ -1,5 +1,64 @@
 # Changelog
 
+## 1.28.0
+
+**From the first playtest.**
+
+- **Cover pieces are barriers.** A cover piece was only a token, so people walked through it.
+  Each piece now has walls of its own, kept by the GM's client: its outline stops movement, and a
+  tall piece (a wall section, a fence, a partition) also blocks sight and light, Thin ones still
+  showing outlines to a Tech scope. They move, turn and go with the token; a destroyed piece opens
+  until it's repaired. Pieces already on a map get theirs when the GM opens the scene. New setting
+  *Cover pieces are barriers*.
+- **Target a Tech scope's outline.** The outline of someone behind thin cover can now be
+  targeted for a Charged Shot: click it (Shift adds), hover it and press the Target key, or press
+  *Target through cover* on the Tech gun's Action HUD entry (nearest first, then the next). Cyan
+  brackets mark the target, since Foundry draws none on a token out of sight.
+- **Tactile Boost** (p.359). A new **Feeling for Motion** condition for the hand on a surface
+  (Token HUD, and the Action HUD's Status group when the chipware is installed). While that
+  character is selected, their player sees an amber ripple where anyone out of sight moves within
+  20 m/yds, through any wall, and a faint ring showing the reach. It marks where motion was last
+  felt, not who it is. New setting *Tactile Boost ripples*.
+- **Improved Smart Ammunition, where you can see it.** The obscurement penalties used to come off
+  after the roll dialog, so the dialog still showed Obscured −4 and a total that was wrong until
+  the dice. They now come off before it opens (listed unticked), and a new condition, **Improved
+  Smart Loaded**, sits on the character while the rounds are in a Smart gun in hand.
+- **Smart's +1 by name.** The +1 is on the roll before its dialog as *Smart weapon +1* (taken out
+  of the gun's own attack modifier on Neon Hub's Smart guns, so it's never counted twice), and on
+  the attack card. No link: no +1, and the card says so.
+- **Cyberware upgrades and Borgware** land in the sibling modules: **Neon Hub 1.25.0** ships
+  every piece of 2070 chrome open to Operating Systems and Enhancements and fixes the copies
+  already in a world once; **Neon At Home 1.14.0** counts a piece as Borgware for Maximum
+  Humanity (−4 in place of −2) while an Operating System or Enhancement that says so is in it.
+- **Weapons' own rules, first part.** The lines the Item Compendium words the same way on every
+  weapon that has them are read from the weapon's card and applied: 3-round (and 2-round) bursts
+  named on the attack card, with the short-magazine damage on the next damage roll; *Aimed Shots
+  deal +1d6*; *Ablates N extra SP*; *5s count as 6s for Critical Injuries*, called out on the
+  damage card; *−2 to every attack* as a named modifier before the dialog; *No Aimed Shots* and
+  *can't ricochet* on the Action HUD. Also: *Critical Injuries deal +N Bonus Damage*; rounds
+  that *count as Armor-Piercing*; *+1 to hit on its first Single Shot of a fight*; a **Two
+  hands** switch for *Excellent Quality two-handed* and *Two-handed: +1...*; Autofire-only guns
+  and guns that only Autofire while charged; charged shots that stop at cover; Tech scopes that
+  read one layer of Thick cover; Critical Injury rules on a head Aimed Shot or within a range;
+  dice that drop the lowest; what a weapon's Tech charge costs, on the charge card; Aimed Shots
+  that are harder to dodge. 144 weapons in the catalog have at least one; weapons already on
+  sheets count. The rounds themselves are spent by Neon Hub 1.25.0. Rules tied to a wound state
+  or to an earlier Round, two-mode weapons, effects on targets, recoil and the Iconics' one-off
+  rules are not automated yet.
+- **Chrome switches.** A *Chrome* group on the Action HUD and a chip button on the Token HUD
+  list the chrome a character can switch on and off, lit while it runs: Sandevistan and Berserk
+  (by their Operating System), Tactile Boost, Optical Camo, Microrotors, the KERS mask (three new
+  Chrome running conditions), and any piece whose item has an "(active)" effect. Each one puts
+  its Active Effect on the character and takes it off.
+- **A Kerenzikov is always on.** Installed, it puts the new **Kerenzikov** condition on the
+  character: the token's faint look, +2 to notice an Ambush as a tick box, and the Boost
+  System's +2 Initiative when that's fitted.
+- **Chrome on your own screen.** While your character's Sandevistan or Berserk runs, your screen
+  alone shows it, in the Operating System's colour; a Kerenzikov cools the picture slightly all
+  the time. A GM sees it for an NPC while that NPC's token is selected. A layer over the map
+  that takes no clicks and hides nothing. New per-player setting
+  *Chrome on my screen*; new world setting *Chrome switches on the Token HUD*.
+
 ## 1.27.0
 
 **The Alert.** The Awareness Ladder (2070 Core Rules, Chapter 06) comes out onto the map.

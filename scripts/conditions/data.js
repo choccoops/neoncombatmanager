@@ -177,6 +177,7 @@ export const CONDITIONS = [
   { id: "smartRebuild", category: "combat", img: `${A}/smart-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
   { id: "techRebuild", category: "combat", img: `${A}/tech-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
   { id: "monoRebuild", category: "combat", img: `${A}/mono-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
+  { id: "improvedSmart", category: "combat", img: `${A}/improved-smart.svg`, page: "2070", mirror: "rebuild", hud: false },
 
   /* ------------------------------------------------------------------ */
   /*  Raising the Stakes (2070): the Plot Die. Each rides one Check.    */
@@ -228,6 +229,14 @@ export const CONDITIONS = [
   { id: "chromeBaldur", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 12, group: "berserk", chrome: { kind: "berserk", os: "baldur" } },
   { id: "chromeMatterhorn", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 30, group: "berserk", chrome: { kind: "berserk", os: "matterhorn" } },
   { id: "chromeBrawler", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", chrome: { kind: "berserk", os: "brawler" } },
+  // A Kerenzikov runs from the day it's installed (scripts/neonfx/switches.js keeps it on); the +2 Initiative is its Boost System's.
+  { id: "chromeKerenzikov", category: "chrome", img: `${A}/qh-speedware.svg`, page: "2070", hud: false, changes: [init(2), { key: "bonuses.perception", value: 2, situational: true, onByDefault: false }] },
+  // Chrome switched on from the Action HUD or the Token HUD, with nothing a roll key can carry: the hint says what it does.
+  { id: "chromeOpticalCamo", category: "chrome", img: `${A}/chrome-running.svg`, page: "2070", duration: R20 },
+  { id: "chromeMicrorotors", category: "chrome", img: `${A}/chrome-running.svg`, page: "2070", duration: 6 },
+  { id: "chromeKers", category: "chrome", img: `${A}/chrome-running.svg`, page: "2070" },
+  // Tactile Boost (p.359): a hand on a surface feels motion within 20 m/yds; Neon FX shows it (scripts/neonfx/tactile.js).
+  { id: "tactileBoost", category: "chrome", img: `${A}/tactile-boost.svg`, page: "p.359" },
 
   /* ------------------------------------------------------------------ */
   /*  The Awareness Ladder (2070 ch.06) on an encounter's enemies:      */

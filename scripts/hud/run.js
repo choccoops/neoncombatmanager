@@ -32,6 +32,18 @@ export const Run = {
       case "auto":
       case "supp": {
         if (!item) return null;
+        if (kind === "atk" || kind === "aim") {
+          const { specialsOf, singleShots } = await import("../arsenal/specials.js");
+          const { Rebuilds } = await import("../arsenal/rebuilds.js");
+          if (!singleShots(specialsOf(item), Rebuilds.isCharged(actor, item))) {
+            ui.notifications?.warn(L(`${LANG}.Arsenal.NoSingle`, { name: item.name }));
+            return null;
+          }
+        }
+        if (kind === "aim" && (await import("../arsenal/specials.js")).specialsOf(item)?.noAimed) {
+          ui.notifications?.warn(L(`${LANG}.Arsenal.NoAimed`, { name: item.name }));
+          return null;
+        }
         // The mode sticks to the weapon, so its Damage roll knows it (Autofire's multiplier).
         if (kind === "atk") await actor.unsetFlag(SYSTEM_ID, `firetype-${item.id}`);
         else await actor.setFlag(SYSTEM_ID, `firetype-${item.id}`, MODES[kind]);
@@ -47,11 +59,16 @@ export const Run = {
         }, { event, token });
       }
       case "rico":
-      case "chg": {
+      case "chg":
+      case "2h": {
         if (!item) return null;
         const { Arsenal } = await import("../arsenal/arsenal.js");
-        return Arsenal.toggle(actor, item, kind === "rico" ? "ricochet" : "charge", { token });
+        return Arsenal.toggle(actor, item, kind === "rico" ? "ricochet" : kind === "chg" ? "charge" : "twoHands", { token });
       }
+      case "chrome":
+        return (await import("../neonfx/switches.js")).Switches.toggle(actor, `chrome:${id}`, { token });
+      case "scope":
+        return (await import("../arsenal/xray.js")).Xray.cycle();
       case "rld":
         if (!item?.doAction) return null;
         // As the sheet's reload button: loaded ammo tops up, none opens the load dialog.

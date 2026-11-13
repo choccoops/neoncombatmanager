@@ -9,9 +9,10 @@ import { loadedAmmo } from "./aa.js";
 
 /**
  * The condition each 2070 flavor (and the Mono-edge Melee Rebuilds, tagged "Monoblade") puts on
- * whoever has a weapon of it in hand.
+ * whoever has a weapon of it in hand; "improved" is a Smart gun in hand with Improved Smart
+ * Ammunition loaded.
  */
-export const REBUILD_CONDITION = { power: "powerRebuild", smart: "smartRebuild", tech: "techRebuild", mono: "monoRebuild" };
+export const REBUILD_CONDITION = { power: "powerRebuild", smart: "smartRebuild", tech: "techRebuild", mono: "monoRebuild", improved: "improvedSmart" };
 /** The managed flag those conditions carry, so only Neon Arsenal's own come off again. */
 const MANAGED = "rebuild";
 const QUIET = { [MODULE_ID]: { quiet: true } };
@@ -23,11 +24,16 @@ export function inHand(item) {
   return false;
 }
 
+/** Improved Smart Ammunition counts only in a Smart weapon (a Smartgun Link isn't enough; 2070 Ch07). */
+export const improvedSmart = (info) => !!info && info.ranged && info.flavor === "smart" && info.ammoType === "smart";
+
 /** What a weapon brings to the hand: its flavor, and "mono" for a Mono-edge Melee Rebuild. */
 export function rebuildKeys(item, actor = item?.actor) {
   const upgrades = Rebuilds.upgradesOf(item, actor);
-  const flavor = classify(item, loadedAmmo(item, actor), upgrades).flavor;
+  const info = classify(item, loadedAmmo(item, actor), upgrades);
+  const flavor = info.flavor;
   const keys = flavor ? [flavor] : [];
+  if (improvedSmart(info)) keys.push("improved");
   if (traitsOf(flavor, upgrades).tags.includes("Monoblade")) keys.push("mono");
   return keys;
 }

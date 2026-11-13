@@ -8,8 +8,8 @@ export const MENUS = {
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim", "conditionSheetNotes"],
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
-  fx: ["fxEnabled", "fxConditions", "fxChrome", "hackFx", "hackGhostFx", "fxMacros"],
-  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels"],
+  fx: ["fxEnabled", "fxConditions", "fxChrome", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
+  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -102,6 +102,9 @@ const DEFS = [
   ["alertBanner", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   // Speedware, Berserk and their Operating Systems light up while their "(active)" effect is on
   ["fxChrome", "world", Boolean, true, {}],
+  ["chromeTokenHud", "world", Boolean, true, {}],
+  ["fxScreen", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  ["fxTactile", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Quickhacking (2070 ch.10): the flow on the Action HUD, its animations, and who sees a Ghost's
   ["hackFlow", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["hackFx", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
@@ -126,6 +129,7 @@ const DEFS = [
   ["coverOn", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.coverChanged`) }],
   ["coverDoors", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.coverChanged`) }],
   ["coverLabels", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.coverChanged`) }],
+  ["coverPieceWalls", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.coverChanged`) }],
   ["arsenalSmartPrompt", "world", Boolean, true, {}],
   ["arsenalRicochetDodge", "world", Boolean, true, {}],
   ["arsenalHitCheck", "world", Boolean, true, {}],

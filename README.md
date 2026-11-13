@@ -651,11 +651,55 @@ Operating System's when they have one installed, and the condition holds the loo
   off places or removes the condition, the macro goes through it, and the condition ending
   switches it off. What that effect already gives isn't counted again.
 - Humanity Loss on activation, cooldowns, halved damage and the other things the hints list stay
-  with the table. A Kerenzikov is always on and has no condition.
+  with the table. A Kerenzikov is always on: see below.
 - A setting (*Speedware and Berserk conditions*) turns this off: the macros are then looks only.
 
 Players can switch their own tokens. The switches are saved on the token, so they survive a
 reload and show for everyone.
+
+**Chrome switches.** Chrome that switches on and off has a button of its own, lit while it runs:
+
+- on the **Action HUD**, a *Chrome* group (shown by default, also in layouts saved before it
+  existed);
+- on the **Token HUD**, a chip button in the right column that opens the list (a setting).
+
+Each character gets a switch for what they have installed: their **Sandevistan** and **Berserk**
+(named for the Operating System fitted, and run as its condition from the table above),
+**Tactile Boost**, **Optical Camo** (a minute), **Microrotors** (2 Rounds), the **KERS** mask, and
+any other piece whose item has an "(active)" effect of its own (DeathTrance, Adrenaline
+Convertor, Prehensile Cyberfoot, Reflex Tuner, Revulsor...), which the switch turns on and off.
+Either way the result is an Active Effect on the character: the numbers the rules give are on it,
+and what no roll key can carry is in its description. Optical Camo never hides the token: who
+sees the character stays the table's call.
+
+**A Kerenzikov is always on.** It has no switch. From the moment it's installed the character
+carries the **Kerenzikov** condition (kept by the GM's client, removed when the chrome comes
+out): the token's faint blue look, +2 to notice an Ambush as a tick box on Perception rolls, and
++2 Initiative while a Kerenzikov Boost System is fitted. Dodging bullets whatever your REF is
+already read from the item by the Evade step.
+
+**On your own screen.** While your character's Sandevistan or Berserk runs, your screen shows it,
+and only yours: for a Sandevistan the world drains of colour and the rim glows and streaks in the
+Operating System's colour; for Berserk the rim beats red. A Kerenzikov cools the picture very
+slightly, all the time, as if everything else ran a touch slow. Berserk wins over a Sandevistan,
+which wins over a Kerenzikov. It's a layer over the map that never takes a click and hides
+nothing. You get it for your assigned character and for tokens you own and have selected; a GM
+gets it for an NPC while that NPC's token is selected. *Chrome on my screen* (each player's own setting) turns it
+off, and it holds still with token motion off or reduced motion asked for. No new sounds.
+
+**Tactile Boost** (Cyberpunk RED p.359). The chipware feels motion within 20 m/yds through a hand
+on a surface. That's the **Feeling for Motion** condition (Chrome running; on the Token HUD, and
+in the Action HUD's Chrome group for anyone with a Tactile Boost installed). While a character
+with it is selected, their player sees:
+
+- an **amber ripple where anyone out of sight moves** within 20 m/yds, through any wall or door
+  (it's the surface that carries it, so thin or thick makes no difference). It marks where motion
+  was last felt: no outline and no name, unlike a Tech scope. It follows them as they move again,
+  and goes when they come into view, pass 20 m/yds or the hand comes off;
+- a slow, faint ring out from their own token to the edge of the 20 m/yds.
+
+Someone standing still isn't felt. Only that player sees any of it, GM-hidden tokens never show,
+and the hand being busy is left to the table. A setting (*Tactile Boost ripples*) turns it off.
 
 **AV landings** (two more macros in the folder):
 
@@ -828,7 +872,11 @@ on the scene. A damage roll for an area draws no Tarot card.
 - **Tech scope.** While a character with a Tech Weapon is selected, their player sees a glowing
   cyan outline of anyone behind thin cover they can't otherwise see, within 50 m/yds. Thin cover
   is a wall ticked *Thin cover* in its settings, and closed doors (a setting). Only that player
-  sees the outlines, and GM-hidden tokens never show.
+  sees the outlines, and GM-hidden tokens never show. **An outline can be targeted**, for a
+  Charged Shot through the cover: click it (Shift-click adds a target), hover it and press the
+  Target key, or use *Target through cover* beside the Tech gun's switches on the Action HUD,
+  which takes the nearest and then the next with each press. Cyan brackets mark a target you
+  can't otherwise see.
 - **Ricochet.** A ricochet shot flies to a bounce point and on to the target. The bounce point is
   on the nearest wall that faces both the shooter and the target with a clear line to each, or
   off to one side when there's no such wall. Sparks fly at the bounce (JB2A's impact where it's
@@ -842,13 +890,55 @@ on the scene. A damage roll for an area draws no Tarot card.
 
 - **Improved Smart vs obscurement.** Improved Smart rounds ignore visual obscurement penalties
   (2070 Ch07), so Low Light, Darkness, Obscured, smoke, pop-ups and weather's sight penalties come
-  off that roll. The card says how much.
+  off that roll, **before its dialog opens**: the dialog lists them unticked and its total leaves
+  them out (ticked back on, they still come off). The card says how much. While the rounds are
+  loaded in a Smart gun in hand, the character carries **Improved Smart Loaded**, a condition
+  beside *Smart Weapon* (an Active Effect with its own icon, on the token and the Effects tab).
+  The penalties come off that gun's attacks only, so the condition itself holds no numbers: a
+  second gun in the other hand still takes them.
+- **A weapon's own rules** (Item Compendium, Weapons and Iconics). Where a weapon's card has
+  one of the lines below, Neon Arsenal reads it from the card's text and applies it, so weapons
+  already on sheets count, and so does one you write in the same words. 144 of the catalog's
+  weapons have at least one.
+
+  | The card says | What happens |
+  | --- | --- |
+  | *Single Shot fires a 3-round burst* / *Every shot is a 3-round burst* | The attack card names the burst. Neon Hub 1.25.0 spends the rounds; a gun that *won't fire with fewer* is refused by Cyberpunk RED's ammo check; one that *empties the magazine for 2d6* fires what's left, and its next damage roll is that 2d6 |
+  | *Autofire uses 6 rounds instead of 10* | Named on the card; spent by Neon Hub 1.25.0 |
+  | *Aimed Shots deal +1d6* | An Aimed Shot's damage roll gets the extra dice |
+  | *Ablates 1 extra SP* (and *(3 charged)*) | Added to the damage card's ablation, so Cyberpunk RED's own damage button takes it off the armor |
+  | *5s count as 6s for Critical Injuries* (always, or *On an Aimed Shot, ...*) | When the dice make a Critical Injury only by that rule, the damage card says so and how much Bonus Damage to add (Cyberpunk RED's total doesn't include it) |
+  | *−2 to every attack*, *+1 to Aimed Shots (and Autofire)* | A modifier in the weapon's name, on the roll before its dialog opens |
+  | *An Aimed Shot fires 2 rounds for +1d6* | The dice on the damage roll; the rounds by Neon Hub 1.25.0 |
+  | *Critical Injuries deal +3 Bonus Damage* | Added to the damage roll's Bonus Damage, counted when the dice make a Critical Injury |
+  | *every round also counts as Armor-Piercing* | Ablates 2 SP, as Armor-Piercing does |
+  | *+1 to hit on its first Single Shot of a fight* | On the first Single Shot of each combat (outside one, on every shot) |
+  | *Excellent Quality two-handed*, *Two-handed: +1 to Aimed Shots (and Autofire)* | A **Two hands** switch on the weapon's Action HUD entry: while it's on, the +1 is on the roll. The switch is yours to flip; it doesn't check for a free hand |
+  | *On a head Aimed Shot, 5s count as 6s*, *Within 6m, 5s count as 6s* | The same card note, only on a head Aimed Shot, or with the first target within that range |
+  | *Head Critical Injuries deal +5 Bonus Damage* | Added on a head Aimed Shot's damage roll |
+  | *Aimed Shots deal 6d6, dropping the lowest*, *Autofire damage: roll 3d6, drop the lowest* | The damage roll is made that way |
+  | *Charges without a Move Action*, *Charging takes only half your MOVE* | The charge card says what this weapon's charge costs |
+  | *Dodging its Aimed Shots takes −2* | On the target's Evade prompt |
+  | *No Aimed Shots* | No Aimed button on the Action HUD (the sheet's own tick box is Cyberpunk RED's) |
+  | *Autofire and Suppressive Fire only*, *No Autofire*, *While charged, it can only Autofire* | The Action HUD leaves out the buttons the weapon doesn't have right now |
+  | *Its Power Rebuild can't ricochet* | No Ricochet switch |
+  | *Charged, it can't see or fire through cover* | Its charged shot stops at Thin cover like any other |
+  | *Its Tech scope sees outlines through one layer of Thin or Thick cover* | The Tech scope outlines people behind one wall of any kind |
+
+  Still the table's to run: a rule tied to a wound state, to the Round a weapon is drawn or to
+  what happened last Round; a charge that lasts to the end of the Turn; weapons with two modes
+  (the IronWind); a rule of the ammo rather than the gun; effects on whoever is hit; recoil and
+  BODY requirements; and each Iconic's one-off rules.
+- **Smart's +1 by name.** A Smart gun's +1 is on the roll before its dialog opens as
+  *Smart weapon +1*, and the card says so. Neon Hub's Smart guns keep the +1 in their own attack
+  modifier: it's taken out of that line and shown by name instead, never counted twice. Without a
+  Personal Link or Subdermal Grip there's no +1, and the card says why.
 - **Following a ricochet.** A ricochet can't be dodged, unless the target can follow the bounce: a
   Kerenzikov, a running Sandevistan or other speedware, or low-light, IR or UV optics while they're
   in the dark. Then their Evade card takes −4 (Ch07, Ricochets in Play; a setting).
 - **Charged Tech shot.** A blue line runs to the target, with a ripple where it punches through
-  each piece of thin cover. The *Weapon Rebuilds* macro lists whoever the Tech scope shows behind
-  cover, so you can target them.
+  each piece of thin cover. The *Weapon Rebuilds* macro also lists whoever the Tech scope shows
+  behind cover, so you can target them from there.
 - **Power Critical Injury.** A heavy hit and an orange shockwave on the target, and a note on the
   card that the Bonus Damage is +5 more.
 - **Smartgun Link** on a Power or Tech gun: the lock-on reticle, over the gun's own shot.
@@ -893,7 +983,13 @@ Dataterm (Concrete), Teller Glass and Armored Glass Barrier (Bulletproof glass),
 thickness the pieces don't already draw as a wall: Interior Wall (Plaster, Thick), Wooden Fence and
 Timber Wall (Wood), Concrete Barrier (Concrete, Thick), Low Stone Wall and Fieldstone Wall (Stone),
 Corrugated Fence and Blast Wall (Steel). Drag one onto the map; its HP bar is the piece's HP,
-seen by the GM. A destroyed piece fades. A player who moves Thick cover without BODY 10+ is
+seen by the GM. **A piece is a barrier**, like the wall it stands for: the GM's client gives each
+one walls of its own (its outline, turned with the token), so nobody walks through it, and a tall
+piece (Office Partition, Interior Wall, the fences, Timber, Fieldstone and Blast Walls) also blocks
+sight and light along its length; a Thin one of those still shows outlines to a Tech scope. You
+see over the low ones and through glass. The walls move, turn and go with the token; pieces already
+on a map get theirs when the GM next opens the scene. A destroyed piece fades and opens: people
+walk and see through it until *Repair cover* (a setting turns the barriers off). A player who moves Thick cover without BODY 10+ is
 reminded of the rule. Cover pieces aren't people: no Wound States, Biomon or death saves.
 
 **Your ride as cover** (HOUSE RULE, 2070 Core Rules Ch07). Every vehicle actor is cover: MMuton's
