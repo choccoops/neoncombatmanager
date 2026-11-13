@@ -50,6 +50,11 @@
  *   aimedStreakDice   more Aimed Shot dice the Round after an Aimed Shot's damage
  *   autoLimit    "Autofire it more than twice in a row and it's Destroyed Beyond Repair"
  *   wounded      what changes while the wielder is Seriously or Mortally Wounded
+ *   remind       one-off rules as reminders: the card's sentence on the Autofire attack ("On
+ *                Autofire, ..."), on the damage card ("Against a target ...", "A kill ..."), or on a
+ *                Critical Injury ("Each Critical Injury ...", "A Head Critical Injury ...")
+ *   table        "Each Critical Injury also rolls 1d6: 1 ...; 2 ...": a button that rolls it
+ *   twin         a sister weapon whose Critical Injuries count as this one's (Nehan and Satori)
  *   noAimed      "No Aimed Shots."
  *   noRicochet   "Its Power Rebuild can't ricochet."
  */
@@ -202,6 +207,28 @@ export function parseSpecials(html) {
   const wHit = t.match(/Seriously or Mortally Wounded, it overclocks: \+(\d+) to hit/i);
   if (wAimed || wLess || wHit) out.wounded = { aimedDice: wAimed ? Number(wAimed[1]) : null, aimedDiceInstead: wLess ? Number(wLess[1]) : null, attackMod: wHit ? Number(wHit[1]) : 0 };
   if (wAimed && out.aimedDice === Number(wAimed[1]) && !new RegExp(`${START}Aimed Shots deal`).test(t)) delete out.aimedDice;
+  // One-off rules the module can't run, but can bring up at the right moment: the card's own
+  // sentence, on the card of the roll that triggers it.
+  const remind = [];
+  for (const sentence of t.split(/(?<=[.;])\s+(?=[A-Z])/)) {
+    if (/^(?:Its )?Critical Injuries deal \+\d+ Bonus Damage \(\d+\)\.$/.test(sentence) || /^Head Critical Injuries deal \+\d+ Bonus Damage\.$/.test(sentence)) continue;
+    const on = /^On (?:its )?Autofire/.test(sentence) ? "autofire"
+      : /^(?:A |Each |Its |Head )?(?:Head |random )?Critical Injur/.test(sentence) ? (/^A Head|^Head/.test(sentence) ? "headCrit" : "crit")
+        : /^(?:A kill|Kill a target|Dropping a target|Taking a target|Each living target)/.test(sentence) ? "kill"
+          : /^Against a target/.test(sentence) ? "target" : null;
+    if (on) remind.push({ on, text: sentence });
+  }
+  if (remind.length) out.remind = remind;
+  // A table of the weapon's own, rolled on each Critical Injury ("Each Critical Injury also rolls 1d6: 1 ...; 2 ...").
+  const tbl = t.match(/Each Critical Injury also rolls 1d(\d+):\s*(.+?)(?:\.\s+[A-Z]|\.$)/);
+  if (tbl) {
+    const entries = {};
+    for (const m of tbl[2].matchAll(/(?:^|;\s*)(\d+)\s+(.+?)(?=;\s*\d+\s|$)/g)) entries[m[1]] = m[2].trim();
+    if (Object.keys(entries).length >= 2) out.table = { die: Number(tbl[1]), entries };
+  }
+  // Two weapons that count each other's Critical Injuries ("If this blade or Satori gave...").
+  const twin = t.match(/If this (?:blade|sword) or ([A-Z][a-z]+) gave/);
+  if (twin) out.twin = twin[1];
   if (new RegExp(`${START}No Aimed Shots[.,]`).test(t)) out.noAimed = true;
   if (/Power Rebuild can't ricochet/i.test(t)) out.noRicochet = true;
   return Object.keys(out).length ? out : null;

@@ -2,7 +2,7 @@
 
 ## 1.30.0
 
-**Weapons' own rules, third part: weapons that remember the fight.** 211 of the catalog's 466
+**Weapons' own rules, third part: weapons that remember the fight.** 217 of the catalog's 466
 weapons now have at least one rule applied.
 
 - **Last Round.** A weapon keeps, for the combat it's in, the Round it last fired, Autofired,
@@ -16,10 +16,17 @@ weapons now have at least one rule applied.
   warns on the second and says so on the third.
 - **A wounded wielder.** Rules for *Seriously or Mortally Wounded* (more or fewer Aimed Shot
   dice, +1 to hit) follow the shooter's Wound State.
-- Not automated: dice rerolled, rules tied to a kill or to one particular target, per-weapon
-  tables (Murphy's Law, the R.N.Geezus! Blind Box, Chaos), escalating Autofire ratings,
-  multi-target Autofire, areas set off by a Critical Injury or a kill, and magazines of several
-  ammo types.
+- **One-off rules as reminders.** What belongs to a single Iconic and can't be run is brought
+  up when it matters, in the card's own words: on the Autofire attack (*On Autofire, ...*), on
+  the damage card (*Against a target ...*, *A kill ...*), or when the dice make a Critical
+  Injury (*Each Critical Injury ...*, *A Head Critical Injury ...*). 29 weapons have one.
+- **A weapon's own table.** Murphy's Law's *Each Critical Injury also rolls 1d6* is a button
+  on the damage card that rolls it and posts the result.
+- **Nehan and Satori** count each other's Critical Injuries.
+- Reminders only, not run: dice rerolled, rules tied to a kill or to one particular target,
+  escalating Autofire ratings, multi-target Autofire, areas set off by a Critical Injury or a
+  kill. Not covered at all: the R.N.Geezus! Blind Box, Chaos's reload rolls, Gris Gris's
+  quickhack rounds, and magazines of several ammo types.
 
 ## 1.29.0
 

@@ -898,7 +898,7 @@ on the scene. A damage roll for an area draws no Tarot card.
   second gun in the other hand still takes them.
 - **A weapon's own rules** (Item Compendium, Weapons and Iconics). Where a weapon's card has
   one of the lines below, Neon Arsenal reads it from the card's text and applies it, so weapons
-  already on sheets count, and so does one you write in the same words. 211 of the catalog's
+  already on sheets count, and so does one you write in the same words. 217 of the catalog's
   weapons have at least one.
 
   | The card says | What happens |
@@ -943,10 +943,18 @@ on the scene. A damage roll for an area draws no Tarot card.
   | *Its Tech scope sees outlines through one layer of Thin or Thick cover* | The Tech scope outlines people behind one wall of any kind |
 
   A weapon's memory lasts one combat and counts in its Rounds; outside a fight nothing is
-  remembered.
+  remembered. Nehan and Satori count each other's Critical Injuries, as their cards say.
 
-  Still the table's to run: a rule tied to the Round a weapon is drawn, to a kill or to what
-  happened to one particular target; dice rerolled; a charge that lasts to the end of the Turn; weapons with two modes
+  **One-off rules as reminders.** A rule that belongs to one Iconic and that the module can't
+  run is still brought up at the moment it matters, in the card's own words: *On Autofire, ...*
+  on the Autofire attack card; *Against a target ...* and *A kill ...* on the damage card;
+  *Each Critical Injury ...* and *A Head Critical Injury ...* on the damage card when the dice
+  make one (a head one only on a head Aimed Shot). A weapon whose card has a table of its own
+  (*Each Critical Injury also rolls 1d6: 1 ...; 2 ...*) gets a button on that card that rolls it
+  and posts what came up.
+
+  Still the table's to run (a reminder at most): a rule tied to the Round a weapon is drawn, to
+  a kill or to what happened to one particular target; dice rerolled; a charge that lasts to the end of the Turn; weapons with two modes
   (the IronWind); magazines and barrels holding several ammo types (Cyberpunk RED loads one:
   use *Change Ammo*); what a failed check does where it isn't a condition the module has; areas
   set off by a Critical Injury or a kill; and each Iconic's one-off rules.

@@ -2459,6 +2459,8 @@
         "noLink": "Smart weapon without a link"
       },
       "Ricochet": "Ricochet",
+      "TableButton": "Roll this weapon's 1d{die}",
+      "TableTitle": "{weapon}: {total}",
       "EffectButton": "{effect}: the {count} targeted",
       "NoCapacity": "{name} takes no capacity attachments: {upgrade} doesn't belong on it.",
       "AmmoOnly": {
@@ -2499,6 +2501,8 @@
         "critBonus": "This weapon's Critical Injuries deal +{bonus} Bonus Damage (counted if the dice make one).",
         "ablate": "This weapon ablates {extra} more SP.",
         "ruleCrit": "A Critical Injury by this weapon's rule ({face}s count as 6s): roll the injury and add its {bonus} Bonus Damage, which the total above doesn't include.",
+        "remind": "This weapon's own rule: {text}",
+        "critRemind": "On this Critical Injury, this weapon's own rule: {text}",
         "memo": "From last Round, this weapon's own rule: {text}",
         "autoStreak": "Autofire {count} in a row: once more and this weapon is Destroyed Beyond Repair.",
         "autoStreakOver": "Autofire {count} in a row: this weapon is Destroyed Beyond Repair.",

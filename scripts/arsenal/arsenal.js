@@ -299,6 +299,8 @@ export const Arsenal = {
       const last = lastRound(state.mem, now);
       const memo = (sp?.memo ?? []).filter((m) => (m.when === "auto" && last.auto && mode === "autofire") || (m.when === "fired" && last.fired) || (m.when === "crit" && last.crit));
       if (memo.length) tag.memo = memo.map((m) => m.text);
+      const onAuto = mode === "autofire" ? (sp?.remind ?? []).filter((r) => r.on === "autofire").map((r) => r.text) : [];
+      if (onAuto.length) tag.remind = onAuto;
       if (now.combat) {
         const mem = remember(state.mem, { ...now, kind: "attack", autofire: mode === "autofire" });
         if (sp?.autoLimit && mem.autoStreak >= sp.autoLimit) tag.autoStreak = { n: mem.autoStreak, over: mem.autoStreak > sp.autoLimit };
@@ -397,6 +399,12 @@ export const Arsenal = {
       }
       const dmgMemo = (sp?.memo ?? []).filter((m) => (m.when === "auto" && last.auto && roll.isAutofire) || (m.when === "crit" && last.crit));
       if (dmgMemo.length) tag.memo = dmgMemo.map((m) => m.text);
+      // One-off rules, as reminders: always on the damage card for a target or a kill; on a Critical Injury for the rest.
+      const always = (sp?.remind ?? []).filter((r) => ["target", "kill"].includes(r.on) || (r.on === "autofire" && roll.isAutofire)).map((r) => r.text);
+      if (always.length) tag.remind = always;
+      const onCrit = (sp?.remind ?? []).filter((r) => r.on === "crit" || (r.on === "headCrit" && mode === "aimed" && roll.location === "head")).map((r) => r.text);
+      if (onCrit.length) tag.critRemind = onCrit;
+      if (sp?.table) tag.table = sp.table;
       // The first damage roll of the fight, or of the Round.
       const first = sp?.crit?.when === "firstDamage" ? !!now.combat && !before.damageRolls : sp?.crit?.when === "firstRound" ? !!now.combat && before.damageRound !== now.round : false;
       if (now.combat) await Rebuilds.setState(actor, item, { mem: remember(state.mem, { ...now, kind: "damage", aimed: mode === "aimed" }) });
@@ -452,7 +460,12 @@ export const Arsenal = {
     if (p.tag.kind === "damage" && (crit || p.tag.ruleCrit) && this.now().combat) {
       const actor = game.actors?.get(p.tag.actorId);
       const item = actor?.items?.get(p.tag.itemId);
-      if (item && specialsOf(item)) Rebuilds.setState(actor, item, { mem: remember(Rebuilds.state(actor, item).mem, { ...this.now(), kind: "crit" }) }).catch(() => {});
+      // The weapon itself, and a sister weapon that counts its Critical Injuries (Nehan and Satori).
+      const twin = specialsOf(item)?.twin;
+      const both = item ? [item, ...(twin ? [...actor.items].filter((i) => i.id !== item.id && String(i.name ?? "").includes(twin)) : [])] : [];
+      (async () => {
+        for (const i of both) if (specialsOf(i)) await Rebuilds.setState(actor, i, { mem: remember(Rebuilds.state(actor, i).mem, { ...this.now(), kind: "crit" }) });
+      })().catch(() => {});
     }
     message.updateSource({ [`flags.${MODULE_ID}.arsenal`]: { ...p.tag, total: Number(p.roll.resultTotal) || 0, penalty: penaltyOf(p.roll), crit, at: Date.now() } });
   },
@@ -558,6 +571,8 @@ export const Arsenal = {
     if (a.kind === "damage" && a.ablate) notes.push(L(`${LANG}.Arsenal.Note.ablate`, { extra: a.ablate }));
     if (a.kind === "damage" && a.ruleCrit) notes.push(L(`${LANG}.Arsenal.Note.ruleCrit`, { face: a.critRule?.face ?? 5, bonus: a.ruleCrit }));
     const named = (id) => esc(Registry.get(id)?.name ?? id);
+    for (const text of a.remind ?? []) notes.push(L(`${LANG}.Arsenal.Note.remind`, { text: esc(text) }));
+    if (a.kind === "damage" && (a.crit || a.ruleCrit)) for (const text of a.critRemind ?? []) notes.push(L(`${LANG}.Arsenal.Note.critRemind`, { text: esc(text) }));
     for (const text of a.memo ?? []) notes.push(L(`${LANG}.Arsenal.Note.memo`, { text: esc(text) }));
     if (a.kind === "attack" && a.autoStreak) notes.push(L(`${LANG}.Arsenal.Note.${a.autoStreak.over ? "autoStreakOver" : "autoStreak"}`, { count: a.autoStreak.n }));
     if (a.kind === "attack" && a.bodyShort) notes.push(L(`${LANG}.Arsenal.Note.bodyShort`, a.bodyShort));
@@ -583,6 +598,9 @@ export const Arsenal = {
     }
     if (a.kind === "damage" && a.effect && a.targets?.length && (game.user.isGM || actor?.isOwner)) {
       buttons.push(`<button type="button" data-arsenal="effect"><i class="fa-solid fa-fire"></i> ${L(`${LANG}.Arsenal.EffectButton`, { effect: named(a.effect.id), count: a.targets.length })}</button>`);
+    }
+    if (a.kind === "damage" && a.table && (a.crit || a.ruleCrit) && (game.user.isGM || actor?.isOwner)) {
+      buttons.push(`<button type="button" data-arsenal="table"><i class="fa-solid fa-dice-d6"></i> ${L(`${LANG}.Arsenal.TableButton`, { die: a.table.die })}</button>`);
     }
     if (a.kind === "damage" && a.cover?.length && game.user.isGM) {
       a.cover.forEach((c, i) => buttons.push(`<button type="button" data-arsenal="cover" data-i="${i}"><i class="fa-solid fa-shield-halved"></i> ${L(`${LANG}.Cover.HitButton`, { cover: esc(c.label), name: esc(c.name) })}</button>`));
@@ -610,11 +628,27 @@ export const Arsenal = {
       ev.currentTarget.disabled = true;
       this.applyEffect(a).catch((err) => ui.notifications.error(err.message));
     });
+    box.querySelector("[data-arsenal=table]")?.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.currentTarget.disabled = true;
+      this.rollTable(a).catch((err) => ui.notifications.error(err.message));
+    });
     box.querySelector("[data-arsenal=retry]")?.addEventListener("click", (ev) => {
       ev.preventDefault();
       ev.currentTarget.disabled = true;
       this.promptRetry(message).catch((err) => ui.notifications.error(err.message));
     });
+  },
+
+  /** Roll a weapon's own table (its card: "Each Critical Injury also rolls 1d6") and post what came up. */
+  async rollTable(a) {
+    if (!a?.table?.die) return null;
+    const roll = await new Roll(`1d${a.table.die}`).evaluate();
+    const actor = game.actors.get(a.actorId);
+    const weapon = actor?.items?.get(a.itemId);
+    const text = a.table.entries[String(roll.total)] ?? "";
+    await Cards.post({ actor, kicker: L(`${LANG}.Arsenal.Kicker`), title: L(`${LANG}.Arsenal.TableTitle`, { weapon: esc(weapon?.name ?? ""), total: roll.total }), tone: "pink", body: `<p>${esc(text)}</p>` });
+    return { total: roll.total, text };
   },
 
   /** Put a weapon's effect (On Fire, Prone...) on the targets its damage card was rolled against (through the GM). */

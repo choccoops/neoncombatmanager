@@ -817,7 +817,9 @@ test("the rest of the first part: Bonus Damage, Armor-Piercing rounds, the first
   const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
   const P = (rule) => parseSpecials(desc(rule).value);
   assert.deepEqual(P("Critical Injuries deal +3 Bonus Damage (8)."), { critBonus: 3 });
-  assert.deepEqual(P("Its Critical Injuries deal +5 Bonus Damage (10) and −2 MOVE (min 1) for 1 Round."), { critBonus: 5 });
+  const bfc = P("Its Critical Injuries deal +5 Bonus Damage (10) and −2 MOVE (min 1) for 1 Round.");
+  assert.equal(bfc.critBonus, 5);
+  assert.equal(bfc.remind[0].on, "crit", "the rest of the sentence is brought up on a Critical Injury");
   assert.equal(P("In the Round you draw it: head Aimed Shots count 5s as 6s for Critical Injuries."), null, "tied to the Round it's drawn: the table's");
   assert.deepEqual(P("An Aimed Shot fires 2 rounds for +1d6 (6d6)."), { aimedRounds: 2, aimedDice: 1 });
   assert.deepEqual(P("+1 to hit on its first Single Shot of a fight."), { firstShot: 1 });
@@ -1168,4 +1170,58 @@ test("third part: weapons that remember the fight (last Round, the first roll, a
   assert.match(Arsenal.pending.tag.memo[0], /heals you 5 HP/);
   game.combat = savedCombat;
   for (const k of ["memo", "autoStreak", "autoStreakOver"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.Note.${k}`), `NEONCOMBAT.Arsenal.Note.${k}`);
+});
+
+test("third part: one-off rules come up as reminders on the roll that triggers them; a weapon's own table is rolled; sister blades share a memory", async () => {
+  const { parseSpecials } = await import("../scripts/arsenal/specials.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.deepEqual(P("On Autofire, add up to 4 more visible targets within 10m of the first, 1 extra round each.").remind.map((r) => r.on), ["autofire"]);
+  assert.deepEqual(P("Against a target it already damaged this Round, 5s count as 6s for Critical Injuries.").remind.map((r) => r.on), ["target"]);
+  assert.deepEqual(P("A kill bursts like a Poison Grenade on the body.").remind.map((r) => r.on), ["kill"]);
+  assert.deepEqual(P("A Head Critical Injury also bursts like Improved EMP ammo (only 4d6) in a 6×6m area around the victim.").remind.map((r) => r.on), ["headCrit"]);
+  assert.equal(P("Critical Injuries deal +3 Bonus Damage (8).").remind, undefined, "already applied: no reminder");
+  const murphy = P("Aimed Shots deal +1d6 (4d6). Each Critical Injury also rolls 1d6: 1 roll twice more for two different results above 1, both apply; 2 −3 MOVE for 3 Rounds; 3 Strongly On Fire; 4 Prone and Cracked Skull, wherever it hit; 5 −2 REF and DEX and no dodging ranged attacks for 3 Rounds; 6 your next attack with it gets +5. With Tarot Criticals, draw three and pick one.");
+  assert.equal(murphy.table.die, 6);
+  assert.equal(Object.keys(murphy.table.entries).length, 6);
+  assert.equal(murphy.table.entries[3], "Strongly On Fire");
+  assert.equal(P("If this blade or Satori gave the target a Critical Injury last Round, its next one deals +5 Bonus Damage (10) and heals you 5 HP.").twin, "Satori");
+
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; this.location = "body"; } }
+  game.user.targets = new Set();
+  const savedCombat = game.combat;
+  game.combat = { id: "f9", started: true, round: 1, combatants: [] };
+  const sab = crew("Saburo", [
+    weapon("w1", "Nehan (Saburo’s Kaiken)", { weaponType: "heavyMelee", isRanged: false, description: desc("If this blade or Satori gave the target a Critical Injury last Round, its next one deals +5 Bonus Damage (10) and heals you 5 HP.") }),
+    weapon("w2", "Satori (Saburo’s Sword)", { weaponType: "heavyMelee", isRanged: false, description: desc("If this sword or Nehan gave the target a Critical Injury last Round, its next one deals +10 Bonus Damage (15) and heals you 5 HP.") }),
+    weapon("w3", "Murphy’s Law", { weaponType: "heavyMelee", isRanged: false, description: desc("Each Critical Injury also rolls 1d6: 1 roll twice more, both apply; 2 −3 MOVE for 3 Rounds; 3 Strongly On Fire; 4 Prone and Cracked Skull; 5 −2 REF and DEX for 3 Rounds; 6 your next attack with it gets +5. A kill makes everyone nervous.") })
+  ]);
+  game.actors.set(sab.id, sab);
+  // Nehan crits this Round; next Round it's Satori that gets its +10.
+  const d1 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(sab.items.get("w1"), d1);
+  d1.faces = [6, 6, 2];
+  Arsenal.tag({ content: '<div class="rollcard"></div>', updateSource() {} }, game.user.id);
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(Rebuilds.state(sab, sab.items.get("w2")).mem.critRound, 1, "the sister blade remembers it too");
+  game.combat.round = 2;
+  const d2 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(sab.items.get("w2"), d2);
+  assert.equal(d2.bonusDamage, 15);
+
+  // Murphy's Law: its table is on the damage card, and the kill line comes up as a reminder.
+  const d3 = new CPRDamageRoll("3d6");
+  await Arsenal.preRoll(sab.items.get("w3"), d3);
+  const t = Arsenal.pending.tag;
+  assert.equal(t.table.die, 6);
+  assert.deepEqual(t.remind, ["A kill makes everyone nervous."]);
+  assert.equal(t.critRemind.length, 1, "kept for when the dice make a Critical Injury");
+  dice.push(3);
+  chat.length = 0;
+  const rolled = await Arsenal.rollTable({ ...t, actorId: sab.id, itemId: "w3" });
+  assert.deepEqual(rolled, { total: 3, text: "Strongly On Fire" });
+  assert.equal(chat.length, 1, "posted for the table");
+  game.actors.delete(sab.id);
+  game.combat = savedCombat;
+  for (const k of ["Note.remind", "Note.critRemind", "TableButton", "TableTitle"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.${k}`), `NEONCOMBAT.Arsenal.${k}`);
 });
