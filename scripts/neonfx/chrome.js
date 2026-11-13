@@ -106,6 +106,24 @@ export function conditionFor(items, kind, conditions) {
   return (os && conditions.find((c) => c.kind === kind && c.os === os)) || conditions.find((c) => c.kind === kind && !c.os) || null;
 }
 
+/** Where a combatant keeps what its running chrome added to its Initiative: { [kind]: n }. */
+export const INIT_FLAG = "chromeInit";
+
+/**
+ * What switching speedware does to a combatant's Initiative, pure.
+ * `had` is what this kind is on record as having added: a number while it's in, 0 once taken
+ * back, undefined when we never touched it (rolled with the chrome already running: the roll
+ * carried the bonus, so "off" takes it out).
+ * @returns {{ initiative: number, keep: number }|null} null: nothing to do
+ */
+export function initiativeMove({ initiative, had, bonus, on }) {
+  const b = Number(bonus) || 0;
+  if (!b || !Number.isFinite(initiative)) return null;
+  if (on) return had > 0 ? null : { initiative: initiative + b, keep: b };
+  if (had === 0) return null;
+  return { initiative: initiative - (had > 0 ? had : b), keep: 0 };
+}
+
 /** A condition's changes without the keys the chrome's own switched-on effects already give, pure. */
 export const withoutGiven = (changes = [], given = []) => changes.filter((ch) => !given.includes(ch.key));
 
@@ -162,8 +180,31 @@ export const Chrome = {
     const item = effect.parent;
     const actor = item?.parent;
     const kind = item?.documentName === "Item" && actor?.documentName === "Actor" ? chromeKind(item.name)?.kind : null;
-    if (!kind) return;
-    this._follow(actor, kind).catch((err) => console.error(`${MODULE_ID} | chrome`, err));
+    // Our own hand is on the switches (opening or closing them all): one look when it's done.
+    if (!kind || this._held.has(this._key(actor, kind))) return;
+    this._queue(actor, kind, () => this._follow(actor, kind));
+  },
+
+  /** Being opened or closed by us right now: `${actor}:${kind}`. */
+  _held: new Set(),
+  /** One thing at a time for a character's chrome of a kind (this client). */
+  _busy: new Map(),
+  _key: (actor, kind) => `${actor?.uuid ?? actor?.id}:${kind}`,
+
+  /**
+   * A character's chrome often has two switches (the Sandevistan's and its Operating System's),
+   * and each write takes a trip to the server: handled side by side, the second saw the world
+   * before the first had finished (two conditions placed, or one put back as it was coming off).
+   * So they queue, and each reads the state as its turn comes.
+   */
+  _queue(actor, kind, fn) {
+    const key = this._key(actor, kind);
+    const next = (this._busy.get(key) ?? Promise.resolve()).then(fn).catch((err) => console.error(`${MODULE_ID} | chrome`, err));
+    this._busy.set(key, next);
+    next.then(() => {
+      if (this._busy.get(key) === next) this._busy.delete(key);
+    });
+    return next;
   },
 
   async _follow(actor, kind) {
@@ -182,28 +223,42 @@ export const Chrome = {
     const c = Registry.ofEffect(effect);
     const actor = effect?.parent;
     if (!c?.chrome?.kind || actor?.documentName !== "Actor" || !this.on || !Core.writes(userId)) return;
-    this._after(actor, c, effect, added).catch((err) => console.error(`${MODULE_ID} | chrome`, err));
+    this._queue(actor, c.chrome.kind, () => this._after(actor, c, effect, added));
   },
 
   async _after(actor, c, effect, added) {
     const { kind, os } = c.chrome;
     const bonus = Number((c.rawChanges ?? []).find((ch) => ch.key === "bonuses.initiative")?.value) || 0;
     if (added) {
+      // The same condition placed twice at once (two clients, two switches): one stays.
+      const twins = effect ? Conditions.effects(actor, c.id).filter((e) => e.id !== effect.id) : [];
+      if (twins.length && actor.isOwner) {
+        const drop = twins.some((e) => e.id < effect.id) ? [effect.id] : twins.map((e) => e.id);
+        await actor.deleteEmbeddedDocuments("ActiveEffect", drop).catch(() => {}); // already gone: fine
+        if (drop.includes(effect.id)) return;
+      }
       // What the chrome's own effect already gives isn't counted twice.
       const given = this.given(actor, kind);
       if (given.length && (c.rawChanges ?? []).some((ch) => given.includes(ch.key))) await Conditions.add(c.id, actor, { changes: withoutGiven(c.rawChanges, given) });
       await this._flag(actor, kind, os ?? true);
       // Whose Turn it is, read before the Initiative moves (the order re-sorts under it).
       const current = game.combat?.combatant?.id ?? null;
-      await this._initiative(actor, bonus);
+      await this._initiative(actor, kind, bonus, true);
       // An Apogee switched on during someone else's Turn can interrupt them.
       if (os === "apogee") await Interrupt.check(actor, { currentId: current });
       return;
     }
     if (this.running(actor, kind)) return; // another of its kind took over
     await this._flag(actor, kind, null);
-    await this._initiative(actor, -bonus);
-    for (const e of this.switches(actor, kind)) if (!e.disabled && actor.isOwner) await e.update({ disabled: true });
+    await this._initiative(actor, kind, bonus, false);
+    // All its switches go off together: none of them, half way, reads as "still on".
+    const key = this._key(actor, kind);
+    this._held.add(key);
+    try {
+      for (const e of this.switches(actor, kind)) if (!e.disabled && actor.isOwner) await e.update({ disabled: true });
+    } finally {
+      this._held.delete(key);
+    }
   },
 
   /** Hold (or drop) a Neon FX switch on a character's tokens. */
@@ -216,13 +271,22 @@ export const Chrome = {
     }
   },
 
-  /** Speedware kicking in mid-fight: the character's place in the Initiative order moves with it. */
-  async _initiative(actor, by) {
+  /**
+   * Speedware kicking in mid-fight: the character's place in the Initiative order moves with it,
+   * once. What was added is kept on the combatant, so a second "on" adds nothing and "off" takes
+   * back what's there, however many times either arrives.
+   */
+  async _initiative(actor, kind, bonus, on) {
     const combat = game.combat;
-    if (!by || !combat?.started) return;
+    if (!bonus || !combat?.started) return;
     for (const cb of combat.combatants ?? []) {
-      if ((cb.actor !== actor && cb.actorId !== actor.id) || !Number.isFinite(cb.initiative) || !cb.isOwner) continue;
-      await cb.update({ initiative: cb.initiative + by });
+      if ((cb.actor !== actor && cb.actorId !== actor.id) || !cb.isOwner) continue;
+      const all = cb.flags?.[MODULE_ID]?.[INIT_FLAG] ?? {};
+      const had = all[kind];
+      const next = initiativeMove({ initiative: cb.initiative, had, bonus, on });
+      if (!next) continue;
+      const flags = { [MODULE_ID]: { ...(cb.flags?.[MODULE_ID] ?? {}), [INIT_FLAG]: { ...all, [kind]: next.keep } } };
+      await cb.update(next.initiative === cb.initiative ? { flags } : { initiative: next.initiative, flags });
     }
   },
 
@@ -244,8 +308,17 @@ export const Chrome = {
       if (want === !!running) continue;
       const switches = this.switches(actor, kind);
       if (!want) await Conditions.remove(running.id, actor);
-      else if (switches.length && actor.isOwner) for (const e of switches) await e.update({ disabled: false });
-      else {
+      else if (switches.length && actor.isOwner) {
+        // All its switches on, then one look: the condition is placed once.
+        const key = this._key(actor, kind);
+        this._held.add(key);
+        try {
+          for (const e of switches) if (e.disabled) await e.update({ disabled: false });
+        } finally {
+          this._held.delete(key);
+        }
+        await this._queue(actor, kind, () => this._follow(actor, kind));
+      } else {
         const c = conditionFor(this.items(actor), kind, chromeConditions());
         if (c) await Conditions.add(c.id, actor);
         else ui.notifications?.warn(L(`${LANG}.FX.NoChrome`, { name: actor.name }));

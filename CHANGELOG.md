@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.31.1
+
+- **A Sandevistan switched on and off no longer piles up Initiative, and goes off when it's
+  switched off.** Chrome with an Operating System has two switches, and each was handled as it
+  arrived: at the table (where every write takes a trip to the server) the running condition
+  could be placed twice, or put straight back as it was coming off. That left the token's
+  Sandevistan look on after switching an Apogee off, and added its Initiative bonus again on
+  each go. Now a character's chrome is handled one step at a time, its switches open and close
+  together, a doubled condition is cleared, and the bonus is kept on record on the combatant:
+  on adds it once, off takes back what was added.
+
 ## 1.31.0
 
 - **The Apogee interrupt.** When an Apogee is switched on during someone else's Turn and its
