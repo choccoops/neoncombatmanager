@@ -1382,3 +1382,37 @@ test("a click on a Tech scope's outline is caught at the token layer: it targets
   CONFIG.Canvas.layers = savedLayers;
   game.user.targets = saved;
 });
+
+test("a Smart gun alone never takes obscurement off: only Improved Smart rounds loaded in it do, and the card names them", async () => {
+  game.user.targets = new Set();
+  const basic = { _id: "b1", name: "Rifle Ammo (Basic)", type: "ammo", system: { variety: "rifle", type: "basic", amount: 20 } };
+  const smart = { _id: "s1", name: "Improved Smart Ammunition (Rifle)", type: "ammo", system: { variety: "rifle", type: "smart", amount: 20 } };
+  const gun = (list) => ({ ...weapon("w1", "Kang Tao G-58 Dian", { weaponType: "smg", attackmod: 1, installedItems: { list } }), flags: { "cpr-neon-hub": { weaponType2070: "smart" } } });
+  const obscuredRoll = async (actor) => {
+    const [fx] = await Conditions.add("obscured", actor);
+    const roll = new CPRAttackRoll([{ id: `bonuses.ranged-${fx.id}`, key: "bonuses.ranged", value: -4, source: "Obscured" }]);
+    Arsenal.preDialog(actor.items.get("w1"), roll);
+    await Arsenal.preRoll(actor.items.get("w1"), roll);
+    return roll;
+  };
+  // Basic rounds loaded, Improved Smart only carried: the penalty stays, before the dialog and after.
+  const a = crew("Fury", [gun(["b1"]), basic, smart, { _id: "n1", name: "Neuroport", type: "cyberware", system: { isInstalled: true } }]);
+  for (const i of a.items) if (i.name.startsWith("Kang")) i.flags = { "cpr-neon-hub": { weaponType2070: "smart" } };
+  const r1 = await obscuredRoll(a);
+  assert.ok(r1.mods.some((m) => m.source === "Obscured" && m.value === -4), "Smart Weapon alone ignores nothing");
+  assert.equal(Arsenal.pending.tag.unobscured, undefined);
+  assert.deepEqual([...flavorsInHand(a)], ["smart"], "and Improved Smart Loaded isn't on");
+  // Nothing loaded at all: the same.
+  const b = crew("Sable", [gun([]), smart]);
+  for (const i of b.items) if (i.name.startsWith("Kang")) i.flags = { "cpr-neon-hub": { weaponType2070: "smart" } };
+  const r2 = await obscuredRoll(b);
+  assert.ok(r2.mods.some((m) => m.source === "Obscured"));
+  // Improved Smart loaded: off, and the card says which round did it.
+  const c = crew("Lattice", [gun(["s1"]), basic, smart]);
+  for (const i of c.items) if (i.name.startsWith("Kang")) i.flags = { "cpr-neon-hub": { weaponType2070: "smart" } };
+  const r3 = await obscuredRoll(c);
+  assert.ok(!r3.mods.some((m) => m.source === "Obscured"));
+  assert.equal(Arsenal.pending.tag.unobscuredBy, "Improved Smart Ammunition (Rifle)");
+  assert.doesNotMatch(game.i18n.localize("NEONCOMBAT.Condition.smartRebuild.hint"), /obscur/i, "the Smart Weapon condition doesn't claim it");
+  assert.match(game.i18n.localize("NEONCOMBAT.Condition.improvedSmart.hint"), /obscurement/);
+});

@@ -345,7 +345,10 @@ export const Arsenal = {
         if (improvedSmart(info)) {
           // Those ticked back on in the dialog come off too: the rounds ignore them.
           const off = (pre.unobscured ?? 0) + this.unobscure(actor, roll);
-          if (off) tag.unobscured = off;
+          if (off) {
+            tag.unobscured = off;
+            tag.unobscuredBy = ammo?.name ?? "";
+          }
         }
         if (traits.active.includes("charge") && Rebuilds.isCharged(actor, item) && !info.explosive) {
           tag.charged = true;
@@ -607,7 +610,7 @@ export const Arsenal = {
     if (a.kind === "damage" && a.throughCover) notes.push(L(`${LANG}.Arsenal.Note.throughCover`));
     if (a.kind === "attack" && a.smartBonus) notes.push(L(`${LANG}.Arsenal.Note.smartBonus`, { value: a.smartBonus }));
     if (a.kind === "attack" && a.smartNoLink) notes.push(L(`${LANG}.Arsenal.Note.smartNoLink`));
-    if (a.kind === "attack" && a.unobscured) notes.push(L(`${LANG}.Arsenal.Note.unobscured`, { value: a.unobscured }));
+    if (a.kind === "attack" && a.unobscured) notes.push(L(`${LANG}.Arsenal.Note.unobscured`, { value: a.unobscured, ammo: esc(a.unobscuredBy ?? "") }));
     if (a.kind === "damage" && a.crit && a.critBonus) notes.push(L(`${LANG}.Arsenal.Note.powerCrit`));
     if (a.kind === "damage" && a.charged) notes.push(L(`${LANG}.Arsenal.Note.chargedDamage`));
     if (a.kind === "damage" && a.sources?.length && Settings.get("arsenalRebuilds")) notes.push(L(`${LANG}.Arsenal.Note.traits`, { list: esc(a.sources.map((s) => this.sourceLabel(s)).join(", ")) }));

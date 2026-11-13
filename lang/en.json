@@ -607,7 +607,7 @@
       },
       "smartRebuild": {
         "name": "Smart Weapon",
-        "hint": "A Smart gun in hand: +1 to its attacks with a Personal Link or Subdermal Grip, on the roll as Smart weapon. Improved Smart Ammunition ignores visual obscurement, and a miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK), the first shot's penalties still applying."
+        "hint": "A Smart gun in hand: +1 to its attacks with a Personal Link or Subdermal Grip, on the roll as Smart weapon. Nothing else: what Improved Smart Ammunition adds is on Improved Smart Loaded, and only while those rounds are in the gun."
       },
       "weaponStrain": {
         "name": "Weapon Strain",
@@ -2515,7 +2515,7 @@
         "throughCover": "Its rounds carry their damage through cover, as an explosive's does.",
         "smartBonus": "Smart weapon: +{value} to this attack (linked).",
         "smartNoLink": "Smart weapon without a Personal Link or Subdermal Grip: no +1.",
-        "unobscured": "Improved Smart: ignores {value} from obscurement (darkness, smoke, fog).",
+        "unobscured": "Improved Smart ({ammo} loaded): ignores {value} from obscurement (darkness, smoke, fog).",
         "powerCrit": "Power: the Critical Injury's Bonus Damage is +5 more.",
         "chargedAttack": "Charged Tech shot: ROF1, through Thin cover without damaging it.",
         "chargedDamage": "Charged Tech shot: ignores half the target's SP (on the Apply Damage button).",

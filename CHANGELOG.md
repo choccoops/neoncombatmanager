@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.30.2
+
+- **Smart Weapon says only what it does.** The Smart Weapon condition's description no longer
+  mentions visual obscurement: that belongs to Improved Smart Loaded alone, which is on only
+  while Improved Smart rounds are in a Smart gun in hand.
+- When obscurement penalties come off a roll, the attack card now names the round that was
+  loaded, so it's plain which ammo did it.
+
 ## 1.30.1
 
 - **Targeting a Tech scope's outline works.** The click on an outline was reaching Foundry as a
