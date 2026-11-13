@@ -732,7 +732,7 @@ test("a weapon's own rules are read from its card: bursts, Autofire rounds, Aime
   assert.deepEqual(parseSpecials(card("+1 to Aimed Shots and Autofire.")), { aimedMod: 1, autofireMod: 1 });
   // Lines that only sound alike are left to the table.
   assert.deepEqual(parseSpecials(card("Two-handed: +1 to Aimed Shots and Autofire.")), { twoHanded: { attack: 0, aimed: 1, autofire: 1 } }, "for the weapon's Two hands switch");
-  assert.equal(parseSpecials(card("Loads only its own Armor-Piercing shells (100eb per 10), which ablate 1 extra SP.")), null, "the ammo's rule, not the gun's");
+  assert.deepEqual(parseSpecials(card("Loads only its own Armor-Piercing shells (100eb per 10), which ablate 1 extra SP.")), { ablate: { extra: 1, charged: null }, ap: true }, "it loads nothing else, so its rounds' rules are the gun's");
   assert.equal(parseSpecials(card("Leg and Held Item Aimed Shots deal +1d6 (6d6); head Aimed Shots deal −1d6 (4d6).")), null);
   assert.equal(parseSpecials("<p>Generic weapon (standard quality).</p>"), null);
 
@@ -999,4 +999,61 @@ test("second part: what a weapon does to its targets and asks of its shooter, it
   await Arsenal.preRoll(big.items.get("w1"), new CPRAttackRoll([]));
   assert.ok(!Arsenal.pending.tag.bodyShort && !Arsenal.pending.tag.recoil && !Conditions.has("tornMuscle", big));
   for (const k of ["Note.bodyShort", "Note.recoil", "Note.wrongAmmo", "Note.effect", "Note.effectDv", "Note.throughCover", "EffectButton", "NoCapacity", "AmmoOnly.smart", "ReloadRule.actions", "ReloadRule.oneHand", "ReloadRule.twoHanded", "ReloadRule.always"]) assert.notEqual(game.i18n.localize(`NEONCOMBAT.Arsenal.${k}`), `NEONCOMBAT.Arsenal.${k}`, k);
+});
+
+test("second part, the rest: Weapon Strain while a heavy weapon is held, a gun's own rounds, target checks on the card, a weapon's own blast size", async () => {
+  const { parseSpecials, strainOf } = await import("../scripts/arsenal/specials.js");
+  const { STRAIN } = await import("../scripts/arsenal/equipped.js");
+  const { classify } = await import("../scripts/arsenal/kinds.js");
+  const desc = (rule) => ({ value: `<p>${rule}</p><p><strong>Class:</strong> x</p>` });
+  const P = (rule) => parseSpecials(desc(rule).value);
+  assert.deepEqual(P("Without BODY 10+ or paired cyberarms, −1 DEX and MOVE while held.").heldPenalty, { body: 10, arms: 2, value: -1, stats: ["dex", "move"] });
+  assert.deepEqual(P("Without BODY 14+, −2 REF, DEX and MOVE while you hold it.").heldPenalty, { body: 14, arms: 0, value: -2, stats: ["ref", "dex", "move"] });
+  assert.deepEqual(P("BODY 14+ or −2 MOVE while held.").heldPenalty, { body: 14, arms: 0, value: -2, stats: ["move"] });
+  assert.deepEqual(P("−2 MOVE while held (min 4).").heldPenalty, { body: null, arms: 0, value: -2, stats: ["move"] });
+  const osprey = P("Without BODY 10+ or paired cyberarms, −2 MOVE while held and Torn Muscle when fired.");
+  assert.deepEqual(osprey.recoil, { body: 10, arms: 2, injury: "tornMuscle" });
+  assert.deepEqual(strainOf([{ body: 10, arms: 2, value: -1, stats: ["dex", "move"] }, { body: 14, arms: 0, value: -2, stats: ["move"] }], { body: 9 }), { dex: -1, move: -2 }, "the worst of each");
+  assert.equal(strainOf([{ body: 10, arms: 2, value: -1, stats: ["dex"] }], { body: 5, cyberarms: 2 }), null, "paired cyberarms carry it");
+  assert.deepEqual(strainOf([{ body: null, arms: 0, value: -2, stats: ["move"] }], { body: 20 }), { move: -2 }, "heavy for anyone");
+
+  assert.deepEqual(P("Loads only its own Incendiary rounds (50eb per 10), which set targets Strongly On Fire and also count as Armor-Piercing."), { effect: { id: "onFireStrong" }, ap: true });
+  assert.deepEqual(P("Loads only its own High Velocity rounds (500eb per 10), which carry damage past destroyed cover."), { throughCover: true });
+  assert.deepEqual(P("Its own Armor-Piercing rounds cost 20eb per 10 and fit only this gun."), { ap: true });
+  const ear = P("On a hit, the target rolls DV15 Resist Torture/Drugs or suffers Damaged Ear (no Bonus Damage).");
+  assert.equal(ear.check.dv, 15);
+  assert.equal(ear.check.skill, "Resist Torture/Drugs");
+  assert.deepEqual(ear.effect, { id: "damagedEar", dv: 15, skill: "Resist Torture/Drugs", own: true });
+  const tox = P("Aimed Shots deal +1d6 (4d6), and a meat target must also beat DV17 Resist Torture/Drugs or take 3d6 more, ignoring armor.");
+  assert.equal(tox.check.dv, 17);
+  assert.equal(tox.effect, undefined, "nothing the module has a condition for: the card says it");
+  assert.equal(P("Its grenades burst in a 6×6m area.").area, 6);
+  const maw = { name: "Modern Assault Weapon", system: { weaponType: "grenadeLauncher", isRanged: true, description: desc("Its grenades burst in a 6×6m area.") } };
+  assert.deepEqual(classify(maw, null, []).area, { shape: "rect", size: 6 });
+  assert.deepEqual(classify({ ...maw, system: { ...maw.system, description: desc("") } }, null, []).area, { shape: "rect", size: 10 });
+
+  // In hand without the BODY for it: Weapon Strain, with the card's numbers; stowed, it goes.
+  const runner = crew("Lattice", [weapon("w1", "Nokota D6 Hawk", { weaponType: "assaultRifle", description: desc("Without BODY 10+ or paired cyberarms, −1 DEX and MOVE while held.") })]);
+  runner.system.stats = { body: { value: 5 } };
+  await Equipped.sync(runner);
+  const [fx] = Conditions.effects(runner, STRAIN);
+  assert.ok(fx, "on while it's held");
+  assert.deepEqual(fx.changes.map((c) => [c.key, Number(c.value)]).sort(), [["system.stats.dex.value", -1], ["system.stats.move.value", -1]]);
+  await Equipped.sync(runner);
+  assert.equal(Conditions.effects(runner, STRAIN).length, 1, "kept, not stacked");
+  runner.items.get("w1").system.equipped = "carried";
+  await Equipped.sync(runner);
+  assert.ok(!Conditions.has(STRAIN, runner));
+  runner.items.get("w1").system.equipped = "equipped";
+  runner.system.stats.body.value = 11;
+  await Equipped.sync(runner);
+  assert.ok(!Conditions.has(STRAIN, runner), "with the BODY for it: nothing");
+  // The damage card carries the weapon's check in the card's words.
+  class CPRDamageRoll { constructor(formula) { this.formula = formula; this.mods = []; this.rollCardExtraArgs = { ablationValue: 1 }; this.bonusDamage = 5; } }
+  game.user.targets = new Set();
+  const med = crew("Doc Mags", [weapon("w1", "Shrieker", { weaponType: "heavyPistol", description: desc("On a hit, the target rolls DV15 Resist Torture/Drugs or suffers Damaged Ear (no Bonus Damage).") })]);
+  await Arsenal.preRoll(med.items.get("w1"), new CPRDamageRoll("3d6"));
+  assert.match(Arsenal.pending.tag.check, /DV15 Resist Torture\/Drugs/);
+  assert.equal(Arsenal.pending.tag.effect.id, "damagedEar");
+  assert.ok(existsSync(path.join(root, "assets/icons/weapon-strain.svg")));
 });

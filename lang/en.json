@@ -609,6 +609,10 @@
         "name": "Smart Weapon",
         "hint": "A Smart gun in hand: +1 to its attacks with a Personal Link or Subdermal Grip, on the roll as Smart weapon. Improved Smart Ammunition ignores visual obscurement, and a miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK), the first shot's penalties still applying."
       },
+      "weaponStrain": {
+        "name": "Weapon Strain",
+        "hint": "Holding a weapon without the BODY (or the paired cyberarms) its card asks for: the penalties to REF, DEX or MOVE the card gives, for as long as it's in hand. Stow it and they go; whether it's mounted is the GM's call."
+      },
       "improvedSmart": {
         "name": "Improved Smart Loaded",
         "hint": "Improved Smart Ammunition in a Smart gun in hand. Its attacks ignore every visual obscurement penalty (Low Light, Darkness, Obscured, smoke, pop-ups, weather's sight penalties): they come off the roll before its dialog opens, and the card says how much. A miss by 5 or less gets a second try at 14 + 1d10 (+ LUCK). The gun's own +1 shows on the roll as Smart weapon."
@@ -2500,6 +2504,7 @@
         "wrongAmmo": "This weapon takes {ammo} only.",
         "effect": "Whoever it damages: {effect}.",
         "effectDv": "Whoever it hits must beat DV{dv} {skill} or be {effect}.",
+        "check": "This weapon's own rule: {text}",
         "throughCover": "Its rounds carry their damage through cover, as an explosive's does.",
         "smartBonus": "Smart weapon: +{value} to this attack (linked).",
         "smartNoLink": "Smart weapon without a Personal Link or Subdermal Grip: no +1.",

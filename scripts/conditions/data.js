@@ -178,6 +178,8 @@ export const CONDITIONS = [
   { id: "techRebuild", category: "combat", img: `${A}/tech-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
   { id: "monoRebuild", category: "combat", img: `${A}/mono-rebuild.svg`, page: "2070", mirror: "rebuild", hud: false },
   { id: "improvedSmart", category: "combat", img: `${A}/improved-smart.svg`, page: "2070", mirror: "rebuild", hud: false },
+  // Holding a weapon without the BODY its card asks for: the numbers come from the weapon (scripts/arsenal/equipped.js).
+  { id: "weaponStrain", category: "combat", img: `${A}/weapon-strain.svg`, page: "2070", mirror: "rebuild", hud: false },
 
   /* ------------------------------------------------------------------ */
   /*  Raising the Stakes (2070): the Plot Die. Each rides one Check.    */

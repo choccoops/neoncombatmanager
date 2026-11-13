@@ -3,7 +3,7 @@
 ## 1.29.0
 
 **Weapons' own rules, second part.** More of the lines a weapon's card carries are read and
-applied; 192 of the catalog's 466 weapons now have at least one.
+applied; 205 of the catalog's 466 weapons now have at least one.
 
 - **What it does to its targets.** *Sets what it damages Strongly On Fire* and *must beat DV15
   Athletics or go Prone* put a button on the damage card that places the condition on the
@@ -16,9 +16,16 @@ applied; 192 of the catalog's 466 weapons now have at least one.
   or Expansive ammo has something else loaded, and when a capacity attachment is fitted to one
   that takes none. A weapon's reload rule is said as it's reloaded from the Action HUD.
 - **Rounds that carry through cover** are treated as an explosive's by *Hit the cover*.
-- Not automated: stat penalties while a weapon is held, magazines of several ammo types, a
-  weapon's own priced rounds, effects worded for one weapon only, and areas set off by a
-  Critical Injury or a kill.
+- **Weapon Strain.** A weapon whose card gives penalties *while held* without the BODY or
+  paired cyberarms puts a new condition on whoever holds it, with those penalties, until it's
+  stowed.
+- **A gun's own rounds.** Where a gun loads only its own rounds, what the card says of them
+  (Armor-Piercing, extra SP ablated, On Fire, damage past cover) is applied as the gun's rule.
+- **Checks worded for one weapon** go on the damage card in the card's own words, with a button
+  where the result is Prone, Damaged Ear or Unconscious. A weapon whose explosives *burst in a
+  6×6m area* gets a template that size.
+- Not automated: magazines and barrels of several ammo types, what a failed check does where it
+  isn't one of those conditions, and areas set off by a Critical Injury or a kill.
 
 ## 1.28.0
 

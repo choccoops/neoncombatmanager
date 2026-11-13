@@ -370,6 +370,7 @@ export const Arsenal = {
         tag.critBonusRule = sp.critBonus;
       }
       if (sp?.effect) tag.effect = sp.effect;
+      if (sp?.check) tag.check = sp.check.text;
       if (sp?.throughCover) tag.throughCover = true;
       if (sp?.ablate) {
         const more = state.fired && sp.ablate.charged ? sp.ablate.charged : sp.ablate.extra;
@@ -515,7 +516,8 @@ export const Arsenal = {
     if (a.kind === "attack" && a.bodyShort) notes.push(L(`${LANG}.Arsenal.Note.bodyShort`, a.bodyShort));
     if (a.kind === "attack" && a.recoil) notes.push(L(`${LANG}.Arsenal.Note.recoil`, { injury: named(a.recoil) }));
     if (a.kind === "attack" && a.wrongAmmo) notes.push(L(`${LANG}.Arsenal.Note.wrongAmmo`, { ammo: L(`${LANG}.Arsenal.AmmoOnly.${a.wrongAmmo}`) }));
-    if (a.kind === "damage" && a.effect) notes.push(a.effect.dv ? L(`${LANG}.Arsenal.Note.effectDv`, { dv: a.effect.dv, skill: esc(a.effect.skill), effect: named(a.effect.id) }) : L(`${LANG}.Arsenal.Note.effect`, { effect: named(a.effect.id) }));
+    if (a.kind === "damage" && a.check) notes.push(L(`${LANG}.Arsenal.Note.check`, { text: esc(a.check) }));
+    if (a.kind === "damage" && a.effect && !a.effect.own) notes.push(a.effect.dv ? L(`${LANG}.Arsenal.Note.effectDv`, { dv: a.effect.dv, skill: esc(a.effect.skill), effect: named(a.effect.id) }) : L(`${LANG}.Arsenal.Note.effect`, { effect: named(a.effect.id) }));
     if (a.kind === "damage" && a.throughCover) notes.push(L(`${LANG}.Arsenal.Note.throughCover`));
     if (a.kind === "attack" && a.smartBonus) notes.push(L(`${LANG}.Arsenal.Note.smartBonus`, { value: a.smartBonus }));
     if (a.kind === "attack" && a.smartNoLink) notes.push(L(`${LANG}.Arsenal.Note.smartNoLink`));

@@ -37,6 +37,12 @@
  *   noCapacity   "No capacity attachments": a warning when one is fitted
  *   reload       "Reloading takes two Reload Actions", "reload by giving up your Move Action": said on reload
  *   throughCover "Its rounds carry damage through cover like an Explosive"
+ *   heldPenalty  "Without BODY 10+ or paired cyberarms, −1 DEX and MOVE while held": a condition on
+ *                whoever holds it without the BODY for it
+ *   (own rounds) "Loads only its own Armor-Piercing rounds, which ablate 1 extra SP...": the
+ *                rounds' rules count as the gun's (ap, ablate, effect, throughCover)
+ *   check        "must beat DV17 Resist Torture/Drugs or ...": the card's sentence on the damage card
+ *   area         "Its grenades burst in a 6×6m area": the size of its template
  *   noAimed      "No Aimed Shots."
  *   noRicochet   "Its Power Rebuild can't ricochet."
  */
@@ -136,6 +142,35 @@ export function parseSpecials(html) {
     out.reload = { actions: rl ? WORDS[w] ?? Number(w) : 1, move: rlMove ? (/Held two-handed, reload/i.test(t) ? "twoHanded" : /one hand free/i.test(t) ? "oneHand" : "always") : null };
   }
   if (/carry damage through cover like an Explosive/i.test(t)) out.throughCover = true;
+  // Too heavy to hold: stat penalties while it's in hand, for someone without the BODY (or the cyberarms).
+  const held = t.match(/(?:[Ww]ithout BODY (\d+)\+((?:,| or) paired cyberarms)?(?: or a mount)?,|BODY (\d+)\+ or)?\s*[−-](\d) ((?:REF, )?(?:DEX and )?MOVE) while (?:held|you hold it)( and (Torn Muscle|Broken Arm) when fired)?/);
+  if (held) {
+    const body = held[1] ?? held[3] ?? null;
+    out.heldPenalty = { body: body ? Number(body) : null, arms: held[2] ? 2 : 0, value: -Number(held[4]), stats: held[5].replace("and ", "").split(/,? /).map((x) => x.toLowerCase()) };
+    if (held[7] && body && !out.recoil) out.recoil = { body: Number(body), arms: held[2] ? 2 : 99, injury: INJ[held[7].toLowerCase()] };
+  }
+  // A gun that loads only its own rounds: what those rounds do is the gun's rule.
+  const ownRounds = t.match(/(?:Loads|Fires) (?:only )?its own [^.]*/i)?.[0] ?? t.match(/Its own Armor-Piercing rounds[^.]*/i)?.[0];
+  if (ownRounds) {
+    if (/Armor-Piercing/i.test(ownRounds)) out.ap = true;
+    const more = ownRounds.match(/ablate (\d+) extra SP/i);
+    if (more && !out.ablate) out.ablate = { extra: Number(more[1]), charged: null };
+    const burn = ownRounds.match(/set targets (Mildly|Strongly|Deadly) On Fire/i);
+    if (burn && !out.effect) out.effect = { id: { mildly: "onFireMild", strongly: "onFireStrong", deadly: "onFireDeadly" }[burn[1].toLowerCase()] };
+    if (/carry(?:ing)? damage (?:past destroyed|through) cover/i.test(ownRounds)) out.throughCover = true;
+  }
+  // A check the target makes, worded for this weapon: the card's own sentence goes on the damage card,
+  // with a button where what follows is a condition the module has.
+  const chk = t.match(/[^.;:]*(?:must (?:also )?beat|forces|makes|rolls) DV(\d+) ([A-Z][A-Za-z/]+(?: [A-Z][A-Za-z/]+)*),? or ([^.;]+)[.;]/);
+  if (chk && !out.effect?.dv) {
+    out.check = { dv: Number(chk[1]), skill: chk[2], text: chk[0].trim() };
+    const then = chk[3];
+    const id = /\bProne\b/.test(then) ? "prone" : /Damaged Ear/.test(then) ? "damagedEar" : /Unconscious/.test(then) ? "unconscious" : null;
+    if (id && !out.effect) out.effect = { id, dv: Number(chk[1]), skill: chk[2], own: true };
+  }
+  // Explosives that burst in an area of their own.
+  const area = t.match(/(?:explosives|grenades|rockets) burst in a (\d+)×\1m area/i);
+  if (area) out.area = Number(area[1]);
   if (new RegExp(`${START}No Aimed Shots[.,]`).test(t)) out.noAimed = true;
   if (/Power Rebuild can't ricochet/i.test(t)) out.noRicochet = true;
   return Object.keys(out).length ? out : null;
@@ -199,3 +234,18 @@ export function wielderCheck(sp, { body = 0, cyberarms = 0, prone = false } = {}
 
 /** Attachments a weapon with "No capacity attachments" can't take. */
 export const CAPACITY = /\b(extended|drum) magazine\b/i;
+
+/**
+ * The stat penalties a character takes for the weapons they hold without the BODY (or the paired
+ * cyberarms) for them: { ref, dex, move } with the worst of each, or null.
+ * @param {object[]} rules - each weapon's heldPenalty
+ */
+export function strainOf(rules = [], { body = 0, cyberarms = 0 } = {}) {
+  const out = {};
+  for (const r of rules) {
+    if (!r) continue;
+    if (r.body !== null && (body >= r.body || (r.arms && cyberarms >= r.arms))) continue;
+    for (const st of r.stats) out[st] = Math.min(out[st] ?? 0, r.value);
+  }
+  return Object.keys(out).length ? out : null;
+}

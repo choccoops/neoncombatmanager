@@ -6,6 +6,8 @@ import { Conditions } from "../conditions/engine.js";
 import { classify } from "./kinds.js";
 import { Rebuilds, traitsOf } from "./rebuilds.js";
 import { loadedAmmo } from "./aa.js";
+import { specialsOf, strainOf } from "./specials.js";
+import { CPR } from "../cpr.js";
 
 /**
  * The condition each 2070 flavor (and the Mono-edge Melee Rebuilds, tagged "Monoblade") puts on
@@ -59,6 +61,9 @@ export function flavorsInHand(actor, keysOfItem = null) {
  * roll gets those from the weapon itself); they show on the token and switch on Neon FX's looks
  * and the Tech scope's outlines.
  */
+/** The condition for holding a weapon without the BODY for it; its numbers come from the weapon's card. */
+export const STRAIN = "weaponStrain";
+
 export const Equipped = {
   _pending: new Map(),
 
@@ -111,5 +116,25 @@ export const Equipped = {
       else if (!want.has(flavor)) stale.push(...mine.map((e) => e.id));
     }
     if (stale.length) await actor.deleteEmbeddedDocuments("ActiveEffect", stale, QUIET);
+    await this.syncStrain(actor);
+  }
+
+  /**
+   * Weapon Strain follows the weapons in hand too: someone holding one whose card asks for more
+   * BODY than they have (or paired cyberarms) carries its stat penalties as an Active Effect, and
+   * loses it when the weapon is stowed or the BODY is there.
+   */
+  ,async syncStrain(actor) {
+    if (Registry.get(STRAIN)?.disabled) return null;
+    const rules = Settings.get("arsenalRebuildConditions") ? [...(actor.items ?? [])].filter(inHand).map((i) => specialsOf(i)?.heldPenalty) : [];
+    const arms = [...(actor.items ?? [])].filter((i) => i.type === "cyberware" && i.system?.type === "cyberArm" && i.system?.isInstalled).length;
+    const strain = strainOf(rules, { body: CPR.stat(actor, "body"), cyberarms: arms });
+    const mine = Conditions.effects(actor, STRAIN).filter((e) => e.getFlag(MODULE_ID, FLAGS.managed) === MANAGED);
+    const want = strain ? Object.entries(strain).map(([st, value]) => ({ key: `system.stats.${st}.value`, value })) : [];
+    const same = mine.length === 1 && want.length === (mine[0].changes ?? []).length && want.every((w) => (mine[0].changes ?? []).some((c) => c.key === w.key && Number(c.value) === w.value));
+    if (same) return strain;
+    if (mine.length) await actor.deleteEmbeddedDocuments("ActiveEffect", mine.map((e) => e.id), QUIET);
+    if (want.length) await Conditions.add(STRAIN, actor, { managed: MANAGED, changes: want });
+    return strain;
   }
 };

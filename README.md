@@ -898,7 +898,7 @@ on the scene. A damage roll for an area draws no Tarot card.
   second gun in the other hand still takes them.
 - **A weapon's own rules** (Item Compendium, Weapons and Iconics). Where a weapon's card has
   one of the lines below, Neon Arsenal reads it from the card's text and applies it, so weapons
-  already on sheets count, and so does one you write in the same words. 192 of the catalog's
+  already on sheets count, and so does one you write in the same words. 205 of the catalog's
   weapons have at least one.
 
   | The card says | What happens |
@@ -927,6 +927,10 @@ on the scene. A damage roll for an area draws no Tarot card.
   | *No capacity attachments* | A warning when an Extended or Drum Magazine is fitted |
   | *Reloading takes two Reload Actions*, *With one hand free, reload by giving up your Move Action* | Said as the weapon is reloaded from the Action HUD |
   | *Its rounds carry damage through cover like an Explosive* | The damage card's *Hit the cover* treats it as an explosive: destroyed cover lets it through |
+  | *Without BODY 10+ or paired cyberarms, −1 DEX and MOVE while held* (and *−2 MOVE while held*) | **Weapon Strain**, a condition on whoever holds it without the BODY or the cyberarms, with the card's penalties as an Active Effect; it goes when the weapon is stowed. A mount is the GM's call |
+  | *Loads only its own Armor-Piercing rounds, which ablate 1 extra SP* (or *set targets Strongly On Fire*, *carry damage past destroyed cover*) | The gun loads nothing else, so its rounds' rules are applied as the gun's |
+  | *must beat DV17 Resist Torture/Drugs or ...* and other checks worded for one weapon | The card's own sentence goes on the damage card; where what follows is Prone, Damaged Ear or Unconscious, the button places it |
+  | *Its grenades burst in a 6×6m area* | The weapon's template is that size |
   | *No Aimed Shots* | No Aimed button on the Action HUD (the sheet's own tick box is Cyberpunk RED's) |
   | *Autofire and Suppressive Fire only*, *No Autofire*, *While charged, it can only Autofire* | The Action HUD leaves out the buttons the weapon doesn't have right now |
   | *Its Power Rebuild can't ricochet* | No Ricochet switch |
@@ -935,9 +939,9 @@ on the scene. A damage roll for an area draws no Tarot card.
 
   Still the table's to run: a rule tied to a wound state, to the Round a weapon is drawn or to
   what happened last Round; a charge that lasts to the end of the Turn; weapons with two modes
-  (the IronWind); stat penalties while a weapon is held; a weapon's own priced rounds and
-  magazines of several ammo types; Resist checks and other effects worded for one weapon only;
-  areas set off by a Critical Injury or a kill; and each Iconic's one-off rules.
+  (the IronWind); magazines and barrels holding several ammo types (Cyberpunk RED loads one:
+  use *Change Ammo*); what a failed check does where it isn't a condition the module has; areas
+  set off by a Critical Injury or a kill; and each Iconic's one-off rules.
 - **Smart's +1 by name.** A Smart gun's +1 is on the roll before its dialog opens as
   *Smart weapon +1*, and the card says so. Neon Hub's Smart guns keep the +1 in their own attack
   modifier: it's taken out of that line and shown by name instead, never counted twice. Without a
