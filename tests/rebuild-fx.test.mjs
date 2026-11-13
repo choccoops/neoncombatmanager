@@ -1279,11 +1279,13 @@ test("the R.N.Geezus! Blind Box, Chaos's reloads, Gris Gris's NET-linked rounds 
   // Chaos: a reload rerolls it.
   assert.deepEqual(chaosStats(20, 8, 4), { capacity: 26, damage: "8d6", ablation: 4 });
   assert.deepEqual(chaosStats(1, 1, 1), { capacity: 2, damage: "1d6", ablation: 1 });
-  const royce = crew("Royce", [weapon("w1", "Chaos", { weaponType: "heavyPistol", damage: "3d6", magazine: { value: 20, max: 20 }, description: desc("Every reload, reroll its stats: capacity 1d20 (min 2; a 20 means 26), damage 1d8 d6s, ablation 1d4 SP.") })]);
+  const royce = crew("Royce", [weapon("w1", "Chaos", { weaponType: "heavyPistol", damage: "3d6", magazine: { value: 20, max: 20 }, installedItems: { list: ["hp"] }, description: desc("Every reload, reroll its stats: capacity 1d20 (min 2; a 20 means 26), damage 1d8 d6s, ablation 1d4 SP.") }),
+    { _id: "hp", name: "Heavy Pistol Ammo (Basic)", type: "ammo", system: { variety: "heavyPistol", type: "basic", amount: 30 } }]);
   const chaos = royce.items.get("w1");
   dice.push(12, 5, 3);
   chat.length = 0;
-  assert.deepEqual(await Iconics.chaosReload(royce, chaos), { capacity: 12, damage: "5d6", ablation: 3 });
+  assert.deepEqual(await Iconics.chaosReload(royce, chaos), { capacity: 12, damage: "5d6", ablation: 3, back: 8 });
+  assert.equal(royce.items.get("hp").system.amount, 38, "the 8 that don't fit go back to their stack");
   assert.equal(chaos.system.magazine.max, 12);
   assert.equal(chaos.system.magazine.value, 12, "no more in it than it now holds");
   assert.equal(chaos.system.damage, "5d6");

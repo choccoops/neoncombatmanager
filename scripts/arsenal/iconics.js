@@ -118,10 +118,15 @@ export const Iconics = {
   /** Chaos, reloaded: new capacity, damage and ablation, on the item and on a card. */
   async chaosReload(actor, item) {
     const s = chaosStats(await roll("1d20"), await roll("1d8"), await roll("1d4"));
-    await item.update({ "system.magazine.max": s.capacity, "system.magazine.value": Math.min(Number(item.system?.magazine?.value) || 0, s.capacity), "system.damage": s.damage });
+    const had = Number(item.system?.magazine?.value) || 0;
+    // A smaller magazine than what was just loaded: the rounds that don't fit go back to their stack.
+    const back = Math.max(0, had - s.capacity);
+    const stack = back ? loadedAmmo(item, actor) : null;
+    await item.update({ "system.magazine.max": s.capacity, "system.magazine.value": Math.min(had, s.capacity), "system.damage": s.damage });
+    if (stack) await stack.update({ "system.amount": (Number(stack.system?.amount) || 0) + back });
     await Rebuilds.setState(actor, item, { chaosAblation: s.ablation });
-    await post(actor, L(`${LANG}.Arsenal.Chaos.Title`, { weapon: esc(item.name) }), `<p>${L(`${LANG}.Arsenal.Chaos.Body`, s)}</p>`);
-    return s;
+    await post(actor, L(`${LANG}.Arsenal.Chaos.Title`, { weapon: esc(item.name) }), `<p>${L(`${LANG}.Arsenal.Chaos.Body`, s)}${stack ? ` ${L(`${LANG}.Arsenal.Chaos.Back`, { count: back, ammo: esc(stack.name) })}` : ""}</p>`);
+    return { ...s, back: stack ? back : 0 };
   },
 
   /** A NET-linked round got through: the highest quickhack DV that lands with it. */

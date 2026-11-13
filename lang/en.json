@@ -2783,7 +2783,8 @@
       },
       "Chaos": {
         "Title": "{weapon}: reloaded",
-        "Body": "New for this magazine: {capacity} rounds, {damage} damage, {ablation} SP ablated. Reloaded too often (the GM's call), it's Damaged."
+        "Body": "New for this magazine: {capacity} rounds, {damage} damage, {ablation} SP ablated. Reloaded too often (the GM's call), it's Damaged.",
+        "Back": "{count} that didn't fit went back to {ammo}."
       },
       "NetRound": {
         "Button": "NET-linked round: roll the quickhack DV",
