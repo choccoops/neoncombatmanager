@@ -718,6 +718,10 @@ While it runs:
 
 Setting: *Chrome activation cards*.
 
+**Paused.** While the game is paused, every screen shows the same stopped world, edged in a
+cold blue, until the game goes on (setting *Time stands still while the game is paused*; each
+player's *Chrome on my screen* turns it off for them).
+
 **Sandevistan Time.** While an Apogee interrupt lasts, a SANDEVISTAN TIME strip stays at the
 top of every screen with who is acting and who is still to act, and the world stays stopped for
 everyone not in Sandevistan time. Others with an Apogee can cut in too (on a Held Action, or

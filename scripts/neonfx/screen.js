@@ -57,9 +57,21 @@ export function withFreeze(own, frozen, { enabled = true } = {}) {
   return { kind: "frozen", tint: hex(CHROME_TINT.apogee) };
 }
 
+/**
+ * The game paused, pure: the world stops on every screen, whoever's chrome is running (nobody is
+ * in Sandevistan time while the GM has stopped the clock).
+ */
+export function withPause(own, paused, { enabled = true } = {}) {
+  if (!paused || !enabled) return own;
+  return { kind: "frozen", tint: PAUSE_TINT };
+}
+/** The edge of a paused screen: a cold blue (an Apogee's stopped world is edged in its own gold). */
+export const PAUSE_TINT = "#7fb8ff";
+
 export const Screen = {
   init() {
     const soon = debounce(() => this.refresh(), 120);
+    Hooks.on("pauseGame", () => this.refresh());
     for (const h of ["updateCombat", "deleteCombat", "createActiveEffect", "deleteActiveEffect", "updateActiveEffect", "controlToken", "canvasReady", `${MODULE_ID}.fxChanged`, `${MODULE_ID}.refreshUI`]) Hooks.on(h, () => soon());
   },
 
@@ -81,7 +93,9 @@ export const Screen = {
 
   look() {
     const enabled = !!Settings.get("fxScreen") && !!Settings.get("fxEnabled") && Chrome.on;
-    return withFreeze(screenLook(this.state(), { enabled }), Interrupt.active(), { enabled });
+    const look = withFreeze(screenLook(this.state(), { enabled }), Interrupt.active(), { enabled });
+    // Paused: needs only "Chrome on my screen" and the world's setting, not chrome running.
+    return withPause(look, !!game.paused, { enabled: !!Settings.get("fxScreen") && !!Settings.get("fxEnabled") && !!Settings.get("fxPause") });
   },
 
   /** Put the layer up, change it or take it down (this client only). */

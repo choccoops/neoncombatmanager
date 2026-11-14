@@ -8,7 +8,7 @@ export const MENUS = {
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim", "conditionSheetNotes"],
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
-  fx: ["fxEnabled", "fxConditions", "fxChrome", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
+  fx: ["fxEnabled", "fxConditions", "fxChrome", "fxPause", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
   arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
@@ -111,6 +111,8 @@ const DEFS = [
   ["chromeCards", "world", Boolean, true, {}],
   ["chromeTokenHud", "world", Boolean, true, {}],
   ["fxScreen", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  // The game paused: time stands still on every screen
+  ["fxPause", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxTactile", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Quickhacking (2070 ch.10): the flow on the Action HUD, its animations, and who sees a Ghost's
   ["hackFlow", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],

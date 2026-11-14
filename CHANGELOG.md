@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.35.0
+
+- **Time stands still while the game is paused.** Pausing the game shows the stopped world on
+  every screen (the colour drained, a cold blue ring at the edges), the look of an Apogee's
+  Sandevistan Time, and it lifts the moment the game goes on. New world setting *Time stands
+  still while the game is paused* (on); each player's *Chrome on my screen* turns it off for
+  them, and it holds still with reduced motion.
+
 ## 1.34.1
 
 - **A Kerenzikov's screen effect you can see.** It was drawn so faintly (a 2.5% tint and a thin
