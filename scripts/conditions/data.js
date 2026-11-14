@@ -62,6 +62,8 @@ const MOVE_MIN = { key: "system.stats.move.value", value: 1, mode: 4 };
 export const CATEGORIES = ["wound", "critical", "combat", "hazard", "situation", "drug", "chrome", "quickhack", "awareness", "weather", "visibility"];
 
 const R3 = 9; // 3 Rounds
+/** Berserk's Operating Systems, on a body with no FBC or Cyberspine to carry them: -4 to ranged attacks. */
+const NO_FRAME = { key: "bonuses.ranged", value: -4 };
 const R20 = 60; // 20 Rounds
 
 export const CONDITIONS = [
@@ -227,10 +229,13 @@ export const CONDITIONS = [
   { id: "chromeFalcon", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", duration: R3, group: "sandevistan", changes: [init(4)], chrome: { kind: "sandevistan", os: "falcon" } },
   { id: "chromeReflexPlus", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", duration: 15, group: "sandevistan", changes: [init(3), { key: "system.stats.ref.value", value: 1 }], chrome: { kind: "sandevistan", os: "reflexplus" } },
   { id: "chromeBerserk", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: R20, group: "berserk", chrome: { kind: "berserk" } },
-  { id: "chromeBerserker", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", chrome: { kind: "berserk", os: "berserker" } },
-  { id: "chromeBaldur", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 12, group: "berserk", chrome: { kind: "berserk", os: "baldur" } },
-  { id: "chromeMatterhorn", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 30, group: "berserk", chrome: { kind: "berserk", os: "matterhorn" } },
-  { id: "chromeBrawler", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", chrome: { kind: "berserk", os: "brawler" } },
+  { id: "chromeBerserker", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", changes: [NO_FRAME], chrome: { kind: "berserk", os: "berserker", unframed: ["bonuses.ranged"] } },
+  { id: "chromeBaldur", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 12, group: "berserk", changes: [NO_FRAME], chrome: { kind: "berserk", os: "baldur", unframed: ["bonuses.ranged"] } },
+  { id: "chromeMatterhorn", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 30, group: "berserk", changes: [NO_FRAME], chrome: { kind: "berserk", os: "matterhorn", unframed: ["bonuses.ranged"] } },
+  { id: "chromeBrawler", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", changes: [NO_FRAME], chrome: { kind: "berserk", os: "brawler", unframed: ["bonuses.ranged"] } },
+  // A Falcon's choice at the start of each of its Turns (scripts/neonfx/os.js asks; the next Turn clears it).
+  { id: "chromeFalconMove", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", hud: false, changes: [{ key: "system.stats.move.value", value: 2 }] },
+  { id: "chromeFalconEvasion", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", hud: false, changes: [{ key: "bonuses.evasion", value: 4, situational: true, onByDefault: false }] },
   // A Kerenzikov runs from the day it's installed (scripts/neonfx/switches.js keeps it on); the +2 Initiative is its Boost System's.
   { id: "chromeKerenzikov", category: "chrome", img: `${A}/qh-speedware.svg`, page: "2070", hud: false, changes: [init(2), { key: "bonuses.perception", value: 2, situational: true, onByDefault: false }] },
   // Chrome switched on from the Action HUD or the Token HUD, with nothing a roll key can carry: the hint says what it does.

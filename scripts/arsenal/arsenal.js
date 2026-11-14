@@ -511,6 +511,7 @@ export const Arsenal = {
     if (!a) return;
     if (a.kind === "attack" && a.blindBox) Iconics.blindBox(a).catch((err) => console.error(`${MODULE_ID} | Blind Box`, err));
     if (a.kind === "attack") {
+      import("../neonfx/os.js").then(({ OS }) => OS.afterAttack(a)).catch((err) => console.error(`${MODULE_ID} | chrome`, err));
       const keys = profileKeys({ kind: a.weapon, flavor: a.flavor, ammoType: a.ammoType });
       if (a.tags?.[0]) keys.unshift(`${keys.at(-1)} · ${a.tags[0]}`);
       const hit = a.dv !== null && a.dv !== undefined ? a.total > a.dv : false;

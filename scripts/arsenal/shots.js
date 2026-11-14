@@ -2,6 +2,7 @@ import { MODULE_ID } from "../constants.js";
 import { Settings } from "../settings.js";
 import { Core, img } from "../neonfx/core.js";
 import { segmentsCross, readWall } from "./xray.js";
+import { flightFor, squaresBetween } from "./timing.js";
 
 /**
  * How a Power ricochet and a Smart gun's rounds are drawn (Sequencer, seen by everyone, played by
@@ -25,8 +26,12 @@ const TECH = 0x3d8bff;
 /** JB2A entries to look for, most specific first (Neon FX's own art stands in without JB2A). */
 export const SHOT_JB2A = {
   spark: ["jb2a.impact.001", "jb2a.impact.002", "jb2a.impact.003", "jb2a.impact"],
-  hit: ["jb2a.impact.010", "jb2a.impact.004", "jb2a.impact.005", "jb2a.impact"]
+  hit: ["jb2a.impact.010", "jb2a.impact.004", "jb2a.impact.005", "jb2a.impact"],
+  // A Smart gun's round: a real bullet, in the lock-on's colour.
+  round: ["jb2a.bullet.01", "jb2a.bullet.02", "jb2a.bullet"]
 };
+/** JB2A colours nearest a Smart round's (cyan) and an Improved Smart round's (magenta). */
+export const SMART_COLORS = { smart: ["blue", "lightblue", "bluewhite"], improved: ["purple", "pink", "purplepink"] };
 
 /**
  * Which look an attack gets: "ricochet" or "smart" (drawn instead of Automated Animations' shot),
@@ -131,8 +136,8 @@ function round(seq, a, b, { tint, delay = 0, duration = 200, size = 0.3, bulge =
 }
 
 /** A burst at a point: JB2A where it's installed, else a flash and a ring. */
-function burst(seq, at, { tint, delay = 0, size = 0.9, jb2a = null }) {
-  const file = jb2a ? Core.jb2a(jb2a, ["orange", "yellow"]) : null;
+function burst(seq, at, { tint, delay = 0, size = 0.9, jb2a = null, colors = ["orange", "yellow"] }) {
+  const file = jb2a ? Core.jb2a(jb2a, colors) : null;
   if (file) return seq.effect().file(file).atLocation(at).size(size * 1.4, { gridUnits: true }).delay(delay).zIndex(31);
   seq.effect().file(img("glow-soft.webp")).atLocation(at).size(size, { gridUnits: true }).tint(tint).delay(delay).duration(260).fadeOut(200).zIndex(31);
   return seq.effect().file(img("ring-pulse.webp")).atLocation(at).size(size, { gridUnits: true }).tint(tint).delay(delay).duration(380).zIndex(31)
@@ -205,12 +210,18 @@ export const Shots = {
     return { bounce, leg1, leg2 };
   },
 
-  /** Smart rounds: lock on, then launch wide and curve in (Improved Smart: harder, magenta). */
+  /**
+   * Smart rounds: lock on, then the rounds go out. With JB2A installed each is a real bullet in
+   * the lock-on's colour, down a guidance line, with an impact where it hits (a miss flies past);
+   * without it, a glowing round that launches wide and curves in (Improved Smart: harder, magenta).
+   */
   smart(seq, from, targets, hits, { improved = false, autofire = false } = {}) {
     const gs = canvas.grid.size;
     const tint = improved ? ISA : SMART;
     const lock = 380;
     this.lockOn(seq, targets, tint, { lock });
+    const colors = improved ? SMART_COLORS.improved : SMART_COLORS.smart;
+    const bullet = Core.jb2a(SHOT_JB2A.round, colors);
     if (improved) {
       seq.effect().file(img("data-ring-white.webp")).atLocation(from).size(1.6, { gridUnits: true }).tint(ISA).opacity(0.8).zIndex(27)
         .scaleIn(0.4, 300).duration(lock + 1100).fadeOut(400)
@@ -229,14 +240,24 @@ export const Shots = {
       const bulge = side * Math.min(dist * (improved ? 0.38 : 0.26), gs * (improved ? 4 : 3));
       const miss = r.hit ? {} : { endBulge: side * gs * 0.9, overshoot: gs * 1.4 };
       const delay = lock + r.i * 110;
+      if (bullet) {
+        // The bullet's own clip decides when it gets there (scripts/arsenal/timing.js).
+        const arrive = flightFor(bullet, squaresBetween(from, to, gs)).arrive;
+        const shot = seq.effect().file(bullet).atLocation(from).stretchTo(to).delay(delay).zIndex(30);
+        if (!r.hit) shot.missed();
+        trail(seq, from, to, { tint, delay });
+        if (r.hit) burst(seq, to, { tint, delay: delay + arrive, size: improved ? 1 : 0.8, jb2a: SHOT_JB2A.hit, colors });
+        r.flight = arrive;
+        continue;
+      }
+      r.flight = duration;
       round(seq, from, to, { tint, delay, duration, size: improved ? 0.34 : 0.28, bulge, ...miss });
       [0.6, 0.38, 0.22].forEach((opacity, k) => {
         round(seq, from, to, { tint, delay: delay + (k + 1) * 28, duration, size: (improved ? 0.26 : 0.2) - k * 0.04, bulge, opacity, ...miss });
       });
       if (r.hit) burst(seq, to, { tint, delay: delay + duration, size: improved ? 1 : 0.8 });
     }
-    const first = rounds[0]?.t.center;
-    return { rounds: rounds.length, lock, flight: first ? flightMs(Math.hypot(first.x - from.x, first.y - from.y), gs, 45, 450, 900) : 0 };
+    return { rounds: rounds.length, lock, flight: rounds[0]?.flight ?? 0, real: !!bullet };
   },
 
   /** A reticle closing in on each target. */

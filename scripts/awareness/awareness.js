@@ -70,8 +70,18 @@ export const Awareness = {
     return combat?.combatants?.find((c) => c.actor === actor || (c.actorId === actor?.id && c.token?.actorLink)) ?? null;
   },
 
+  /** Solos with one free reassignment in hand (an Apogee or Professional running: scripts/neonfx/os.js). This client. */
+  _pass: new Set(),
+
+  /** Give a Solo one free reassignment, whoever's Turn it is. */
+  pass(actor) {
+    if (actor?.id) this._pass.add(actor.id);
+    if (this.app?.rendered) this.app.render();
+  },
+
   /** What reassigning costs right now: "free", "action", "wait" (not their Turn) or "gm". */
   mode(actor, combat = game.combat) {
+    if (actor?.id && this._pass.has(actor.id)) return "free";
     const cb = this.combatant(actor, combat);
     return assignMode({
       inCombat: !!cb && !!combat?.started,
@@ -130,6 +140,7 @@ export const Awareness = {
       return key ? { ...ab, rank: next[key] } : ab;
     });
     await role.update({ "system.abilities": abilities });
+    this._pass.delete(actor.id);
 
     const cb = this.combatant(actor, combat);
     if (mode === "action" && cb?.isOwner) await cb.setFlag(MODULE_ID, "awareness", { round: combat.round, turn: combat.turn });

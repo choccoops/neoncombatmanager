@@ -5,6 +5,7 @@ import { Conditions } from "../conditions/engine.js";
 import { L } from "../util.js";
 import { Core, FX_FLAG } from "./core.js";
 import { Interrupt } from "./interrupt.js";
+import { OS as OsRules } from "./os.js";
 
 /**
  * Chrome you switch on: a Sandevistan, Berserk, and the Operating Systems that run on them (a
@@ -287,8 +288,9 @@ export const Chrome = {
         await actor.deleteEmbeddedDocuments("ActiveEffect", drop).catch(() => {}); // already gone: fine
         if (drop.includes(effect.id)) return;
       }
-      // What the chrome's own effect already gives isn't counted twice.
-      const given = this.given(actor, kind);
+      // What the chrome's own effect already gives isn't counted twice; what only a body
+      // without an FBC or Cyberspine suffers (Berserk's -4 to ranged attacks) comes off one that has it.
+      const given = [...this.given(actor, kind), ...(c.chrome.unframed?.length && OsRules.framed(actor) ? c.chrome.unframed : [])];
       if (given.length && (c.rawChanges ?? []).some((ch) => given.includes(ch.key))) await Conditions.add(c.id, actor, { changes: withoutGiven(c.rawChanges, given) });
       await this._flag(actor, kind, os ?? true);
       // Whose Turn it is, read before the Initiative moves (the order re-sorts under it).
@@ -296,6 +298,8 @@ export const Chrome = {
       await this._initiative(actor, kind, bonus, true);
       // An Apogee switched on during someone else's Turn can interrupt them.
       if (os === "apogee") await Interrupt.check(actor, { currentId: current });
+      // What starting it costs and allows, on a card.
+      if (effect) await OsRules.started(actor, c);
       return;
     }
     if (this.running(actor, kind)) return; // another of its kind took over
@@ -303,6 +307,7 @@ export const Chrome = {
     await this._initiative(actor, kind, bonus, false);
     // All its switches go off together: none of them, half way, reads as "still on".
     await this._settle(actor, kind, false);
+    if (effect) await OsRules.ended(actor, c);
   },
 
   /** Hold (or drop) a Neon FX switch on a character's tokens. */
