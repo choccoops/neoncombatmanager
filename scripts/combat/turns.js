@@ -6,6 +6,7 @@ import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
 import { Cards } from "./cards.js";
 import { L, esc } from "../util.js";
+import { stepTrail } from "../ruler/ruler-core.js";
 
 /** Moving more than this many m/yds on foot in a Turn reopens some Critical Injuries (p.187-188). */
 export const MOVE_LIMIT = 4;
@@ -29,7 +30,7 @@ export const Turns = {
   init() {
     Hooks.on("updateCombat", (combat, changed, options) => this.onUpdate(combat, changed, options));
     Hooks.on("deleteCombat", (combat) => this.last.delete(combat.id));
-    Hooks.on("updateToken", (token, changed) => this.onMove(token, changed));
+    Hooks.on("updateToken", (token, changed, options) => this.onMove(token, changed, options));
   },
 
   state(combat) {
@@ -117,7 +118,7 @@ export const Turns = {
 
   resetMove(combatant) {
     const t = combatant.token;
-    this.moved.set(combatant.id, { metres: 0, at: t ? { x: t.x, y: t.y } : null });
+    this.moved.set(combatant.id, { metres: 0, at: t ? { x: t.x, y: t.y } : null, trail: t ? [{ ...this.centre(t), d: 0 }] : [] });
     // The path walked this Turn, for every client's movement ruler (scripts/ruler/ruler.js).
     if (Compat.isActiveGM && Settings.get("trackMovement")) {
       const c = t ? this.centre(t) : null;
@@ -130,24 +131,39 @@ export const Turns = {
     return { x: token.x + ((Number(token.width) || 1) * grid) / 2, y: token.y + ((Number(token.height) || 1) * grid) / 2 };
   },
 
-  /** The current combatant's token moved: add up the distance (active GM). */
-  onMove(token, changed) {
+  /**
+   * The current combatant's token moved: add up the distance (active GM). A move taken back
+   * (Foundry's undo, or the token put straight back where it stood) gives its distance back; a
+   * move that wasn't theirs to make (thrown, pushed, dodging out of a blast) costs nothing.
+   */
+  onMove(token, changed, options = {}) {
     if (!Compat.isActiveGM || !("x" in changed || "y" in changed)) return;
     const combat = game.combats?.find((c) => c.started && c.combatant?.tokenId === token.id && (!c.scene || c.scene.id === token.parent?.id));
     if (!combat) return;
     const cb = combat.combatant;
+    const path = cb.flags?.[MODULE_ID]?.path ?? {};
     const entry = this.moved.get(cb.id) ?? { metres: 0, at: null };
-    const now = { x: token.x, y: token.y };
-    if (entry.at) {
-      const grid = token.parent?.grid?.size ?? canvas?.dimensions?.size ?? 100;
-      const half = { x: (token.width * grid) / 2, y: (token.height * grid) / 2 };
-      entry.metres += Compat.measure({ x: entry.at.x + half.x, y: entry.at.y + half.y }, { x: now.x + half.x, y: now.y + half.y });
+    const to = this.centre(token);
+    // A trail to go by: this Turn's own, else rebuilt from what the combatant carries (a reload mid-Turn).
+    if (!Array.isArray(entry.trail)) {
+      const pts = Array.isArray(path.points) ? path.points : [];
+      entry.trail = pts.map((p, i) => ({ x: p.x, y: p.y, d: i ? Compat.measure(pts[i - 1], p) : 0 }));
     }
-    entry.at = now;
+    const from = entry.trail.at(-1) ?? null;
+    const forced = !!options?.[MODULE_ID]?.free;
+    if (forced) {
+      // Where it stands changes; what it has walked doesn't.
+      if (entry.trail.length) entry.trail[entry.trail.length - 1] = { ...to, d: entry.trail.at(-1).d };
+      else entry.trail.push({ ...to, d: 0 });
+    } else {
+      const next = stepTrail(entry.trail, to, from ? Compat.measure(from, to) : 0, { undo: !!options?.isUndo });
+      entry.trail = next.trail;
+      entry.metres = next.metres;
+    }
+    entry.at = { x: token.x, y: token.y };
     this.moved.set(cb.id, entry);
     if (Settings.get("trackMovement")) {
-      const path = cb.flags?.[MODULE_ID]?.path ?? {};
-      const points = [...(Array.isArray(path.points) ? path.points : []), this.centre(token)].slice(-60);
+      const points = entry.trail.map((p) => ({ x: p.x, y: p.y })).slice(-60);
       cb.setFlag?.(MODULE_ID, "path", { ...path, points, metres: entry.metres })?.catch?.(() => null);
     }
   },

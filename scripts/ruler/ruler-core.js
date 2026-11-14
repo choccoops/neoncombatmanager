@@ -71,6 +71,45 @@ export function movementLeft({ walked = 0, r = { move: 0, run: 0, why: null }, r
   return { left: round(Math.max(0, open.run - w)), total: round(open.run), walked: round(w), run: round(Math.max(0, r.run - open.run)), why: r.why ?? null };
 }
 
+const samePoint = (a, b) => !!a && !!b && Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1;
+
+/**
+ * The trail a token has walked this Turn after one more move, pure. A trail is the points it
+ * stood on with what each leg cost: [{ x, y, d }] (the first: d 0).
+ *
+ * A move that takes it back is given back, not added: straight back to where it stood before
+ * the last leg (the move reversed), or, undone (Foundry's undo), back to wherever on the trail
+ * it now stands. Only a move somewhere new costs.
+ * @param {object[]} trail
+ * @param {{x, y}} to - where it stands now (centre)
+ * @param {number} distance - what this move measured
+ * @param {object} [o] - undo: Foundry says this move is an undo
+ * @returns {{ trail: object[], metres: number, back: boolean }}
+ */
+export function stepTrail(trail = [], to, distance = 0, { undo = false } = {}) {
+  const t = trail.map((p) => ({ ...p }));
+  let back = false;
+  if (t.length >= 2 && samePoint(t[t.length - 2], to)) {
+    t.pop();
+    back = true;
+  } else if (undo && t.length) {
+    let i = t.length - 2;
+    while (i >= 0 && !samePoint(t[i], to)) i--;
+    if (i >= 0) t.length = i + 1;
+    else {
+      // Undone to somewhere the trail doesn't know: the last leg is given back, and it stands there.
+      const last = t.pop();
+      t.push({ x: to.x, y: to.y, d: t.length ? Math.max(0, (Number(last?.d) || 0) - (Number(distance) || 0)) : 0 });
+    }
+    back = true;
+  } else t.push({ x: to.x, y: to.y, d: t.length ? Math.max(0, Number(distance) || 0) : 0 });
+  const metres = t.reduce((sum, p) => sum + (Number(p.d) || 0), 0);
+  return { trail: t, metres: Math.round(metres * 100) / 100, back };
+}
+
+/** Is a move straight back to where the token stood before its last leg (so: a move taken back)? Pure. */
+export const isStepBack = (points = [], to) => points.length >= 2 && samePoint(points[points.length - 2], to);
+
 /** The band a distance falls in. */
 export function bandOf(distance, r) {
   const d = Number(distance) || 0;

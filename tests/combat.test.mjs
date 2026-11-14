@@ -460,3 +460,86 @@ test("the carousel says how far the acting character can still go this Turn, and
   const html = await C2.renderTemplate("modules/cpr-neon-combat-manager/templates/carousel.hbs", Carousel.context(combat));
   assert.match(html, /class="ncm-move/, "the line is on the card");
 });
+
+test("a move taken back gives its movement back: undone, or the token put straight back; being thrown or pushed costs nothing", async () => {
+  const { stepTrail, isStepBack } = await import("../scripts/ruler/ruler-core.js");
+  const p = (x, y = 0) => ({ x, y });
+  let t = stepTrail([], p(50), 0);
+  assert.deepEqual([t.trail.length, t.metres], [1, 0], "where it starts costs nothing");
+  t = stepTrail(t.trail, p(250), 4);
+  t = stepTrail(t.trail, p(450), 4);
+  assert.deepEqual([t.trail.length, t.metres, t.back], [3, 8, false]);
+  // Put straight back where it stood before the last move: that move is given back.
+  t = stepTrail(t.trail, p(250), 4);
+  assert.deepEqual([t.trail.length, t.metres, t.back], [2, 4, true]);
+  // On somewhere new again: it costs again.
+  t = stepTrail(t.trail, p(250, 200), 4);
+  assert.equal(t.metres, 8);
+  // Foundry's undo, two moves at once back to the start.
+  t = stepTrail(t.trail, p(50), 9, { undo: true });
+  assert.deepEqual([t.trail.length, t.metres, t.back], [1, 0, true]);
+  // Walking back to somewhere earlier without it being an undo or the last move reversed is a move like any other.
+  t = stepTrail([{ ...p(50), d: 0 }, { ...p(250), d: 4 }, { ...p(450), d: 4 }], p(50), 8);
+  assert.deepEqual([t.trail.length, t.metres, t.back], [4, 16, false]);
+  assert.equal(isStepBack([p(50), p(250)], p(50)), true);
+  assert.equal(isStepBack([p(50), p(250)], p(450)), false);
+  assert.equal(isStepBack([p(50)], p(50)), false);
+
+  // At the table: the tracker, the bar's number and the limit.
+  const { Turns } = await import("../scripts/combat/turns.js");
+  const { NeonRuler } = await import("../scripts/ruler/ruler.js");
+  const { Compat } = await import("../scripts/compat.js");
+  const { Settings: S } = await import("../scripts/settings.js");
+  await S.set("trackMovement", true);
+  await S.set("movementLimit", "block");
+  await S.set("movementRun", false);
+  const actor = makeActor({ name: "Runner" });
+  const combat = makeCombat([actor, makeActor({ name: "Ganger" })]);
+  const cb = combat.turns[0];
+  const doc = { id: "tk", name: "Runner", x: 0, y: 0, width: 1, height: 1, actor, parent: { id: combat.scene?.id, grid: { size: 100 } } };
+  cb.tokenId = "tk";
+  cb.token = doc;
+  cb.parent = combat;
+  combat.combatant; // the first: Runner's Turn
+  const saved = { combats: game.combats, combat: game.combat, measure: Compat.measure, gm: game.user.isGM };
+  game.combats = [combat];
+  game.combat = combat;
+  Compat.measure = (a, b) => (Math.hypot(b.x - a.x, b.y - a.y) / 100) * 2;
+  const M3 = "cpr-neon-combat-manager";
+  Turns.resetMove(cb);
+  const go = async (x, options = {}) => {
+    doc.x = x;
+    Turns.onMove(doc, { x }, options);
+    await new Promise((r) => setTimeout(r, 2));
+  };
+  await go(300);
+  assert.equal(Turns.metres(cb.id), 6);
+  await go(500);
+  assert.equal(Turns.metres(cb.id), 10);
+  assert.equal(cb.flags[M3].path.metres, 10, "what the carousel and the ruler read");
+  await go(300);
+  assert.equal(Turns.metres(cb.id), 6, "put straight back: given back");
+  assert.equal(cb.flags[M3].path.points.length, 2);
+  await go(0, { isUndo: true });
+  assert.equal(Turns.metres(cb.id), 0, "undone: all of it back");
+  // Thrown by a blast: where it stands changes, what it walked doesn't.
+  await go(400);
+  await go(900, { [M3]: { free: true } });
+  assert.equal(Turns.metres(cb.id), 8);
+  // Out of movement, a player can still take the last move back.
+  game.user.isGM = false;
+  const move = Number(actor.system.stats.move.value) * 2;
+  cb.flags[M3].path = { points: [{ x: 50, y: 50 }, { x: 450, y: 50 }], metres: move * 2 };
+  doc.x = 400;
+  const warn = ui.notifications.warn;
+  ui.notifications.warn = () => {};
+  assert.equal(NeonRuler.limit(doc, { x: 600 }, {}), false, "no further");
+  assert.equal(NeonRuler.limit(doc, { x: 0 }, {}), true, "but back where it stood");
+  assert.equal(NeonRuler.limit(doc, { x: 200 }, { isUndo: true }), true, "and an undo, wherever to");
+  ui.notifications.warn = warn;
+  game.user.isGM = saved.gm;
+  Compat.measure = saved.measure;
+  game.combats = saved.combats;
+  game.combat = saved.combat;
+  await S.set("movementRun", true);
+});

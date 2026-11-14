@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.37.1
+
+- **A move taken back gives its movement back.** Undoing a token's move (Ctrl+Z), or putting
+  the token straight back where it stood before its last move, used to count as more movement
+  walked. It now takes that move off what's been walked this Turn: the carousel's movement
+  bar, the ruler's faded path and the movement limit all go back with it, and taking a move
+  back is never held by the limit, even with nothing left.
+- **Being moved isn't moving.** Thrown back by a blast, pushed, or dodging out of an area no
+  longer counts toward what a character has walked this Turn.
+
 ## 1.37.0
 
 - **Humanity Loss rolls.** The *Roll 1d6 Humanity Loss* button on a chrome card failed with
