@@ -1,6 +1,5 @@
 import { MODULE_ID } from "../constants.js";
 import { Core } from "./core.js";
-import { Focus } from "./focus.js";
 import { C } from "./recipes.js";
 
 /**
@@ -27,7 +26,7 @@ export const Trail = {
   /** Called on every token refresh: drop afterimages along the way the token has been drawn. */
   onRefresh(token) {
     if (!token?.id) return;
-    if (!Core.on || !Core.state(token).sandevistan || !token.visible || Focus.hides(token, "sandevistan")) {
+    if (!Core.on || !Core.state(token).sandevistan || !token.visible) {
       this.tracks.delete(token.id);
       return;
     }

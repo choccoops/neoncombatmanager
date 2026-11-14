@@ -107,8 +107,6 @@ const DEFS = [
   ["chromeCards", "world", Boolean, true, {}],
   ["chromeTokenHud", "world", Boolean, true, {}],
   ["fxScreen", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
-  // A GM with many tokens: running chrome's looks only on the ones selected (this client)
-  ["fxFocus", "client", Boolean, false, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["fxTactile", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Quickhacking (2070 ch.10): the flow on the Action HUD, its animations, and who sees a Ghost's
   ["hackFlow", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],

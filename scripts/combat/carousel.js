@@ -155,8 +155,10 @@ export const Carousel = {
         canRoll: (owner || gm) && (cb.initiative === null || cb.initiative === undefined),
         active: combat.combatant?.id === cb.id && combat.started,
         // An Apogee interrupt under way: this is who cut in.
-        interrupting: Interrupt.active(combat)?.combatantId === cb.id,
-        interrupted: Interrupt.active(combat)?.returnTo === cb.id,
+        interrupting: Interrupt.role(combat, cb.id) === "acting",
+        interruptWaiting: Interrupt.role(combat, cb.id) === "waiting",
+        interruptDone: Interrupt.role(combat, cb.id) === "done",
+        interrupted: Interrupt.role(combat, cb.id) === "cut",
         defeated: dead,
         hidden: cb.hidden || token?.hidden,
         owner,
