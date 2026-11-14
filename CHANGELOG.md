@@ -16,6 +16,17 @@
   GM's Apply button still works and removes it for good. A miss stays until it's moved or
   scattered; smoke and other areas that linger stay. New setting *Clear an area once it has
   gone off* (on).
+- **The movement ruler shows on the scene you load into.** On Foundry v12 it was put in after
+  the first scene was drawn, and a token keeps the drag handlers it was drawn with: the ruler
+  only appeared on tokens drawn later (after a scene change). It now goes in before the first
+  scene, and tokens already drawn are given the new handlers.
+- **Movement is held to MOVE in a fight.** On its own Turn in a fight under way, a token goes
+  no further than its character can this Turn: the Move Action (MOVE × 2 m/yds) plus a Run,
+  counting what it has already walked, as the ruler's bands show while you drag. MOVE is the
+  character's MOVE as it stands (conditions, armor, chrome and gear that change it all count),
+  and Prone or Grappled it's nothing. A player's move past it doesn't happen; a GM's always
+  goes, with a warning. Being thrown, pushed or dodging out of a blast isn't walking and
+  isn't held. New setting *Hold movement to MOVE in a fight* (Hold, Warn, Off).
 
 ## 1.33.2
 

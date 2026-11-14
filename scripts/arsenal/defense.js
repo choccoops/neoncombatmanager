@@ -253,7 +253,7 @@ export const Defense = {
     const distance = Number(doc.parent?.grid?.distance ?? canvas?.dimensions?.distance) || 2;
     const t = { t: doc.t, x: doc.x, y: doc.y, distance: doc.distance, direction: doc.direction, angle: doc.angle, side: doc.t === "rect" ? b.area?.size : undefined };
     const to = escapeSquare(t, tok, { size, distance }, (a, c) => !!Compat.moveBlocked(a, c));
-    if (to) await tok.update({ x: to.x, y: to.y });
+    if (to) await tok.update({ x: to.x, y: to.y }, { [MODULE_ID]: { free: true } }); // dodging out isn't their Move
     return to ?? true;
   },
 

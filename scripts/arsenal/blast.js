@@ -519,7 +519,7 @@ export const Blast = {
       if (blow && hurt) {
         const where = this.blowTo(tok, center, blowBackMetres(b.kind), grid);
         if (where) {
-          await tok.update({ x: where.x, y: where.y });
+          await tok.update({ x: where.x, y: where.y }, { [MODULE_ID]: { free: true } }); // thrown, not walked
           if (where.wall) {
             await Conditions.add("intoTheWall", actor);
             notes.push(Registry.get("intoTheWall")?.name ?? "Into the Wall");

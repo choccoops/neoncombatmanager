@@ -4,7 +4,7 @@ const K = (key) => `${LANG}.Settings.${key}`;
 
 /** World settings grouped into submenus; everything else shows in Foundry's own list. */
 export const MENUS = {
-  combat: ["encounterMode", "roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement", "pickupCarried", "movementRuler", "movementRulerWaypoints"],
+  combat: ["encounterMode", "roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement", "pickupCarried", "movementRuler", "movementRulerWaypoints", "movementLimit"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim", "conditionSheetNotes"],
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
@@ -80,6 +80,8 @@ const DEFS = [
   ["pickupCarried", "world", Boolean, true, {}],
   ["movementRuler", "world", String, "auto", { choices: { auto: K("MovementRuler.auto"), off: K("MovementRuler.off") }, requiresReload: true }],
   ["movementRulerWaypoints", "world", Boolean, true, {}],
+  // In a fight, on their Turn: a token goes as far as its character can (Move Action plus a Run)
+  ["movementLimit", "world", String, "block", { choices: { block: K("MovementLimit.block"), warn: K("MovementLimit.warn"), off: K("MovementLimit.off") } }],
   ["movementRulerNoticed", "world", Boolean, false, { config: false }],
 
   // Conditions

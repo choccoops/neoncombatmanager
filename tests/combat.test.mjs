@@ -296,3 +296,19 @@ test("every template renders and every key it uses exists", async () => {
   await Compat.renderTemplate(`${base}/settings-menu.hbs`, { fields: [{ key: "a", type: "boolean" }, { key: "b", type: "select", choices: [] }, { key: "c", type: "number", range: { min: 0, max: 1, step: 1 } }, { key: "d", type: "text" }] });
   assert.equal(missingKeys.size, 0, [...missingKeys].join(", "));
 });
+
+test("movement in a fight is held to what the character can cover this Turn: a player's move past it doesn't happen, a GM's goes with a warning", async () => {
+  const { moveCheck, reach: reachOf } = await import("../scripts/ruler/ruler-core.js");
+  const r = reachOf(6); // Move 12 m, with a Run 24 m
+  assert.deepEqual(moveCheck({ walked: 0, step: 24, r, ownTurn: true }), { ok: true, warn: false, left: 24, over: 0, why: null });
+  assert.deepEqual(moveCheck({ walked: 10, step: 16, r, ownTurn: true }), { ok: false, warn: true, left: 14, over: 2, why: null });
+  assert.equal(moveCheck({ walked: 10, step: 16, r, ownTurn: true, mode: "warn" }).ok, true, "warned, not held");
+  assert.equal(moveCheck({ walked: 10, step: 16, r, ownTurn: true, mode: "warn" }).warn, true);
+  assert.equal(moveCheck({ walked: 10, step: 16, r, ownTurn: true, gm: true }).ok, true, "a GM's move always goes");
+  assert.equal(moveCheck({ walked: 10, step: 16, r, ownTurn: true, gm: true }).warn, true);
+  assert.equal(moveCheck({ walked: 10, step: 16, r, ownTurn: true, mode: "off" }).warn, false);
+  assert.equal(moveCheck({ walked: 10, step: 16, r, ownTurn: false }).warn, false, "out of their Turn, nothing is held");
+  const prone = reachOf(6, { prone: true });
+  assert.deepEqual(moveCheck({ step: 2, r: prone, ownTurn: true }), { ok: false, warn: true, left: 0, over: 2, why: "prone" });
+  assert.equal(moveCheck({ step: 500, ownTurn: true }).warn, false, "no reach known: nothing to hold to");
+});

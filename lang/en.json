@@ -1354,6 +1354,15 @@
       "arsenalAreaClear": {
         "name": "Clear an area once it has gone off",
         "hint": "A blast's or shell's template disappears from the map a moment after it goes off (the targets are already set and the card lists who was caught). The GM's Apply button on the card still works, and removes it for good. A miss stays until it's moved or scattered; smoke and other areas that linger stay. Off: the template shows until the GM applies it."
+      },
+      "movementLimit": {
+        "name": "Hold movement to MOVE in a fight",
+        "hint": "On its own Turn in a fight under way, a token goes no further than its character can this Turn: the Move Action (MOVE × 2 m/yds) plus a Run, counting what it has already walked (the movement ruler shows it as you drag). Hold: a player's move past that doesn't happen. Warn: it goes, with a warning. A GM's move always goes, with the warning. Out of a fight, and out of their Turn, nothing is held. Needs \"Track movement\"."
+      },
+      "MovementLimit": {
+        "block": "Hold",
+        "warn": "Warn",
+        "off": "Off"
       }
     },
     "SceneWeather": {
@@ -2868,7 +2877,9 @@
       },
       "walked": "{metres} {unit} already walked this Turn",
       "Blocked": "A wall is in the way: the token stopped at the last waypoint it could reach.",
-      "DragRulerNotice": "Neon Combat Manager has its own movement ruler, with Cyberpunk RED's Move and Run (and what was already walked this Turn). Drag Ruler is running, so for now Drag Ruler shows those bands instead. To use Neon Combat Manager's ruler, disable Drag Ruler."
+      "DragRulerNotice": "Neon Combat Manager has its own movement ruler, with Cyberpunk RED's Move and Run (and what was already walked this Turn). Drag Ruler is running, so for now Drag Ruler shows those bands instead. To use Neon Combat Manager's ruler, disable Drag Ruler.",
+      "Held": "{name} can't go that far this Turn: {left} {unit} left.",
+      "PastReach": "{name} has gone past what they can cover this Turn ({left} {unit} was left)."
     },
     "Cover": {
       "Kicker": "Cover",

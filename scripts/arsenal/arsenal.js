@@ -898,7 +898,7 @@ export const Arsenal = {
       if (!to || (to.x === tok.x && to.y === tok.y)) continue;
       const half = { x: ((Number(tok.width) || 1) * grid.size) / 2, y: ((Number(tok.height) || 1) * grid.size) / 2 };
       const from = { x: tok.x + half.x, y: tok.y + half.y };
-      await tok.update({ x: to.x, y: to.y });
+      await tok.update({ x: to.x, y: to.y }, { [MODULE_ID]: { free: true } }); // pushed, not walked
       if (sc.id === canvas?.scene?.id) Shots.pushed(from, { x: to.x + half.x, y: to.y + half.y }, { wall: !!to.wall });
       if (to.wall) await Conditions.add("intoTheWall", actor);
       n++;
