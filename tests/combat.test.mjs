@@ -312,3 +312,69 @@ test("movement in a fight is held to what the character can cover this Turn: a p
   assert.deepEqual(moveCheck({ step: 2, r: prone, ownTurn: true }), { ok: false, warn: true, left: 0, over: 2, why: "prone" });
   assert.equal(moveCheck({ step: 500, ownTurn: true }).warn, false, "no reach known: nothing to hold to");
 });
+
+test("a Run is taken: until then a token goes as far as its Move Action; the Action HUD's Run opens the rest, and says so", async () => {
+  const { ranThisTurn, reachTaken, moveCheck, reach: reachOf } = await import("../scripts/ruler/ruler-core.js");
+  const r = reachOf(6); // 12 m, 24 m with a Run
+  assert.deepEqual(reachTaken(r, false), { move: 12, run: 12, why: null });
+  assert.deepEqual(reachTaken(r, true), r);
+  assert.equal(moveCheck({ step: 14, r: reachTaken(r, false), ownTurn: true }).ok, false, "past the Move Action, no Run taken");
+  assert.equal(moveCheck({ step: 14, r: reachTaken(r, true), ownTurn: true }).ok, true);
+  // No Move Action this Turn: nothing until the Run.
+  assert.equal(reachTaken(reachOf(6, { noMove: true }), false).run, 0);
+  assert.equal(ranThisTurn({ round: 3 }, 3), true);
+  assert.equal(ranThisTurn({ round: 2 }, 3), false, "last Round's Run is spent");
+  assert.equal(ranThisTurn(undefined, 3), false);
+
+  const { NeonRuler } = await import("../scripts/ruler/ruler.js");
+  const { Settings: S } = await import("../scripts/settings.js");
+  const M2 = "cpr-neon-combat-manager";
+  await S.set("actionHud", true);
+  await S.set("movementRun", true);
+  await S.set("movementLimit", "block");
+  await S.set("trackMovement", true);
+  const actor = makeActor({ name: "Runner" });
+  const other = makeActor({ name: "Ganger" });
+  const combat = makeCombat([actor, other]);
+  const cb = combat.turns[0];
+  cb.tokenId = "tok1";
+  cb.unsetFlag = async (s2, k) => { delete cb.flags[s2]?.[k]; };
+  cb.parent = combat;
+  const savedCombats = game.combats;
+  const savedCombat = game.combat;
+  game.combats = [combat];
+  game.combat = combat;
+  const savedUser = game.user.isGM;
+  game.user.isGM = false;
+  const move = Number(actor.system.stats.move.value);
+  const doc = { id: "tok1", name: "Runner", x: 0, y: 0, width: 1, height: 1, actor, parent: { id: combat.scene?.id, grid: { size: 100 } } };
+  const savedMeasure = NeonRuler.measure;
+  NeonRuler.measure = (a, b) => (Math.hypot(b.x - a.x, b.y - a.y) / 100) * 2;
+  const squares = (n) => ({ x: n * 100 });
+  const warned = [];
+  const savedWarn = ui.notifications.warn;
+  ui.notifications.warn = (m) => warned.push(m);
+  assert.equal(NeonRuler.limit(doc, squares(move), {}), true, "the Move Action: fine");
+  assert.equal(NeonRuler.limit(doc, squares(move + 1), {}), false, "a square further: held");
+  assert.match(warned.at(-1), /take a Run/);
+  chat.length = 0;
+  assert.equal(await NeonRuler.toggleRun(actor, doc), true);
+  assert.ok(chat.some((m) => /takes a Run/.test(m.content ?? "")), "the table is told");
+  assert.equal(NeonRuler.limit(doc, squares(move + 1), {}), true, "with the Run taken, it goes");
+  assert.equal(NeonRuler.limit(doc, squares(move * 2 + 1), {}), false, "but not past the Run");
+  assert.equal(await NeonRuler.toggleRun(actor, doc), false, "taken back before it's used");
+  assert.equal(NeonRuler.limit(doc, squares(move + 1), {}), false);
+  // Not their Turn: no Run to take.
+  combat.turn = 1;
+  assert.equal(await NeonRuler.toggleRun(actor, doc), null);
+  combat.turn = 0;
+  // Switched off (or no Action HUD to take it on): the Run's distance is open from the start.
+  await S.set("movementRun", false);
+  assert.equal(NeonRuler.limit(doc, squares(move + 1), {}), true);
+  await S.set("movementRun", true);
+  ui.notifications.warn = savedWarn;
+  NeonRuler.measure = savedMeasure;
+  game.user.isGM = savedUser;
+  game.combats = savedCombats;
+  game.combat = savedCombat;
+});

@@ -105,7 +105,7 @@ test("a character's actions: equipped weapons with their fire modes, skills with
   assert.ok(!c.status.some((s) => /tarot|stakes|lightlyWounded/.test(s.key)));
   assert.equal(c.stats.find((s) => s.key === "stat:ref").sub, "7");
   assert.deepEqual(c.gear.map((g) => [g.key, g.sub]), [["drug:blueglass", "×2"]]);
-  assert.deepEqual(c.turn.map((t) => t.key), ["turn:initiative", "turn:endTurn", "turn:deathSave", "turn:facedown"]);
+  assert.deepEqual(c.turn.map((t) => t.key), ["turn:initiative", "turn:run", "turn:endTurn", "turn:deathSave", "turn:facedown"]);
   assert.equal(c.turn[0].off, true, "no encounter");
 });
 
@@ -117,8 +117,9 @@ test("in a fight: Initiative shows, End Turn lights up on your turn, Death Save 
   await vee.update({ "system.derivedStats.hp.value": 0, "system.derivedStats.deathSave.penalty": 2 });
   const t = catalog(vee).turn;
   assert.equal(t[0].sub, "17");
-  assert.equal(t[1].alert, true);
-  assert.deepEqual([t[2].alert, t[2].sub], [true, "+2"]);
+  assert.equal(t[2].alert, true);
+  assert.deepEqual([t[3].alert, t[3].sub], [true, "+2"]);
+  assert.deepEqual([t[1].key, t[1].on, t[1].off], ["turn:run", false, false], "a Run to take, on their Turn");
   game.combat = null;
 });
 
@@ -132,7 +133,7 @@ test("in a stealth segment, the Stealth roll joins the Turn group", async () => 
   assert.equal(EncounterMode.isStealth(combat), true);
   const t = catalog(vee).turn;
   const s = t.find((x) => x.key === "turn:stealth");
-  assert.deepEqual([s.run, s.alert, t.indexOf(s)], ["sk:sth", true, 2]);
+  assert.deepEqual([s.run, s.alert, t.indexOf(s)], ["sk:sth", true, 3]);
   game.combat = null;
 });
 

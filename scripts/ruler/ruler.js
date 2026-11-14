@@ -3,7 +3,8 @@ import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { Conditions } from "../conditions/engine.js";
-import { reach, legs, squaresAlong, label, bandOf, moveCheck, COLORS } from "./ruler-core.js";
+import { reach, legs, squaresAlong, label, bandOf, moveCheck, ranThisTurn, reachTaken, RUN_FLAG, COLORS } from "./ruler-core.js";
+import { Cards } from "../combat/cards.js";
 import { L } from "../util.js";
 
 export const DRAG_RULER_ID = "drag-ruler";
@@ -95,13 +96,61 @@ export const NeonRuler = {
     const half = { x: ((Number(doc.width) || 1) * size) / 2, y: ((Number(doc.height) || 1) * size) / 2 };
     const from = { x: doc.x + half.x, y: doc.y + half.y };
     const to = { x: (changes.x ?? doc.x) + half.x, y: (changes.y ?? doc.y) + half.y };
-    const r = this.reachFor(doc);
-    const check = moveCheck({ walked: this.historyFor(doc).metres, step: this.measure(from, to), r, mode, gm: !!game.user?.isGM, ownTurn: true });
+    const full = this.reachFor(doc);
+    // Past the Move Action takes a Run (the Action HUD's button), where there's an Action HUD to take it on.
+    const ran = !this.runTaken || this.ran(cb, combat);
+    const r = reachTaken(full, ran);
+    const walked = this.historyFor(doc).metres;
+    const step = this.measure(from, to);
+    const check = moveCheck({ walked, step, r, mode, gm: !!game.user?.isGM, ownTurn: true });
     if (!check.warn) return true;
     const unit = canvas?.scene?.grid?.units || canvas?.grid?.units || "m";
-    const why = check.why ? ` ${L(`${LANG}.Ruler.why.${check.why}`)}` : "";
-    ui.notifications?.warn(L(`${LANG}.Ruler.${check.ok ? "PastReach" : "Held"}`, { name: doc.name, left: Math.round(check.left * 10) / 10, unit }) + why);
+    const round = (n) => Math.round(n * 10) / 10;
+    // Would a Run cover it? Then that's what to say.
+    const needsRun = !ran && !moveCheck({ walked, step, r: full, mode, ownTurn: true }).warn;
+    const why = check.why && !needsRun ? ` ${L(`${LANG}.Ruler.why.${check.why}`)}` : "";
+    const key = needsRun ? (check.ok ? "PastMove" : "NeedRun") : check.ok ? "PastReach" : "Held";
+    ui.notifications?.warn(L(`${LANG}.Ruler.${key}`, { name: doc.name, left: round(check.left), unit }) + why);
     return check.ok;
+  },
+
+  /** Is a Run something that's taken (a button to press) here? Only with the Action HUD to press it on. */
+  get runTaken() {
+    return !!Settings.get("actionHud") && !!Settings.get("movementRun");
+  },
+
+  /** Has this combatant taken a Run this Turn? */
+  ran(cb, combat = cb?.parent ?? game.combat) {
+    return ranThisTurn(cb?.flags?.[MODULE_ID]?.[RUN_FLAG], combat?.round);
+  },
+
+  /**
+   * Take a Run this Turn (the Action HUD): the Action goes on a second Move Action, and the
+   * token can go on into the Run's distance. Pressed again before going that far, it's taken back.
+   * @returns {Promise<boolean|null>} whether a Run is now taken; null when it can't be
+   */
+  async toggleRun(actor, token = null) {
+    const combat = game.combats?.find?.((c) => c.started && [...(c.combatants ?? [])].some((x) => (token && x.tokenId === (token.id ?? token.document?.id)) || x.actor === actor || x.actorId === actor?.id)) ?? null;
+    const cb = combat ? [...combat.combatants].find((x) => (token && x.tokenId === (token.id ?? token.document?.id)) || x.actor === actor || x.actorId === actor?.id) : null;
+    if (!cb || combat.combatant?.id !== cb.id) {
+      ui.notifications?.warn(L(`${LANG}.Hud.NotYourTurn`));
+      return null;
+    }
+    if (!cb.isOwner) return null;
+    if (this.ran(cb, combat)) {
+      const r = this.reachFor(cb.token ?? token);
+      if ((Number(cb.flags?.[MODULE_ID]?.[PATH_FLAG]?.metres) || 0) > r.move + 1e-6) {
+        ui.notifications?.info(L(`${LANG}.Ruler.RunUsed`, { name: cb.name }));
+        return true;
+      }
+      await cb.unsetFlag(MODULE_ID, RUN_FLAG);
+      return false;
+    }
+    await cb.setFlag(MODULE_ID, RUN_FLAG, { round: combat.round });
+    const r = this.reachFor(cb.token ?? token);
+    const unit = canvas?.scene?.grid?.units || "m";
+    await Cards.post({ actor, kicker: L(`${LANG}.Ruler.RunKicker`), title: L(`${LANG}.Ruler.RunTitle`, { name: cb.name }), body: `<p>${L(`${LANG}.Ruler.RunBody`, { total: r.run, unit })}</p>`, tone: "cyan" });
+    return true;
   },
 
   /** The path walked this Turn (on its own Turn, in combat): { points, metres }. */
