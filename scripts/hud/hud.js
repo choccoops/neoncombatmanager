@@ -33,6 +33,23 @@ export const groupLabel = (g) => g.name || (g.source ? L(`${LANG}.Hud.Group.${g.
  * player's own (scripts/hud/layout.js), kept on their user: one layout for all their characters,
  * and any number of per-character ones. Plain DOM, like the carousel; dragged where you want it.
  */
+/** Keys whose number didn't work out, already named in the console (once each). */
+const warned = new Set();
+
+/**
+ * A button's small yellow label, or "" when its number didn't work out: "NaN" tells nobody
+ * anything. The key is named in the console once, so the number can be put right.
+ */
+export function cleanSub(entry) {
+  const sub = entry?.sub === undefined || entry?.sub === null ? "" : String(entry.sub);
+  if (!/NaN|undefined|null|Infinity/.test(sub)) return sub;
+  if (!warned.has(entry.key)) {
+    warned.add(entry.key);
+    console.warn(`${MODULE_ID} | Action HUD: no number for "${entry.key}" (${sub})`);
+  }
+  return "";
+}
+
 export const Hud = {
   el: null,
   /** The group pinned open (a click), by id. */
@@ -126,7 +143,7 @@ export const Hud = {
       label: groupLabel(g),
       icon: g.icon || GROUP_ICONS[g.source] || "fa-solid fa-star",
       open: g.id === this.pinned,
-      entries: g.entries.map((e) => ({ ...e, run: e.run ?? e.key }))
+      entries: g.entries.map((e) => ({ ...e, run: e.run ?? e.key, sub: cleanSub(e) }))
     }));
     const hp = CPR.hp(actor);
     const state = Settings.get("actionHudState") ?? {};
