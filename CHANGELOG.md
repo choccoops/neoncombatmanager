@@ -16,6 +16,11 @@
   - *Berserk's Operating Systems*: -4 to ranged attacks while they run, unless an FBC or
     Cyberspine is installed. A Baldur gives 5 HP back as it stops.
 - New setting *Chrome activation cards* (on).
+- **Smart guns fire real rounds.** A Smart gun's shot was drawn with small glowing dots and a
+  ring where it hit, which read as no projectile and no hit at all. With JB2A installed each
+  round is now a JB2A bullet in the lock-on's colour (blue; purple for Improved Smart) down a
+  guidance line, with a JB2A impact as it arrives; a miss flies past. The hit and its sound
+  are placed by the bullet clip's own timing. Without JB2A the curving rounds remain.
 
 ## 1.31.3
 

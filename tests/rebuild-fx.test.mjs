@@ -89,6 +89,7 @@ const { Registry } = await import("../scripts/conditions/registry.js");
 const { Conditions } = await import("../scripts/conditions/engine.js");
 const { segmentsCross, throughThinCover, readWall, Xray, nextScopeTarget } = await import("../scripts/arsenal/xray.js");
 const { bouncePoint, shotLook, shotWall, Shots, flightMs, crossings } = await import("../scripts/arsenal/shots.js");
+const { Core: CoreFx } = await import("../scripts/neonfx/core.js");
 const { Equipped, flavorsInHand, inHand, REBUILD_CONDITION } = await import("../scripts/arsenal/equipped.js");
 const { Arsenal, penaltyOf, retryFormula, obscurementMods, rolledCrit } = await import("../scripts/arsenal/arsenal.js");
 const { dodgeAbility, tracksRicochet } = await import("../scripts/arsenal/defense.js");
@@ -309,6 +310,30 @@ test("the drawn shots: a ricochet's sparks at the bounce, Smart rounds that lock
   Shots.attack({ ...base, flavor: "smart", ammoType: "smart", mode: "single" });
   assert.ok(played.some((s) => String(call(s, "file")?.[0]).endsWith("data-ring-white.webp")), "Improved Smart paints the shooter");
   assert.ok(played.filter((s) => call(s, "tint")).every((s) => call(s, "tint")[0] === 0xff4fd8));
+
+  // With JB2A installed: each round is a real bullet in the lock-on's colour, with an impact where it hits.
+  const db = Sequencer.Database;
+  const has = (p) => /^jb2a\.(bullet\.01|impact\.010)(\.(blue|purple))?$/.test(p);
+  Sequencer.Database = { getEntry: (p) => has(p), getPathsUnder: () => ["blue", "purple"] };
+  CoreFx.clearCache();
+  played.length = 0;
+  const real = Shots.attack({ ...base, flavor: "smart", ammoType: "basic", mode: "single" });
+  const shot = played.find((s) => call(s, "file")?.[0] === "jb2a.bullet.01.blue");
+  assert.ok(shot && call(shot, "stretchTo"), "a bullet from the gun to the target");
+  assert.ok(!call(shot, "missed"));
+  assert.equal(call(shot, "delay")[0], 380, "after the lock");
+  const impact = played.find((s) => call(s, "file")?.[0] === "jb2a.impact.010.blue");
+  assert.ok(impact, "and an impact where it hits");
+  assert.equal(call(impact, "delay")[0], 380 + 400, "as the bullet arrives (8 squares: the 30 ft clip)");
+  assert.deepEqual([real.launch, real.arrive], [380, 380 + 400]);
+  assert.ok(!played.some((s) => s.calls.some(([m, args]) => m === "animateProperty" && args[1] === "position.y")), "no stand-in rounds");
+  played.length = 0;
+  Shots.attack({ ...base, total: 10, flavor: "smart", ammoType: "smart", mode: "single" });
+  const wide = played.find((s) => call(s, "file")?.[0] === "jb2a.bullet.01.purple");
+  assert.ok(wide && call(wide, "missed"), "a miss flies past, in Improved Smart's colour");
+  assert.ok(!played.some((s) => String(call(s, "file")?.[0]).startsWith("jb2a.impact")), "and hits nothing");
+  Sequencer.Database = db;
+  CoreFx.clearCache();
 
   assert.equal(Shots.attack({ ...base, flavor: "tech", mode: "single" }), false);
   for (const f of ["tracer.webp", "trajectory.webp", "reticle-white.webp", "data-ring-white.webp", "ring-pulse.webp", "glow-soft.webp"]) assert.ok(existsSync(path.join(root, "assets", "fx", "img", f)), f);
