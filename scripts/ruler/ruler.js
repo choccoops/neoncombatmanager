@@ -37,6 +37,11 @@ export const NeonRuler = {
         console.warn(`${MODULE_ID} | ruler`, err);
       }
     });
+    // The drag itself, as Foundry shows it: the preview copy of a token being dragged. The ruler
+    // follows that copy, so it draws whatever is doing the dragging (Foundry's own handlers,
+    // another module's in their place); the wrapped handlers below only add waypoints on top.
+    Hooks.on("refreshToken", (token) => this.onPreview(token));
+    Hooks.on("destroyToken", (token) => this.onPreviewGone(token));
     // In a fight, on their Turn, a token goes as far as its character can this Turn.
     Hooks.on("preUpdateToken", (doc, changes, options) => this.limit(doc, changes, options));
   },
@@ -278,6 +283,36 @@ export const NeonRuler = {
       }
     }
     return true;
+  },
+
+  /** Is this ruler the one drawing token drags here (v12, no Drag Ruler)? */
+  get draws() {
+    return this.on && !Compat.isV13 && !game.modules?.get?.(DRAG_RULER_ID)?.active;
+  },
+
+  /** A dragged token's preview moved: the ruler starts (once) and follows it. */
+  onPreview(preview) {
+    const token = preview?._original;
+    if (!token || !preview.isPreview || !this.draws || !canvas?.ready) return false;
+    if ((canvas.tokens?.controlled ?? []).length > 1) return false;
+    try {
+      if (this.state?.token !== token) this.start(token);
+      const s = this.state;
+      if (!s) return false;
+      const at = Compat.snapCenter(preview.center);
+      if (s.end && s.end.x === at.x && s.end.y === at.y) return true;
+      s.end = at;
+      this.draw();
+      return true;
+    } catch (err) {
+      console.warn(`${MODULE_ID} | ruler`, err);
+      return false;
+    }
+  },
+
+  /** The preview is gone (dropped or cancelled): so is the ruler. */
+  onPreviewGone(preview) {
+    if (preview?._original && this.state?.token === preview._original) this.end();
   },
 
   /** A drag starts: one token you own. */
