@@ -1168,6 +1168,12 @@ count. Prone, nothing is in reach until they Get Up; Grappled, no Move Action; a
 walked shows faded and counts toward the bands, on every client (the path is kept on the
 combatant, and starts over each Turn). The label at the cursor says how far, and which band.
 
+**Held to it in a fight** (setting *Hold movement to MOVE in a fight*: Hold, Warn, Off). On its
+own Turn in a fight under way, a token goes no further than the red band begins: a player's move
+past it doesn't happen (or goes with a warning); a GM's always goes, with the warning. Being
+thrown, pushed or dodging out of a blast isn't walking, and isn't held. Out of a fight, and out
+of their Turn, nothing is held.
+
 **Waypoints**: Space or right-click drops one where the token is, Backspace takes the last one
 back. On release, the token walks them one leg at a time; a wall stops a player's token at the
 last waypoint it reached.

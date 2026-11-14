@@ -921,3 +921,37 @@ test("the HUD shows a Power gun's Ricochet and a Tech gun's Charge", async () =>
 test("Neon Arsenal's text is all in the language file", () => {
   assert.deepEqual([...missingKeys].filter((k) => k.includes("Arsenal")), []);
 });
+
+test("a blast's square is the size its area says, whatever diagonal Foundry needed to draw it; and it clears once the blast has gone off", async () => {
+  const { sideOf, contains: inside, centerOf: middle } = await import("../scripts/arsenal/area.js");
+  const { squareFit, blastSpent, tokensIn: caught } = await import("../scripts/arsenal/blast.js");
+  // 10 m on 2 m squares: 5 squares, 500 px here. Foundry drew 707 px (7 squares) from the same diagonal.
+  assert.equal(squareFit(500, 500), 1);
+  assert.equal(squareFit(500.6, 500), 1, "close enough");
+  assert.ok(Math.abs(squareFit(707.1, 500) - 0.7071) < 0.001);
+  assert.equal(squareFit(0, 500), 1, "not drawn yet: nothing to go by");
+  assert.equal(squareFit(NaN, 500), 1);
+  const t = templateData({ shape: "rect", size: 10 }, { center: { x: 550, y: 550 } }, GRID);
+  assert.equal(t.side, 10);
+  // The diagonal scaled to draw right: who's inside goes by the area's side, not by the diagonal.
+  const scaled = { ...t, distance: t.distance * 0.7071 };
+  assert.equal(sideOf(scaled), 10);
+  assert.deepEqual(middle(scaled, GRID), { x: 550, y: 550 });
+  assert.equal(inside(scaled, { x: 310, y: 550 }, GRID), true, "two squares out: in");
+  assert.equal(inside(scaled, { x: 250, y: 550 }, GRID), false, "three squares out: not in a 5×5");
+  // A placed template carries its area: read from there, with no `side` on the document.
+  const doc = { t: "rect", x: t.x, y: t.y, distance: 10, direction: 45, flags: { "cpr-neon-combat-manager": { blast: { area: { shape: "rect", size: 10 } } } } };
+  assert.equal(sideOf(doc), 10);
+  const tok = (id, x, y) => ({ id, x, y, width: 1, height: 1, hidden: false });
+  const scene = { grid: { size: 100, distance: 2 }, tokens: [tok("in", 300, 500), tok("edge", 700, 700), tok("out", 200, 500)] };
+  assert.deepEqual(caught(doc, scene).map((x) => x.id), ["in", "edge"]);
+  // With nothing to say otherwise, Foundry's own diagonal.
+  assert.ok(Math.abs(sideOf({ t: "rect", distance: Math.hypot(6, 6) }) - 6) < 1e-9);
+
+  // Gone off: done with. A miss waits to be moved; smoke stays.
+  assert.equal(blastSpent({ state: "landed" }), true);
+  assert.equal(blastSpent({ state: "hit" }), true);
+  assert.equal(blastSpent({ state: "placed" }), false);
+  assert.equal(blastSpent({ state: "miss" }), false);
+  assert.equal(blastSpent({ state: "landed" }, { persist: true }), false);
+});

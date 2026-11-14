@@ -3,7 +3,7 @@ import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { Conditions } from "../conditions/engine.js";
-import { reach, legs, squaresAlong, label, bandOf, COLORS } from "./ruler-core.js";
+import { reach, legs, squaresAlong, label, bandOf, moveCheck, COLORS } from "./ruler-core.js";
 import { L } from "../util.js";
 
 export const DRAG_RULER_ID = "drag-ruler";
@@ -27,17 +27,28 @@ export const NeonRuler = {
 
   init() {
     Hooks.once("dragRuler.ready", (SpeedProvider) => this.registerSpeedProvider(SpeedProvider));
+    // Before the first scene is drawn: a token keeps the drag handlers it was drawn with, so a
+    // ruler put in at "ready" (after the canvas) never reached the tokens already on the map.
+    Hooks.once("setup", () => {
+      try {
+        this.ready({ quiet: true });
+      } catch (err) {
+        console.warn(`${MODULE_ID} | ruler`, err);
+      }
+    });
+    // In a fight, on their Turn, a token goes as far as its character can this Turn.
+    Hooks.on("preUpdateToken", (doc, changes, options) => this.limit(doc, changes, options));
   },
 
   get on() {
     return Settings.get("movementRuler") !== "off";
   },
 
-  ready() {
+  ready({ quiet = false } = {}) {
     if (!this.on) return;
     if (Compat.isV13) return this.installV13();
     if (game.modules.get(DRAG_RULER_ID)?.active) {
-      if (game.user.isGM && !Settings.get("movementRulerNoticed")) {
+      if (!quiet && game.user.isGM && !Settings.get("movementRulerNoticed")) {
         ui.notifications.info(L(`${LANG}.Ruler.DragRulerNotice`), { permanent: true });
         Settings.set("movementRulerNoticed", true);
       }
@@ -67,6 +78,30 @@ export const NeonRuler = {
       grappled: Conditions.has("grappled", actor),
       noMove: !!cb?.flags?.[MODULE_ID]?.[PATH_FLAG]?.noMove
     });
+  },
+
+  /**
+   * A token is about to move (whoever moves it): held to what its character can cover this Turn.
+   * A player's move past it doesn't happen (or goes with a warning, by setting); a GM's always does.
+   */
+  limit(doc, changes, options = {}) {
+    if (!("x" in (changes ?? {}) || "y" in (changes ?? {})) || options?.[MODULE_ID]?.free) return true;
+    const mode = Settings.get("movementLimit");
+    if (mode === "off" || !Settings.get("trackMovement")) return true;
+    const cb = this.combatantOf(doc);
+    const combat = cb?.parent ?? cb?.combat ?? null;
+    if (!cb || !combat?.started || combat.combatant?.id !== cb.id) return true;
+    const size = doc.parent?.grid?.size ?? canvas?.dimensions?.size ?? 100;
+    const half = { x: ((Number(doc.width) || 1) * size) / 2, y: ((Number(doc.height) || 1) * size) / 2 };
+    const from = { x: doc.x + half.x, y: doc.y + half.y };
+    const to = { x: (changes.x ?? doc.x) + half.x, y: (changes.y ?? doc.y) + half.y };
+    const r = this.reachFor(doc);
+    const check = moveCheck({ walked: this.historyFor(doc).metres, step: this.measure(from, to), r, mode, gm: !!game.user?.isGM, ownTurn: true });
+    if (!check.warn) return true;
+    const unit = canvas?.scene?.grid?.units || canvas?.grid?.units || "m";
+    const why = check.why ? ` ${L(`${LANG}.Ruler.why.${check.why}`)}` : "";
+    ui.notifications?.warn(L(`${LANG}.Ruler.${check.ok ? "PastReach" : "Held"}`, { name: doc.name, left: Math.round(check.left * 10) / 10, unit }) + why);
+    return check.ok;
   },
 
   /** The path walked this Turn (on its own Turn, in combat): { points, metres }. */
@@ -145,7 +180,7 @@ export const NeonRuler = {
 
   installV12() {
     const proto = CONFIG.Token?.objectClass?.prototype;
-    if (!proto || proto[`${MODULE_ID}Ruler`]) return false;
+    if (!proto || Object.prototype.hasOwnProperty.call(proto, `${MODULE_ID}Ruler`)) return false;
     proto[`${MODULE_ID}Ruler`] = true;
     const self = this;
     const wrap = (name, fn) => {
@@ -185,6 +220,14 @@ export const NeonRuler = {
       if (self.state?.token === this) self.end();
       return original.call(this, event);
     });
+    // Tokens already drawn took their handlers before this: give them the new ones.
+    for (const t of canvas?.tokens?.placeables ?? []) {
+      try {
+        t.activateListeners?.();
+      } catch {
+        /* drawn again on the next scene change */
+      }
+    }
     return true;
   },
 

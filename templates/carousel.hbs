@@ -1,13 +1,13 @@
 <header class="ncm-car-bar">
   <button type="button" class="ncm-car-collapse" data-ncm="collapse" data-tooltip="NEONCOMBAT.Carousel.Collapse" aria-label="{{localize 'NEONCOMBAT.Carousel.Collapse'}}">
-    <i class="fa-solid {{#if collapsed}}fa-chevron-down{{else}}fa-chevron-up{{/if}}"></i>
+    <i class="fa-solid {{#if this.collapsed}}fa-chevron-down{{else}}fa-chevron-up{{/if}}"></i>
   </button>
   <div class="ncm-car-round">
     <span class="ncm-kicker">// {{localize "NEONCOMBAT.Carousel.Round"}}</span>
-    <b>{{#if started}}{{round}}{{else}}—{{/if}}</b>
+    <b>{{#if this.started}}{{this.round}}{{else}}—{{/if}}</b>
   </div>
-  {{#if started}}
-  {{#if gm}}
+  {{#if this.started}}
+  {{#if this.gm}}
   <button type="button" class="ncm-car-mode is-{{mode.mode}}" data-ncm="mode" data-tooltip="{{mode.hint}} {{mode.switchHint}}" aria-label="{{mode.switchHint}}">
     <i class="fa-solid {{#if mode.stealth}}fa-user-ninja{{else}}fa-burst{{/if}}"></i> <span>{{mode.label}}</span>
   </button>
@@ -18,16 +18,16 @@
   {{/if}}
   {{/if}}
   <div class="ncm-car-clock" data-tooltip="{{localize 'NEONCOMBAT.Carousel.ClockHint' seconds=roundSeconds}}">
-    <span><i class="fa-solid fa-stopwatch"></i> T+{{elapsed}}</span>
-    <span><i class="fa-regular fa-clock"></i> {{clock}}</span>
+    <span><i class="fa-solid fa-stopwatch"></i> T+{{this.elapsed}}</span>
+    <span><i class="fa-regular fa-clock"></i> {{this.clock}}</span>
   </div>
-  {{#if weather}}
-  <button type="button" class="ncm-car-weather{{#if weather.indoor}} is-indoor{{/if}}" data-ncm="environment" data-tooltip="{{weather.label}}{{#if weather.indoor}} ({{localize 'NEONCOMBAT.Carousel.Indoors'}}){{/if}}"{{#unless gm}} disabled{{/unless}}>
-    {{#each weather.items}}<img src="{{img}}" alt="{{name}}">{{else}}<i class="fa-solid fa-cloud-sun"></i>{{/each}}
+  {{#if this.weather}}
+  <button type="button" class="ncm-car-weather{{#if weather.indoor}} is-indoor{{/if}}" data-ncm="environment" data-tooltip="{{weather.label}}{{#if weather.indoor}} ({{localize 'NEONCOMBAT.Carousel.Indoors'}}){{/if}}"{{#unless this.gm}} disabled{{/unless}}>
+    {{#each weather.items}}<img src="{{this.img}}" alt="{{this.name}}">{{else}}<i class="fa-solid fa-cloud-sun"></i>{{/each}}
     <span>{{weather.label}}</span>
   </button>
   {{/if}}
-  {{#if ladder}}
+  {{#if this.ladder}}
   <div class="ncm-car-ladder lvl-{{ladder.level}}" data-tooltip="{{ladder.hint}}">
     <button type="button" data-ncm="ladderDown" {{#if ladder.bottom}}disabled{{/if}} aria-label="−"><i class="fa-solid fa-caret-down"></i></button>
     <span><small>{{localize "NEONCOMBAT.Ladder.Title"}}</small><b>{{ladder.label}}</b>{{#if ladder.dv}}<em>DV {{ladder.dv}}</em>{{/if}}</span>
@@ -36,16 +36,16 @@
   </div>
   {{/if}}
   <div class="ncm-car-controls">
-    {{#if gm}}
-      {{#if started}}
+    {{#if this.gm}}
+      {{#if this.started}}
       <button type="button" data-ncm="prevRound" data-tooltip="COMBAT.RoundPrev"><i class="fa-solid fa-backward-fast"></i></button>
       <button type="button" data-ncm="prevTurn" data-tooltip="COMBAT.TurnPrev"><i class="fa-solid fa-backward-step"></i></button>
       <button type="button" class="ncm-cta" data-ncm="nextTurn" data-tooltip="COMBAT.TurnNext"><i class="fa-solid fa-forward-step"></i> {{localize "NEONCOMBAT.Carousel.Next"}}</button>
       <button type="button" data-ncm="nextRound" data-tooltip="COMBAT.RoundNext"><i class="fa-solid fa-forward-fast"></i></button>
       {{else}}
       <button type="button" data-ncm="rollNPC" data-tooltip="COMBAT.RollNPC"><i class="fa-solid fa-dice-d10"></i> NPC</button>
-      <button type="button" class="ncm-sneak{{#if sneakFirst}} ncm-cta{{/if}}" data-ncm="sneak" data-tooltip="NEONCOMBAT.Carousel.SneakHint"><i class="fa-solid fa-user-ninja"></i> {{localize "NEONCOMBAT.Carousel.Sneak"}}</button>
-      <button type="button" class="{{#unless sneakFirst}}ncm-cta{{/unless}}" data-ncm="start" data-tooltip="NEONCOMBAT.Carousel.StartHint"><i class="fa-solid fa-bolt"></i> {{localize "NEONCOMBAT.Carousel.Start"}}</button>
+      <button type="button" class="ncm-sneak{{#if this.sneakFirst}} ncm-cta{{/if}}" data-ncm="sneak" data-tooltip="NEONCOMBAT.Carousel.SneakHint"><i class="fa-solid fa-user-ninja"></i> {{localize "NEONCOMBAT.Carousel.Sneak"}}</button>
+      <button type="button" class="{{#unless this.sneakFirst}}ncm-cta{{/unless}}" data-ncm="start" data-tooltip="NEONCOMBAT.Carousel.StartHint"><i class="fa-solid fa-bolt"></i> {{localize "NEONCOMBAT.Carousel.Start"}}</button>
       {{/if}}
       <button type="button" data-ncm="stakes" data-tooltip="NEONCOMBAT.Stakes.Title"><i class="fa-solid fa-dice-six"></i></button>
       <button type="button" data-ncm="hub" data-tooltip="NEONCOMBAT.Hub.Title"><i class="fa-solid fa-map-location-dot"></i></button>
@@ -55,41 +55,41 @@
     {{else}}
       <button type="button" data-ncm="stakes" data-tooltip="NEONCOMBAT.Stakes.Title"><i class="fa-solid fa-dice-six"></i></button>
       <button type="button" data-ncm="hub" data-tooltip="NEONCOMBAT.Hub.Title"><i class="fa-solid fa-map-location-dot"></i></button>
-      {{#if myTurn}}<button type="button" class="ncm-cta" data-ncm="endTurn"><i class="fa-solid fa-check"></i> {{localize "NEONCOMBAT.Carousel.EndTurn"}}</button>{{/if}}
+      {{#if this.myTurn}}<button type="button" class="ncm-cta" data-ncm="endTurn"><i class="fa-solid fa-check"></i> {{localize "NEONCOMBAT.Carousel.EndTurn"}}</button>{{/if}}
     {{/if}}
   </div>
 </header>
-{{#unless collapsed}}
+{{#unless this.collapsed}}
 <ol class="ncm-car-track">
-  {{#each cards}}
-  <li class="ncm-card wound-{{woundTone}}{{#if active}} is-active{{/if}}{{#if interrupting}} is-interrupting{{/if}}{{#if interruptWaiting}} is-interrupt-waiting{{/if}}{{#if interruptDone}} is-interrupt-done{{/if}}{{#if interrupted}} is-interrupted{{/if}}{{#if defeated}} is-defeated{{/if}}{{#if hidden}} is-hidden{{/if}}{{#if friendly}} is-friendly{{else}} is-hostile{{/if}}" data-combatant-id="{{id}}">
+  {{#each this.cards}}
+  <li class="ncm-card wound-{{this.woundTone}}{{#if this.active}} is-active{{/if}}{{#if this.interrupting}} is-interrupting{{/if}}{{#if this.interruptWaiting}} is-interrupt-waiting{{/if}}{{#if this.interruptDone}} is-interrupt-done{{/if}}{{#if this.interrupted}} is-interrupted{{/if}}{{#if this.defeated}} is-defeated{{/if}}{{#if this.hidden}} is-hidden{{/if}}{{#if this.friendly}} is-friendly{{else}} is-hostile{{/if}}" data-combatant-id="{{this.id}}">
     <div class="ncm-card-frame">
-      <img class="ncm-card-portrait" src="{{img}}" alt="">
+      <img class="ncm-card-portrait" src="{{this.img}}" alt="">
       <div class="ncm-card-init">
-        {{#if hasInit}}{{initiative}}{{else if canRoll}}<button type="button" data-ncm="roll" data-tooltip="COMBAT.InitiativeRoll"><i class="fa-solid fa-dice-d10"></i></button>{{else}}—{{/if}}
+        {{#if this.hasInit}}{{this.initiative}}{{else if canRoll}}<button type="button" data-ncm="roll" data-tooltip="COMBAT.InitiativeRoll"><i class="fa-solid fa-dice-d10"></i></button>{{else}}—{{/if}}
       </div>
-      {{#if defeated}}<div class="ncm-card-flatline">{{localize "NEONCOMBAT.Carousel.Flatlined"}}</div>{{/if}}
-      {{#if solo}}<button type="button" class="ncm-card-ca{{#if awarenessSpent}} is-spent{{/if}}" data-ncm="awareness" data-tooltip="{{localize 'NEONCOMBAT.Awareness.Title'}}: {{awareness}}{{#if awarenessSpent}} ({{localize 'NEONCOMBAT.Awareness.SpentThisRound'}}){{/if}}"><i class="fa-solid fa-crosshairs"></i></button>{{/if}}
-      {{#if deathSave}}<div class="ncm-card-ds" data-tooltip="NEONCOMBAT.Carousel.DeathSave"><i class="fa-solid fa-heart-crack"></i> +{{deathSave}}</div>{{/if}}
+      {{#if this.defeated}}<div class="ncm-card-flatline">{{localize "NEONCOMBAT.Carousel.Flatlined"}}</div>{{/if}}
+      {{#if this.solo}}<button type="button" class="ncm-card-ca{{#if this.awarenessSpent}} is-spent{{/if}}" data-ncm="awareness" data-tooltip="{{localize 'NEONCOMBAT.Awareness.Title'}}: {{this.awareness}}{{#if this.awarenessSpent}} ({{localize 'NEONCOMBAT.Awareness.SpentThisRound'}}){{/if}}"><i class="fa-solid fa-crosshairs"></i></button>{{/if}}
+      {{#if this.deathSave}}<div class="ncm-card-ds" data-tooltip="NEONCOMBAT.Carousel.DeathSave"><i class="fa-solid fa-heart-crack"></i> +{{this.deathSave}}</div>{{/if}}
       {{#if ../gm}}
       <div class="ncm-card-gm">
-        <button type="button" data-ncm="hide" data-tooltip="COMBAT.ToggleVis"><i class="fa-solid {{#if hidden}}fa-eye-slash{{else}}fa-eye{{/if}}"></i></button>
+        <button type="button" data-ncm="hide" data-tooltip="COMBAT.ToggleVis"><i class="fa-solid {{#if this.hidden}}fa-eye-slash{{else}}fa-eye{{/if}}"></i></button>
         <button type="button" data-ncm="defeat" data-tooltip="COMBAT.ToggleDead"><i class="fa-solid fa-skull"></i></button>
         <button type="button" data-ncm="roll" data-tooltip="COMBAT.InitiativeRoll"><i class="fa-solid fa-dice-d10"></i></button>
         <button type="button" data-ncm="remove" data-tooltip="COMBAT.CombatantRemove"><i class="fa-solid fa-trash"></i></button>
       </div>
       {{/if}}
     </div>
-    <div class="ncm-card-name" title="{{name}}">{{name}}</div>
-    {{#if showBar}}
+    <div class="ncm-card-name" title="{{this.name}}">{{this.name}}</div>
+    {{#if this.showBar}}
     <div class="ncm-hp" style="--pct: {{hp.pct}}%"><span class="ncm-hp-fill"></span><span class="ncm-hp-text">{{hp.value}}/{{hp.max}}</span></div>
     {{else if showWound}}
-    <div class="ncm-wound-label">{{woundLabel}}</div>
+    <div class="ncm-wound-label">{{this.woundLabel}}</div>
     {{/if}}
     {{#if conditions.length}}
     <ul class="ncm-fx">
-      {{#each conditions}}<li class="cat-{{category}}"><img src="{{img}}" alt="{{name}}" data-tooltip="{{name}}"></li>{{/each}}
-      {{#if more}}<li class="ncm-fx-more">+{{more}}</li>{{/if}}
+      {{#each this.conditions}}<li class="cat-{{this.category}}"><img src="{{this.img}}" alt="{{this.name}}" data-tooltip="{{this.name}}"></li>{{/each}}
+      {{#if this.more}}<li class="ncm-fx-more">+{{this.more}}</li>{{/if}}
     </ul>
     {{/if}}
   </li>

@@ -1,16 +1,16 @@
-<div class="neon-combat-chat ncm-chat tone-{{tone}}">
+<div class="neon-combat-chat ncm-chat tone-{{this.tone}}">
   <header>
-    {{#if img}}<img src="{{img}}" alt="">{{/if}}
+    {{#if this.img}}<img src="{{this.img}}" alt="">{{/if}}
     <div>
-      {{#if kicker}}<span class="ncm-kicker">// {{{kicker}}}</span>{{/if}}
-      <h3>{{{title}}}</h3>
+      {{#if this.kicker}}<span class="ncm-kicker">// {{{this.kicker}}}</span>{{/if}}
+      <h3>{{{this.title}}}</h3>
     </div>
   </header>
-  {{#if body}}<div class="ncm-chat-body">{{{body}}}</div>{{/if}}
+  {{#if this.body}}<div class="ncm-chat-body">{{{this.body}}}</div>{{/if}}
   {{#if buttons.length}}
   <footer>
-    {{#each buttons}}
-    <button type="button" data-ncm-action="{{action}}" {{{attrs}}}{{#if gm}} data-gm="true"{{/if}}{{#if owner}} data-owner="true"{{/if}}>{{#if icon}}<i class="{{icon}}"></i> {{/if}}{{{label}}}</button>
+    {{#each this.buttons}}
+    <button type="button" data-ncm-action="{{this.action}}" {{{this.attrs}}}{{#if this.gm}} data-gm="true"{{/if}}{{#if this.owner}} data-owner="true"{{/if}}>{{#if this.icon}}<i class="{{this.icon}}"></i> {{/if}}{{{this.label}}}</button>
     {{/each}}
   </footer>
   {{/if}}

@@ -1641,6 +1641,19 @@ test("Sandevistan Time: others with an Apogee cut in too, highest Initiative fir
   assert.equal(joins({ initiative: 16, cut: 15 }), "initiative");
   assert.equal(joins({ initiative: 15, cut: 15 }), null);
   assert.equal(joins({ held: true, already: true }), null, "already waiting");
+  // Whoever cut in taken out of the fight (or the tracker emptied): it's over, whatever the Round and Turn say.
+  assert.equal(interruptLive({ round: 1, turn: 0, anchor: "a" }, { round: 1, turn: 0, started: true, current: null }), false);
+  assert.equal(interruptLive({ round: 1, turn: 0 }, { round: 1, turn: 0, started: true, present: false }), false, "an older flag, the same");
+  assert.equal(interruptLive({ round: 1, turn: 0 }, { round: 1, turn: 0, started: true }), true);
+  {
+    const stale = { round: 22, turn: 0, anchor: "gone", combatantId: "gone", queue: [{ combatantId: "gone", name: "Fury" }] };
+    const flags = { [INTERRUPT_FLAG]: stale };
+    const empty = { id: "e", started: true, round: 22, turn: 0, combatants: [], combatant: undefined, flags: { [M]: flags }, getFlag: (s2, k) => flags[k], async unsetFlag(s2, k) { delete flags[k]; } };
+    assert.equal(Interrupt.active(empty), null, "nobody left in the tracker: no Sandevistan Time, no stopped world");
+    Interrupt.sweep(empty);
+    await new Promise((res) => setTimeout(res, 5));
+    assert.equal(flags[INTERRUPT_FLAG], undefined, "and the GM takes it off the combat");
+  }
   // Live by who holds the Turn, not by its place in an order that re-sorts.
   assert.equal(interruptLive({ round: 1, turn: 0, anchor: "a" }, { round: 1, turn: 3, started: true, current: "a" }), true);
   assert.equal(interruptLive({ round: 1, turn: 0, anchor: "a" }, { round: 1, turn: 0, started: true, current: "b" }), false);

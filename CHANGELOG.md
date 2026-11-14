@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.33.3
+
+- **The Action HUD's "NaN", for real this time.** Another module registers a template helper
+  called `sub`, and it was answering for every button's small label in place of the label
+  itself (nothing minus nothing: NaN). Every template now reads its own values explicitly, so
+  no helper of the same name (sub, max, round, count...) can stand in for them, anywhere in
+  the module.
+- **A blast's area is 5×5 squares again.** Foundry draws a square template from its diagonal,
+  and with equidistant diagonals a 10×10 m blast came out 14×14 m (7×7 squares), while the
+  attack itself still caught the right 5×5. The template is now measured as it's drawn and
+  scaled to the area's true size, and who's inside is read from the area, not the drawing.
+- **An area clears once it has gone off.** A moment after the blast (or a shell's cone) is
+  seen, its template disappears from the map; the card still lists who was caught and the
+  GM's Apply button still works and removes it for good. A miss stays until it's moved or
+  scattered; smoke and other areas that linger stay. New setting *Clear an area once it has
+  gone off* (on).
+- **The stopped world doesn't outlive whoever stopped it.** An Apogee interrupt ended when the
+  interrupter ended their Turn; taken out of the tracker first (or the tracker emptied), nothing
+  ever ended it, and every screen kept the frozen blue ring with no token selected and no
+  chrome running. An interrupt whose combatant is gone is over at once, and the GM's client
+  clears it off the combat (also when a world opens with an old one still there).
+- **The movement ruler shows on the scene you load into.** On Foundry v12 it was put in after
+  the first scene was drawn, and a token keeps the drag handlers it was drawn with: the ruler
+  only appeared on tokens drawn later (after a scene change). It now goes in before the first
+  scene, and tokens already drawn are given the new handlers.
+- **Movement is held to MOVE in a fight.** On its own Turn in a fight under way, a token goes
+  no further than its character can this Turn: the Move Action (MOVE × 2 m/yds) plus a Run,
+  counting what it has already walked, as the ruler's bands show while you drag. MOVE is the
+  character's MOVE as it stands (conditions, armor, chrome and gear that change it all count),
+  and Prone or Grappled it's nothing. A player's move past it doesn't happen; a GM's always
+  goes, with a warning. Being thrown, pushed or dodging out of a blast isn't walking and
+  isn't held. New setting *Hold movement to MOVE in a fight* (Hold, Warn, Off).
+
 ## 1.33.2
 
 - **No more "NaN" on the Action HUD.** A button's small yellow label (a Skill's total, a

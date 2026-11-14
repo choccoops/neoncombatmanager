@@ -1,45 +1,45 @@
 <div class="ncm-hands-body">
-  {{#if none}}
+  {{#if this.none}}
   <p class="ncm-hint">{{localize "NEONCOMBAT.Hands.NoActor"}}</p>
   {{else}}
   <header class="ncm-hands-head">
-    <img src="{{img}}" alt="">
+    <img src="{{this.img}}" alt="">
     <div>
-      <b>{{name}}</b>
+      <b>{{this.name}}</b>
       <small>{{localize "NEONCOMBAT.Hands.Free" free=free total=total}}</small>
     </div>
   </header>
 
   <ul class="ncm-hands-slots">
-    {{#each hands}}
-    <li class="{{#if lost}}is-lost{{else if item}}is-full{{/if}}" data-tooltip="{{label}}">
-      <i class="fa-solid {{#if lost}}fa-ban{{else}}fa-hand{{/if}}"></i>
-      <span>{{label}}</span>
-      <small>{{#if lost}}{{localize "NEONCOMBAT.Hands.Lost"}}{{else if item}}{{item.name}}{{else}}{{localize "NEONCOMBAT.Hands.Empty"}}{{/if}}</small>
+    {{#each this.hands}}
+    <li class="{{#if this.lost}}is-lost{{else if item}}is-full{{/if}}" data-tooltip="{{this.label}}">
+      <i class="fa-solid {{#if this.lost}}fa-ban{{else}}fa-hand{{/if}}"></i>
+      <span>{{this.label}}</span>
+      <small>{{#if this.lost}}{{localize "NEONCOMBAT.Hands.Lost"}}{{else if item}}{{item.name}}{{else}}{{localize "NEONCOMBAT.Hands.Empty"}}{{/if}}</small>
     </li>
     {{/each}}
   </ul>
 
   <span class="ncm-kicker">// {{localize "NEONCOMBAT.Hands.Held"}}</span>
-  {{#each held}}
-  <div class="ncm-hands-row{{#if over}} is-alert{{/if}}">
-    <img src="{{img}}" alt="">
-    <div class="ncm-hands-name"><b>{{name}}</b><small>{{where}}</small></div>
-    <button type="button" data-action="freeHand" data-item="{{id}}" data-tooltip="NEONCOMBAT.Hands.FreeHint"><i class="fa-solid fa-hand-holding"></i> {{localize "NEONCOMBAT.Hands.FreeIt"}}</button>
-    <button type="button" data-action="dropItem" data-item="{{id}}" data-tooltip="NEONCOMBAT.Hands.DropHint"><i class="fa-solid fa-arrow-down"></i> {{localize "NEONCOMBAT.Hands.Drop"}}</button>
+  {{#each this.held}}
+  <div class="ncm-hands-row{{#if this.over}} is-alert{{/if}}">
+    <img src="{{this.img}}" alt="">
+    <div class="ncm-hands-name"><b>{{this.name}}</b><small>{{this.where}}</small></div>
+    <button type="button" data-action="freeHand" data-item="{{this.id}}" data-tooltip="NEONCOMBAT.Hands.FreeHint"><i class="fa-solid fa-hand-holding"></i> {{localize "NEONCOMBAT.Hands.FreeIt"}}</button>
+    <button type="button" data-action="dropItem" data-item="{{this.id}}" data-tooltip="NEONCOMBAT.Hands.DropHint"><i class="fa-solid fa-arrow-down"></i> {{localize "NEONCOMBAT.Hands.Drop"}}</button>
   </div>
   {{else}}
   <p class="ncm-hint">{{localize "NEONCOMBAT.Hands.NothingHeld"}}</p>
   {{/each}}
 
   <span class="ncm-kicker">// {{localize "NEONCOMBAT.Hands.Carried"}}</span>
-  {{#each carried}}
-  <div class="ncm-hands-row{{#unless fits}} is-off{{/unless}}">
-    <img src="{{img}}" alt="">
-    <div class="ncm-hands-name"><b>{{name}}</b><small>{{localize "NEONCOMBAT.Hands.Needs" n=need}}</small></div>
+  {{#each this.carried}}
+  <div class="ncm-hands-row{{#unless this.fits}} is-off{{/unless}}">
+    <img src="{{this.img}}" alt="">
+    <div class="ncm-hands-name"><b>{{this.name}}</b><small>{{localize "NEONCOMBAT.Hands.Needs" n=need}}</small></div>
     <div class="ncm-hands-put">
-      {{#each hands}}
-      <button type="button" data-action="equipHand" data-item="{{../id}}" data-hand="{{id}}" data-tooltip="{{label}}" aria-label="{{label}}"><i class="fa-solid fa-hand-fist"></i> {{short}}</button>
+      {{#each this.hands}}
+      <button type="button" data-action="equipHand" data-item="{{../id}}" data-hand="{{this.id}}" data-tooltip="{{this.label}}" aria-label="{{this.label}}"><i class="fa-solid fa-hand-fist"></i> {{this.short}}</button>
       {{/each}}
     </div>
   </div>

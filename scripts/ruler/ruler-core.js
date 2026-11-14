@@ -26,6 +26,22 @@ export function reach(MOVE, { prone = false, grappled = false, noMove = false } 
   return { move: step, run: step * 2, why: null };
 }
 
+/**
+ * May a token make this move, pure: { ok, left, over, why }.
+ * Movement is held to what the character can cover this Turn (Move Action plus a Run) while it
+ * is their Turn in a fight; out of their Turn, out of a fight, and for a GM, nothing is held.
+ * @param {object} o - walked: metres already walked this Turn; step: this move's metres;
+ *   r: reach ({ move, run, why }); mode: "off" | "warn" | "block"; gm; ownTurn
+ * @returns {{ ok: boolean, warn: boolean, left: number, over: number, why: string|null }}
+ *   left: metres still to go before this move; over: how far past them this move ends
+ */
+export function moveCheck({ walked = 0, step = 0, r = { move: Infinity, run: Infinity, why: null }, mode = "block", gm = false, ownTurn = false } = {}) {
+  const left = Math.max(0, r.run - (Number(walked) || 0));
+  const over = Math.max(0, (Number(walked) || 0) + (Number(step) || 0) - r.run);
+  const past = ownTurn && mode !== "off" && over > 1e-6 && Number.isFinite(r.run);
+  return { ok: !past || gm || mode === "warn", warn: past, left, over, why: r.why ?? null };
+}
+
 /** The band a distance falls in. */
 export function bandOf(distance, r) {
   const d = Number(distance) || 0;

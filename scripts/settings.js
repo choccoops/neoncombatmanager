@@ -4,12 +4,12 @@ const K = (key) => `${LANG}.Settings.${key}`;
 
 /** World settings grouped into submenus; everything else shows in Foundry's own list. */
 export const MENUS = {
-  combat: ["encounterMode", "roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement", "pickupCarried", "movementRuler", "movementRulerWaypoints"],
+  combat: ["encounterMode", "roundSeconds", "turnSeconds", "combatSummary", "npcHealth", "enhanceTracker", "deathSaves", "hazardDamage", "trackMovement", "pickupCarried", "movementRuler", "movementRulerWaypoints", "movementLimit"],
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim", "conditionSheetNotes"],
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxChrome", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
-  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
+  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -80,6 +80,8 @@ const DEFS = [
   ["pickupCarried", "world", Boolean, true, {}],
   ["movementRuler", "world", String, "auto", { choices: { auto: K("MovementRuler.auto"), off: K("MovementRuler.off") }, requiresReload: true }],
   ["movementRulerWaypoints", "world", Boolean, true, {}],
+  // In a fight, on their Turn: a token goes as far as its character can (Move Action plus a Run)
+  ["movementLimit", "world", String, "block", { choices: { block: K("MovementLimit.block"), warn: K("MovementLimit.warn"), off: K("MovementLimit.off") } }],
   ["movementRulerNoticed", "world", Boolean, false, { config: false }],
 
   // Conditions
@@ -123,6 +125,8 @@ const DEFS = [
   ["arsenalProfile", "world", String, "", { config: false }],
   ["arsenalSounds", "world", Boolean, true, {}],
   ["arsenalAreas", "world", Boolean, true, {}],
+  // A blast's template clears from the map once the blast has gone off
+  ["arsenalAreaClear", "world", Boolean, true, {}],
   ["arsenalBlowBack", "world", Boolean, true, {}],
   ["arsenalRebuilds", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["arsenalRebuildConditions", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.rebuildConditionsChanged`) }],

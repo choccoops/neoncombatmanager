@@ -10,6 +10,18 @@
 
 const DEG = Math.PI / 180;
 const px = (m, grid) => (m / grid.distance) * grid.size;
+const BLAST = "cpr-neon-combat-manager";
+
+/**
+ * A square area's side, in m/yds: what the area says it is (`side`, or the blast a placed
+ * template carries), else read back off Foundry's diagonal. The template's own `distance` isn't
+ * to be trusted for it: how Foundry turns a diagonal into a square depends on the scene's rule
+ * for diagonals, so Neon Arsenal scales it to draw the right square (scripts/arsenal/blast.js).
+ */
+export function sideOf(t) {
+  const own = Number(t?.side) || (t?.flags?.[BLAST]?.blast?.area?.shape === "rect" ? Number(t.flags[BLAST].blast.area.size) : 0);
+  return own > 0 ? own : Number(t?.distance) / Math.SQRT2;
+}
 
 /** Template data for an area: a square centred on `center`, or a cone from `origin` toward `toward`. */
 export function templateData(area, { center = null, origin = null, toward = null }, grid) {
@@ -19,13 +31,13 @@ export function templateData(area, { center = null, origin = null, toward = null
   }
   const half = px(area.size, grid) / 2;
   // Foundry's rectangle runs from (x, y) along its diagonal: distance = side × √2, at 45°.
-  return { t: "rect", x: center.x - half, y: center.y - half, distance: Math.hypot(area.size, area.size), direction: 45 };
+  return { t: "rect", x: center.x - half, y: center.y - half, distance: Math.hypot(area.size, area.size), direction: 45, side: area.size };
 }
 
 /** Is a canvas point inside a template (rect or cone data, as above)? */
 export function contains(t, point, grid) {
   if (t.t === "rect") {
-    const side = px(Number(t.distance) / Math.SQRT2, grid);
+    const side = px(sideOf(t), grid);
     return point.x >= t.x - 0.5 && point.x <= t.x + side + 0.5 && point.y >= t.y - 0.5 && point.y <= t.y + side + 0.5;
   }
   if (t.t === "cone") {
@@ -60,7 +72,7 @@ export function tokenInside(t, token, grid) {
 /** The middle of a template's area (for the explosion and the blown-back direction). */
 export function centerOf(t, grid) {
   if (t.t === "rect") {
-    const half = px(Number(t.distance) / Math.SQRT2, grid) / 2;
+    const half = px(sideOf(t), grid) / 2;
     return { x: t.x + half, y: t.y + half };
   }
   if (t.t === "cone") {

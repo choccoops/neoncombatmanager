@@ -316,3 +316,20 @@ test("a button's small label never reads NaN: a number that didn't work out show
   console.warn = warn;
   assert.equal(said.filter((m) => /skill:athletics/.test(m)).length, 1, "named in the console once");
 });
+
+test("templates read their own values: a helper another module registers under the same name (sub, max, round...) can't take their place", async () => {
+  const { readdirSync, readFileSync } = await import("node:fs");
+  const dir = new URL("../templates/", import.meta.url);
+  for (const f of readdirSync(dir).filter((x) => x.endsWith(".hbs"))) {
+    const bare = [...readFileSync(new URL(f, dir), "utf8").matchAll(/\{\{\{?\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}?\}\}/g)].map((m) => m[1]).filter((n) => !["else", "this"].includes(n));
+    assert.deepEqual(bare, [], `${f}: every value is looked up as this.<name>`);
+  }
+  // The case that showed: a "sub" helper (a - b) turned every small label into NaN.
+  if (typeof Handlebars !== "undefined" && typeof Handlebars.registerHelper === "function") {
+    Handlebars.registerHelper("sub", (a, b) => a - b);
+    const html = await Compat.renderTemplate("modules/cpr-neon-combat-manager/templates/action-hud.hbs", { name: "V", hp: { value: 1, max: 1 }, groups: [{ id: "skills", label: "Skills", icon: "x", entries: [{ key: "skill:evasion", run: "sk:1", label: "Evasion", sub: "+12", icon: "x" }] }] });
+    assert.match(html, /<small>\+12<\/small>/);
+    assert.doesNotMatch(html, /NaN/);
+    Handlebars.unregisterHelper("sub");
+  }
+});
