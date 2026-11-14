@@ -12,6 +12,7 @@ import { WEATHER_CONDITION } from "../environment/weather-data.js";
 import { Awareness } from "../awareness/awareness.js";
 import { Ladder } from "../roller/ladder.js";
 import { debounce, formatElapsed, L } from "../util.js";
+import { NeonRuler } from "../ruler/ruler.js";
 
 const WOUND_TONE = { notWounded: "ok", lightlyWounded: "light", seriouslyWounded: "serious", mortallyWounded: "mortal" };
 
@@ -128,6 +129,17 @@ export const Carousel = {
     if (was) Hooks.callAll(`${MODULE_ID}.carouselPlaced`, null);
   },
 
+  /** A card's movement line: what's left this Turn, out of what's open, and what a Run would add. */
+  movement(cb, combat) {
+    const m = NeonRuler.leftFor(cb, combat);
+    if (!m) return null;
+    const unit = canvas?.scene?.grid?.units || "m";
+    const tip = [L(`${LANG}.Carousel.MoveLeft`, { left: m.left, total: m.total, unit })];
+    if (m.run) tip.push(L(`${LANG}.Carousel.MoveRun`, { run: m.run, unit }));
+    if (m.why) tip.push(L(`${LANG}.Ruler.why.${m.why}`));
+    return { ...m, unit, pct: m.total ? Math.max(0, Math.min(100, Math.round((m.left / m.total) * 100))) : 0, spent: m.left <= 0, tip: tip.join(" ") };
+  },
+
   context(combat) {
     const gm = game.user.isGM;
     const npcHealth = Settings.get("npcHealth");
@@ -146,6 +158,7 @@ export const Carousel = {
       const dead = cb.defeated || (actor && Conditions.has("dead", actor));
       const conditions = actor ? this.effects(actor) : [];
       const solo = !!actor && (owner || gm) && Awareness.isSolo(actor);
+      const active = combat.combatant?.id === cb.id && combat.started;
       cards.push({
         id: cb.id,
         name: showName ? cb.name : L(`${LANG}.Carousel.Unknown`),
@@ -173,7 +186,8 @@ export const Carousel = {
         deathSave: wound === "mortallyWounded" && !dead ? CPR.deathSave(actor).penalty : null,
         conditions: conditions.slice(0, 6),
         more: Math.max(0, conditions.length - 6),
-        moved: null,
+        // On their Turn: how far they can still go (to whoever runs them).
+        moved: active && (owner || gm) && actor && CPR.isMeat(actor) ? this.movement(cb, combat) : null,
         solo,
         awareness: solo ? Awareness.summary(actor) : "",
         awarenessSpent: solo && Awareness.spent(actor, combat)

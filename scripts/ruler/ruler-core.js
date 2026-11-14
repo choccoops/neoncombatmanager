@@ -57,6 +57,20 @@ export function reachTaken(r, ran) {
   return ran ? r : { ...r, run: r.move };
 }
 
+/**
+ * What a character has left to move this Turn, pure: { left, total, walked, run, why }.
+ * total: what's open to them now (the Move Action; with a Run taken, or where a Run needn't be
+ * taken, the Run's distance too); run: what taking a Run would still add (0 when it's taken).
+ * @param {object} o - walked: metres walked this Turn; r: reach; ran: a Run taken; runTaken:
+ *   does a Run have to be taken here
+ */
+export function movementLeft({ walked = 0, r = { move: 0, run: 0, why: null }, ran = false, runTaken = true } = {}) {
+  const open = reachTaken(r, ran || !runTaken);
+  const w = Math.max(0, Number(walked) || 0);
+  const round = (n) => Math.round(n * 10) / 10;
+  return { left: round(Math.max(0, open.run - w)), total: round(open.run), walked: round(w), run: round(Math.max(0, r.run - open.run)), why: r.why ?? null };
+}
+
 /** The band a distance falls in. */
 export function bandOf(distance, r) {
   const d = Number(distance) || 0;

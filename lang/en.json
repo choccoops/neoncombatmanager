@@ -1447,7 +1447,9 @@
       "Flatlined": "Flatlined",
       "Sneak": "Sneak",
       "SneakHint": "Begin a stealth segment: Turns and Rounds in Initiative order, nobody spotted yet",
-      "StartHint": "Begin full combat"
+      "StartHint": "Begin full combat",
+      "MoveLeft": "{left} of {total} {unit} left to move this Turn.",
+      "MoveRun": "A Run would add {run} {unit}."
     },
     "Mode": {
       "combat": "Combat",

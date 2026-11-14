@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.36.0
+
+- **Movement left, on the carousel.** The acting character's card shows how far they can
+  still go this Turn: metres left out of what's open to them (the Move Action; the Run's
+  distance too once a Run is taken), as a bar that empties as they move, with what a Run would
+  add beside it in yellow. Prone, Grappled or with no Move Action it says why on hover. Shown
+  to whoever runs the character (their player and the GM); needs *Track movement*.
+
 ## 1.35.1
 
 - **The movement ruler draws, whatever is doing the dragging.** On Foundry v12 the ruler was

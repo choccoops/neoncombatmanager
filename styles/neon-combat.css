@@ -1381,3 +1381,12 @@ li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; li
 #ncm-sandtime.is-still b { animation: none; }
 @keyframes ncm-sandtime-pulse { from { opacity: 0.72; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { #ncm-sandtime b { animation: none; } }
+
+/* The carousel: what the acting character has left to move this Turn (and what a Run would add). */
+#ncm-carousel .ncm-move { position: relative; height: 13px; margin-top: 2px; background: rgba(5, 217, 232, 0.08); border: 1px solid rgba(5, 217, 232, 0.45); overflow: hidden; }
+#ncm-carousel .ncm-move-fill { position: absolute; inset: 0 auto 0 0; width: var(--pct, 100%); background: linear-gradient(90deg, rgba(5, 217, 232, 0.12), rgba(5, 217, 232, 0.45)); border-right: 2px solid #05d9e8; transition: width 300ms; }
+#ncm-carousel .ncm-move-text { position: relative; display: block; text-align: center; font-family: var(--ncm-display); font-size: 9px; line-height: 13px; letter-spacing: 0.04em; color: #fff; text-shadow: 0 0 3px #000; white-space: nowrap; }
+#ncm-carousel .ncm-move-text i { font-size: 8px; color: #05d9e8; }
+#ncm-carousel .ncm-move-text em { font-style: normal; color: var(--ncm-yellow); }
+#ncm-carousel .ncm-move.is-spent { border-color: rgba(255, 42, 109, 0.6); background: rgba(255, 42, 109, 0.12); }
+#ncm-carousel .ncm-move.is-spent .ncm-move-fill { border-right-color: transparent; }
