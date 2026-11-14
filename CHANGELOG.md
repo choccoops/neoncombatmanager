@@ -16,6 +16,11 @@
   GM's Apply button still works and removes it for good. A miss stays until it's moved or
   scattered; smoke and other areas that linger stay. New setting *Clear an area once it has
   gone off* (on).
+- **The stopped world doesn't outlive whoever stopped it.** An Apogee interrupt ended when the
+  interrupter ended their Turn; taken out of the tracker first (or the tracker emptied), nothing
+  ever ended it, and every screen kept the frozen blue ring with no token selected and no
+  chrome running. An interrupt whose combatant is gone is over at once, and the GM's client
+  clears it off the combat (also when a world opens with an old one still there).
 - **The movement ruler shows on the scene you load into.** On Foundry v12 it was put in after
   the first scene was drawn, and a token keeps the drag handlers it was drawn with: the ruler
   only appeared on tokens drawn later (after a scene change). It now goes in before the first

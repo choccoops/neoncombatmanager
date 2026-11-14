@@ -45,9 +45,11 @@ export function interruptBy({ ownTurn = false, held = false, initiative = null, 
  * By combatant, so the order re-sorting under it (an Initiative moving) changes nothing; by the
  * Turn's place for a flag with no anchor.
  */
-export function interruptLive(flag, { round = 0, turn = 0, started = false, current = null } = {}) {
-  if (!flag || !started || flag.round !== round) return false;
-  if (flag.anchor && current) return flag.anchor === current;
+export function interruptLive(flag, { round = 0, turn = 0, started = false, current = null, present = true } = {}) {
+  // `present`: whoever cut in is still in the fight. Taken out of it (or the tracker emptied),
+  // there is no Turn of theirs left to end, and nothing would ever clear it.
+  if (!flag || !started || flag.round !== round || !present) return false;
+  if (flag.anchor) return flag.anchor === current;
   return flag.turn === turn;
 }
 
@@ -110,6 +112,9 @@ export const Interrupt = {
     // next one who cut in, or back to whoever was cut into, in the same Round.
     Hooks.on("preUpdateCombat", (combat, changes, options) => this.returnTurn(combat, changes, options));
     Hooks.on("deleteCombat", () => this.sync(null));
+    // Someone taken out of the fight, or a world opened with an old interrupt still on its combat.
+    Hooks.on("deleteCombatant", (cb) => this.sweep(cb?.parent ?? cb?.combat ?? game.combat));
+    Hooks.on("canvasReady", () => this.sweep(game.combat));
     Hooks.on("deleteActiveEffect", () => this.dropIfOver());
     Hooks.on(`${MODULE_ID}.fxChanged`, () => this.sync(game.combat));
   },
@@ -117,7 +122,15 @@ export const Interrupt = {
   /** Sandevistan Time under way in the combat this client is looking at: its flag, or null. */
   active(combat = game.combat) {
     const flag = combat?.flags?.[MODULE_ID]?.[INTERRUPT_FLAG] ?? null;
-    return interruptLive(flag, { round: combat?.round, turn: combat?.turn, started: !!combat?.started, current: combat?.combatant?.id ?? null }) ? flag : null;
+    const present = !!flag && [...(combat?.combatants ?? [])].some((cb) => cb.id === flag.combatantId);
+    return interruptLive(flag, { round: combat?.round, turn: combat?.turn, started: !!combat?.started, current: combat?.combatant?.id ?? null, present }) ? flag : null;
+  },
+
+  /** An interrupt nothing can end any more (its combatant gone, the Turn elsewhere): the active GM takes it off the combat. */
+  sweep(combat = game.combat) {
+    const flag = combat?.getFlag?.(MODULE_ID, INTERRUPT_FLAG) ?? combat?.flags?.[MODULE_ID]?.[INTERRUPT_FLAG];
+    if (flag && Compat.isActiveGM && !this.active(combat)) combat.unsetFlag?.(MODULE_ID, INTERRUPT_FLAG)?.catch?.(() => {});
+    this.sync(combat);
   },
 
   /** How a combatant stands in Sandevistan Time: "acting", "waiting" (cut in, still to act), "done", "cut" (whose Turn it was), or null. */
