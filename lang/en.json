@@ -624,6 +624,14 @@
       "techRebuild": {
         "name": "Tech Weapon",
         "hint": "A Tech gun in hand: its scope shows outlines through thin cover. Charge it with the Move Action (20 Rounds or until fired): the next shot is ROF 1, goes through thin cover without damaging it and ignores half the target's SP."
+      },
+      "chromeFalconMove": {
+        "name": "Falcon: +2 MOVE",
+        "hint": "The Falcon's choice for this Turn: +2 MOVE until their next Turn begins."
+      },
+      "chromeFalconEvasion": {
+        "name": "Falcon: +4 Evasion",
+        "hint": "The Falcon's choice for this Turn: +4 on one Evasion Check before their next Turn (tick it in the roll)."
       }
     },
     "Key": {
@@ -1338,6 +1346,10 @@
       "interruptTurn": {
         "name": "An Apogee interrupt takes the Turn",
         "hint": "When an Apogee interrupts, the Turn goes to the interrupter at once and, when they end it, back to whoever was cut into, in the same Round. Nobody's Turn counts as starting or ending by it. Off: the interrupt is only announced."
+      },
+      "chromeCards": {
+        "name": "Chrome activation cards",
+        "hint": "As a Sandevistan, Berserk or one of their Operating Systems starts, a card in chat says what it costs and allows, with a button for each roll or choice: Humanity Loss each time (not with an FBC or Cyberspine), Humanity Loss for starting again inside the cooldown, a Solo's free Combat Awareness under an Apogee or Professional, the Falcon's choice each Turn. Stopping starts the cooldown (and gives a Baldur's 5 HP back)."
       }
     },
     "SceneWeather": {
@@ -2383,7 +2395,37 @@
       "Empty": "No one on stage"
     },
     "Chrome": {
-      "HudTitle": "Chrome: switch on or off"
+      "HudTitle": "Chrome: switch on or off",
+      "Span": {
+        "rounds": "{n} Rounds",
+        "minutes": "{n} minutes",
+        "hours": "{n} hour(s)"
+      },
+      "Card": {
+        "Kicker": "Chrome running",
+        "On": "{name} switches on {chrome}",
+        "Off": "{name}: {chrome} stops",
+        "Humanity": "No FBC or Cyberspine to carry it: {formula} Humanity Loss each time it starts.",
+        "RollHumanity": "Roll {formula} Humanity Loss",
+        "Carried": "An FBC or Cyberspine carries it: no Humanity Loss for starting it.",
+        "Early": "Started again with {left} of cooldown left: {n} Humanity Loss.",
+        "TakeHumanity": "Take {n} Humanity Loss",
+        "Cooling": "Still cooling down ({left} left), and this one can't be started early: the GM's call.",
+        "Awareness": "A Solo reassigns Combat Awareness for free on every Aimed Shot, alternate firing mode or Martial Arts Special Move while it runs. Attack cards offer it; after a Special Move, use the button here.",
+        "Reassign": "Reassign Combat Awareness (free)",
+        "EachTurn": "A choice at the start of each of their Turns: a card asks.",
+        "Cooldown": "Cooldown once it stops: {span}.",
+        "CoolingNow": "Cooling down for {span}.",
+        "EarlyNext": "Starting it again before then costs {n} Humanity Loss.",
+        "Healed": "{n} HP back as it stops.",
+        "TurnTitle": "{name}: this Turn's choice",
+        "TurnBody": "+2 MOVE for the Turn, or +4 on one Evasion Check before their next Turn.",
+        "AwarenessTitle": "Combat Awareness: free to reassign",
+        "AwarenessBody": "{name} took an Aimed Shot or an alternate firing mode with the chrome running: the points can move for free, without spending an Action.",
+        "LostHumanity": "{name} loses {n} Humanity ({now} left).",
+        "AlreadyTaken": "That Humanity Loss has already been taken.",
+        "NotRunning": "{name}'s chrome isn't running any more."
+      }
     },
     "FX": {
       "NoSequencer": "Neon FX needs the Sequencer module.",

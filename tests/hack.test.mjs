@@ -804,3 +804,157 @@ test("a Sandevistan's \"(active)\" effect, the condition and Initiative move tog
 test("no string the quickhack flow or the chrome conditions use is missing", () => {
   assert.deepEqual([...missingKeys].filter((k) => /Hack|chrome|FX/.test(k)), []);
 });
+
+/* ---------------------------------------- */
+/*  What starting chrome costs and allows   */
+/* ---------------------------------------- */
+
+test("starting chrome: Humanity Loss unless the body carries it, the cooldown and what starting early costs, a Solo's free Combat Awareness (pure)", async () => {
+  const { OS_RULES, rulesOf, framed, startPlan, AWARENESS_MODES } = await import("../scripts/neonfx/os.js");
+  // Every Operating System a condition names has its rules.
+  for (const c of chromeConditions().filter((x) => x.kind !== "kerenzikov")) assert.ok(OS_RULES[c.os ?? c.kind], `${c.id} has rules`);
+  const apogee = rulesOf({ kind: "sandevistan", os: "apogee" });
+  assert.deepEqual(startPlan({ rules: apogee, now: 100 }), { humanity: "1d6", early: null, left: 0, blocked: false, awareness: false, keep: 0 });
+  assert.equal(startPlan({ rules: apogee, framed: true }).humanity, null, "an FBC or Cyberspine carries it");
+  assert.equal(startPlan({ rules: apogee, solo: true }).awareness, true);
+  assert.equal(startPlan({ rules: rulesOf({ kind: "sandevistan", os: "falcon" }), solo: true }).awareness, false);
+  // Inside the cooldown: 3, then 6, then 9, and 9 from there on.
+  const cool = (early) => ({ until: 160, early });
+  assert.deepEqual([0, 1, 2, 5].map((n) => startPlan({ rules: apogee, now: 100, cool: cool(n) }).early), [3, 6, 9, 9]);
+  assert.equal(startPlan({ rules: apogee, now: 100, cool: cool(1) }).keep, 2);
+  assert.equal(startPlan({ rules: apogee, now: 100, cool: cool(1) }).left, 60);
+  // The cooldown over: the count starts again.
+  assert.deepEqual(startPlan({ rules: apogee, now: 200, cool: cool(2) }), { humanity: "1d6", early: null, left: 0, blocked: false, awareness: false, keep: 0 });
+  // A bare Sandevistan can't be started early: the GM's call.
+  assert.equal(startPlan({ rules: rulesOf({ kind: "sandevistan" }), now: 100, cool: cool(0) }).blocked, true);
+  assert.equal(framed([{ name: "Sycust Cyberspine", type: "cyberware", installed: true }]), true);
+  assert.equal(framed([{ name: "Sycust Cyberspine", type: "cyberware", installed: false }]), false);
+  assert.equal(framed([{ name: "FBC EMP Coating", type: "cyberware", installed: true }]), true);
+  assert.equal(framed([{ name: "Sandevistan", type: "cyberware", installed: true }]), false);
+  assert.deepEqual(AWARENESS_MODES, ["aimed", "autofire", "suppressive"]);
+});
+
+test("an Apogee starting: the card and its buttons; Humanity Loss taken once; stopping starts the cooldown and starting inside it costs 3; a Solo's free Combat Awareness", async () => {
+  await Settings.set("fxChrome", true);
+  await Settings.set("chromeCards", true);
+  const { OS: Card } = await import("../scripts/neonfx/os.js");
+  const { Awareness } = await import("../scripts/awareness/awareness.js");
+  const actor = makeActor({ name: "Fury" }, [
+    { _id: "solo", name: "Solo", type: "role", system: { rank: 4, mainRoleAbility: "Combat Awareness", abilities: [{ name: "Precision Attack", rank: 2 }, { name: "Spot Weakness", rank: 2 }] } }
+  ]);
+  game.combat = null;
+  game.time.worldTime = 1000;
+  const cards = () => chat.filter((m) => m.flags?.[M]?.card);
+  chat.length = 0;
+  await Conditions.add("chromeApogee", actor);
+  await settle(40);
+  let card = cards().find((m) => /switches on/.test(m.content));
+  assert.ok(card, "a card as it starts");
+  assert.match(card.content, /chrome-humanity/);
+  assert.match(card.content, /data-formula="1d6"/);
+  assert.match(card.content, /chrome-awareness/, "a Solo's free Combat Awareness");
+  assert.doesNotMatch(card.content, /data-key="early"/);
+
+  // The Humanity Loss, once.
+  const before = actor.system.derivedStats.humanity.value;
+  dice.length = 0;
+  dice.push(4);
+  const btn = (action, data = {}) => ({ dataset: { ncmAction: action, actor: actor.uuid, ...data }, disabled: false });
+  await Card.click(card, btn("chrome-humanity", { formula: "1d6", key: "start" }), {}, actor);
+  assert.equal(actor.system.derivedStats.humanity.value, before - 4);
+  await Card.click(card, btn("chrome-humanity", { formula: "1d6", key: "start" }), {}, actor);
+  assert.equal(actor.system.derivedStats.humanity.value, before - 4, "not twice off one card");
+
+  // Free Combat Awareness: one reassignment, whoever's Turn it is.
+  await Card.click(card, btn("chrome-awareness"), {}, actor).catch(() => {});
+  assert.equal(Awareness.mode(actor), "free");
+  await Awareness.assign(actor, { precisionAttack: 4 });
+  assert.equal(Awareness._pass.has(actor.id), false, "spent");
+
+  // Stopping: the cooldown starts (20 Rounds).
+  await Conditions.remove("chromeApogee", actor);
+  await settle(40);
+  assert.deepEqual(Card.cool(actor, "sandevistan"), { until: 1060, early: 0 });
+  // Started again 5 Rounds in: 3 Humanity Loss; and again: 6.
+  for (const want of ["3", "6"]) {
+    game.time.worldTime += 15;
+    chat.length = 0;
+    await Conditions.add("chromeApogee", actor);
+    await settle(40);
+    card = cards().find((m) => /switches on/.test(m.content));
+    assert.match(card.content, new RegExp(`data-formula="${want}"[^>]*data-key="early"|data-key="early"[^>]*data-formula="${want}"`));
+    await Conditions.remove("chromeApogee", actor);
+    await settle(40);
+  }
+  // Let it cool: no early cost, and the count starts over.
+  game.time.worldTime += 4000;
+  chat.length = 0;
+  await Conditions.add("chromeApogee", actor);
+  await settle(40);
+  assert.doesNotMatch(cards().find((m) => /switches on/.test(m.content)).content, /data-key="early"/);
+  assert.equal(Card.cool(actor, "sandevistan").early, 0);
+  await Conditions.remove("chromeApogee", actor);
+  await settle(40);
+
+  // Switched off in the settings: no cards.
+  await Settings.set("chromeCards", false);
+  chat.length = 0;
+  await Conditions.add("chromeApogee", actor);
+  await settle(40);
+  assert.equal(cards().filter((m) => /switches on/.test(m.content)).length, 0);
+  await Conditions.remove("chromeApogee", actor);
+  await settle(40);
+  await Settings.set("chromeCards", true);
+});
+
+test("Berserk's Operating Systems: -4 to ranged attacks unless an FBC or Cyberspine carries it; a Baldur gives 5 HP back as it stops; a Falcon asks each Turn", async () => {
+  await Settings.set("fxChrome", true);
+  await Settings.set("chromeCards", true);
+  const { OS: Card } = await import("../scripts/neonfx/os.js");
+  const ranged = (a, id) => Conditions.effects(a, id)[0]?.changes.find((c) => c.key === "bonuses.ranged")?.value;
+  game.combat = null;
+  const bare = makeActor({ name: "Meat" });
+  await Conditions.add("chromeBaldur", bare);
+  await settle(40);
+  assert.equal(Number(ranged(bare, "chromeBaldur")), -4);
+  const spine = makeActor({ name: "Chrome" }, [{ _id: "spine", name: "Sycust Cyberspine", type: "cyberware", system: { isInstalled: true } }]);
+  await Conditions.add("chromeBaldur", spine);
+  await settle(40);
+  assert.equal(ranged(spine, "chromeBaldur"), undefined, "the Cyberspine carries it");
+  const card = chat.filter((m) => /switches on/.test(m.content ?? "")).at(-1);
+  assert.doesNotMatch(card.content, /chrome-humanity/, "and no Humanity Loss either");
+
+  // 5 HP back as a Baldur stops.
+  await spine.update({ "system.derivedStats.hp.value": 20 });
+  await Conditions.remove("chromeBaldur", spine);
+  await settle(40);
+  assert.equal(spine.system.derivedStats.hp.value, 25);
+
+  // A Falcon: the choice at the start of each of their Turns, one at a time.
+  const pilot = makeActor({ name: "Pilot" });
+  const other = makeActor({ name: "Ganger" });
+  await Conditions.add("chromeFalcon", pilot);
+  await settle(40);
+  const combat = makeCombat([pilot, other]);
+  game.combat = combat;
+  chat.length = 0;
+  const asked = await Card.turn(combat);
+  assert.ok(asked, "asked on their Turn");
+  assert.match(asked.content, /chromeFalconMove/);
+  assert.match(asked.content, /chromeFalconEvasion/);
+  const pick = (id, others) => Card.click(asked, { dataset: { ncmAction: "chrome-pick", condition: id, others } }, {}, pilot);
+  await pick("chromeFalconMove", "chromeFalconEvasion");
+  assert.ok(Conditions.has("chromeFalconMove", pilot));
+  await pick("chromeFalconEvasion", "chromeFalconMove");
+  assert.ok(Conditions.has("chromeFalconEvasion", pilot) && !Conditions.has("chromeFalconMove", pilot), "one or the other");
+  combat.turn = 1;
+  assert.equal(await Card.turn(combat), null, "nobody else is asked");
+  combat.turn = 0;
+  await Card.turn(combat);
+  assert.ok(!Conditions.has("chromeFalconEvasion", pilot), "last Turn's choice is over");
+  await pick("chromeFalconMove", "chromeFalconEvasion");
+  await Conditions.remove("chromeFalcon", pilot);
+  await settle(40);
+  assert.ok(!Conditions.has("chromeFalconMove", pilot), "gone with the Falcon");
+  game.combat = null;
+});

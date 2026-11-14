@@ -687,6 +687,26 @@ nothing. You get it for your assigned character and for tokens you own and have 
 gets it for an NPC while that NPC's token is selected. *Chrome on my screen* (each player's own setting) turns it
 off, and it holds still with token motion off or reduced motion asked for. No new sounds.
 
+**What starting it costs** (Item Compendium, the Sandevistan, Berserk and their Operating
+Systems). As chrome starts, a card in chat says what it costs and allows, with a button for each
+roll or choice; stopping it starts the cooldown.
+
+- *Humanity Loss each time* (Apogee, Falcon, Baldur: 1d6): a button rolls it and takes it off.
+  With an FBC or Cyberspine installed (matched by name) the card says the body carries it.
+- *The cooldown*: 20 Rounds for an Apogee, an hour for the rest, on the world clock. Started
+  again inside it, the card names the Humanity Loss (3, then 6, then 9; or 2, 4, 6) with a button
+  to take it. Chrome that can't be started early says so and leaves it to the GM.
+- *A Solo's free Combat Awareness* (Apogee, Professional): after an Aimed Shot, Autofire or
+  Suppressive Fire a card offers to reassign the points for free, whoever's Turn it is; the
+  start card's own button covers Martial Arts Special Moves, which the module can't see.
+- *A Falcon's choice*: at the start of each of its Turns a card asks, +2 MOVE or +4 on one
+  Evasion Check (a tick box in the roll); the next Turn clears it.
+- *Berserk's Operating Systems* take -4 from ranged attacks while they run, unless an FBC or
+  Cyberspine is installed; a Baldur gives 5 HP back as it stops.
+
+Rules the module doesn't work for you (halved damage, ROF2 half-Actions, dodging bullets) stay
+as the condition's text on the card. Setting: *Chrome activation cards*.
+
 **The Apogee interrupt** (Item Compendium, Militech 'Apogee' OS). Switched on during someone
 else's Turn, the Apogee interrupts them when its +6 puts your Initiative ahead of theirs, and
 always when you were Holding Action (the *Holding Action* condition) as you switched it on. When

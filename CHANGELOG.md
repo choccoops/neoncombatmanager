@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.32.0
+
+- **Chrome activation cards.** As a Sandevistan, Berserk or one of their Operating Systems
+  starts, a card in chat says what it costs and allows, with a button for each roll or choice.
+  - *Humanity Loss each time* (Apogee, Falcon, Baldur): a button rolls 1d6 and takes it off.
+    An FBC or Cyberspine carries it instead.
+  - *Cooldown and starting early.* Stopping starts the cooldown (20 Rounds for an Apogee, an
+    hour for the rest). Started again inside it, the card names the Humanity Loss (3, 6, 9 or
+    2, 4, 6) with a button.
+  - *A Solo's free Combat Awareness* under an Apogee or Professional: offered on a card after
+    an Aimed Shot, Autofire or Suppressive Fire, and from the start card for Martial Arts
+    Special Moves. One free reassignment each time, whoever's Turn it is.
+  - *A Falcon's choice each Turn*: +2 MOVE or +4 on one Evasion Check (two new conditions).
+  - *Berserk's Operating Systems*: -4 to ranged attacks while they run, unless an FBC or
+    Cyberspine is installed. A Baldur gives 5 HP back as it stops.
+- New setting *Chrome activation cards* (on).
+
 ## 1.31.3
 
 - **An Operating System runs as itself.** An Operating System is an Item Upgrade fitted inside
