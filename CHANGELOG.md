@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.33.0
+
+- **Chrome looks only on tokens I've selected.** A GM running many tokens saw every
+  Sandevistan, Berserk and Kerenzikov look at once. A new setting of each user's own (off by
+  default) shows running chrome's look, afterimages and motion on your screen only while you
+  have that token selected. Nobody else's view changes, the one-off burst as chrome starts or
+  stops still shows, and conditions and Cyberpsychosis are untouched.
+
 ## 1.32.0
 
 - **Chrome activation cards.** As a Sandevistan, Berserk or one of their Operating Systems

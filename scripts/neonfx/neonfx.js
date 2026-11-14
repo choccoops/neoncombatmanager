@@ -8,6 +8,7 @@ import { Core, FX_FLAG } from "./core.js";
 import { RECIPES, recipeFor, LAYERED, JB2A, Once } from "./recipes.js";
 import { Motion, MODES } from "./motion.js";
 import { Trail } from "./sandevistan.js";
+import { Focus } from "./focus.js";
 import { Landing } from "./landing.js";
 import { Chrome, tintOf } from "./chrome.js";
 import { Tactile } from "./tactile.js";
@@ -59,6 +60,8 @@ export const NeonFX = {
       Trail.forget(doc.id);
     });
     Hooks.on("refreshToken", (token) => Trail.onRefresh(token));
+    // Selected or let go: with "only on tokens I've selected" on, its chrome's motion follows.
+    Hooks.on("controlToken", (token) => Focus.enabled && Motion.set(token, this.motionFor(token)));
     Hooks.on("canvasReady", () => this.refreshScene({ settle: true }));
     Hooks.on("canvasTearDown", () => {
       Motion.clear();
@@ -73,6 +76,7 @@ export const NeonFX = {
     Switches.init();
     Screen.init();
     Interrupt.init();
+    Focus.init();
     OS.init();
   },
 
@@ -119,7 +123,7 @@ export const NeonFX = {
     }
     if (!Conditions.has("dead", token.actor)) {
       const state = Core.state(token);
-      for (const k of SWITCHES) if (state[k] && RECIPES[k].motion) modes.add(RECIPES[k].motion);
+      for (const k of SWITCHES) if (state[k] && RECIPES[k].motion && !Focus.hides(token, k)) modes.add(RECIPES[k].motion);
     }
     return MODES.find((m) => modes.has(m)) ?? null;
   },

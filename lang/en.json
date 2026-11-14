@@ -1350,6 +1350,10 @@
       "chromeCards": {
         "name": "Chrome activation cards",
         "hint": "As a Sandevistan, Berserk or one of their Operating Systems starts, a card in chat says what it costs and allows, with a button for each roll or choice: Humanity Loss each time (not with an FBC or Cyberspine), Humanity Loss for starting again inside the cooldown, a Solo's free Combat Awareness under an Apogee or Professional, the Falcon's choice each Turn. Stopping starts the cooldown (and gives a Baldur's 5 HP back)."
+      },
+      "fxFocus": {
+        "name": "Chrome looks only on tokens I've selected",
+        "hint": "For whoever runs many tokens at once (a GM): a running Sandevistan, Berserk or Kerenzikov shows its look, afterimages and motion on your screen only while you have that token selected. Everyone else sees them as before; the one-off burst as chrome starts or stops still shows. Off: every token's chrome shows all the time."
       }
     },
     "SceneWeather": {

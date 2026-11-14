@@ -687,6 +687,11 @@ nothing. You get it for your assigned character and for tokens you own and have 
 gets it for an NPC while that NPC's token is selected. *Chrome on my screen* (each player's own setting) turns it
 off, and it holds still with token motion off or reduced motion asked for. No new sounds.
 
+**Many tokens at once.** *Chrome looks only on tokens I've selected* (each user's own setting,
+off by default) is for whoever runs a crowd: a running Sandevistan, Berserk or Kerenzikov shows
+its look, afterimages and motion on your screen only while its token is selected. The effects
+are still there for everyone else; your client just doesn't draw them.
+
 **What starting it costs** (Item Compendium, the Sandevistan, Berserk and their Operating
 Systems). As chrome starts, a card in chat says what it costs and allows, with a button for each
 roll or choice; stopping it starts the cooldown.
