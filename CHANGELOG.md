@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.35.1
+
+- **Alert doesn't stack on tokens.** Switching a stealth segment to full combat (and the
+  Ladder moving, and the clock) each asked for the enemies' Awareness condition at the same
+  moment; each found none yet and each placed one. They now take turns, and any that had
+  already stacked are cleared down to one.
+
 ## 1.35.0
 
 - **Combat starts and moves again.** Since 1.31.0 the Apogee interrupt's check on each Turn

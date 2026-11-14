@@ -311,3 +311,29 @@ test("the alert sounds ship, and no string is missing", () => {
   for (const k of ["alertSting", "alertResponse", "alertClear"]) for (const f of SOUNDS[k].files) assert.ok(existsSync(path.join(root, f.replace(`modules/${M}/`, ""))), f);
   assert.deepEqual([...missingKeys].filter((k) => /Alert|aware/i.test(k)), []);
 });
+
+test("the Awareness condition goes on once: asked for several times at once (the mode switching, the Ladder, the clock), it doesn't stack; ones that had are cleared", async () => {
+  const { combat, mooks } = encounter(2);
+  const settle = (ms = 60) => new Promise((r) => setTimeout(r, ms));
+  await Ladder.set(combat, "alert");
+  await settle();
+  const count = (a) => Conditions.effects(a, "awareAlert").length;
+  for (const a of mooks) await Conditions.remove("awareAlert", a);
+  // Every write takes a trip to the server, as at the table.
+  for (const a of mooks) {
+    const real = a.createEmbeddedDocuments.bind(a);
+    a.createEmbeddedDocuments = async (...args) => {
+      await settle(5);
+      return real(...args);
+    };
+  }
+  await Promise.all([Alert.syncConditions(combat), Alert.syncConditions(combat), Alert.syncConditions(combat)]);
+  assert.deepEqual(mooks.map(count), [1, 1], "one each, however many asked");
+  // Stacked by an older version: cleared down to one on the next look.
+  await Conditions.add("awareAlert", mooks[0], { managed: "ladder", allowDuplicates: true });
+  await Conditions.add("awareAlert", mooks[0], { managed: "ladder", allowDuplicates: true });
+  assert.equal(count(mooks[0]), 3);
+  await Alert.syncConditions(combat);
+  assert.equal(count(mooks[0]), 1);
+  game.combat = null;
+});

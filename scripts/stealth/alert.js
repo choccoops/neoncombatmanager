@@ -128,8 +128,25 @@ export const Alert = {
     } else if (!Rules.isAlert(level) && this.of(combat)) await combat.unsetFlag(MODULE_ID, "alert");
   },
 
-  /** Each enemy still up carries the Ladder's step as a condition (by the setting); the rest lose it. */
-  async syncConditions(combat) {
+  /** combat id -> the sync under way. */
+  _syncing: new Map(),
+
+  /**
+   * Each enemy still up carries the Ladder's step as a condition (by the setting); the rest lose
+   * it. One at a time for a combat: the Ladder moving, the mode switching and the clock all ask
+   * for this, and two at once each found no condition yet and each placed one (they stacked).
+   */
+  syncConditions(combat) {
+    const id = combat?.id ?? "";
+    const next = (this._syncing.get(id) ?? Promise.resolve()).then(() => this._syncConditions(combat)).catch((err) => console.error(`${MODULE_ID} | awareness`, err));
+    this._syncing.set(id, next);
+    next.then(() => {
+      if (this._syncing.get(id) === next) this._syncing.delete(id);
+    });
+    return next;
+  },
+
+  async _syncConditions(combat) {
     const level = this.on ? Ladder.level(combat) : "unaware";
     const want = Rules.conditionAt(level, this.tokenMode);
     const all = Object.values(Rules.AWARE_CONDITIONS);
@@ -138,6 +155,9 @@ export const Alert = {
       const drop = all.filter((id) => id !== mine && Conditions.effects(actor, id).some((e) => e.getFlag?.(MODULE_ID, "managed") === MANAGED));
       if (drop.length) await Conditions.remove(drop, actor, { managed: MANAGED });
       if (mine && !Conditions.has(mine, actor)) await Conditions.add(mine, actor, { managed: MANAGED });
+      // Any that did stack (an older version, two GMs): one stays.
+      const twins = mine ? Conditions.effects(actor, mine).filter((e) => e.getFlag?.(MODULE_ID, "managed") === MANAGED).slice(1) : [];
+      if (twins.length && actor.isOwner) await actor.deleteEmbeddedDocuments("ActiveEffect", twins.map((e) => e.id));
     }
   },
 
