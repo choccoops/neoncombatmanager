@@ -146,22 +146,70 @@ export const Chrome = {
     return !!Settings.get("fxChrome");
   },
 
-  /** An actor's items as the pure functions read them. */
+  /**
+   * A character's fitted chrome: installed cyberware, and the upgrades sitting in it. An
+   * Operating System is an Item Upgrade inside its Sandevistan or Berserk, not cyberware of its
+   * own, so it counts when the piece it's in is installed.
+   */
+  fitted(actor) {
+    const list = [...(actor?.items ?? [])];
+    const host = new Map();
+    for (const i of list) for (const id of i.system?.installedItems?.list ?? []) host.set(id, i);
+    const ok = (i) => {
+      if (i.type === "cyberware") return !!i.system?.isInstalled;
+      if (i.type !== "itemUpgrade") return false;
+      return host.has(i.id) ? ok(host.get(i.id)) : false;
+    };
+    return list.filter(ok);
+  },
+
+  /** An actor's items as the pure functions read them (a fitted upgrade reads as installed chrome). */
   items(actor) {
+    const fitted = new Set(this.fitted(actor).map((i) => i.id));
     return [...(actor?.items ?? [])].map((i) => ({
       id: i.id,
       name: i.name,
-      type: i.type,
-      installed: !!i.system?.isInstalled,
+      type: fitted.has(i.id) ? "cyberware" : i.type,
+      installed: fitted.has(i.id),
       effects: [...(i.effects ?? [])].map((e) => ({ name: e.name, disabled: !!e.disabled, keys: (e.changes ?? []).map((c) => c.key) }))
     }));
   },
 
-  /** The switch effects ("(active)") on a character's chrome of a kind. */
+  /** Every switch effect ("(active)") on a character's chrome of a kind, its Operating System's included. */
+  allSwitches(actor, kind) {
+    return this.fitted(actor).filter((i) => chromeKind(i.name)?.kind === kind).flatMap((i) => [...(i.effects ?? [])].filter(isSwitch));
+  },
+
+  /**
+   * The switches that run a character's chrome of a kind: its Operating System's when that has
+   * one, else the bare chrome's. An Operating System's numbers stand in for the chrome's own
+   * (an Apogee's +6 Initiative, not that on top of the Sandevistan's +3), so the two are never
+   * on together.
+   */
   switches(actor, kind) {
-    return [...(actor?.items ?? [])]
-      .filter((i) => i.type === "cyberware" && i.system?.isInstalled && chromeKind(i.name)?.kind === kind)
-      .flatMap((i) => [...(i.effects ?? [])].filter(isSwitch));
+    const pieces = this.fitted(actor).filter((i) => chromeKind(i.name)?.kind === kind);
+    const of = (list) => list.flatMap((i) => [...(i.effects ?? [])].filter(isSwitch));
+    const os = of(pieces.filter((i) => chromeKind(i.name).os));
+    return os.length ? os : of(pieces);
+  },
+
+  /**
+   * Put a kind's switches where they belong: the ones that run it on or off together, any other
+   * (the bare chrome's, under an Operating System) off. Ours to do, so nothing reacts half way.
+   */
+  async _settle(actor, kind, on) {
+    if (!actor?.isOwner) return;
+    const mine = this.switches(actor, kind);
+    const rest = this.allSwitches(actor, kind).filter((e) => !mine.includes(e));
+    const key = this._key(actor, kind);
+    const held = this._held.has(key);
+    this._held.add(key);
+    try {
+      for (const e of mine) if (!!e.disabled === on) await e.update({ disabled: !on });
+      for (const e of rest) if (!e.disabled) await e.update({ disabled: true });
+    } finally {
+      if (!held) this._held.delete(key);
+    }
   },
 
   /** Keys the chrome's switched-on effects give (the condition leaves those to them). */
@@ -208,10 +256,12 @@ export const Chrome = {
   },
 
   async _follow(actor, kind) {
-    const on = this.switches(actor, kind).some((e) => !e.disabled);
+    const on = this.allSwitches(actor, kind).some((e) => !e.disabled);
     // A Kerenzikov's or other speedware's switch has no condition: the token's look follows it.
     if (kind === "kerenzikov") return this._flag(actor, kind, on ? true : null);
     const running = this.running(actor, kind);
+    // Switched on by hand at the bare chrome with an Operating System in it: the Operating System's runs.
+    if (on) await this._settle(actor, kind, true);
     if (on && !running) {
       const c = conditionFor(this.items(actor), kind, chromeConditions());
       if (c) await Conditions.add(c.id, actor);
@@ -252,13 +302,7 @@ export const Chrome = {
     await this._flag(actor, kind, null);
     await this._initiative(actor, kind, bonus, false);
     // All its switches go off together: none of them, half way, reads as "still on".
-    const key = this._key(actor, kind);
-    this._held.add(key);
-    try {
-      for (const e of this.switches(actor, kind)) if (!e.disabled && actor.isOwner) await e.update({ disabled: true });
-    } finally {
-      this._held.delete(key);
-    }
+    await this._settle(actor, kind, false);
   },
 
   /** Hold (or drop) a Neon FX switch on a character's tokens. */
@@ -309,14 +353,8 @@ export const Chrome = {
       const switches = this.switches(actor, kind);
       if (!want) await Conditions.remove(running.id, actor);
       else if (switches.length && actor.isOwner) {
-        // All its switches on, then one look: the condition is placed once.
-        const key = this._key(actor, kind);
-        this._held.add(key);
-        try {
-          for (const e of switches) if (e.disabled) await e.update({ disabled: false });
-        } finally {
-          this._held.delete(key);
-        }
+        // Its switches on (the Operating System's, in place of the bare chrome's), then one look: the condition is placed once.
+        await this._settle(actor, kind, true);
         await this._queue(actor, kind, () => this._follow(actor, kind));
       } else {
         const c = conditionFor(this.items(actor), kind, chromeConditions());

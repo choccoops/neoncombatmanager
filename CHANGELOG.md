@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.31.3
+
+- **An Operating System runs as itself.** An Operating System is an Item Upgrade fitted inside
+  its Sandevistan or Berserk, and the chrome switch only looked at cyberware: switching an
+  Apogee on from the Token HUD or Action HUD ran the bare Sandevistan. It now runs the
+  Operating System's own condition (the Apogee's +6 Initiative, +2 to Aimed Shots, its three
+  Rounds, its colour, its interrupt), for every Operating System of a Sandevistan or Berserk.
+- **Nothing doubles up.** With an Operating System fitted, its "(active)" effect goes on and
+  the bare chrome's stays off, so the Apogee's +6 isn't added to the Sandevistan's +3. Switch
+  the bare chrome on by hand and the Operating System's takes over. An Operating System with
+  no "(active)" effect of its own runs through the chrome's switch, with its own condition.
+
 ## 1.31.2
 
 - **Low Light and Darkness don't wait for an encounter.** The light a character stands in was
