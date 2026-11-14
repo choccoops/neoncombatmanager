@@ -2954,6 +2954,25 @@
       },
       "Time": "Sandevistan Time",
       "Order": "Sandevistan Time, highest Initiative first: {names}."
+    },
+    "Humanity": {
+      "Title": "Humanity Loss",
+      "Kicker": "Humanity Loss",
+      "GmOnly": "Calling for Humanity Loss is for the GM.",
+      "Nobody": "Nobody to call on: select tokens, or give the players their characters.",
+      "What": "What happened",
+      "WhatHint": "What they saw, did, or had done to them.",
+      "Amount": "How much",
+      "Other": "Other (type it below)",
+      "OtherAmount": "Other amount",
+      "Who": "Who rolls",
+      "Has": "Humanity {n}",
+      "Call": "Call for it",
+      "BadAmount": "\"{formula}\" isn't a Humanity Loss amount: 1d6, 2d6, 3d6+2, or a number.",
+      "CardTitle": "{name}: {formula} Humanity Loss",
+      "Roll": "Roll {formula} Humanity Loss",
+      "Lost": "{name} loses {n} Humanity ({now} left).",
+      "AlreadyTaken": "That Humanity Loss has already been taken."
     }
   }
 }

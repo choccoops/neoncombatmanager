@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.37.0
+
+- **Humanity Loss rolls.** The *Roll 1d6 Humanity Loss* button on a chrome card failed with
+  "This Roll contains terms that cannot be synchronously evaluated": Foundry v12 won't roll
+  dice without waiting. Dice are now rolled Foundry's way wherever a roll is made, which also
+  mends weather exposure damage, damage at the start and end of a Turn, healing and conditions
+  with dice in them (they failed the same way).
+- **Humanity Loss events, for the GM.** A brain button in the token controls (or `/humanity`,
+  or the *Neon Combat: Humanity Loss* macro) opens a window: what happened, in your own words;
+  how much (1d6, 2d6, 3d6, 4d6, or any amount typed: 5d6, 1d10, 3); and who rolls, from the
+  tokens you've selected and the players' characters. Each of them gets a card with what
+  happened and a button; their player (or you) rolls, the loss comes off their Humanity, and a
+  card says how much and what's left. Once a card.
+
 ## 1.36.0
 
 - **Movement left, on the carousel.** The acting character's card shows how far they can

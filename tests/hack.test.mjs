@@ -1042,3 +1042,54 @@ test("while an Operating System runs: a Baldur halves damage, a Matterhorn takes
   // A Brawler: 2 off all damage, through the system's own reduction.
   assert.ok(BY_ID.chromeBrawler.changes.some((c) => c.key === "bonuses.universalDamageReduction" && c.value === 2));
 });
+
+test("Humanity Loss the GM calls for: an amount as typed, a card each with what happened, rolled once and taken off; dice that can't be thrown without waiting still roll", async () => {
+  const { Humanity, cleanFormula, afterLoss, FORMULAS } = await import("../scripts/humanity/humanity.js");
+  assert.deepEqual(FORMULAS, ["1d6", "2d6", "3d6", "4d6"]);
+  assert.equal(cleanFormula(" 2D6 "), "2d6");
+  assert.equal(cleanFormula("d6"), "1d6");
+  assert.equal(cleanFormula("3d6+2"), "3d6+2");
+  assert.equal(cleanFormula("3"), "3");
+  assert.equal(cleanFormula("0"), null);
+  assert.equal(cleanFormula("lots"), null);
+  assert.equal(cleanFormula("2d6; alert(1)"), null);
+  assert.equal(afterLoss(5, 9), -4, "below nothing is where Cyberpsychosis lives");
+
+  const a = makeActor({ name: "Fury" });
+  const b = makeActor({ name: "Rogue" });
+  const hum = (x) => x.system.derivedStats.humanity.value;
+  const before = [hum(a), hum(b)];
+  chat.length = 0;
+  const cards = await Humanity.call([a, b, a], "2D6", "They watched the Trauma Team leave him there.");
+  assert.equal(cards.length, 2, "one each");
+  assert.match(cards[0].content, /humanity-roll/);
+  assert.match(cards[0].content, /data-formula="2d6"/);
+  assert.match(cards[0].content, /Trauma Team/);
+  assert.deepEqual(await Humanity.call([a], "lots", ""), [], "not an amount: nothing posted");
+
+  dice.length = 0;
+  dice.push(3, 4);
+  const btn = (formula) => ({ dataset: { ncmAction: "humanity-roll", formula, key: "event", actor: a.uuid }, disabled: false });
+  const out = await Humanity.click(cards[0], btn("2d6"), {}, a);
+  assert.deepEqual(out, { loss: 7, now: before[0] - 7 });
+  assert.equal(hum(a), before[0] - 7);
+  assert.equal(hum(b), before[1], "only whoever rolled");
+  assert.ok(chat.some((m) => /loses 7 Humanity/.test(m.content ?? "") && /Trauma Team/.test(m.content ?? "")), "the table is told, with what happened");
+  assert.equal(await Humanity.click(cards[0], btn("2d6"), {}, a), null, "once a card");
+  assert.equal(hum(a), before[0] - 7);
+
+  // Foundry v12: dice can't be rolled without waiting. The waiting roll is used; where there's none, the dice are thrown by hand.
+  const RollWas = globalThis.Roll;
+  globalThis.Roll = class extends RollWas {
+    evaluateSync() {
+      throw new Error("This Roll contains terms that cannot be synchronously evaluated.");
+    }
+  };
+  dice.length = 0;
+  dice.push(5);
+  assert.equal((await Conditions.roll("1d6", a)).total, 5, "rolled Foundry's way");
+  const byHand = Conditions.formula("2d6+1", a);
+  assert.ok(byHand.total >= 3 && byHand.total <= 13 && byHand.roll === null, "and by hand where it can't wait");
+  assert.equal(Conditions.formula("@body+2", a).total, Number(a.system.stats.body.value) + 2, "no dice: as before");
+  globalThis.Roll = RollWas;
+});

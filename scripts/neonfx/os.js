@@ -271,18 +271,12 @@ export const OS = {
     if (!actor?.isOwner) return ui.notifications?.warn(L(`${LANG}.Error.NotOwner`));
     switch (d.ncmAction) {
       case "chrome-humanity": {
-        // Once a card: whoever can write to the message keeps the mark; the result's own card says it was taken.
-        const done = message.getFlag?.(MODULE_ID, "chromeDone") ?? {};
-        if (done[d.key]) return ui.notifications?.info(L(`${LANG}.Chrome.Card.AlreadyTaken`));
+        // The one place Humanity is taken (scripts/humanity/humanity.js): rolled, taken off, said, once a card.
+        const { Humanity } = await import("../humanity/humanity.js");
         btn.disabled = true;
-        const { total, roll } = Conditions.formula(d.formula, actor);
-        const have = Number(actor.system?.derivedStats?.humanity?.value);
-        if (!Number.isFinite(have) || !(total > 0)) return;
-        await actor.update({ "system.derivedStats.humanity.value": have - total });
-        if (message.isOwner) await message.setFlag(MODULE_ID, "chromeDone", { ...done, [d.key]: true });
-        const dice = /d/i.test(d.formula) ? ` <span class="ncm-roll">(${esc(roll?.formula ?? d.formula)})</span>` : "";
-        await Cards.note(actor, `<p>${L(`${LANG}.Chrome.Card.LostHumanity`, { name: esc(actor.name), n: total, now: have - total })}${dice}</p>`, { tone: "red", whisper: [] });
-        return;
+        const out = await Humanity.take(actor, d.formula, { message, key: d.key || "start" });
+        if (!out) btn.disabled = false;
+        return out;
       }
       case "chrome-awareness": {
         const { Awareness } = await import("../awareness/awareness.js");

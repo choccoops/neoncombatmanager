@@ -174,6 +174,10 @@ export const Cards = {
       const { Arsenal } = await import("../arsenal/arsenal.js");
       return Arsenal.click(message, btn, event, actor);
     }
+    if (String(d.ncmAction).startsWith("humanity-")) {
+      const { Humanity } = await import("../humanity/humanity.js");
+      return Humanity.click(message, btn, event, actor);
+    }
     if (String(d.ncmAction).startsWith("chrome-")) {
       const { OS } = await import("../neonfx/os.js");
       return OS.click(message, btn, event, actor);
@@ -215,7 +219,7 @@ export const Cards = {
         const result = await CPR.skillCheck(actor, "Resist Torture/Drugs", { event });
         if (!result) return;
         if (result.total > Number(d.dv)) return ui.notifications?.info(L(`${LANG}.Notify.Resisted`, { name: actor.name }));
-        const { total, roll } = Conditions.formula(d.damage, actor);
+        const { total, roll } = await Conditions.roll(d.damage, actor);
         await CPR.damageHP(actor, total);
         if (d.condition) await Conditions.add(d.condition, actor);
         await this.note(actor, `<p>${L(`${LANG}.Card.TookDamage`, { name: esc(actor.name), amount: total })} <span class="ncm-roll">(${esc(roll?.formula ?? d.damage)})</span></p>`, { tone: "red" });

@@ -20,6 +20,7 @@ const GLYPHS = {
   stakes: `<path d="M256 108l128 74v148l-128 74-128-74V182z"/><path d="M128 182l128 74 128-74M256 256v148"/><circle cx="196" cy="290" r="10"/><circle cx="316" cy="290" r="10"/><circle cx="256" cy="176" r="10"/>`,
   lab: `<path d="M212 112h88M228 112v110l-90 140a28 28 0 0 0 24 44h188a28 28 0 0 0 24-44l-90-140V112M170 312h172"/>`,
   rebuilds: `<path d="M108 220h232l36-36h40v72h-48l-20 28H244l-28 108h-64l20-108h-64z"/><path d="M380 300l-34 60h44l-34 60"/>`,
+  humanity: `<path d="M256 120c-60 0-104 40-104 96 0 30 12 52 30 68v60h148v-60c18-16 30-38 30-68 0-56-44-96-104-96z"/><path d="M216 344v48M256 344v48M296 344v48M206 232h36M270 232h36"/>`,
   arsenal: `<circle cx="256" cy="256" r="120"/><path d="M256 100v86M256 326v86M100 256h86M326 256h86"/><circle cx="256" cy="256" r="18"/>`
 };
 
@@ -39,6 +40,7 @@ const MACROS = [
   { key: "hub", name: "Night City Map", call: "ncm.hub.open()", what: "the Night City Map" },
   { key: "stakes", name: "Plot Die", call: "ncm.stakes.open(who)", what: "the Plot Die (Raising the Stakes)" },
   { key: "lab", name: "Condition Lab", call: "ncm.conditions.openLab()", what: "the Condition Lab", gm: true },
+  { key: "humanity", name: "Humanity Loss", call: "ncm.humanity.open()", what: "", doing: "call for Humanity Loss: what happened, how much (1d6, 2d6...), and which characters roll", gm: true, gmWhat: "Calling for Humanity Loss" },
   { key: "rebuilds", name: "Weapon Rebuilds", call: "ncm.arsenal.menu(who)", what: "the weapon switches (a Power gun's ricochet, a Tech gun's charge)" },
   { key: "arsenal", name: "Install Weapon Animations", call: "ncm.arsenal.install()", what: "", doing: "put Neon Arsenal's weapon animations into Automated Animations (or bring them up to date)", gm: true, gmWhat: "Installing the weapon animations" }
 ];

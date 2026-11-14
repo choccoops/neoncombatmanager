@@ -29,6 +29,7 @@ import { Environment } from "./environment/environment.js";
 import { Sources } from "./environment/sources.js";
 import { WeatherFx, presetFor } from "./environment/weather-fx.js";
 import { Stakes } from "./stakes/stakes.js";
+import { Humanity } from "./humanity/humanity.js";
 import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
 import { Roller } from "./roller/roller.js";
@@ -303,6 +304,14 @@ const api = {
     noSignal: (actor) => Hub.noSignal(actor),
     whereIs: (actor) => Hub.whereIs(actor)
   },
+  /** Humanity Loss the GM calls for: what happened, how much, who rolls. */
+  humanity: {
+    open: () => Humanity.open(),
+    /** GM: a card for each character with the button their player rolls from. */
+    call: (actors, formula, text) => Humanity.call(actors, formula, text),
+    /** Roll and take Humanity Loss for a character now. */
+    take: (actor, formula, options) => Humanity.take(actor, formula, options)
+  },
   /** Raising the Stakes: the Plot Die (2070 Core Rules). */
   stakes: {
     open: (actor) => Stakes.open(actor),
@@ -410,6 +419,7 @@ Hooks.once("init", () => {
   Hooks.on(`${MODULE_ID}.spamChanged`, () => NcmSpam.apply());
   Stakes.init();
   Awareness.init();
+  Humanity.init();
   Hub.init();
   Roller.init();
   EncounterMode.init();

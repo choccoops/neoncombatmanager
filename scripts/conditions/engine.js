@@ -130,7 +130,7 @@ export const Conditions = {
       return existing[0];
     }
     const flags = options.managed ? { [MODULE_ID]: { [FLAGS.managed]: options.managed } } : {};
-    const rolled = options.changes ? null : this._rolled(c, actor);
+    const rolled = options.changes ? null : await this._rolled(c, actor);
     const name = options.name ?? (rolled ? `${c.name} (${rolled.shown})` : null);
     const item = !!options.flags?.[MODULE_ID]?.[FLAGS.item];
     const data = Registry.effectData(c, { changes: options.changes ?? rolled?.changes, duration: options.duration, name, item, flags: { ...flags, ...(options.flags ?? {}) } });
@@ -139,16 +139,20 @@ export const Conditions = {
   },
 
   /** A condition whose changes carry dice ("-1d6", Slow): rolled now, once. Null without dice. */
-  _rolled(c, actor) {
+  async _rolled(c, actor) {
     const raw = c.rawChanges ?? [];
     if (!raw.some((ch) => typeof ch.value === "string" && /d/i.test(ch.value))) return null;
     const shown = [];
-    const changes = raw.map((ch) => {
-      if (typeof ch.value !== "string" || !/d/i.test(ch.value)) return ch;
-      const { total } = this.formula(ch.value, actor);
+    const changes = [];
+    for (const ch of raw) {
+      if (typeof ch.value !== "string" || !/d/i.test(ch.value)) {
+        changes.push(ch);
+        continue;
+      }
+      const { total } = await this.roll(ch.value, actor);
       shown.push(total > 0 ? `+${total}` : String(total));
-      return { ...ch, value: total };
-    });
+      changes.push({ ...ch, value: total });
+    }
     return { changes, shown: shown.join(", ") };
   },
 
@@ -285,7 +289,7 @@ export const Conditions = {
       if (purge.length) await this.remove(purge, actor);
     }
     if (c.heal && CPR.woundState(actor) !== "mortallyWounded") {
-      const healed = await CPR.healHP(actor, this.formula(c.heal, actor).total);
+      const healed = await CPR.healHP(actor, (await this.roll(c.heal, actor)).total);
       if (healed) await Cards.note(actor, L(`${LANG}.Card.Healed`, { name: esc(actor.name), amount: healed, condition: esc(c.name) }));
     }
     if (c.stabilize && CPR.woundState(actor) === "mortallyWounded") {
@@ -465,13 +469,50 @@ export const Conditions = {
   formula(expr, actor) {
     const text = String(expr ?? "0").replace(/@(\w+)/g, (m, stat) => String(CPR.stat(actor, stat)));
     if (/d/i.test(text)) {
-      const roll = new Roll(text);
-      if (typeof roll.evaluateSync === "function") roll.evaluateSync();
-      else roll.evaluate({ async: false });
-      return { total: Number(roll.total) || 0, roll };
+      // Foundry v12 won't roll dice without waiting ("cannot be synchronously evaluated"): where
+      // there's no waiting, the dice are thrown here. Anything that can wait uses roll() below.
+      try {
+        const roll = new Roll(text);
+        if (typeof roll.evaluateSync === "function") roll.evaluateSync();
+        else roll.evaluate({ async: false });
+        if (Number.isFinite(Number(roll.total))) return { total: Number(roll.total), roll };
+      } catch {
+        /* thrown by hand, below */
+      }
+      const thrown = text.replace(/(\d*)d(\d+)/gi, (m, n, d) => {
+        let sum = 0;
+        for (let i = 0; i < (Number(n) || 1); i++) sum += 1 + Math.floor(Math.random() * Number(d));
+        return String(sum);
+      });
+      return { total: thrown.replace(/\s+/g, "").split(/(?=[+-])/).reduce((sum, part) => sum + (Number(part) || 0), 0), roll: null };
     }
     // Only digits, + and - remain: add them up.
     return { total: text.split(/(?=[+-])/).reduce((sum, part) => sum + (Number(part) || 0), 0), roll: null };
+  },
+
+  /**
+   * The same, for anything that can wait: Foundry rolls the dice (its own way, for every version,
+   * and Dice So Nice shows them when it's there).
+   * @returns {Promise<{ total: number, roll: Roll|null }>}
+   */
+  async roll(expr, actor) {
+    const text = String(expr ?? "0").replace(/@(\w+)/g, (m, stat) => String(CPR.stat(actor, stat)));
+    if (!/d/i.test(text)) return this.formula(text, actor);
+    try {
+      const roll = new Roll(text);
+      await roll.evaluate();
+      if (Number.isFinite(Number(roll.total))) {
+        try {
+          await game.dice3d?.showForRoll?.(roll, game.user, true);
+        } catch {
+          /* the dice are for show */
+        }
+        return { total: Number(roll.total), roll };
+      }
+    } catch (err) {
+      console.warn(`${MODULE_ID} | roll ${text}`, err);
+    }
+    return this.formula(text, actor);
   },
 
   /* ---------------------------------------- */
