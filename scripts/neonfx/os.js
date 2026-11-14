@@ -22,21 +22,40 @@ import { L, esc } from "../util.js";
  *              mode or Martial Arts Special Move while it runs
  *   turn       a choice at the start of each of their Turns: condition ids
  *   heal       HP back as it stops
+ *   start      what switching it on takes: "free", "half" (half of a ROF2 Action) or "action"
+ *   dodge      dodges bullets whatever their REF while it runs
+ *   soak       "half": all HP damage halved, rounded up; "first": the first damage each Round
+ *              is less by half their BODY
+ *   half       things that can each be half of a ROF2 Action while it runs (a reminder each Turn)
  */
 const HOUR = 3600;
 export const OS_RULES = {
-  sandevistan: { cooldown: HOUR },
-  apogee: { humanity: "1d6", cooldown: 60, early: [3, 6, 9], awareness: true },
-  professional: { cooldown: HOUR, awareness: true },
-  warpdancer: { cooldown: HOUR, early: [2, 4, 6] },
-  falcon: { humanity: "1d6", cooldown: HOUR, early: [3, 6, 9], turn: ["chromeFalconMove", "chromeFalconEvasion"] },
-  reflexplus: { cooldown: HOUR, early: [2, 4, 6] },
-  berserk: { cooldown: HOUR },
-  berserker: { cooldown: HOUR },
-  baldur: { humanity: "1d6", cooldown: HOUR, early: [3, 6, 9], heal: 5 },
-  matterhorn: { cooldown: HOUR },
-  brawler: { cooldown: HOUR, early: [3, 6, 9] }
+  sandevistan: { start: "action", cooldown: HOUR },
+  apogee: { start: "free", humanity: "1d6", cooldown: 60, early: [3, 6, 9], awareness: true, dodge: true },
+  professional: { start: "half", cooldown: HOUR, awareness: true },
+  warpdancer: { start: "half", cooldown: HOUR, early: [2, 4, 6], half: true },
+  falcon: { start: "free", humanity: "1d6", cooldown: HOUR, early: [3, 6, 9], turn: ["chromeFalconMove", "chromeFalconEvasion"], dodge: true },
+  reflexplus: { start: "half", cooldown: HOUR, early: [2, 4, 6] },
+  berserk: { start: "action", cooldown: HOUR },
+  berserker: { start: "action", cooldown: HOUR, half: true },
+  baldur: { start: "free", humanity: "1d6", cooldown: HOUR, early: [3, 6, 9], heal: 5, soak: "half", half: true },
+  matterhorn: { start: "half", cooldown: HOUR, soak: "first" },
+  brawler: { start: "half", cooldown: HOUR, early: [3, 6, 9] }
 };
+
+/**
+ * What running chrome takes off a loss of HP, pure.
+ * @param {object} o - loss (HP about to go); soak: the rule; body: their BODY; first: is this the
+ *   first damage this Round?
+ * @returns {number} the HP that goes
+ */
+export function soaked({ loss = 0, soak = null, body = 0, first = true } = {}) {
+  const n = Math.max(0, Math.round(Number(loss) || 0));
+  if (!n) return 0;
+  if (soak === "half") return Math.ceil(n / 2);
+  if (soak === "first" && first) return Math.max(0, n - Math.ceil((Number(body) || 0) / 2));
+  return n;
+}
 
 /** The rules of a Chrome running condition's chrome ({ kind, os }). */
 export const rulesOf = (chrome) => OS_RULES[chrome?.os ?? chrome?.kind] ?? {};
@@ -77,6 +96,10 @@ export function span(seconds) {
 export const AWARENESS_MODES = ["aimed", "autofire", "suppressive"];
 
 const COOL_FLAG = "chromeCooldown";
+const HIT_FLAG = "chromeHit";
+const HP = "system.derivedStats.hp.value";
+/** The Round under way, as a mark: the fight's, else three seconds of the world clock. */
+const roundMark = () => (game.combat?.started ? `${game.combat.id}:${game.combat.round}` : `t:${Math.floor((Number(game.time?.worldTime) || 0) / 3)}`);
 const now = () => Number(game.time?.worldTime) || 0;
 const items = (actor) => [...(actor?.items ?? [])].map((i) => ({ name: i.name, type: i.type, installed: !!i.system?.isInstalled }));
 const running = (actor, test) => Conditions.active(actor).find((c) => c.chrome?.kind && test(rulesOf(c.chrome), c)) ?? null;
@@ -92,10 +115,44 @@ export const OS = {
       if (!("turn" in changes || "round" in changes) || !Compat.isActiveGM || !this.on) return;
       this.turn(combat).catch((err) => console.error(`${MODULE_ID} | chrome turn`, err));
     });
+    // HP about to go from someone whose chrome soaks damage: less goes (whoever makes the change).
+    Hooks.on("preUpdateActor", (actor, changes, options) => this.soak(actor, changes, options));
+    // An unlinked token's character changes through its delta.
+    Hooks.on("preUpdateActorDelta", (delta, changes, options) => (delta?.syntheticActor ? this.soak(delta.syntheticActor, changes, options) : null));
   },
 
   framed(actor) {
     return framed(items(actor));
+  },
+
+  /** The chrome that lets someone dodge bullets whatever their REF right now: its condition's name, or null. */
+  dodges(actor) {
+    return running(actor, (r) => !!r.dodge)?.name ?? null;
+  },
+
+  /**
+   * A loss of HP on its way in (preUpdateActor): a Baldur halves it; a Matterhorn takes half
+   * their BODY off the first each Round. The change itself is made smaller, so everything after
+   * it (Wound States, cards) sees what really went.
+   */
+  soak(actor, changes, options = {}) {
+    if (!this.on || options?.[MODULE_ID]?.soaked) return null;
+    const next = foundry.utils.getProperty(changes ?? {}, HP);
+    const have = Number(actor?.system?.derivedStats?.hp?.value);
+    if (next === undefined || !Number.isFinite(have) || !(Number(next) < have)) return null;
+    const c = running(actor, (r) => !!r.soak);
+    if (!c) return null;
+    const rule = rulesOf(c.chrome).soak;
+    const mark = roundMark();
+    const first = actor.flags?.[MODULE_ID]?.[HIT_FLAG] !== mark;
+    const loss = have - Number(next);
+    const goes = soaked({ loss, soak: rule, body: CPR.stat(actor, "body"), first });
+    if (rule === "first" && first) foundry.utils.setProperty(changes, `flags.${MODULE_ID}.${HIT_FLAG}`, mark);
+    if (goes === loss) return null;
+    foundry.utils.setProperty(changes, HP, have - goes);
+    options[MODULE_ID] = { ...(options[MODULE_ID] ?? {}), soaked: true };
+    Cards.note(actor, `<p>${L(`${LANG}.Chrome.Card.Soaked.${rule}`, { name: esc(actor.name), chrome: esc(c.name), from: loss, to: goes })}</p>`).catch(() => {});
+    return { from: loss, to: goes };
   },
 
   cool(actor, kind) {
@@ -133,6 +190,7 @@ export const OS = {
       buttons.push({ action: "chrome-awareness", label: L(`${LANG}.Chrome.Card.Reassign`), icon: "fa-solid fa-crosshairs", owner: true });
     }
     if (rules.turn) lines.push(L(`${LANG}.Chrome.Card.EachTurn`));
+    if (rules.start) lines.unshift(L(`${LANG}.Chrome.Card.Start.${rules.start}`));
     if (rules.cooldown) lines.push(L(`${LANG}.Chrome.Card.Cooldown`, { span: span(rules.cooldown) }));
     return Cards.post({
       actor,
@@ -165,6 +223,9 @@ export const OS = {
   async turn(combat) {
     const actor = combat?.started ? combat.combatant?.actor : null;
     if (!actor) return null;
+    // What can be half of a ROF2 Action while it runs: a reminder, theirs alone.
+    const h = running(actor, (r) => !!r.half);
+    if (h) await Cards.note(actor, `<p>${L(`${LANG}.Chrome.Card.Half.${h.chrome.os}`)}</p>`, { title: L(`${LANG}.Chrome.Card.HalfTitle`, { chrome: esc(h.name) }) });
     const c = running(actor, (r) => !!r.turn);
     if (!c) return null;
     const ids = rulesOf(c.chrome).turn;

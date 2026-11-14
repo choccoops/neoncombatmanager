@@ -6,6 +6,7 @@ import { CPR } from "../cpr.js";
 import { Cards } from "../combat/cards.js";
 import { Conditions } from "../conditions/engine.js";
 import { escapeSquare } from "./area.js";
+import { OS as OsRules } from "../neonfx/os.js";
 import { L, esc } from "../util.js";
 
 /**
@@ -36,8 +37,9 @@ const isActiveEffect = (e) => /\(active\)\s*$/i.test(String(e?.name ?? ""));
  * @param {object} c - { ref, items: [{ name, installed, description, effects: [{ name, disabled }] }],
  *   blind, attackerHidden, ricochet, tracks }
  */
-export function dodgeAbility({ ref = 0, items = [], blind = false, attackerHidden = false, ricochet = false, tracks = false } = {}) {
-  let why = Number(ref) >= 8 ? "ref" : null;
+export function dodgeAbility({ ref = 0, items = [], blind = false, attackerHidden = false, ricochet = false, tracks = false, chrome = null } = {}) {
+  // `chrome`: a running condition that lets them (an Apogee or Falcon), whatever items say.
+  let why = Number(ref) >= 8 ? "ref" : chrome || null;
   if (!why) {
     for (const i of items) {
       if (!i.installed || !DODGE_TEXT.test(strip(i.description))) continue;
@@ -110,6 +112,7 @@ export const Defense = {
     return dodgeAbility({
       ref: CPR.stat(target, "ref"),
       items,
+      chrome: OsRules.dodges(target),
       blind: Conditions.has("blind", target) || Conditions.has("qhRebootOptics", target),
       attackerHidden: !!attacker && Conditions.has("hidden", attacker),
       ricochet,

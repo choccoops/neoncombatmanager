@@ -1349,7 +1349,11 @@
       },
       "chromeCards": {
         "name": "Chrome activation cards",
-        "hint": "As a Sandevistan, Berserk or one of their Operating Systems starts, a card in chat says what it costs and allows, with a button for each roll or choice: Humanity Loss each time (not with an FBC or Cyberspine), Humanity Loss for starting again inside the cooldown, a Solo's free Combat Awareness under an Apogee or Professional, the Falcon's choice each Turn. Stopping starts the cooldown (and gives a Baldur's 5 HP back)."
+        "hint": "As a Sandevistan, Berserk or one of their Operating Systems starts, a card in chat says what it costs and allows, with a button for each roll or choice: Humanity Loss each time (not with an FBC or Cyberspine), Humanity Loss for starting again inside the cooldown, a Solo's free Combat Awareness under an Apogee or Professional, the Falcon's choice each Turn. Stopping starts the cooldown (and gives a Baldur's 5 HP back). While it runs: a Baldur's halved damage and a Matterhorn's first hit each Round are taken off HP losses as they land, an Apogee or Falcon dodges bullets whatever the REF, and a card each Turn lists what can be half of a ROF2 Action."
+      },
+      "fxFocus": {
+        "name": "Chrome looks only on tokens I've selected",
+        "hint": "For whoever runs many tokens at once (a GM): a running Sandevistan, Berserk or Kerenzikov shows its look, afterimages and motion on your screen only while you have that token selected. Everyone else sees them as before; the one-off burst as chrome starts or stops still shows. Off: every token's chrome shows all the time."
       }
     },
     "SceneWeather": {
@@ -2424,7 +2428,22 @@
         "AwarenessBody": "{name} took an Aimed Shot or an alternate firing mode with the chrome running: the points can move for free, without spending an Action.",
         "LostHumanity": "{name} loses {n} Humanity ({now} left).",
         "AlreadyTaken": "That Humanity Loss has already been taken.",
-        "NotRunning": "{name}'s chrome isn't running any more."
+        "NotRunning": "{name}'s chrome isn't running any more.",
+        "Start": {
+          "free": "Switching it on is free.",
+          "half": "Switching it on is half of a ROF2 Action.",
+          "action": "Switching it on takes an Action."
+        },
+        "Soaked": {
+          "half": "{chrome}: {name} takes {to} of {from} damage (halved, rounded up).",
+          "first": "{chrome}: the first damage this Round is less by half {name}'s BODY: {to} of {from}."
+        },
+        "HalfTitle": "{chrome}: half of a ROF2 Action",
+        "Half": {
+          "warpdancer": "While it runs, each of these can be half of a ROF2 Action, once a Turn each: grab or drop a shield, get up, Reload, Stabilize yourself, activate gear or chrome, clear a jam, put yourself out, stow a weapon.",
+          "berserker": "While it runs, each of these can be half of a ROF2 Action: grab or drop a shield, get up, Grab, Human Shield, activate gear or chrome, clear a jam, put yourself out, stow a weapon.",
+          "baldur": "While it runs, each of these can be half of a ROF2 Action: grab or drop a shield, get up, Grab, Human Shield, Stabilize yourself, use an object (drugs, Pharmaceuticals), activate gear or chrome, clear a jam, put yourself out, stow a weapon. Brawling and Martial Arts Aimed Shots work at ROF2."
+        }
       }
     },
     "FX": {

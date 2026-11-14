@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.33.0
+
+- **Operating Systems do more of their own work while they run.**
+  - *A Baldur halves damage* (rounded up) and *a Matterhorn takes half their BODY off the
+    first damage each Round*: the loss of HP is made smaller as it lands, whatever it came
+    from, and a card says what went. *A Brawler's* 2 off all damage is on its condition.
+  - *An Apogee or Falcon dodges bullets whatever the REF* from the running condition itself,
+    not only from the item's text.
+  - *Half-Actions*: a card at the start of each Turn under a Warp Dancer, Berserker or Baldur
+    lists what can be half of a ROF2 Action (a reminder: nothing tracks Actions). The start
+    card says what switching it on takes.
+- **Chrome looks only on tokens I've selected.** A GM running many tokens saw every
+  Sandevistan, Berserk and Kerenzikov look at once. A new setting of each user's own (off by
+  default) shows running chrome's look, afterimages and motion on your screen only while you
+  have that token selected. Nobody else's view changes, the one-off burst as chrome starts or
+  stops still shows, and conditions and Cyberpsychosis are untouched.
+
 ## 1.32.0
 
 - **Chrome activation cards.** As a Sandevistan, Berserk or one of their Operating Systems
