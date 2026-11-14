@@ -1325,8 +1325,9 @@ li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; li
 #ncm-screen-fx[data-kind="berserk"] .ncm-screen-tone { backdrop-filter: saturate(1.25) contrast(1.12); background: rgba(255, 23, 68, 0.05); }
 #ncm-screen-fx[data-kind="berserk"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 44%, color-mix(in srgb, var(--ncm-screen-tint) 46%, transparent) 100%); animation: ncm-screen-beat 0.86s ease-in-out infinite; }
 #ncm-screen-fx[data-kind="berserk"] .ncm-screen-streaks { display: none; }
-#ncm-screen-fx[data-kind="kerenzikov"] .ncm-screen-tone { backdrop-filter: saturate(0.88); background: rgba(61, 139, 255, 0.025); }
-#ncm-screen-fx[data-kind="kerenzikov"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 70%, color-mix(in srgb, var(--ncm-screen-tint) 14%, transparent) 100%); animation: ncm-screen-breathe 6s ease-in-out infinite alternate; }
+/* A Kerenzikov: the world a touch slow. A cool blue ring you can see is there, calmer than time standing still (which drains the colour). */
+#ncm-screen-fx[data-kind="kerenzikov"] .ncm-screen-tone { backdrop-filter: saturate(0.8) contrast(1.04); background: rgba(61, 139, 255, 0.05); }
+#ncm-screen-fx[data-kind="kerenzikov"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 50%, rgba(170, 205, 255, 0.2) 80%, color-mix(in srgb, var(--ncm-screen-tint) 34%, transparent) 100%); animation: ncm-screen-breathe 6s ease-in-out infinite alternate; }
 #ncm-screen-fx[data-kind="kerenzikov"] .ncm-screen-streaks { display: none; }
 #ncm-screen-fx.still > div { animation: none !important; }
 @keyframes ncm-screen-breathe { from { opacity: 0.7; } to { opacity: 1; } }

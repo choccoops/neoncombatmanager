@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.34.1
+
+- **A Kerenzikov's screen effect you can see.** It was drawn so faintly (a 2.5% tint and a thin
+  edge) that it read as nothing; what looked like it during testing was a left-over Apogee
+  interrupt's frozen screen, which 1.33.3 clears. The Kerenzikov now has a cool blue ring of
+  its own, breathing slowly, calmer than time standing still (the colour stays in the picture).
+
 ## 1.34.0
 
 - **Run, on the Action HUD.** The Turn group has a **Run** button: on their Turn, a player

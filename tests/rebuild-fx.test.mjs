@@ -1773,3 +1773,14 @@ test("Sandevistan Time: others with an Apogee cut in too, highest Initiative fir
   assert.match(css, /#ncm-sandtime \{[^}]*pointer-events: none/);
   assert.match(readFileSync(path.join(root, "templates/carousel.hbs"), "utf8"), /is-interrupt-waiting/);
 });
+
+test("a Kerenzikov's screen effect is there to be seen: a ring from mid-screen out, not a trace at the edge", () => {
+  const css = readFileSync(path.join(root, "styles/neon-combat.css"), "utf8");
+  const rim = /#ncm-screen-fx\[data-kind="kerenzikov"\] \.ncm-screen-rim \{[^}]*transparent (\d+)%[^}]*var\(--ncm-screen-tint\) (\d+)%/.exec(css);
+  assert.ok(rim, "it has a rim");
+  assert.ok(Number(rim[1]) <= 55, "the ring starts well inside the screen");
+  assert.ok(Number(rim[2]) >= 30, "and is strong enough to read");
+  // Still calmer than time standing still, which drains the colour.
+  const sat = (kind) => Number(new RegExp(`data-kind="${kind}"\\] \\.ncm-screen-tone \\{[^}]*saturate\\(([\\d.]+)\\)`).exec(css)?.[1]);
+  assert.ok(sat("kerenzikov") > sat("frozen") + 0.4);
+});
