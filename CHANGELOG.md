@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.34.0
+
+- **Run, on the Action HUD.** The Turn group has a **Run** button: on their Turn, a player
+  takes a Run (their Action, a second Move Action), a card tells the table, and the button
+  stays lit. Pressed again before the token has gone past its Move Action, it's taken back.
+- **A Run has to be taken.** With movement held to MOVE in a fight, a token goes as far as
+  its Move Action (MOVE × 2 m/yds) until its player takes the Run; then the Run's distance
+  opens. Held short of it, the warning says a Run would cover it. The ruler still shows both
+  bands as you drag, so the Run can be planned before it's taken. A GM's move always goes.
+  New setting *A Run has to be taken* (on); with it off, or with the Action HUD off, the
+  Run's distance is open from the start of the Turn as in 1.33.3.
+
 ## 1.33.3
 
 - **The Action HUD's "NaN", for real this time.** Another module registers a template helper

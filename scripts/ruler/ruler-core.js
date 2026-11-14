@@ -42,6 +42,21 @@ export function moveCheck({ walked = 0, step = 0, r = { move: Infinity, run: Inf
   return { ok: !past || gm || mode === "warn", warn: past, left, over, why: r.why ?? null };
 }
 
+/** The combatant flag a Run is taken on: { round } (the Round it was taken in). */
+export const RUN_FLAG = "run";
+
+/** Has this combatant taken a Run this Turn, pure: the flag says this Round. */
+export const ranThisTurn = (flag, round) => !!flag && Number(flag.round) === Number(round);
+
+/**
+ * What a character can cover until they take a Run, pure: the Move Action only. A Run is a
+ * second Move Action taken with the Action, so its distance opens once it's taken (the Action
+ * HUD's Run button). With no Move Action this Turn, nothing until the Run.
+ */
+export function reachTaken(r, ran) {
+  return ran ? r : { ...r, run: r.move };
+}
+
 /** The band a distance falls in. */
 export function bandOf(distance, r) {
   const d = Number(distance) || 0;

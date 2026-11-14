@@ -1,4 +1,5 @@
-import { LANG } from "../constants.js";
+import { MODULE_ID, LANG } from "../constants.js";
+import { ranThisTurn, RUN_FLAG } from "../ruler/ruler-core.js";
 import { CPR } from "../cpr.js";
 import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
@@ -73,6 +74,8 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   const mortal = CPR.woundState(actor) === "mortallyWounded";
   out.turn.push(
     { key: "turn:initiative", label: L(`${LANG}.Hud.Initiative`), icon: "fa-solid fa-bolt", sub: Number.isFinite(cb?.initiative) ? String(cb.initiative) : "", off: !combat },
+    // A Run: the Action spent on a second Move Action (the movement ruler's yellow band opens).
+    { key: "turn:run", label: L(`${LANG}.Hud.Run`), icon: "fa-solid fa-person-running", off: !myTurn, on: myTurn && ranThisTurn(cb?.flags?.[MODULE_ID]?.[RUN_FLAG], combat?.round) },
     { key: "turn:endTurn", label: L(`${LANG}.Hud.EndTurn`), icon: "fa-solid fa-forward-step", off: !myTurn, alert: myTurn },
     { key: "turn:deathSave", label: L(`${LANG}.Hud.DeathSave`), icon: "fa-solid fa-skull", sub: mortal ? `+${CPR.deathSave(actor).penalty}` : "", alert: mortal },
     { key: "turn:facedown", label: L(`${LANG}.Hud.Facedown`), icon: "fa-solid fa-face-angry" }
@@ -81,7 +84,7 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   const stealth = combat?.started && EncounterMode.isStealth(combat) ? items.find((i) => i.type === "skill" && slug(i.name) === "stealth") : null;
   if (stealth) {
     const base = CPR.stat(actor, stealth.system?.stat) + (Number(stealth.system?.level) || 0);
-    out.turn.splice(2, 0, { key: "turn:stealth", run: `sk:${stealth.id}`, label: stealth.name, sub: `+${base}`, icon: "fa-solid fa-user-ninja", alert: myTurn });
+    out.turn.splice(3, 0, { key: "turn:stealth", run: `sk:${stealth.id}`, label: stealth.name, sub: `+${base}`, icon: "fa-solid fa-user-ninja", alert: myTurn });
   }
 
   // Weapons.

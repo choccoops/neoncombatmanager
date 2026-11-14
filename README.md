@@ -1174,6 +1174,12 @@ past it doesn't happen (or goes with a warning); a GM's always goes, with the wa
 thrown, pushed or dodging out of a blast isn't walking, and isn't held. Out of a fight, and out
 of their Turn, nothing is held.
 
+**Run** (setting *A Run has to be taken*). Until a Run is taken, a token is held at its Move
+Action. The Action HUD's Turn group has a **Run** button: it spends the Action on a second Move
+Action, tells the table on a card, and opens the yellow band for the Turn. Pressed again before
+the token has gone past the Move Action, it's taken back. The ruler shows both bands either way,
+so the Run can be planned before it's taken.
+
 **Waypoints**: Space or right-click drops one where the token is, Backspace takes the last one
 back. On release, the token walks them one leg at a time; a wall stops a player's token at the
 last waypoint it reached.

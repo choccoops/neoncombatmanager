@@ -1363,6 +1363,10 @@
         "block": "Hold",
         "warn": "Warn",
         "off": "Off"
+      },
+      "movementRun": {
+        "name": "A Run has to be taken",
+        "hint": "With \"Hold movement to MOVE in a fight\": a token goes as far as its Move Action (MOVE × 2 m/yds) until its player takes a Run, the Run button in the Action HUD's Turn group, which spends the Action on a second Move Action and opens the rest. A card says so. Off (or with the Action HUD off): the Run's distance is open from the start of the Turn."
       }
     },
     "SceneWeather": {
@@ -2185,7 +2189,8 @@
       "Save": "Save",
       "Saved": "Action HUD layout saved.",
       "MacroAdded": "{name} is in the HUD's Macros now.",
-      "MacroNoRun": "You can't run {name} yet: the GM gives you Limited ownership of it (and Use Script Macros)."
+      "MacroNoRun": "You can't run {name} yet: the GM gives you Limited ownership of it (and Use Script Macros).",
+      "Run": "Run"
     },
     "Hack": {
       "Kicker": "Quickhacking",
@@ -2879,7 +2884,13 @@
       "Blocked": "A wall is in the way: the token stopped at the last waypoint it could reach.",
       "DragRulerNotice": "Neon Combat Manager has its own movement ruler, with Cyberpunk RED's Move and Run (and what was already walked this Turn). Drag Ruler is running, so for now Drag Ruler shows those bands instead. To use Neon Combat Manager's ruler, disable Drag Ruler.",
       "Held": "{name} can't go that far this Turn: {left} {unit} left.",
-      "PastReach": "{name} has gone past what they can cover this Turn ({left} {unit} was left)."
+      "PastReach": "{name} has gone past what they can cover this Turn ({left} {unit} was left).",
+      "NeedRun": "{name} has {left} {unit} of their Move Action left. To go further, take a Run first (Action HUD, Turn).",
+      "PastMove": "{name} has gone past their Move Action without taking a Run ({left} {unit} was left).",
+      "RunUsed": "{name} has already gone into their Run this Turn.",
+      "RunKicker": "Run",
+      "RunTitle": "{name} takes a Run",
+      "RunBody": "Their Action goes on a second Move Action: {total} {unit} in all this Turn."
     },
     "Cover": {
       "Kicker": "Cover",

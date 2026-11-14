@@ -150,6 +150,10 @@ export const Run = {
         }
         return combat.rollInitiative([cb.id]);
       }
+      case "run": {
+        const { NeonRuler } = await import("../ruler/ruler.js");
+        return NeonRuler.toggleRun(actor, token);
+      }
       case "endTurn": {
         const cb = combatantOf(actor, token, combat);
         if (combat?.started && cb && combat.combatant?.id === cb.id) return combat.nextTurn();
