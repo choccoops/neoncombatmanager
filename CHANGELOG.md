@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.33.2
+
+- **No more "NaN" on the Action HUD.** A button's small yellow label (a Skill's total, a
+  magazine, a count) showed "NaN" when its number didn't work out. Such a label now shows
+  nothing, and the button's key is named once in the browser console (F12) so the number
+  itself can be put right.
+
 ## 1.33.1
 
 - **Sandevistan Time.** While an Apogee interrupt lasts:

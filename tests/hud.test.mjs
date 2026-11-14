@@ -299,3 +299,20 @@ test("the Action HUD and its editor render with every string", async () => {
   assert.ok(editor.includes('name="addPick"') && editor.includes('data-action="saveLayout"'));
   assert.equal(missingKeys.size, 0, [...missingKeys].join(", "));
 });
+
+test("a button's small label never reads NaN: a number that didn't work out shows nothing", async () => {
+  const { cleanSub } = await import("../scripts/hud/hud.js");
+  assert.equal(cleanSub({ key: "skill:evasion", sub: "+12" }), "+12");
+  assert.equal(cleanSub({ key: "weapon:smg", sub: "0/30" }), "0/30");
+  assert.equal(cleanSub({ key: "role:x", sub: "Solo" }), "Solo");
+  assert.equal(cleanSub({ key: "util:sheet" }), "");
+  const warn = console.warn;
+  const said = [];
+  console.warn = (m) => said.push(m);
+  assert.equal(cleanSub({ key: "skill:athletics", sub: "+NaN" }), "");
+  assert.equal(cleanSub({ key: "skill:athletics", sub: "+NaN" }), "");
+  assert.equal(cleanSub({ key: "turn:initiative", sub: "NaN" }), "");
+  assert.equal(cleanSub({ key: "weapon:x", sub: "undefined/8" }), "");
+  console.warn = warn;
+  assert.equal(said.filter((m) => /skill:athletics/.test(m)).length, 1, "named in the console once");
+});
