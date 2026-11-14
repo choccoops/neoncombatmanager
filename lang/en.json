@@ -2917,9 +2917,11 @@
       "Banner": "Interrupt",
       "Title": "{name} interrupts {target}",
       "Body": {
-        "held": "A Held Action spent on the Apogee: the interrupt is automatic, whatever the Initiative. The Turn is theirs now; when they end it, it goes back to the Turn they cut into.",
-        "initiative": "The Apogee put their Initiative ahead of the Turn under way. The Turn is theirs now; when they end it, it goes back to the Turn they cut into."
-      }
+        "held": "A Held Action spent on the Apogee: the interrupt is automatic, whatever the Initiative. Those who cut in act highest Initiative first; when the last of them ends their Turn, it goes back to the Turn that was cut into.",
+        "initiative": "The Apogee put their Initiative ahead of the Turn under way. Those who cut in act highest Initiative first; when the last of them ends their Turn, it goes back to the Turn that was cut into."
+      },
+      "Time": "Sandevistan Time",
+      "Order": "Sandevistan Time, highest Initiative first: {names}."
     }
   }
 }

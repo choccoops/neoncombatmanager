@@ -2,6 +2,18 @@
 
 ## 1.33.1
 
+- **Sandevistan Time.** While an Apogee interrupt lasts:
+  - a **SANDEVISTAN TIME** strip stays at the top of every screen, naming who is acting and
+    who is still to act, alongside the stopped world;
+  - **others with an Apogee can cut in too.** Each gets the INTERRUPT banner, a card and a
+    mark on the carousel: gold for whoever is acting, dashed gold for those waiting, a faint
+    bolt for those who have gone;
+  - **they act highest Initiative first**, whether or not either Held an Action to do it; a
+    later one with the higher Initiative goes ahead of the one acting;
+  - **it lasts until every one of them has ended their Turn.** Then the Turn goes back to
+    whoever was first cut into, and the strip and the stopped world go with it.
+  - Someone joining gets in on a Held Action, or with an Initiative ahead of the Turn that was
+    first cut into. An Initiative moving mid-way (the order re-sorting) no longer ends it.
 - **A GM's screen effect follows the selected token, and nothing else.** A GM saw the
   full-screen Sandevistan, Berserk or Kerenzikov effect for their assigned character all the
   time, on top of whichever token they were working with. A GM now gets it only for a token

@@ -1517,8 +1517,10 @@ test("an Apogee interrupt: by Initiative or by a Held Action; the table is told,
   assert.equal(Interrupt.active()?.combatantId, "c1");
   // The next Turn: it's over, on the combat and on every screen.
   game.combat.turn = 1;
+  game.combat.combatant = cbSolo;
   assert.equal(Interrupt.active(), null, "stale at once, even before the flag is cleared");
   game.combat.turn = 0;
+  game.combat.combatant = cbGanger;
   // Switched off early: the world moves again.
   await apogee(solo, false);
   Interrupt.dropIfOver();
@@ -1615,4 +1617,146 @@ test("an Apogee interrupt takes the Turn and hands it back: to the interrupter a
   await Conditions.remove("chromeApogee", solo);
   game.combat = savedCombat;
   assert.notEqual(game.i18n.localize("NEONCOMBAT.Settings.interruptTurn.name"), "NEONCOMBAT.Settings.interruptTurn.name");
+});
+
+test("Sandevistan Time: others with an Apogee cut in too, highest Initiative first whoever Held; it lasts until every one of them has ended their Turn, then the Turn goes back", async () => {
+  const { Interrupt, INTERRUPT_FLAG, pendingOf, joinQueue, resolveQueue, joins, interruptLive } = await import("../scripts/neonfx/interrupt.js");
+  // The queue, pure.
+  const e = (id, initiative, by = "initiative") => ({ combatantId: id, actorId: `a${id}`, name: id.toUpperCase(), by, initiative });
+  let q = joinQueue({ round: 1, turn: 0, cutId: "x", returnTo: "x", target: "X" }, e("a", 18));
+  assert.deepEqual([q.combatantId, q.anchor], ["a", "a"]);
+  q = joinQueue(q, e("b", 12, "held"));
+  assert.equal(q.combatantId, "a", "a Held Action doesn't jump the higher Initiative");
+  assert.deepEqual(pendingOf(q).map((x) => x.combatantId), ["a", "b"]);
+  q = joinQueue(q, e("c", 25, "held"));
+  assert.deepEqual(pendingOf(q).map((x) => x.combatantId), ["c", "a", "b"], "the highest goes first, even ahead of the one acting");
+  assert.equal(q.anchor, "c");
+  let r = resolveQueue(q);
+  assert.deepEqual([r.next, pendingOf(r.flag).map((x) => x.combatantId)], ["a", ["a", "b"]]);
+  r = resolveQueue(r.flag);
+  assert.equal(r.next, "b");
+  r = resolveQueue(r.flag);
+  assert.deepEqual([r.flag, r.next], [null, "x"], "the last one done: back to whoever was cut into");
+  assert.equal(joins({ held: true, initiative: 1, cut: 15 }), "held");
+  assert.equal(joins({ initiative: 16, cut: 15 }), "initiative");
+  assert.equal(joins({ initiative: 15, cut: 15 }), null);
+  assert.equal(joins({ held: true, already: true }), null, "already waiting");
+  // Live by who holds the Turn, not by its place in an order that re-sorts.
+  assert.equal(interruptLive({ round: 1, turn: 0, anchor: "a" }, { round: 1, turn: 3, started: true, current: "a" }), true);
+  assert.equal(interruptLive({ round: 1, turn: 0, anchor: "a" }, { round: 1, turn: 0, started: true, current: "b" }), false);
+
+  // At the table.
+  await Settings.set("fxChrome", true);
+  await Settings.set("fxScreen", true);
+  await Settings.set("chromeCards", false);
+  await Settings.set("interruptTurn", true);
+  const fury = makeActor({ name: "Fury" });
+  const rogue = makeActor({ name: "Rogue" });
+  const flags = {};
+  const mk = (id, name, initiative, actor = makeActor({ name })) => ({ id, name, initiative, actor, actorId: actor.id, isOwner: true, async update(u) { Object.assign(this, u); } });
+  const boss = mk("c1", "Boss", 20);
+  const ganger = mk("c2", "Ganger", 15);
+  const cf = mk("c3", "Fury", 12, fury);
+  const cr = mk("c4", "Rogue", 8, rogue);
+  const savedCombat = game.combat;
+  const combat = {
+    id: "fight3", started: true, round: 2, turn: 1, combatants: [boss, ganger, cf, cr], flags: { [M]: flags },
+    get turns() { return [...this.combatants].sort((x, y) => y.initiative - x.initiative); },
+    get combatant() { return this.turns[this.turn]; },
+    getFlag: (scope, key) => flags[key],
+    async setFlag(scope, key, value) { flags[key] = value; },
+    async unsetFlag(scope, key) { delete flags[key]; },
+    async update(changes) {
+      for (const [k, v] of Object.entries(changes.flags?.[M] ?? {})) {
+        if (k.startsWith("-=")) delete flags[k.slice(2)];
+        else flags[k] = v;
+      }
+      if ("turn" in changes) this.turn = changes.turn;
+      if ("round" in changes) this.round = changes.round;
+    }
+  };
+  game.combat = combat;
+  const keepTurn = (id) => { combat.turn = combat.turns.findIndex((t) => t.id === id); };
+  const made = [];
+  const node = () => ({ id: "", className: "", innerHTML: "", classList: { add() {} }, setAttribute() {}, remove() { made.splice(made.indexOf(this), 1); } });
+  const savedDoc = globalThis.document;
+  globalThis.document = { getElementById: (id) => made.find((n) => n.id === id) ?? null, createElement: () => node(), body: { appendChild: (n) => made.push(n), append: (n) => made.push(n) } };
+
+  // Fury's Apogee in the Ganger's Turn: 18, ahead of 15.
+  assert.equal(combat.combatant.name, "Ganger");
+  cf.initiative = 18;
+  keepTurn("c2");
+  await Interrupt.check(fury);
+  assert.equal(combat.combatant.name, "Fury");
+  Interrupt.sync(combat);
+  const strip = () => made.find((n) => n.id === "ncm-sandtime");
+  assert.match(strip().innerHTML, /Sandevistan Time/);
+  assert.equal(Interrupt.role(combat, "c3"), "acting");
+  assert.equal(Interrupt.role(combat, "c2"), "cut");
+
+  // Rogue Held an Action for theirs: 8 + 6 = 14, behind Fury. They cut in, and wait.
+  await Conditions.add("readiedAction", rogue);
+  cr.initiative = 14;
+  keepTurn("c3");
+  // Foundry keeping its place as the order re-sorts is not the end of anyone's Turn.
+  assert.equal(Interrupt.returnTurn(combat, { turn: combat.turn }, { turnEvents: false }), false);
+  const joined = await Interrupt.check(rogue);
+  assert.equal(joined.by, "held");
+  assert.equal(combat.combatant.name, "Fury", "the higher Initiative keeps the Turn, Held or not");
+  assert.equal(Interrupt.role(combat, "c4"), "waiting");
+  Interrupt.sync(combat);
+  assert.match(strip().innerHTML, /Fury.*Rogue/s, "the order, on the strip");
+  assert.equal(await Interrupt.check(rogue), null, "not twice");
+
+  // Fury ends the Turn: on to Rogue, still Sandevistan Time, still this Round.
+  let next = { turn: combat.turn + 1 };
+  let opts = { direction: 1 };
+  assert.equal(Interrupt.returnTurn(combat, next, opts), true);
+  assert.equal(opts[M].interrupt, "next");
+  await combat.update(next);
+  assert.equal(combat.combatant.name, "Rogue");
+  assert.equal(combat.round, 2);
+  assert.ok(Interrupt.active(combat), "it goes on until all of them are done");
+  assert.equal(Interrupt.role(combat, "c3"), "done");
+  assert.equal(Interrupt.role(combat, "c4"), "acting");
+  Interrupt.sync(combat);
+  assert.ok(strip(), "the strip stays");
+
+  // Rogue ends theirs: back to the Ganger, and it's over.
+  next = { turn: combat.turn + 1 };
+  opts = { direction: 1 };
+  assert.equal(Interrupt.returnTurn(combat, next, opts), true);
+  assert.equal(opts[M].interrupt, "back");
+  await combat.update(next);
+  assert.equal(combat.combatant.name, "Ganger");
+  assert.equal(flags[INTERRUPT_FLAG], undefined);
+  assert.equal(Interrupt.active(combat), null);
+  Interrupt.sync(combat);
+  assert.equal(strip(), undefined, "and the strip comes down");
+
+  // A later one with the higher Initiative goes ahead of the one acting.
+  await Conditions.remove("readiedAction", rogue);
+  cf.initiative = 18;
+  keepTurn("c2");
+  await Interrupt.check(fury);
+  cr.initiative = 30;
+  keepTurn("c3");
+  await Interrupt.check(rogue);
+  assert.equal(combat.combatant.name, "Rogue");
+  assert.equal(Interrupt.role(combat, "c3"), "waiting");
+  // Rogue's Sandevistan goes off early: they drop out, and the Turn is Fury's again.
+  await Conditions.add("chromeApogee", fury);
+  Interrupt.dropIfOver();
+  await new Promise((res) => setTimeout(res, 10));
+  assert.equal(combat.combatant.name, "Fury");
+  assert.equal(Interrupt.role(combat, "c4"), "done");
+  await Conditions.remove("chromeApogee", fury);
+  delete flags[INTERRUPT_FLAG];
+
+  globalThis.document = savedDoc;
+  game.combat = savedCombat;
+  await Settings.set("chromeCards", true);
+  const css = readFileSync(path.join(root, "styles/neon-combat.css"), "utf8");
+  assert.match(css, /#ncm-sandtime \{[^}]*pointer-events: none/);
+  assert.match(readFileSync(path.join(root, "templates/carousel.hbs"), "utf8"), /is-interrupt-waiting/);
 });

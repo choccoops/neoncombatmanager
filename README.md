@@ -718,6 +718,14 @@ While it runs:
 
 Setting: *Chrome activation cards*.
 
+**Sandevistan Time.** While an Apogee interrupt lasts, a SANDEVISTAN TIME strip stays at the
+top of every screen with who is acting and who is still to act, and the world stays stopped for
+everyone not in Sandevistan time. Others with an Apogee can cut in too (on a Held Action, or
+with an Initiative ahead of the Turn first cut into): each is marked on the carousel, and they
+act highest Initiative first, whoever Held, a later higher one going ahead of the one acting. It
+ends when every one of them has ended their Turn: the Turn goes back to whoever was first cut
+into. Someone whose Sandevistan goes off before their Turn drops out.
+
 **The Apogee interrupt** (Item Compendium, Militech 'Apogee' OS). Switched on during someone
 else's Turn, the Apogee interrupts them when its +6 puts your Initiative ahead of theirs, and
 always when you were Holding Action (the *Holding Action* condition) as you switched it on. When
