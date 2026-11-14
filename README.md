@@ -709,8 +709,19 @@ roll or choice; stopping it starts the cooldown.
 - *Berserk's Operating Systems* take -4 from ranged attacks while they run, unless an FBC or
   Cyberspine is installed; a Baldur gives 5 HP back as it stops.
 
-Rules the module doesn't work for you (halved damage, ROF2 half-Actions, dodging bullets) stay
-as the condition's text on the card. Setting: *Chrome activation cards*.
+While it runs:
+
+- *Damage.* A Baldur halves every loss of HP (rounded up) and a Matterhorn takes half their BODY
+  off the first each Round, as the loss lands, whatever it came from; a card says what went. A
+  Brawler's 2 off all damage is the system's own damage reduction.
+- *Dodging bullets.* An Apogee or Falcon running lets its user dodge ranged attacks whatever
+  their REF: the defense prompt offers Evade.
+- *Half-Actions.* Nothing tracks Actions, so these can't be enforced: at the start of each Turn
+  under a Warp Dancer, Berserker or Baldur a card (theirs alone) lists what can be half of a
+  ROF2 Action. The start card says what switching it on takes (free, half of a ROF2 Action, an
+  Action).
+
+Setting: *Chrome activation cards*.
 
 **The Apogee interrupt** (Item Compendium, Militech 'Apogee' OS). Switched on during someone
 else's Turn, the Apogee interrupts them when its +6 puts your Initiative ahead of theirs, and

@@ -232,7 +232,7 @@ export const CONDITIONS = [
   { id: "chromeBerserker", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", changes: [NO_FRAME], chrome: { kind: "berserk", os: "berserker", unframed: ["bonuses.ranged"] } },
   { id: "chromeBaldur", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 12, group: "berserk", changes: [NO_FRAME], chrome: { kind: "berserk", os: "baldur", unframed: ["bonuses.ranged"] } },
   { id: "chromeMatterhorn", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 30, group: "berserk", changes: [NO_FRAME], chrome: { kind: "berserk", os: "matterhorn", unframed: ["bonuses.ranged"] } },
-  { id: "chromeBrawler", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", changes: [NO_FRAME], chrome: { kind: "berserk", os: "brawler", unframed: ["bonuses.ranged"] } },
+  { id: "chromeBrawler", category: "chrome", img: `${A}/berserk.svg`, page: "2070", duration: 15, group: "berserk", changes: [NO_FRAME, { key: "bonuses.universalDamageReduction", value: 2 }], chrome: { kind: "berserk", os: "brawler", unframed: ["bonuses.ranged"] } },
   // A Falcon's choice at the start of each of its Turns (scripts/neonfx/os.js asks; the next Turn clears it).
   { id: "chromeFalconMove", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", hud: false, changes: [{ key: "system.stats.move.value", value: 2 }] },
   { id: "chromeFalconEvasion", category: "chrome", img: `${A}/sandevistan.svg`, page: "2070", hud: false, changes: [{ key: "bonuses.evasion", value: 4, situational: true, onByDefault: false }] },

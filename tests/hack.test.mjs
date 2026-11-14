@@ -958,3 +958,87 @@ test("Berserk's Operating Systems: -4 to ranged attacks unless an FBC or Cybersp
   assert.ok(!Conditions.has("chromeFalconMove", pilot), "gone with the Falcon");
   game.combat = null;
 });
+
+test("while an Operating System runs: a Baldur halves damage, a Matterhorn takes half BODY off the first each Round, an Apogee dodges bullets, a card lists the half-Actions", async () => {
+  await Settings.set("fxChrome", true);
+  await Settings.set("chromeCards", true);
+  const { OS: Card, soaked, OS_RULES } = await import("../scripts/neonfx/os.js");
+  const { Defense, dodgeAbility } = await import("../scripts/arsenal/defense.js");
+  // The sums, pure.
+  assert.equal(soaked({ loss: 9, soak: "half" }), 5, "halved, rounded up");
+  assert.equal(soaked({ loss: 1, soak: "half" }), 1);
+  assert.equal(soaked({ loss: 9, soak: "first", body: 7, first: true }), 5, "half of BODY 7 is 4");
+  assert.equal(soaked({ loss: 3, soak: "first", body: 12, first: true }), 0, "never below nothing");
+  assert.equal(soaked({ loss: 9, soak: "first", body: 7, first: false }), 9, "only the first each Round");
+  assert.equal(soaked({ loss: 9 }), 9);
+  assert.equal(OS_RULES.apogee.dodge && OS_RULES.falcon.dodge, true);
+
+  game.combat = null;
+  game.time.worldTime = 5000;
+  const hp = (a) => a.system.derivedStats.hp.value;
+  const hit = (a, n) => {
+    const changes = { system: { derivedStats: { hp: { value: hp(a) - n } } } };
+    const options = {};
+    const out = Card.soak(a, changes, options);
+    return { out, changes, options, to: changes.system.derivedStats.hp.value };
+  };
+  // A Baldur: every loss halved; healing and no chrome untouched.
+  const tank = makeActor({ name: "Tank" });
+  assert.equal(hit(tank, 9).out, null, "nothing running");
+  await Conditions.add("chromeBaldur", tank);
+  await settle(40);
+  let r = hit(tank, 9);
+  assert.deepEqual(r.out, { from: 9, to: 5 });
+  assert.equal(r.to, hp(tank) - 5);
+  assert.equal(r.options[M].soaked, true);
+  assert.equal(Card.soak(tank, r.changes, r.options), null, "not twice on one change");
+  assert.equal(Card.soak(tank, { system: { derivedStats: { hp: { value: hp(tank) + 5 } } } }, {}), null, "healing is healing");
+  assert.equal(Card.soak(tank, { name: "Tank II" }, {}), null);
+
+  // A Matterhorn: the first damage each Round, by half their BODY.
+  const wall = makeActor({ name: "Wall" });
+  const body = Number(wall.system.stats.body.value);
+  await Conditions.add("chromeMatterhorn", wall);
+  await settle(40);
+  r = hit(wall, 20);
+  assert.deepEqual(r.out, { from: 20, to: 20 - Math.ceil(body / 2) });
+  await wall.update({ "system.derivedStats.hp.value": r.to, [`flags.${M}.chromeHit`]: r.changes.flags[M].chromeHit });
+  assert.equal(hit(wall, 20).out, null, "the second this Round lands whole");
+  game.time.worldTime += 3;
+  assert.ok(hit(wall, 20).out, "a new Round");
+
+  // Switched off in the settings: nothing soaks.
+  await Settings.set("chromeCards", false);
+  assert.equal(hit(tank, 9).out, null);
+  await Settings.set("chromeCards", true);
+
+  // Dodging bullets: the running condition is enough, whatever the REF and the items.
+  assert.deepEqual(dodgeAbility({ ref: 5 }), { can: false, why: null, blocked: null });
+  assert.equal(dodgeAbility({ ref: 5, chrome: "Sandevistan: Apogee OS" }).can, true);
+  assert.equal(dodgeAbility({ ref: 5, chrome: "Sandevistan: Apogee OS", attackerHidden: true }).can, false, "still not a shooter they can't see");
+  const slow = makeActor({ name: "Slow" });
+  await slow.update({ "system.stats.ref.value": 5 });
+  assert.equal(Defense.ability(slow).can, false);
+  await Conditions.add("chromeApogee", slow);
+  await settle(40);
+  assert.equal(Defense.ability(slow).can, true);
+  assert.equal(Card.dodges(slow), Registry.get("chromeApogee").name);
+  await Conditions.remove("chromeApogee", slow);
+  await settle(40);
+  assert.equal(Defense.ability(slow).can, false, "over when it stops");
+
+  // Each Turn under a Baldur: what can be half of a ROF2 Action.
+  const combat = makeCombat([tank, wall]);
+  game.combat = combat;
+  chat.length = 0;
+  await Card.turn(combat);
+  assert.ok(chat.some((m) => /half of a ROF2 Action/.test(m.content ?? "")), "a reminder on their Turn");
+  chat.length = 0;
+  combat.turn = 1;
+  await Card.turn(combat);
+  assert.equal(chat.length, 0, "a Matterhorn has none");
+  game.combat = null;
+
+  // A Brawler: 2 off all damage, through the system's own reduction.
+  assert.ok(BY_ID.chromeBrawler.changes.some((c) => c.key === "bonuses.universalDamageReduction" && c.value === 2));
+});
