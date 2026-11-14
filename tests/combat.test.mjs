@@ -543,3 +543,56 @@ test("a move taken back gives its movement back: undone, or the token put straig
   game.combat = saved.combat;
   await S.set("movementRun", true);
 });
+
+test("the path is written one write at a time: a first move as long as last Turn's total still goes out with its distance", async () => {
+  const { Turns } = await import("../scripts/combat/turns.js");
+  const { Compat } = await import("../scripts/compat.js");
+  const { Settings: S } = await import("../scripts/settings.js");
+  await S.set("trackMovement", true);
+  const M4 = "cpr-neon-combat-manager";
+  const actor = makeActor({ name: "Runner" });
+  const combat = makeCombat([actor, makeActor({ name: "Ganger" })]);
+  const cb = combat.turns[0];
+  const doc = { id: "tk", name: "Runner", x: 0, y: 0, width: 1, height: 1, actor, parent: { id: combat.scene?.id, grid: { size: 100 } } };
+  cb.tokenId = "tk";
+  cb.token = doc;
+  // Last Turn: one square, 2 m. That's what this client still holds when the new Turn begins.
+  cb.flags[M4] = { path: { points: [{ x: -150, y: 50 }, { x: 50, y: 50 }], metres: 2, noMove: false } };
+  // The server, as Foundry talks to it: each write is the difference from what the client holds
+  // when it's made, and comes back a moment later.
+  const server = { ...cb.flags[M4].path };
+  cb.setFlag = async (scope, key, value) => {
+    const local = cb.flags[scope]?.[key] ?? {};
+    const diff = Object.fromEntries(Object.entries(value).filter(([k, v]) => JSON.stringify(local[k]) !== JSON.stringify(v)));
+    await new Promise((r) => setTimeout(r, 8));
+    Object.assign(server, diff);
+    cb.flags[scope] ??= {};
+    cb.flags[scope][key] = { ...server };
+    return cb;
+  };
+  const saved = { combats: game.combats, combat: game.combat, measure: Compat.measure };
+  game.combats = [combat];
+  game.combat = combat;
+  Compat.measure = (a, b) => (Math.hypot(b.x - a.x, b.y - a.y) / 100) * 2;
+  // The Turn begins and the token moves one square at once, before the first write is back.
+  Turns.resetMove(cb);
+  doc.y = 100;
+  Turns.onMove(doc, { y: 100 }, {});
+  await new Promise((r) => setTimeout(r, 60));
+  assert.equal(server.metres, 2, "this Turn's 2 m, not last Turn's left alone at 0");
+  assert.equal(server.points.length, 2);
+  assert.equal(cb.flags[M4].path.metres, 2, "what the carousel and the ruler read");
+  // And on: move, take it back, move again, each landing as it should.
+  doc.y = 200;
+  Turns.onMove(doc, { y: 200 }, {});
+  doc.y = 100;
+  Turns.onMove(doc, { y: 100 }, {});
+  doc.y = 300;
+  Turns.onMove(doc, { y: 300 }, {});
+  await new Promise((r) => setTimeout(r, 90));
+  assert.equal(server.metres, 6);
+  assert.equal(Turns.metres(cb.id), 6);
+  Compat.measure = saved.measure;
+  game.combats = saved.combats;
+  game.combat = saved.combat;
+});

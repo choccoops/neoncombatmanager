@@ -87,7 +87,7 @@ export const Turns = {
       // The movement ruler shows only the Run left this Turn.
       if (Settings.get("trackMovement")) {
         const t = combatant.token;
-        await combatant.setFlag?.(MODULE_ID, "path", { points: t ? [this.centre(t)] : [], metres: 0, noMove: true });
+        await this._keepPath(combatant, () => ({ points: t ? [this.centre(t)] : [], metres: 0, noMove: true }));
       }
     }
   },
@@ -122,8 +122,31 @@ export const Turns = {
     // The path walked this Turn, for every client's movement ruler (scripts/ruler/ruler.js).
     if (Compat.isActiveGM && Settings.get("trackMovement")) {
       const c = t ? this.centre(t) : null;
-      combatant.setFlag?.(MODULE_ID, "path", { points: c ? [c] : [], metres: 0, noMove: false })?.catch?.(() => null);
+      this._keepPath(combatant, () => ({ points: c ? [c] : [], metres: 0, noMove: false }));
     }
+  },
+
+  /** combatant id -> the write of its path under way. */
+  _writes: new Map(),
+
+  /**
+   * Write a combatant's path, one write at a time. Foundry sends only what differs from what
+   * this client last heard back, so a second write made before the first had returned was
+   * measured against the old Turn's numbers: a first move as long as last Turn's total went
+   * out with no distance at all, and the sums after it were off. Each write now waits for the
+   * one before, and works out what to write when its turn comes.
+   * @param {Combatant} combatant
+   * @param {(path: object) => object} make - the path to write, from the one the combatant carries then
+   */
+  _keepPath(combatant, make) {
+    if (typeof combatant?.setFlag !== "function") return Promise.resolve(null);
+    const prev = this._writes.get(combatant.id) ?? Promise.resolve();
+    const next = prev.then(() => combatant.setFlag(MODULE_ID, "path", make(combatant.flags?.[MODULE_ID]?.path ?? {}))).catch(() => null);
+    this._writes.set(combatant.id, next);
+    next.then(() => {
+      if (this._writes.get(combatant.id) === next) this._writes.delete(combatant.id);
+    });
+    return next;
   },
 
   centre(token) {
@@ -164,7 +187,8 @@ export const Turns = {
     this.moved.set(cb.id, entry);
     if (Settings.get("trackMovement")) {
       const points = entry.trail.map((p) => ({ x: p.x, y: p.y })).slice(-60);
-      cb.setFlag?.(MODULE_ID, "path", { ...path, points, metres: entry.metres })?.catch?.(() => null);
+      const metres = entry.metres;
+      this._keepPath(cb, (now) => ({ ...now, points, metres }));
     }
   },
 

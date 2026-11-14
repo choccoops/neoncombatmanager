@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.37.2
+
+- **The first move of a Turn counts, and the sums hold.** The path a token has walked is
+  written to its combatant at the start of the Turn and again on each move. Written back to
+  back, the second went out measured against last Turn's numbers, so a first move as long as
+  last Turn's total was sent with no distance at all, and moving and undoing after it showed
+  wrong amounts. The writes now go one at a time, each from what the combatant carries then.
+
 ## 1.37.1
 
 - **A move taken back gives its movement back.** Undoing a token's move (Ctrl+Z), or putting
