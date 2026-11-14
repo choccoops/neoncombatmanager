@@ -196,7 +196,7 @@ test("roofs, awnings and Suppress Weather regions keep characters out of the wea
 /*  Who the weather reaches                 */
 /* ---------------------------------------- */
 
-test("the weather reaches every character on the scene, out of combat too, with its obscurement; light and darkness stay with the encounter", () => {
+test("the weather reaches every character on the scene, out of combat too, with its obscurement, and so do light and darkness", () => {
   const doc = (name, x = 2000) => {
     const actor = makeActor({ name, hasPlayerOwner: false });
     return { id: name, name, actor, x, y: 2000, width: 1, height: 1, elevation: 0, texture: {} };
@@ -206,21 +206,21 @@ test("the weather reaches every character on the scene, out of combat too, with 
   const scene = makeScene({ tokens: [a, b] });
   globalThis.canvas = { scene, ready: false };
   assert.deepEqual(Environment.weatherScope().map((d) => d.id).sort(), ["Bystander", "Ganger"]);
-  const { desired } = Environment.evaluate(a, Sources.weather(), { visibility: false });
+  const { desired } = Environment.evaluate(a, Sources.weather());
   assert.ok(desired.has("wxAcidRain") && desired.has("wxHeavyRain"), "the weather's conditions");
-  assert.ok(![...desired.keys()].some((id) => ["lowLight", "darkness"].includes(id)), "light and darkness are read for the encounter only");
+  assert.ok(![...desired.keys()].some((id) => ["lowLight", "darkness"].includes(id)), "no light read before the canvas is up");
   // The rain itself is in the way of everyone it falls on, in a fight or not: Obscured at the weather's own penalty.
   assert.ok(desired.has("obscured"), "the weather's obscurement, outside the encounter too");
   assert.deepEqual(desired.get("obscured").changes.map((c) => [c.key, c.value]), [["bonuses.perceptionSight", -2], ["bonuses.ranged", -2], ["bonuses.melee", -2]]);
   assert.match(desired.get("obscured").name, /\(-2\)/, "named for what it takes off");
 
-  // In the encounter, in poor light as well: two conditions, each for what it is.
+  // In poor light as well, in a fight or not (nobody here is in one): two conditions, each for what it is.
   const savedLevel = Environment.levelFor;
   const savedReady = canvas.ready;
   canvas.ready = true;
   const sight = (d, id) => d.get(id)?.changes.find((c) => c.key === "bonuses.ranged")?.value;
   Environment.levelFor = () => "dim";
-  let d = Environment.evaluate(a, Sources.weather(), { visibility: true }).desired;
+  let d = Environment.evaluate(a, Sources.weather()).desired;
   assert.equal(sight(d, "lowLight"), -1, "Low Light shows as itself");
   assert.equal(sight(d, "obscured"), -2, "and the rain as Obscured");
   assert.match(d.get("lowLight").name, /\(-1\)$/);
@@ -228,12 +228,12 @@ test("the weather reaches every character on the scene, out of combat too, with 
   assert.ok(!d.has("darkness"));
   // In the dark, in the rain: both in full. Nothing caps a sight penalty.
   Environment.levelFor = () => "dark";
-  d = Environment.evaluate(a, Sources.weather(), { visibility: true }).desired;
+  d = Environment.evaluate(a, Sources.weather()).desired;
   assert.equal(sight(d, "darkness"), -4);
   assert.equal(sight(d, "obscured"), -2, "-6 in all");
   assert.ok(!d.has("lowLight"));
   Environment.levelFor = () => "bright";
-  d = Environment.evaluate(a, Sources.weather(), { visibility: true }).desired;
+  d = Environment.evaluate(a, Sources.weather()).desired;
   assert.equal(sight(d, "obscured"), -2);
   assert.ok(!d.has("lowLight") && !d.has("darkness"), "rain alone");
   Environment.levelFor = savedLevel;
@@ -244,7 +244,7 @@ test("the weather reaches every character on the scene, out of combat too, with 
 
   // Under a roof: nothing.
   scene.tiles = [{ x: 1900, y: 1900, width: 300, height: 300, rotation: 0, elevation: 10, restrictions: { weather: true }, flags: {} }];
-  assert.equal(Environment.evaluate(a, Sources.weather(), { visibility: false }).desired.size, 0);
+  assert.equal(Environment.evaluate(a, Sources.weather()).desired.size, 0);
   scene.tiles = [];
 
   return Settings.set("weatherEveryone", false).then(() => {

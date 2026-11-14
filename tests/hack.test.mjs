@@ -668,9 +668,9 @@ test("a Sandevistan switched on and off again and again leaves Initiative where 
   for (let i = 0; i < 4; i++) {
     await NeonFX.activate("sandevistan", [token]);
     await settle(120);
-    assert.equal(a.disabled, false);
+    assert.equal(a.disabled, true, "the bare Sandevistan's switch stays off under an Operating System");
     assert.equal(b.disabled, false);
-    assert.ok(Chrome.running(actor, "sandevistan"), `on, time ${i + 1}`);
+    assert.equal(Chrome.running(actor, "sandevistan")?.id, "chromeFalcon", `on, time ${i + 1}`);
     up ??= cb.initiative;
     assert.ok(up > start, "up while it runs");
     assert.equal(cb.initiative, up, `the same bonus, time ${i + 1}`);
@@ -691,6 +691,64 @@ test("a Sandevistan switched on and off again and again leaves Initiative where 
   assert.equal(initiativeMove({ initiative: 12, had: 0, bonus: 6, on: false }), null, "already taken back");
   assert.deepEqual(initiativeMove({ initiative: 20, had: undefined, bonus: 6, on: false }), { initiative: 14, keep: 0 }, "rolled while it ran");
   assert.equal(initiativeMove({ initiative: null, had: undefined, bonus: 6, on: true }), null, "not rolled yet");
+});
+
+test("an Operating System fitted in its chrome (an Item Upgrade) runs as itself: the Apogee's condition and switch, not the bare Sandevistan's on top", async () => {
+  await Settings.set("fxChrome", true);
+  const actor = makeActor({ name: "V" }, [
+    { _id: "sande", name: "Sandevistan", type: "cyberware", system: { isInstalled: true, installedItems: { list: ["apogee"] } } },
+    { _id: "apogee", name: "Militech 'Apogee' OS", type: "itemUpgrade", system: { type: "cyberware", isInstalled: true } },
+    { _id: "spare", name: "Militech ‘Falcon’ OS", type: "itemUpgrade", system: { type: "cyberware" } }
+  ]);
+  const token = makeToken(actor);
+  const mk = (id, sid, name, changes) => {
+    const item = actor.items.get(id);
+    const sw = { documentName: "ActiveEffect", id: sid, name, disabled: true, changes, parent: item, statuses: new Set(), flags: {},
+      async update(u) {
+        Object.assign(this, u);
+        Hooks.callAll("updateActiveEffect", this, u, {}, game.user.id);
+      } };
+    item.effects = [sw];
+    item.documentName = "Item";
+    return sw;
+  };
+  const base = mk("sande", "sw1", "Sandevistan (active)", [{ key: "bonuses.initiative", value: "3" }]);
+  const os = mk("apogee", "sw2", "Militech 'Apogee' OS (active)", [{ key: "bonuses.aimedShot", value: "2" }, { key: "bonuses.initiative", value: "6" }]);
+  const spare = mk("spare", "sw3", "Militech ‘Falcon’ OS (active)", [{ key: "bonuses.initiative", value: "4" }]);
+  assert.deepEqual(Chrome.fitted(actor).map((i) => i.id).sort(), ["apogee", "sande"], "an Operating System lying in the gear isn't fitted");
+  assert.deepEqual(Chrome.switches(actor, "sandevistan"), [os]);
+  const combat = makeCombat([actor]);
+  game.combat = combat;
+  const cb = combat.turns[0];
+  const start = cb.initiative;
+
+  await NeonFX.activate("sandevistan", [token]);
+  await settle(40);
+  assert.equal(Chrome.running(actor, "sandevistan")?.id, "chromeApogee");
+  assert.equal(Conditions.has("chromeSandevistan", actor), false, "not the bare Sandevistan's");
+  assert.equal(os.disabled, false);
+  assert.equal(base.disabled, true, "the Apogee's +6 stands in for the Sandevistan's +3");
+  assert.equal(spare.disabled, true);
+  assert.equal(cb.initiative, start + 6);
+  assert.equal(token.document.flags[M].fx.sandevistan, "apogee");
+
+  await NeonFX.activate("sandevistan", [token]);
+  await settle(40);
+  assert.equal(Chrome.running(actor, "sandevistan"), null);
+  assert.equal(os.disabled, true);
+  assert.equal(cb.initiative, start);
+
+  // Switched on by hand at the bare Sandevistan: the Apogee's takes over.
+  await base.update({ disabled: false });
+  await settle(40);
+  assert.equal(Chrome.running(actor, "sandevistan")?.id, "chromeApogee");
+  assert.equal(os.disabled, false);
+  assert.equal(base.disabled, true);
+  assert.equal(cb.initiative, start + 6);
+  await Conditions.remove("chromeApogee", actor);
+  await settle(40);
+  assert.equal(os.disabled, true);
+  assert.equal(cb.initiative, start);
 });
 
 test("a Sandevistan's \"(active)\" effect, the condition and Initiative move together, and nothing counts twice", async () => {
