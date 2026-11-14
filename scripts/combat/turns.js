@@ -107,7 +107,7 @@ export const Turns = {
   },
 
   async _damage(actor, c, spec) {
-    const { total, roll } = Conditions.formula(spec.damage, actor);
+    const { total, roll } = await Conditions.roll(spec.damage, actor);
     await Cards.damage(actor, { amount: total, roll, armor: !!spec.armor, reason: c.name, condition: c.id });
   },
 

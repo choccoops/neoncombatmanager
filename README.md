@@ -1154,6 +1154,19 @@ The GM's client checks the clock really moved after each Round and moves it if n
 combat ends, a card says how many Rounds it ran, how long that was and the time of day.
 Seconds per Round (and per skipped Turn) are settings.
 
+## Humanity Loss events
+
+For when something costs the crew a piece of themselves. The GM opens **Humanity Loss** (the
+brain button in the token controls, `/humanity` in chat, or the *Neon Combat: Humanity Loss*
+macro), writes what happened, picks how much (1d6, 2d6, 3d6, 4d6, or any amount typed: `5d6`,
+`1d10`, `3`) and ticks who rolls: the tokens selected, and the players' characters. Each of them
+gets a card with the GM's words and a button; their player (or the GM) rolls, the loss comes off
+their Humanity, and a card tells the table how much and what's left. A card can be rolled once.
+The chrome cards' Humanity Loss (an Apogee, a Falcon, a Baldur, starting early) rolls the same way.
+
+`game.modules.get("cpr-neon-combat-manager").api.humanity`: `open()`, `call(actors, formula,
+text)`, `take(actor, formula)`.
+
 ## Movement ruler
 
 In place of [Drag Ruler](https://github.com/manuelVo/foundryvtt-drag-ruler) (which stops at
