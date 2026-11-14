@@ -1825,3 +1825,23 @@ test("the game paused: time stands still on every screen, chrome running or not,
   canvas.tokens.controlled = savedControlled;
   globalThis.document = savedDoc;
 });
+
+test("nothing of ours stands in the way of an ordinary change to a combat: beginning it, the next Turn, a flag", async () => {
+  const { Interrupt } = await import("../scripts/neonfx/interrupt.js");
+  const before = Hooks.call("preUpdateCombat", { flags: {}, started: false, round: 0, turn: null }, { round: 1, turn: 0 }, {});
+  Interrupt.init();
+  const plain = { id: "p", flags: {}, started: false, round: 0, turn: null, combatants: [] };
+  // A pre-update hook that answers false cancels the update: none of these may.
+  assert.equal(before, true);
+  assert.equal(Hooks.call("preUpdateCombat", plain, { round: 1, turn: 0 }, {}), true, "Begin");
+  const going = { ...plain, started: true, round: 3, turn: 1 };
+  assert.equal(Hooks.call("preUpdateCombat", going, { turn: 2 }, { direction: 1 }), true, "the next Turn");
+  assert.equal(Hooks.call("preUpdateCombat", going, { round: 4, turn: 0 }, { direction: 1 }), true, "the next Round");
+  assert.equal(Hooks.call("preUpdateCombat", going, { flags: { "cpr-neon-combat-manager": { mode: "stealth" } } }, {}), true, "a flag");
+  // And with an interrupt under way it still only steers the Turn, never stops it.
+  const flag = { round: 3, turn: 1, anchor: "c1", combatantId: "c1", returnTo: "c2", cutId: "c2", queue: [{ combatantId: "c1", name: "Fury", initiative: 20 }] };
+  const live = { id: "l", started: true, round: 3, turn: 0, flags: { "cpr-neon-combat-manager": { interrupt: flag } }, combatants: [{ id: "c1" }, { id: "c2" }], turns: [{ id: "c1" }, { id: "c2" }], combatant: { id: "c1" } };
+  const changes = { turn: 1 };
+  assert.equal(Hooks.call("preUpdateCombat", live, changes, { direction: 1 }), true);
+  assert.equal(changes.turn, 1, "back to whoever was cut into");
+});

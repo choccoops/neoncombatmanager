@@ -110,7 +110,12 @@ export const Interrupt = {
     });
     // Whoever is acting ends their Turn (on whichever client presses it): the Turn goes to the
     // next one who cut in, or back to whoever was cut into, in the same Round.
-    Hooks.on("preUpdateCombat", (combat, changes, options) => this.returnTurn(combat, changes, options));
+    // Braces, not an arrow's value: a pre-update hook that answers `false` cancels the update, and
+    // returnTurn's "nothing to do" is false. Answered straight back, it stopped every change to
+    // every combat: Begin, the next Turn, the flags.
+    Hooks.on("preUpdateCombat", (combat, changes, options) => {
+      this.returnTurn(combat, changes, options);
+    });
     Hooks.on("deleteCombat", () => this.sync(null));
     // Someone taken out of the fight, or a world opened with an old interrupt still on its combat.
     Hooks.on("deleteCombatant", (cb) => this.sweep(cb?.parent ?? cb?.combat ?? game.combat));
