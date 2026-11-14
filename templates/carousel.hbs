@@ -86,6 +86,9 @@
     {{else if showWound}}
     <div class="ncm-wound-label">{{this.woundLabel}}</div>
     {{/if}}
+    {{#if this.moved}}
+    <div class="ncm-move{{#if moved.spent}} is-spent{{/if}}" style="--pct: {{moved.pct}}%" data-tooltip="{{moved.tip}}"><span class="ncm-move-fill"></span><span class="ncm-move-text"><i class="fa-solid fa-person-running"></i> {{moved.left}}/{{moved.total}} {{moved.unit}}{{#if moved.run}} <em>+{{moved.run}}</em>{{/if}}</span></div>
+    {{/if}}
     {{#if conditions.length}}
     <ul class="ncm-fx">
       {{#each this.conditions}}<li class="cat-{{this.category}}"><img src="{{this.img}}" alt="{{this.name}}" data-tooltip="{{this.name}}"></li>{{/each}}

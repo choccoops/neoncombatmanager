@@ -421,3 +421,42 @@ test("the movement ruler follows a dragged token's preview: it starts once, redr
   Compat.snapCenter = saved.snap;
   globalThis.canvas = saved.canvas;
 });
+
+test("the carousel says how far the acting character can still go this Turn, and what a Run would add", async () => {
+  const { movementLeft, reach: reachOf } = await import("../scripts/ruler/ruler-core.js");
+  const r = reachOf(6); // 12 m, 24 m with a Run
+  assert.deepEqual(movementLeft({ walked: 0, r }), { left: 12, total: 12, walked: 0, run: 12, why: null });
+  assert.deepEqual(movementLeft({ walked: 8, r }), { left: 4, total: 12, walked: 8, run: 12, why: null });
+  assert.deepEqual(movementLeft({ walked: 14, r, ran: true }), { left: 10, total: 24, walked: 14, run: 0, why: null }, "a Run taken: the rest is open");
+  assert.deepEqual(movementLeft({ walked: 14, r, runTaken: false }), { left: 10, total: 24, walked: 14, run: 0, why: null }, "where a Run needn't be taken");
+  assert.equal(movementLeft({ walked: 30, r, ran: true }).left, 0, "never below nothing");
+  assert.deepEqual(movementLeft({ r: reachOf(6, { prone: true }) }), { left: 0, total: 0, walked: 0, run: 0, why: "prone" });
+  assert.deepEqual(movementLeft({ r: reachOf(6, { noMove: true }) }), { left: 0, total: 0, walked: 0, run: 12, why: "noMove" }, "no Move Action: only a Run");
+
+  const { Carousel } = await import("../scripts/combat/carousel.js");
+  const { Settings: S } = await import("../scripts/settings.js");
+  await S.set("trackMovement", true);
+  await S.set("actionHud", true);
+  await S.set("movementRun", true);
+  const actor = makeActor({ name: "Runner" });
+  const other = makeActor({ name: "Ganger" });
+  const combat = makeCombat([actor, other]);
+  const [cb, cb2] = combat.turns;
+  cb.token = { id: "tk", actor, hidden: false };
+  cb2.token = { id: "tk2", actor: other, hidden: false };
+  const move = Number(actor.system.stats.move.value) * 2;
+  cb.flags["cpr-neon-combat-manager"] = { path: { metres: 4, points: [] } };
+  const cards = Carousel.context(combat).cards;
+  assert.deepEqual([cards[0].moved.left, cards[0].moved.total, cards[0].moved.run], [move - 4, move, move]);
+  assert.equal(cards[0].moved.spent, false);
+  assert.match(cards[0].moved.tip, /left to move this Turn/);
+  assert.equal(cards[1].moved, null, "only whoever's Turn it is");
+  cb.flags["cpr-neon-combat-manager"].path.metres = move;
+  assert.equal(Carousel.context(combat).cards[0].moved.spent, true);
+  await S.set("trackMovement", false);
+  assert.equal(Carousel.context(combat).cards[0].moved, null, "not tracked: no line");
+  await S.set("trackMovement", true);
+  const { Compat: C2 } = await import("../scripts/compat.js");
+  const html = await C2.renderTemplate("modules/cpr-neon-combat-manager/templates/carousel.hbs", Carousel.context(combat));
+  assert.match(html, /class="ncm-move/, "the line is on the card");
+});

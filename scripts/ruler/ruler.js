@@ -3,7 +3,7 @@ import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { Conditions } from "../conditions/engine.js";
-import { reach, legs, squaresAlong, label, bandOf, moveCheck, ranThisTurn, reachTaken, RUN_FLAG, COLORS } from "./ruler-core.js";
+import { reach, legs, squaresAlong, label, bandOf, moveCheck, movementLeft, ranThisTurn, reachTaken, RUN_FLAG, COLORS } from "./ruler-core.js";
 import { Cards } from "../combat/cards.js";
 import { L } from "../util.js";
 
@@ -117,6 +117,13 @@ export const NeonRuler = {
     const key = needsRun ? (check.ok ? "PastMove" : "NeedRun") : check.ok ? "PastReach" : "Held";
     ui.notifications?.warn(L(`${LANG}.Ruler.${key}`, { name: doc.name, left: round(check.left), unit }) + why);
     return check.ok;
+  },
+
+  /** What a combatant has left to move this Turn (the carousel): { left, total, walked, run, why }, or null when movement isn't tracked. */
+  leftFor(cb, combat = cb?.parent ?? game.combat) {
+    const token = cb?.token;
+    if (!token?.actor || !Settings.get("trackMovement")) return null;
+    return movementLeft({ walked: Number(cb.flags?.[MODULE_ID]?.[PATH_FLAG]?.metres) || 0, r: this.reachFor(token), ran: this.ran(cb, combat), runTaken: this.runTaken });
   },
 
   /** Is a Run something that's taken (a button to press) here? Only with the Action HUD to press it on. */
