@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.31.2
+
+- **Low Light and Darkness don't wait for an encounter.** The light a character stands in was
+  read only for tokens in a fight, so the condition appeared as they joined one. It now goes to
+  everyone the weather reaches (every character on the scene by default), in a fight or not,
+  as the weather's Obscured already did. Weather hazard cards (damage by the Round) stay with
+  the encounter.
+
 ## 1.31.1
 
 - **A Sandevistan switched on and off no longer piles up Initiative, and goes off when it's

@@ -81,7 +81,7 @@ export const Environment = {
 
   /**
    * Tokens the weather reaches: every character on the scene (setting "Weather reaches everyone
-   * on the scene"), else the same tokens as visibility.
+   * on the scene"), else the encounter's. Light and darkness reach the same tokens.
    */
   weatherScope() {
     const scene = canvas?.scene;
@@ -115,15 +115,15 @@ export const Environment = {
    * What the environment does to one token's character.
    * @returns {{ desired: Map<string, {changes, name}>, row: object, hazards: string[] }}
    */
-  evaluate(doc, weather, { visibility = true } = {}) {
+  evaluate(doc, weather) {
     const actor = doc.actor;
     const mode = Sources.sceneMode(doc.parent);
     const outdoors = mode === "outdoor" && !Sources.sheltered(doc);
     const gear = Sources.gear(actor);
     const w = outdoors && weather.keys.length ? weatherFor(weather.keys, gear, { armorPenalty: CPR.armorPenalty(actor) }) : { conditions: [], sight: 0, extra: [], hazards: [] };
-    // Light and darkness are read for the encounter only; the weather's own obscurement goes to
-    // everyone the weather reaches, in a fight or not.
-    const level = visibility && Settings.get("visibilityEnabled") && canvas?.ready ? this.levelFor(doc) : "bright";
+    // Light and darkness, like the weather's own obscurement, go to everyone the weather reaches,
+    // in a fight or not: a character standing in the dark is in the dark before Initiative too.
+    const level = Settings.get("visibilityEnabled") && canvas?.ready ? this.levelFor(doc) : "bright";
     // Light and weather add in full: there is no cap (the user's ruling; Cyberpunk RED has none).
     const sp = sightParts({ level, weather: w.sight, vision: gear.vision, cap: 0 });
 
@@ -170,7 +170,7 @@ export const Environment = {
       const encounter = new Set(this.scope().map((d) => d.id));
       for (const doc of this.weatherScope()) {
         const actor = doc.actor;
-        const { desired, row, hazards: hz } = this.evaluate(doc, weather, { visibility: encounter.has(doc.id) });
+        const { desired, row, hazards: hz } = this.evaluate(doc, weather);
         rows.push(row);
         hazards.set(actor.uuid, encounter.has(doc.id) ? hz : []);
         inScope.add(actor.uuid);

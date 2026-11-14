@@ -1160,7 +1160,8 @@ out in it:
   with the clock, including mid-fight.
 
 **Who it reaches**: every character token out in it on the scene, in combat or not (setting
-"Weather reaches everyone on the scene"); visibility stays with the encounter. Protective gear is
+"Weather reaches everyone on the scene"); Low Light and Darkness reach the same tokens, in a fight
+or not. Protective gear is
 matched by name (settings): Nasal Filters, Anti-Smog Breathing Mask, Radiation Suit, umbrellas and
 the jacket linings from the Night City Weather pack the system ships.
 

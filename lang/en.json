@@ -1213,7 +1213,7 @@
       },
       "weatherEveryone": {
         "name": "Weather reaches everyone on the scene",
-        "hint": "Every character token out in the weather gets its conditions, in combat or not (gear still protects). Off: only the encounter (and player tokens, with \"Environment outside combat\"). Visibility stays with the encounter either way."
+        "hint": "Every character token out in the weather gets its conditions, in combat or not (gear still protects). Off: only the encounter (and player tokens, with \"Environment outside combat\"). Low Light and Darkness reach the same tokens as the weather."
       },
       "weatherAmbience": {
         "name": "Weather sounds and lightning",
