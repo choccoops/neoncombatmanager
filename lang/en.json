@@ -1367,6 +1367,10 @@
       "movementRun": {
         "name": "A Run has to be taken",
         "hint": "With \"Hold movement to MOVE in a fight\": a token goes as far as its Move Action (MOVE × 2 m/yds) until its player takes a Run, the Run button in the Action HUD's Turn group, which spends the Action on a second Move Action and opens the rest. A card says so. Off (or with the Action HUD off): the Run's distance is open from the start of the Turn."
+      },
+      "fxPause": {
+        "name": "Time stands still while the game is paused",
+        "hint": "While the game is paused, every screen shows the world stopped: the colour drained, a cold blue ring at the edges, the same look as an Apogee's Sandevistan Time. It lifts the moment the game goes on. Each player's \"Chrome on my screen\" turns it off for them."
       }
     },
     "SceneWeather": {

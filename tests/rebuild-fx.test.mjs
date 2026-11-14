@@ -1784,3 +1784,64 @@ test("a Kerenzikov's screen effect is there to be seen: a ring from mid-screen o
   const sat = (kind) => Number(new RegExp(`data-kind="${kind}"\\] \\.ncm-screen-tone \\{[^}]*saturate\\(([\\d.]+)\\)`).exec(css)?.[1]);
   assert.ok(sat("kerenzikov") > sat("frozen") + 0.4);
 });
+
+test("the game paused: time stands still on every screen, chrome running or not, and lifts when it goes on", async () => {
+  const { Screen, withPause, PAUSE_TINT, SCREEN_ID } = await import("../scripts/neonfx/screen.js");
+  assert.deepEqual(withPause(null, true), { kind: "frozen", tint: PAUSE_TINT });
+  assert.deepEqual(withPause({ kind: "sandevistan", tint: "#00e5ff" }, true), { kind: "frozen", tint: PAUSE_TINT }, "nobody is in Sandevistan time with the clock stopped");
+  assert.equal(withPause(null, false), null);
+  assert.deepEqual(withPause({ kind: "berserk", tint: "#ff1744" }, false), { kind: "berserk", tint: "#ff1744" });
+  assert.equal(withPause(null, true, { enabled: false }), null);
+
+  const made = [];
+  const el = () => ({ id: "", dataset: {}, style: { props: {}, setProperty(k, v) { this.props[k] = v; } }, classList: { toggle() {} }, setAttribute() {}, remove() { made.length = 0; } });
+  const savedDoc = globalThis.document;
+  globalThis.document = { getElementById: (id) => made.find((e) => e.id === id) ?? null, createElement: () => el(), body: { append: (e) => made.push(e) } };
+  const savedControlled = canvas.tokens.controlled;
+  const savedCombat = game.combat;
+  const savedPaused = game.paused;
+  canvas.tokens.controlled = [];
+  game.combat = null;
+  await Settings.set("fxScreen", true);
+  await Settings.set("fxPause", true);
+  game.paused = false;
+  assert.equal(Screen.refresh(), null, "running: nothing selected, nothing shown");
+  game.paused = true;
+  assert.deepEqual(Screen.refresh(), { kind: "frozen", tint: PAUSE_TINT });
+  assert.equal(made[0].id, SCREEN_ID);
+  assert.equal(made[0].dataset.kind, "frozen");
+  // The world's setting, and each player's own.
+  await Settings.set("fxPause", false);
+  assert.equal(Screen.refresh(), null);
+  await Settings.set("fxPause", true);
+  await Settings.set("fxScreen", false);
+  assert.equal(Screen.refresh(), null);
+  await Settings.set("fxScreen", true);
+  game.paused = false;
+  assert.equal(Screen.refresh(), null, "on it goes");
+  assert.equal(made.length, 0);
+  game.paused = savedPaused;
+  game.combat = savedCombat;
+  canvas.tokens.controlled = savedControlled;
+  globalThis.document = savedDoc;
+});
+
+test("nothing of ours stands in the way of an ordinary change to a combat: beginning it, the next Turn, a flag", async () => {
+  const { Interrupt } = await import("../scripts/neonfx/interrupt.js");
+  const before = Hooks.call("preUpdateCombat", { flags: {}, started: false, round: 0, turn: null }, { round: 1, turn: 0 }, {});
+  Interrupt.init();
+  const plain = { id: "p", flags: {}, started: false, round: 0, turn: null, combatants: [] };
+  // A pre-update hook that answers false cancels the update: none of these may.
+  assert.equal(before, true);
+  assert.equal(Hooks.call("preUpdateCombat", plain, { round: 1, turn: 0 }, {}), true, "Begin");
+  const going = { ...plain, started: true, round: 3, turn: 1 };
+  assert.equal(Hooks.call("preUpdateCombat", going, { turn: 2 }, { direction: 1 }), true, "the next Turn");
+  assert.equal(Hooks.call("preUpdateCombat", going, { round: 4, turn: 0 }, { direction: 1 }), true, "the next Round");
+  assert.equal(Hooks.call("preUpdateCombat", going, { flags: { "cpr-neon-combat-manager": { mode: "stealth" } } }, {}), true, "a flag");
+  // And with an interrupt under way it still only steers the Turn, never stops it.
+  const flag = { round: 3, turn: 1, anchor: "c1", combatantId: "c1", returnTo: "c2", cutId: "c2", queue: [{ combatantId: "c1", name: "Fury", initiative: 20 }] };
+  const live = { id: "l", started: true, round: 3, turn: 0, flags: { "cpr-neon-combat-manager": { interrupt: flag } }, combatants: [{ id: "c1" }, { id: "c2" }], turns: [{ id: "c1" }, { id: "c2" }], combatant: { id: "c1" } };
+  const changes = { turn: 1 };
+  assert.equal(Hooks.call("preUpdateCombat", live, changes, { direction: 1 }), true);
+  assert.equal(changes.turn, 1, "back to whoever was cut into");
+});

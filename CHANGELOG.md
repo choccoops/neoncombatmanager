@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.35.0
+
+- **Combat starts and moves again.** Since 1.31.0 the Apogee interrupt's check on each Turn
+  change answered "not mine" in a way Foundry reads as "cancel": no change to a combat went
+  through. Start and Sneak on the carousel did nothing, the next Turn didn't come, and the
+  interrupt's own marks never reached the combat. The check now never stands in the way.
+- **Time stands still while the game is paused.** Pausing the game shows the stopped world on
+  every screen (the colour drained, a cold blue ring at the edges), the look of an Apogee's
+  Sandevistan Time, and it lifts the moment the game goes on. New world setting *Time stands
+  still while the game is paused* (on); each player's *Chrome on my screen* turns it off for
+  them, and it holds still with reduced motion.
+
 ## 1.34.1
 
 - **A Kerenzikov's screen effect you can see.** It was drawn so faintly (a 2.5% tint and a thin
