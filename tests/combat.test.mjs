@@ -378,3 +378,46 @@ test("a Run is taken: until then a token goes as far as its Move Action; the Act
   game.combats = savedCombats;
   game.combat = savedCombat;
 });
+
+test("the movement ruler follows a dragged token's preview: it starts once, redraws as the preview moves square to square, and goes when the preview does", async () => {
+  const { NeonRuler } = await import("../scripts/ruler/ruler.js");
+  const { Settings: S } = await import("../scripts/settings.js");
+  const { Compat } = await import("../scripts/compat.js");
+  await S.set("movementRuler", "auto");
+  const saved = { start: NeonRuler.start, draw: NeonRuler.draw, end: NeonRuler.end, canvas: globalThis.canvas, snap: Compat.snapCenter };
+  const calls = { start: 0, draw: 0, end: 0 };
+  const token = { id: "t1", isOwner: true, actor: {} };
+  NeonRuler.state = null;
+  NeonRuler.start = (t) => { calls.start++; NeonRuler.state = { token: t, end: null, waypoints: [] }; };
+  NeonRuler.draw = () => { calls.draw++; };
+  NeonRuler.end = () => { calls.end++; NeonRuler.state = null; };
+  Compat.snapCenter = (p) => ({ x: Math.floor(p.x / 100) * 100 + 50, y: Math.floor(p.y / 100) * 100 + 50 });
+  globalThis.canvas = { ready: true, tokens: { controlled: [token] } };
+  const preview = (x, y) => ({ isPreview: true, _original: token, center: { x, y } });
+
+  assert.equal(NeonRuler.draws, true);
+  assert.equal(NeonRuler.onPreview({ isPreview: false, center: { x: 0, y: 0 } }), false, "a token that isn't being dragged");
+  assert.equal(NeonRuler.onPreview(preview(120, 130)), true);
+  assert.deepEqual([calls.start, calls.draw], [1, 1]);
+  assert.deepEqual(NeonRuler.state.end, { x: 150, y: 150 });
+  NeonRuler.onPreview(preview(160, 170));
+  assert.deepEqual([calls.start, calls.draw], [1, 1], "the same square: nothing to redraw");
+  NeonRuler.onPreview(preview(260, 170));
+  assert.deepEqual([calls.start, calls.draw], [1, 2], "the next square");
+  // Several tokens dragged together: no ruler.
+  canvas.tokens.controlled = [token, { id: "t2" }];
+  assert.equal(NeonRuler.onPreview(preview(360, 170)), false);
+  canvas.tokens.controlled = [token];
+  // Dropped or cancelled: the preview goes, and the ruler with it.
+  NeonRuler.onPreviewGone({ _original: { id: "other" } });
+  assert.equal(calls.end, 0);
+  NeonRuler.onPreviewGone(preview(0, 0));
+  assert.equal(calls.end, 1);
+  // Switched off: nothing.
+  await S.set("movementRuler", "off");
+  assert.equal(NeonRuler.onPreview(preview(120, 130)), false);
+  await S.set("movementRuler", "auto");
+  Object.assign(NeonRuler, { start: saved.start, draw: saved.draw, end: saved.end });
+  Compat.snapCenter = saved.snap;
+  globalThis.canvas = saved.canvas;
+});

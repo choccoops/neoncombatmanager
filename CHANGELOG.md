@@ -2,6 +2,11 @@
 
 ## 1.35.1
 
+- **The movement ruler draws, whatever is doing the dragging.** On Foundry v12 the ruler was
+  attached by replacing the token's own drag handlers; in a world where those are handled
+  differently it attached and never ran. It now follows the preview copy Foundry shows while
+  a token is dragged, so the path, its bands (Move, Run, out of reach) and the distance show
+  for any drag. Waypoints (Space or right-click) still need the token's own handlers.
 - **Alert doesn't stack on tokens.** Switching a stealth segment to full combat (and the
   Ladder moving, and the clock) each asked for the enemies' Awareness condition at the same
   moment; each found none yet and each placed one. They now take turns, and any that had
