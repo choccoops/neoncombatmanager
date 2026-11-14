@@ -1,34 +1,34 @@
-<div class="ncm-ah-bar wound-{{wound}}">
+<div class="ncm-ah-bar wound-{{this.wound}}">
   <button type="button" class="ncm-ah-grip" data-ah="drag" data-tooltip="NEONCOMBAT.Hud.Drag" aria-label="{{localize 'NEONCOMBAT.Hud.Drag'}}"><i class="fa-solid fa-grip-vertical"></i></button>
   <button type="button" class="ncm-ah-who" data-ah="who" data-tooltip="NEONCOMBAT.Hud.Sheet">
-    <img src="{{img}}" alt="">
+    <img src="{{this.img}}" alt="">
     <span>
-      <b>{{name}}</b>
-      <span class="ncm-ah-hp" style="--pct: {{pct}}%"><i></i><small>HP {{hp.value}}/{{hp.max}} · {{localize "NEONCOMBAT.Hud.Luck"}} {{luck}}</small></span>
+      <b>{{this.name}}</b>
+      <span class="ncm-ah-hp" style="--pct: {{this.pct}}%"><i></i><small>HP {{hp.value}}/{{hp.max}} · {{localize "NEONCOMBAT.Hud.Luck"}} {{this.luck}}</small></span>
     </span>
   </button>
-  {{#unless collapsed}}
+  {{#unless this.collapsed}}
   <ul class="ncm-ah-groups">
-    {{#each groups}}
-    <li class="ncm-ah-group{{#if open}} is-open{{/if}}" data-group="{{id}}">
-      <button type="button" class="ncm-ah-tab" data-ah="tab"><i class="{{icon}}"></i><span>{{label}}</span></button>
+    {{#each this.groups}}
+    <li class="ncm-ah-group{{#if this.open}} is-open{{/if}}" data-group="{{this.id}}">
+      <button type="button" class="ncm-ah-tab" data-ah="tab"><i class="{{this.icon}}"></i><span>{{this.label}}</span></button>
       <div class="ncm-ah-panel">
-        <span class="ncm-kicker">// {{label}}</span>
+        <span class="ncm-kicker">// {{this.label}}</span>
         <div class="ncm-ah-list">
-          {{#each entries}}
-          {{#if buttons}}
-          <div class="ncm-ah-weapon{{#if alert}} is-alert{{/if}}">
-            <img src="{{img}}" alt="">
-            <div class="ncm-ah-wname"><b>{{label}}</b>{{#if sub}}<small>{{sub}}</small>{{/if}}</div>
+          {{#each this.entries}}
+          {{#if this.buttons}}
+          <div class="ncm-ah-weapon{{#if this.alert}} is-alert{{/if}}">
+            <img src="{{this.img}}" alt="">
+            <div class="ncm-ah-wname"><b>{{this.label}}</b>{{#if this.sub}}<small>{{this.sub}}</small>{{/if}}</div>
             <div class="ncm-ah-modes">
-              {{#each buttons}}<button type="button" class="{{#if on}}is-on{{/if}}" data-run="{{key}}" data-tooltip="{{label}}" aria-label="{{label}}"><i class="{{icon}}"></i></button>{{/each}}
+              {{#each this.buttons}}<button type="button" class="{{#if this.on}}is-on{{/if}}" data-run="{{this.key}}" data-tooltip="{{this.label}}" aria-label="{{this.label}}"><i class="{{this.icon}}"></i></button>{{/each}}
             </div>
           </div>
           {{else}}
-          <button type="button" class="ncm-ah-act{{#if on}} is-on{{/if}}{{#if alert}} is-alert{{/if}}{{#if off}} is-off{{/if}}" data-run="{{run}}">
-            {{#if img}}<img src="{{img}}" alt="">{{else}}<i class="{{icon}}"></i>{{/if}}
-            <span>{{label}}</span>
-            {{#if sub}}<small>{{sub}}</small>{{/if}}
+          <button type="button" class="ncm-ah-act{{#if this.on}} is-on{{/if}}{{#if this.alert}} is-alert{{/if}}{{#if this.off}} is-off{{/if}}" data-run="{{this.run}}">
+            {{#if this.img}}<img src="{{this.img}}" alt="">{{else}}<i class="{{this.icon}}"></i>{{/if}}
+            <span>{{this.label}}</span>
+            {{#if this.sub}}<small>{{this.sub}}</small>{{/if}}
           </button>
           {{/if}}
           {{/each}}
@@ -40,6 +40,6 @@
   {{/unless}}
   <div class="ncm-ah-tools">
     <button type="button" data-ah="edit" data-tooltip="NEONCOMBAT.Hud.Customize" aria-label="{{localize 'NEONCOMBAT.Hud.Customize'}}"><i class="fa-solid fa-sliders"></i></button>
-    <button type="button" data-ah="collapse" data-tooltip="NEONCOMBAT.Hud.Collapse" aria-label="{{localize 'NEONCOMBAT.Hud.Collapse'}}"><i class="fa-solid {{#if collapsed}}fa-chevron-right{{else}}fa-chevron-left{{/if}}"></i></button>
+    <button type="button" data-ah="collapse" data-tooltip="NEONCOMBAT.Hud.Collapse" aria-label="{{localize 'NEONCOMBAT.Hud.Collapse'}}"><i class="fa-solid {{#if this.collapsed}}fa-chevron-right{{else}}fa-chevron-left{{/if}}"></i></button>
   </div>
 </div>

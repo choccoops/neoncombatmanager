@@ -1350,6 +1350,10 @@
       "chromeCards": {
         "name": "Chrome activation cards",
         "hint": "As a Sandevistan, Berserk or one of their Operating Systems starts, a card in chat says what it costs and allows, with a button for each roll or choice: Humanity Loss each time (not with an FBC or Cyberspine), Humanity Loss for starting again inside the cooldown, a Solo's free Combat Awareness under an Apogee or Professional, the Falcon's choice each Turn. Stopping starts the cooldown (and gives a Baldur's 5 HP back). While it runs: a Baldur's halved damage and a Matterhorn's first hit each Round are taken off HP losses as they land, an Apogee or Falcon dodges bullets whatever the REF, and a card each Turn lists what can be half of a ROF2 Action."
+      },
+      "arsenalAreaClear": {
+        "name": "Clear an area once it has gone off",
+        "hint": "A blast's or shell's template disappears from the map a moment after it goes off (the targets are already set and the card lists who was caught). The GM's Apply button on the card still works, and removes it for good. A miss stays until it's moved or scattered; smoke and other areas that linger stay. Off: the template shows until the GM applies it."
       }
     },
     "SceneWeather": {

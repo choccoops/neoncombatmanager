@@ -1,17 +1,17 @@
 <section class="ncm-settings-wrap">
-  {{#if intro}}<p class="ncm-hint">{{intro}}</p>{{/if}}
+  {{#if this.intro}}<p class="ncm-hint">{{this.intro}}</p>{{/if}}
   <ol class="ncm-settings-list">
-    {{#each fields}}
+    {{#each this.fields}}
     <li class="ncm-setting">
       <div class="ncm-setting-text">
-        <label for="ncm-set-{{key}}">{{name}}</label>
-        {{#if hint}}<p class="ncm-hint">{{hint}}</p>{{/if}}
+        <label for="ncm-set-{{this.key}}">{{this.name}}</label>
+        {{#if this.hint}}<p class="ncm-hint">{{this.hint}}</p>{{/if}}
       </div>
       <div class="ncm-setting-input">
-        {{#if (eq type "boolean")}}<input type="checkbox" id="ncm-set-{{key}}" name="{{key}}" {{#if checked}}checked{{/if}}>
-        {{else if (eq type "select")}}<select id="ncm-set-{{key}}" name="{{key}}">{{#each choices}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
-        {{else if (eq type "number")}}<input type="number" id="ncm-set-{{key}}" name="{{key}}" value="{{value}}"{{#if range}} min="{{range.min}}" max="{{range.max}}" step="{{range.step}}"{{/if}}>
-        {{else}}<input type="text" id="ncm-set-{{key}}" name="{{key}}" value="{{value}}">
+        {{#if (eq type "boolean")}}<input type="checkbox" id="ncm-set-{{this.key}}" name="{{this.key}}" {{#if this.checked}}checked{{/if}}>
+        {{else if (eq type "select")}}<select id="ncm-set-{{this.key}}" name="{{this.key}}">{{#each this.choices}}<option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>{{/each}}</select>
+        {{else if (eq type "number")}}<input type="number" id="ncm-set-{{this.key}}" name="{{this.key}}" value="{{this.value}}"{{#if this.range}} min="{{range.min}}" max="{{range.max}}" step="{{range.step}}"{{/if}}>
+        {{else}}<input type="text" id="ncm-set-{{this.key}}" name="{{this.key}}" value="{{this.value}}">
         {{/if}}
       </div>
     </li>

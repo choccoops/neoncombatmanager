@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.33.3
+
+- **The Action HUD's "NaN", for real this time.** Another module registers a template helper
+  called `sub`, and it was answering for every button's small label in place of the label
+  itself (nothing minus nothing: NaN). Every template now reads its own values explicitly, so
+  no helper of the same name (sub, max, round, count...) can stand in for them, anywhere in
+  the module.
+- **A blast's area is 5×5 squares again.** Foundry draws a square template from its diagonal,
+  and with equidistant diagonals a 10×10 m blast came out 14×14 m (7×7 squares), while the
+  attack itself still caught the right 5×5. The template is now measured as it's drawn and
+  scaled to the area's true size, and who's inside is read from the area, not the drawing.
+- **An area clears once it has gone off.** A moment after the blast (or a shell's cone) is
+  seen, its template disappears from the map; the card still lists who was caught and the
+  GM's Apply button still works and removes it for good. A miss stays until it's moved or
+  scattered; smoke and other areas that linger stay. New setting *Clear an area once it has
+  gone off* (on).
+
 ## 1.33.2
 
 - **No more "NaN" on the Action HUD.** A button's small yellow label (a Skill's total, a

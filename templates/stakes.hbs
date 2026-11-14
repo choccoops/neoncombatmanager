@@ -1,13 +1,13 @@
 <section class="ncm-stakes-wrap">
   <header class="ncm-stakes-head">
-    {{#if actor}}<img src="{{actor.img}}" alt="">{{/if}}
+    {{#if this.actor}}<img src="{{actor.img}}" alt="">{{/if}}
     <div>
       <span class="ncm-kicker">// {{localize "NEONCOMBAT.Stakes.Kicker"}}</span>
       <label class="ncm-stakes-who">{{localize "NEONCOMBAT.Stakes.Whose"}}
-        <select name="actor">{{#each actors}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select>
+        <select name="actor">{{#each this.actors}}<option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>{{/each}}</select>
       </label>
     </div>
-    {{#if actor}}
+    {{#if this.actor}}
     <div class="ncm-stakes-luck" data-tooltip="NEONCOMBAT.Stakes.LuckHint">
       <b>{{luck.value}}</b><small>/{{luck.max}}</small>
       <span>LUCK</span>
@@ -15,15 +15,15 @@
     {{/if}}
   </header>
 
-  {{#if actor}}
+  {{#if this.actor}}
   <ul class="ncm-stakes-perks">
     <li class="{{#if opts.ask}}on{{/if}}"><i class="fa-solid fa-hand"></i> {{localize "NEONCOMBAT.Stakes.Perk.ask" luck=needs.ask}}</li>
-    <li class="{{#if opts.doubleDown}}on{{/if}}">{{#if canDouble}}<button type="button" class="ncm-stakes-perk" data-action="doubleDown"><i class="fa-solid fa-rotate"></i> {{localize "NEONCOMBAT.Stakes.Perk.doubleDown" luck=needs.doubleDown}}</button>{{else}}<i class="fa-solid fa-rotate"></i> {{localize "NEONCOMBAT.Stakes.Perk.doubleDown" luck=needs.doubleDown}}{{#if used.doubleDown}} · {{localize "NEONCOMBAT.Stakes.UsedThisSession"}}{{else if opts.doubleDown}} · {{localize "NEONCOMBAT.Stakes.DoubleDownWhen"}}{{/if}}{{/if}}</li>
-    <li class="{{#if opts.forceFate}}on{{/if}}">{{#if canForce}}<button type="button" class="ncm-stakes-perk" data-action="forceFate"><i class="fa-solid fa-star"></i> {{localize "NEONCOMBAT.Stakes.Perk.forceFate" luck=needs.forceFate cost=forceCost}}</button>{{else}}<i class="fa-solid fa-star"></i> {{localize "NEONCOMBAT.Stakes.Perk.forceFate" luck=needs.forceFate cost=forceCost}}{{#if used.forceFate}} · {{localize "NEONCOMBAT.Stakes.UsedThisSession"}}{{else if opts.forceFate}} · {{localize "NEONCOMBAT.Stakes.ForceFateWhen"}}{{/if}}{{/if}}</li>
+    <li class="{{#if opts.doubleDown}}on{{/if}}">{{#if this.canDouble}}<button type="button" class="ncm-stakes-perk" data-action="doubleDown"><i class="fa-solid fa-rotate"></i> {{localize "NEONCOMBAT.Stakes.Perk.doubleDown" luck=needs.doubleDown}}</button>{{else}}<i class="fa-solid fa-rotate"></i> {{localize "NEONCOMBAT.Stakes.Perk.doubleDown" luck=needs.doubleDown}}{{#if used.doubleDown}} · {{localize "NEONCOMBAT.Stakes.UsedThisSession"}}{{else if opts.doubleDown}} · {{localize "NEONCOMBAT.Stakes.DoubleDownWhen"}}{{/if}}{{/if}}</li>
+    <li class="{{#if opts.forceFate}}on{{/if}}">{{#if this.canForce}}<button type="button" class="ncm-stakes-perk" data-action="forceFate"><i class="fa-solid fa-star"></i> {{localize "NEONCOMBAT.Stakes.Perk.forceFate" luck=needs.forceFate cost=forceCost}}</button>{{else}}<i class="fa-solid fa-star"></i> {{localize "NEONCOMBAT.Stakes.Perk.forceFate" luck=needs.forceFate cost=forceCost}}{{#if used.forceFate}} · {{localize "NEONCOMBAT.Stakes.UsedThisSession"}}{{else if opts.forceFate}} · {{localize "NEONCOMBAT.Stakes.ForceFateWhen"}}{{/if}}{{/if}}</li>
   </ul>
-  <textarea name="reason" rows="2" placeholder="{{#if gm}}{{localize 'NEONCOMBAT.Stakes.ReasonGM'}}{{else}}{{localize 'NEONCOMBAT.Stakes.ReasonPlayer'}}{{/if}}"></textarea>
+  <textarea name="reason" rows="2" placeholder="{{#if this.gm}}{{localize 'NEONCOMBAT.Stakes.ReasonGM'}}{{else}}{{localize 'NEONCOMBAT.Stakes.ReasonPlayer'}}{{/if}}"></textarea>
   <div class="ncm-stakes-actions">
-    {{#if gm}}
+    {{#if this.gm}}
     <button type="button" class="ncm-cta" data-action="raiseStakes"><i class="fa-solid fa-dice-six"></i> {{localize "NEONCOMBAT.Stakes.Raise"}}</button>
     <button type="button" data-action="grantOpp" data-tooltip="NEONCOMBAT.Stakes.GrantHint"><i class="fa-solid fa-plus"></i> {{localize "NEONCOMBAT.Stakes.GrantOpp"}}</button>
     <button type="button" data-action="grantComp" data-tooltip="NEONCOMBAT.Stakes.GrantHint"><i class="fa-solid fa-minus"></i> {{localize "NEONCOMBAT.Stakes.GrantComp"}}</button>
@@ -36,34 +36,34 @@
   <p class="ncm-empty">{{localize "NEONCOMBAT.Stakes.NoOne"}}</p>
   {{/if}}
 
-  {{#if flash}}
+  {{#if this.flash}}
   <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Flash.Kicker"}} <small>{{localize "NEONCOMBAT.Flash.Limits" beat=flash.used.beat mission=flash.used.mission maxBeat=flash.limits.beat maxMission=flash.limits.mission}}</small></h4>
   <textarea name="flashText" rows="2" placeholder="{{localize 'NEONCOMBAT.Flash.Placeholder'}}"></textarea>
   <div class="ncm-stakes-actions ncm-flash-types">
-    {{#each flash.types}}<button type="button" data-action="flashLuck" data-type="{{id}}" {{#unless ok}}disabled{{/unless}} data-tooltip="{{#if why}}{{why}}{{else}}{{hint}}{{/if}}"><b>{{label}}</b> <small>{{luck}} LUCK · ≤{{spend}}eb</small></button>{{/each}}
+    {{#each flash.types}}<button type="button" data-action="flashLuck" data-type="{{this.id}}" {{#unless this.ok}}disabled{{/unless}} data-tooltip="{{#if this.why}}{{this.why}}{{else}}{{this.hint}}{{/if}}"><b>{{this.label}}</b> <small>{{this.luck}} LUCK · ≤{{this.spend}}eb</small></button>{{/each}}
   </div>
-  {{#if gm}}<div class="ncm-stakes-actions">
+  {{#if this.gm}}<div class="ncm-stakes-actions">
     <button type="button" data-action="newBeat" data-tooltip="{{localize 'NEONCOMBAT.Flash.NewBeatHint'}}"><i class="fa-solid fa-forward"></i> {{localize "NEONCOMBAT.Flash.NewBeat"}}</button>
     <button type="button" data-action="newMission" data-tooltip="{{localize 'NEONCOMBAT.Flash.NewMissionHint'}}"><i class="fa-solid fa-flag-checkered"></i> {{localize "NEONCOMBAT.Flash.NewMission"}}</button>
   </div>{{/if}}
   {{/if}}
-  {{#if tarot}}
+  {{#if this.tarot}}
   <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Tarot.Kicker"}} <small>{{localize "NEONCOMBAT.Tarot.Status" seen=tarot.seen total=tarot.total}}{{#if tarot.drawn}} · {{localize "NEONCOMBAT.Tarot.DrawnThisSession"}}{{/if}}</small></h4>
   <div class="ncm-stakes-actions"><button type="button" data-action="drawTarot" data-tooltip="{{localize 'NEONCOMBAT.Tarot.DrawHint'}}"><i class="fa-solid fa-clone"></i> {{localize "NEONCOMBAT.Tarot.Draw"}}</button></div>
   {{/if}}
 
   <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Stakes.TableTitle"}}</h4>
   <ol class="ncm-stakes-faces">
-    {{#each faces}}<li class="kind-{{kind}}"><b>{{face}}</b><span>{{label}}</span></li>{{/each}}
+    {{#each this.faces}}<li class="kind-{{this.kind}}"><b>{{this.face}}</b><span>{{this.label}}</span></li>{{/each}}
   </ol>
   <div class="ncm-stakes-tables">
     <div>
       <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Stakes.Opportunities"}}</h4>
-      <dl>{{#each opportunities}}<dt>{{name}}</dt><dd>{{text}}</dd>{{/each}}</dl>
+      <dl>{{#each this.opportunities}}<dt>{{this.name}}</dt><dd>{{this.text}}</dd>{{/each}}</dl>
     </div>
     <div>
       <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Stakes.Complications"}}</h4>
-      <dl>{{#each complications}}<dt>{{name}}</dt><dd>{{text}}</dd>{{/each}}</dl>
+      <dl>{{#each this.complications}}<dt>{{this.name}}</dt><dd>{{this.text}}</dd>{{/each}}</dl>
     </div>
   </div>
 </section>

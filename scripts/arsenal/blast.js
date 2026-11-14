@@ -12,7 +12,7 @@ import { flightFor, squaresBetween, BLOOM_LEAD } from "./timing.js";
 import { Defense } from "./defense.js";
 import { Cover } from "../cover/cover.js";
 import { Dv } from "./dv.js";
-import { templateData, tokenInside, centerOf, blownBack, blowBackMetres, ammoEffect, scatter } from "./area.js";
+import { templateData, tokenInside, centerOf, sideOf, blownBack, blowBackMetres, ammoEffect, scatter } from "./area.js";
 import { L, esc } from "../util.js";
 
 /** A Shotgun Shell (and a flamethrower's) is one attack against DV13 (2070 Core Rules Ch07). */
@@ -43,10 +43,26 @@ export function damageFromHtml(html) {
   };
 }
 
+/**
+ * How much to scale a square template's diagonal so it draws the side wanted, pure: 1 when it
+ * already does (or can't be measured).
+ * @param {number} drawn - the side Foundry drew, in pixels
+ * @param {number} wanted - the side it should be, in pixels
+ */
+export function squareFit(drawn, wanted) {
+  if (!(drawn > 0) || !(wanted > 0) || Math.abs(drawn - wanted) <= 1) return 1;
+  return wanted / drawn;
+}
+
+/** Has a blast gone off (so its template has done its job)? Pure: not a miss still to be moved, not smoke that stays. */
+export function blastSpent(b, { persist = false } = {}) {
+  return !!b && ["hit", "landed"].includes(b.state) && !persist;
+}
+
 /** The tokens of a scene inside a template (documents, no canvas needed); the attacker stays out of a cone. */
 export function tokensIn(template, scene, { exclude = null } = {}) {
   const grid = { size: Number(scene?.grid?.size ?? scene?.dimensions?.size) || 100, distance: Number(scene?.grid?.distance ?? scene?.dimensions?.distance) || 2 };
-  const t = { t: template.t, x: template.x, y: template.y, distance: template.distance, direction: template.direction, angle: template.angle };
+  const t = { t: template.t, x: template.x, y: template.y, distance: template.distance, direction: template.direction, angle: template.angle, side: template.t === "rect" ? sideOf(template) : undefined };
   return [...(scene?.tokens ?? [])].filter((tok) => tok.id !== exclude && !tok.hidden && tokenInside(t, tok, grid));
 }
 
@@ -70,10 +86,30 @@ export const Blast = {
       // A miss the GM has moved lands there.
       if (b.state === "miss" && Compat.isActiveGM && userId === game.user.id) this.land(doc).catch((err) => console.error(`${MODULE_ID} | blast`, err));
     });
+    // Once the blast has gone off, its template has done its job: it clears from the map (the
+    // document stays for the GM's Apply button, which removes it).
+    Hooks.on("refreshMeasuredTemplate", (template) => this.veil(template));
   },
 
   get on() {
     return !!Settings.get("arsenalAreas");
+  },
+
+  /** Template id -> when its blast is over on this client (ms). Unknown: it already is. */
+  _boom: new Map(),
+
+  /** Leave a spent blast's template undrawn here: the shape and the squares it lit. */
+  veil(template) {
+    const doc = template?.document;
+    const b = doc?.flags?.[MODULE_ID]?.blast;
+    if (!b || !Settings.get("arsenalAreaClear")) return false;
+    const persist = !!ammoEffect({ kind: b.kind, ammoType: b.ammoType, ammoName: b.ammoName })?.persist;
+    if (!blastSpent(b, { persist }) || Date.now() < (this._boom.get(doc.id) ?? 0)) return false;
+    template.visible = false;
+    const id = template.highlightId;
+    const layer = canvas?.interface?.grid?.getHighlightLayer?.(id) ?? canvas?.grid?.getHighlightLayer?.(id);
+    layer?.clear?.();
+    return true;
   },
 
   grid(scene = canvas?.scene) {
@@ -93,7 +129,15 @@ export const Blast = {
     const grid = this.grid();
     const origin = token.center;
     const target = [...(game.user.targets ?? [])][0]?.center ?? null;
-    const at = (p) => (area.shape === "cone" ? templateData(area, { origin, toward: p }, grid) : templateData(area, { center: Compat.snapCenter(p) }, grid));
+    // Foundry draws a square from its diagonal, and how long that diagonal must be depends on the
+    // scene's rule for diagonals (equidistant: a 10 m square came out 14 m, 7 squares for 5). So
+    // the preview is measured once it's drawn and the diagonal scaled until the square is right.
+    let fit = 1;
+    const at = (p) => {
+      const { side, ...d } = area.shape === "cone" ? templateData(area, { origin, toward: p }, grid) : templateData(area, { center: Compat.snapCenter(p) }, grid);
+      if (d.t === "rect") d.distance *= fit;
+      return d;
+    };
     const flags = {
       [MODULE_ID]: {
         blast: {
@@ -109,6 +153,14 @@ export const Blast = {
     const doc = new cls({ ...at(target ?? { x: origin.x + grid.size * 3, y: origin.y }), user: game.user.id, fillColor: game.user.color?.css ?? game.user.color ?? "#ff2a6d", flags }, { parent: canvas.scene });
     const preview = new CONFIG.MeasuredTemplate.objectClass(doc);
     await preview.draw();
+    const calibrate = () => {
+      if (fit !== 1 || area.shape !== "rect") return;
+      const f = squareFit(Number(preview.shape?.width), (area.size / grid.distance) * grid.size);
+      if (f === 1) return;
+      fit = f;
+      doc.updateSource({ distance: doc.distance * fit });
+    };
+    calibrate();
     const layer = canvas.templates;
     const before = canvas.activeLayer;
     layer.activate?.();
@@ -123,6 +175,7 @@ export const Blast = {
       const move = () => {
         const p = Compat.mousePosition;
         if (!p) return;
+        calibrate();
         doc.updateSource(at(p));
         refresh();
       };
@@ -154,6 +207,8 @@ export const Blast = {
       canvas.stage.on("pointermove", move);
       canvas.stage.on("pointerdown", down);
       document.addEventListener("keydown", key, true);
+      refresh();
+      calibrate();
       refresh();
     });
   },
@@ -317,6 +372,15 @@ export const Blast = {
     const token = canvas.tokens?.get(b.tokenId);
     const look = this.lookFor(b);
     const { arrive: travel, shot } = this.times(doc, { launch });
+    // The template stays until the blast has been seen, then clears (veil).
+    if (!noBlast) {
+      const over = travel + 1200;
+      this._boom.set(doc.id, Date.now() + over);
+      setTimeout(() => {
+        const t = doc.object;
+        if (t && !t.destroyed) this.veil(t);
+      }, over + 30);
+    }
     if (look?.sound && !noBlast && Settings.get("arsenalSounds")) Sound.local({ key: look.sound, delay: travel });
     // Only the client that set it off starts the effects: Sequencer shows them to everyone.
     if (given === null || !Core.sequencer || !Settings.get("fxEnabled")) return true;
