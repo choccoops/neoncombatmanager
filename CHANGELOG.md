@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.33.1
+
+- **A GM's screen effect follows the selected token, and nothing else.** A GM saw the
+  full-screen Sandevistan, Berserk or Kerenzikov effect for their assigned character all the
+  time, on top of whichever token they were working with. A GM now gets it only for a token
+  they have selected: nothing selected, no screen effect. Players are unchanged (their own
+  character, and tokens they own and select). The Apogee's frozen time still reaches everyone.
+- **Removed: *Chrome looks only on tokens I've selected*** (1.33.0). It hid the token effects,
+  which was not what was asked for: a token's Sandevistan, Berserk and Kerenzikov looks always
+  show, for everyone.
+
 ## 1.33.0
 
 - **Operating Systems do more of their own work while they run.**

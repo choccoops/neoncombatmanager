@@ -36,13 +36,14 @@ export function screenLook(mine = [], { enabled = true } = {}) {
 }
 
 /**
- * Whose eyes this client looks through, pure: the user's own character, and the tokens they have
- * selected and own. A GM owns every token, so an NPC shows on the GM's screen while (and only
- * while) its token is selected.
+ * Whose eyes this client looks through, pure. A player: their own character, and the tokens they
+ * have selected and own. A GM owns every token and runs many at once, so a GM looks through the
+ * tokens they have selected and nothing else: no selection, no screen effect, whatever chrome is
+ * running on the map (their assigned character's included, until its token is selected).
  */
 export function viewpoints({ character = null, controlled = [], isGM = false } = {}) {
   const out = new Map();
-  if (character) out.set(character.id, character);
+  if (character && !isGM) out.set(character.id, character);
   for (const a of controlled) if (a && (isGM || a.isOwner)) out.set(a.id, a);
   return [...out.values()];
 }

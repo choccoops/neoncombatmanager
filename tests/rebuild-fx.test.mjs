@@ -706,7 +706,9 @@ test("running chrome on its owner's screen only: Berserk over a Sandevistan over
   const npc = { id: "n", isOwner: true };
   const theirs = { id: "t", isOwner: false };
   assert.deepEqual(viewpoints({ character: mine, controlled: [npc, theirs], isGM: false }).map((a) => a.id), ["a", "n"]);
-  assert.deepEqual(viewpoints({ character: mine, controlled: [npc], isGM: true }).map((a) => a.id), ["a", "n"]);
+  assert.deepEqual(viewpoints({ character: mine, controlled: [npc], isGM: true }).map((a) => a.id), ["n"], "a GM: the selected token only");
+  assert.deepEqual(viewpoints({ character: mine, controlled: [], isGM: true }), [], "nothing selected, nothing shown, even with a character of their own");
+  assert.deepEqual(viewpoints({ character: mine, controlled: [mine], isGM: true }).map((a) => a.id), ["a"], "their own character once its token is selected");
   assert.deepEqual(viewpoints({ controlled: [npc], isGM: true }).map((a) => a.id), ["n"]);
   assert.deepEqual(viewpoints({ controlled: [], isGM: true }), []);
 
@@ -719,8 +721,19 @@ test("running chrome on its owner's screen only: Berserk over a Sandevistan over
   solo.isOwner = true;
   const savedChar = game.user.character;
   game.user.character = solo;
+  const savedGM = game.user.isGM;
   assert.equal(Screen.refresh(), null);
   await Conditions.add("chromeFalcon", solo);
+  // A GM with a character of their own: nothing until its token is selected.
+  game.user.isGM = true;
+  const savedControlled = canvas.tokens.controlled;
+  canvas.tokens.controlled = [];
+  assert.equal(Screen.refresh(), null, "a GM with nothing selected");
+  canvas.tokens.controlled = [{ actor: solo }];
+  assert.deepEqual(Screen.refresh(), { kind: "sandevistan", tint: "#00e5ff" }, "selected: theirs to see");
+  canvas.tokens.controlled = savedControlled;
+  // A player: their own character, selected or not.
+  game.user.isGM = false;
   assert.deepEqual(Screen.refresh(), { kind: "sandevistan", tint: "#00e5ff" });
   assert.equal(made[0].id, SCREEN_ID);
   assert.equal(made[0].dataset.kind, "sandevistan");
@@ -732,6 +745,7 @@ test("running chrome on its owner's screen only: Berserk over a Sandevistan over
   await Conditions.remove("chromeFalcon", solo);
   assert.equal(Screen.refresh(), null);
   game.user.character = savedChar;
+  game.user.isGM = savedGM;
   delete globalThis.document;
   const css = readFileSync(path.join(root, "styles/neon-combat.css"), "utf8");
   assert.match(css, /#ncm-screen-fx \{[^}]*pointer-events: none/);

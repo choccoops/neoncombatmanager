@@ -683,14 +683,9 @@ and only yours: for a Sandevistan the world drains of colour and the rim glows a
 Operating System's colour; for Berserk the rim beats red. A Kerenzikov cools the picture very
 slightly, all the time, as if everything else ran a touch slow. Berserk wins over a Sandevistan,
 which wins over a Kerenzikov. It's a layer over the map that never takes a click and hides
-nothing. You get it for your assigned character and for tokens you own and have selected; a GM
-gets it for an NPC while that NPC's token is selected. *Chrome on my screen* (each player's own setting) turns it
+nothing. A player gets it for their assigned character and for tokens they own and have
+selected; a GM gets it only for a token they have selected (nothing selected, no screen effect). *Chrome on my screen* (each player's own setting) turns it
 off, and it holds still with token motion off or reduced motion asked for. No new sounds.
-
-**Many tokens at once.** *Chrome looks only on tokens I've selected* (each user's own setting,
-off by default) is for whoever runs a crowd: a running Sandevistan, Berserk or Kerenzikov shows
-its look, afterimages and motion on your screen only while its token is selected. The effects
-are still there for everyone else; your client just doesn't draw them.
 
 **What starting it costs** (Item Compendium, the Sandevistan, Berserk and their Operating
 Systems). As chrome starts, a card in chat says what it costs and allows, with a button for each
