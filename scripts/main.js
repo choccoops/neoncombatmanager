@@ -332,6 +332,9 @@ const api = {
     /** GM: make a Region a floor of a building (stack) at a height (m/yds). */
     add: (floor) => Levels.add(floor),
     remove: (region) => Levels.remove(region),
+    /** GM: mark a Region as an opening between floors (a stairwell, an atrium), or take the mark off. */
+    opening: (region, on = true) => Levels.opening(region, on),
+    openings: () => Levels.openingIds(),
     /** The real distance between two tokens, or null where the map's own is right. */
     distance: (a, b) => Levels.distance(a, b)
   },

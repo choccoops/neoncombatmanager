@@ -1212,12 +1212,17 @@ distance isn't the real one. With **Levels** on (the default):
 
 ### Seeing the other floors
 
-Select your token on a floor of a building: everyone on its other floors shows on yours, at the
-spot straight above or below them, as a pale figure. Blue with ▲ is above, amber with ▼ is
+Floors are solid: nobody sees or shoots through one. A building is open between floors only
+where the GM says so. In the **Levels** window, mark a Region as an **opening** (a stairwell, an
+atrium, a fire escape); drawn on one floor, it counts for that part of the plan on every floor.
+
+Select your token on a floor of a building: everyone on its other floors who stands in the same
+opening as you shows on yours, at the spot straight above or below them, as a pale figure. Blue with ▲ is above, amber with ▼ is
 below, and the number is the height between you. Click a figure to target the real token
 (Shift-click adds it); the attack is then measured up or down the building. Hidden tokens and
-unseen cloaks don't show to players. Setting *Levels: seeing the other floors* picks every
-floor, only the next one up and down, or none.
+unseen cloaks don't show to players. An attack at someone with a floor between you is called out
+on the card as no shot. Setting *Levels: seeing the other floors*: only through openings (the
+default), see-through for every floor or the next one up and down, or off.
 
 ### Stairs and ladders
 

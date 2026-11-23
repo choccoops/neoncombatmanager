@@ -14,6 +14,7 @@ import { Rebuilds, RebuildRegistry, REBUILD_HOOK, traitsOf, attackMods, damageAr
 import { AA, loadedAmmo } from "./aa.js";
 import { Cover } from "../cover/cover.js";
 import { Hold } from "../combat/hold.js";
+import { Levels } from "../senses/levels.js";
 import { Blast, damageFromHtml } from "./blast.js";
 import { Dv } from "./dv.js";
 import { Sound } from "./sound.js";
@@ -369,7 +370,9 @@ export const Arsenal = {
           // Cover in the way (a charged Tech shot goes through Thin cover): the card says so, and the damage card can hit it.
           const cover = Cover.forShot(token, t, { throughThin: tag.charged && !sp?.noThrough });
           const behind = shielded.swapped.find((s) => s.shield === t.name)?.holder;
-          tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref"), dodge: !Hold.cantDodge(t.actor) && Defense.ability(t.actor, { attacker: actor, ricochet: tag.ricochet }).can, ...(cover ? { cover } : {}), ...(behind ? { shieldFor: behind } : {}) });
+          // A solid floor between the two (another floor of the building, no opening they share): no shot.
+          const floor = Levels.floorBetween(token, t);
+          tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref"), dodge: !Hold.cantDodge(t.actor) && Defense.ability(t.actor, { attacker: actor, ricochet: tag.ricochet }).can, ...(cover ? { cover } : {}), ...(behind ? { shieldFor: behind } : {}), ...(floor ? { floor: true } : {}) });
         }
         tag.dv = tag.hits[0]?.dv ?? null;
         tag.cap = Number(item.system?.fireModes?.autoFire) || 0;
@@ -588,6 +591,7 @@ export const Arsenal = {
         if (cover) line += ` ${L(`${LANG}.Cover.${cover.self ? "Shooting" : "Behind"}`, { cover: esc(cover.label), hp: cover.hp })}`;
         const shieldFor = a.hits.find((x) => x.name === h.name)?.shieldFor;
         if (shieldFor) line += ` ${L(`${LANG}.Hold.Takes`, { holder: esc(shieldFor) })}`;
+        if (a.hits.find((x) => x.name === h.name)?.floor) line = L(`${LANG}.Levels.NoShot`, { name: esc(h.name) });
         notes.push(`<span class="ncm-hit ${h.hit ? "is-hit" : "is-miss"}">${line}</span>`);
       }
     }

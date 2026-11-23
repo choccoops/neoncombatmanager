@@ -13,6 +13,10 @@ import { debounce } from "../util.js";
  * targets the real token (Shift to add), so an attack up or down the building is aimed and
  * measured at the right one.
  *
+ * Floors are solid by default: a figure shows only when it and the viewer both stand in the same
+ * opening (a Region the GM marked: a stairwell, an atrium, a fire escape). The setting can make
+ * every floor see-through instead.
+ *
  * Left out: hidden tokens (for players), cloaks the viewer hasn't seen through, and anyone
  * Multilevel Tokens already shows on this floor as a clone.
  */
@@ -25,7 +29,7 @@ export const FloorView = {
   layer: null,
 
   get mode() {
-    return Levels.on ? String(Settings.get("levelsView") || "all") : "off";
+    return Levels.on ? String(Settings.get("levelsView") || "open") : "off";
   },
 
   init() {
@@ -59,9 +63,12 @@ export const FloorView = {
       if (t === v || !t.actor || t.document?.flags?.[MLT]?.stoken || cloned.has(t.id)) continue;
       if (!game.user?.isGM && (t.document?.hidden || Cloak.hides(t, v) || Cloak.unseen(t))) continue;
       const p = Levels.place(t, scene);
-      if (p?.floor) others.push({ id: t.id, floor: p.floor, corner: p.corner, point: p.point, height: p.height });
+      if (!p?.floor) continue;
+      // Floors are solid: only who shares an opening with the viewer (a stairwell, an atrium, a fire escape).
+      if (this.mode === "open" && !Levels.openFor(vp, p, scene)) continue;
+      others.push({ id: t.id, floor: p.floor, corner: p.corner, point: p.point, height: p.height });
     }
-    return ghostsFor(vp, others, floors, this.mode).map((g) => ({ ...g, token: all.find((t) => t.id === g.id) })).filter((g) => g.token);
+    return ghostsFor(vp, others, floors, this.mode === "open" ? "all" : this.mode).map((g) => ({ ...g, token: all.find((t) => t.id === g.id) })).filter((g) => g.token);
   },
 
   clear() {
