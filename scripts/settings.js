@@ -149,7 +149,7 @@ const DEFS = [
   // Levels: Regions as floors with heights, and a token's elevation, count in the distance for a DV
   ["levels", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Who on the other floors of a building shows on the viewer's own
-  ["levelsView", "world", String, "all", { choices: { all: K("LevelsView.all"), near: K("LevelsView.near"), off: K("LevelsView.off") }, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  ["levelsView", "world", String, "open", { choices: { open: K("LevelsView.open"), all: K("LevelsView.all"), near: K("LevelsView.near"), off: K("LevelsView.off") }, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Stairs and ladders: two linked Tiles
   ["stairs", "world", Boolean, true, {}],
   // Holds: Grab carries the held token along, a Human Shield takes the ranged attacks aimed at its holder

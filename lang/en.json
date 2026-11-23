@@ -1459,11 +1459,12 @@
       },
       "levelsView": {
         "name": "Levels: seeing the other floors",
-        "hint": "Whoever is on another floor of the building your token is in shows on your own floor, at the spot straight above or below: a pale figure, blue with ▲ for those above and amber with ▼ for those below, with the height between you. Click one to target the real token. Hidden tokens and cloaks you haven't seen through don't show."
+        "hint": "Floors are solid: you see someone on another floor of your building only where it's open between you, when you both stand in the same opening (a stairwell, an atrium, a fire escape: a Region the GM marks in the Levels window). They show on your own floor at the spot straight above or below: a pale figure, blue with ▲ above and amber with ▼ below, with the height between you. Click one to target the real token. An attack through a solid floor is called out as no shot. The other choices make every floor see-through."
       },
       "LevelsView": {
-        "all": "Every floor of the building",
-        "near": "The next floor up and down",
+        "open": "Only through openings (floors are solid)",
+        "all": "See-through: every floor of the building",
+        "near": "See-through: the next floor up and down",
         "off": "Off"
       },
       "stairs": {
@@ -3146,7 +3147,11 @@
       "Stack": "Building",
       "StackHint": "the same name for every floor of one building",
       "Height": "Height above the ground ({unit})",
-      "Save": "Save"
+      "Save": "Save",
+      "Openings": "Open between floors (a stairwell, an atrium, a fire escape). Tick one to close it:",
+      "Opening": "Mark a Region as an opening",
+      "NoOpening": "(none)",
+      "NoShot": "{name}: a floor lies between you. No shot."
     },
     "Hold": {
       "Grab": "Grab: {name}",

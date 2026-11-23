@@ -36,8 +36,8 @@ export const onto = (p, from, to) => ({ x: p.x - from.x + to.x, y: p.y - from.y 
 /** Across and up, together, to the whole m/yd. */
 export const through = (across, up) => Math.round(Math.hypot(Number(across) || 0, Number(up) || 0));
 
-/** Which other floors are looked onto: "off" none, "near" the next one up and down, "all" every floor of the building. */
-export const VIEW_MODES = ["all", "near", "off"];
+/** Which other floors are looked onto: "open" only through an opening both stand in (floors are solid), "off" none, "near" the next one up and down, "all" every floor of the building. */
+export const VIEW_MODES = ["open", "all", "near", "off"];
 
 /**
  * Who shows on the viewer's floor as a figure from another floor of the same building.
@@ -63,3 +63,20 @@ export function ghostsFor(viewer, others = [], floors = [], mode = "all") {
 
 /** Is the viewer's target on another floor of its building (the map between them means nothing)? */
 export const apart = (pa, pb) => stacked(pa?.floor, pb?.floor);
+
+/**
+ * Openings: where a building is open from floor to floor (a stairwell, an atrium, a fire escape).
+ * A floor is solid everywhere else: nobody sees or shoots through it. An opening is a Region
+ * drawn on one floor of the building; it stands for that part of the plan on every floor.
+ *
+ * Two people on different floors have a line between them when both stand in the same opening.
+ * @param {object[]} openings - [{ stack, shapes, corner }] (corner: its floor Region's top left)
+ * @param {object} pa - { floor, corner, point } (from Levels.place)
+ * @param {object} pb - the same, for the other
+ * @param {(shapes: object[], p: {x,y}) => boolean} inside - the point-in-shapes test
+ */
+export function openBetween(openings = [], pa, pb, inside) {
+  if (!stacked(pa?.floor, pb?.floor) || !pa.corner || !pb.corner) return false;
+  return (openings ?? []).some((o) => o.stack === pa.floor.stack && o.corner
+    && inside(o.shapes, onto(pa.point, pa.corner, o.corner)) && inside(o.shapes, onto(pb.point, pb.corner, o.corner)));
+}

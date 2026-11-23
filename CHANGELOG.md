@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.44.0
+
+- **Floors are solid.** 1.43.0 showed everyone on the other floors of a building, and let them
+  be shot at, as if the floors were glass. Now a floor blocks sight and fire, except where the
+  building is open from floor to floor:
+  - *Openings*: in the **Levels** window, mark a Region as an opening: a stairwell, an atrium,
+    a fire escape. Draw it on any one floor of the building; it stands for that part of the
+    plan on every floor. Tick an opening in the same window to close it.
+  - *Seeing*: someone on another floor shows on yours (the pale figure) only when you both
+    stand in the same opening. Everyone else on the other floors stays unseen.
+  - *Shooting*: an attack at someone on another floor with no opening between you says so on
+    the attack card: a floor lies between, no shot.
+  - *Levels: seeing the other floors* now defaults to **Only through openings**. The
+    see-through choices (every floor, or the next up and down) are still there for a glass
+    floor or a GM who wants the overview.
+  - `api.levels.opening(region, on)` and `api.levels.openings()` for macros.
+
 ## 1.43.0
 
 - **Seeing the other floors.** With floors set up under Levels, whoever is on another floor of

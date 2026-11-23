@@ -117,3 +117,48 @@ test("stairs at the table: linking two tiles, a token taken up and not straight 
   await Stairs.unlink(other);
   assert.equal(Stairs.tiles(scene).length, 0);
 });
+
+test("openings: a floor is solid except where the building is open between floors", async () => {
+  const { inShapes } = await import("../scripts/senses/far-data.js");
+  const { Levels, FLOORS_FLAG, OPENINGS_FLAG } = await import("../scripts/senses/levels.js");
+  const rect = (x, y, width, height) => ({ type: "rectangle", x, y, width, height });
+  const g = { region: "g", stack: "Tower", height: 0 };
+  const f2 = { region: "f2", stack: "Tower", height: 4 };
+  // A stairwell drawn on the ground floor, in the plan's top left 200 × 200.
+  const well = [{ stack: "Tower", shapes: [rect(0, 0, 200, 200)], corner: { x: 0, y: 0 } }];
+  const at = (floor, cx, x, y) => ({ floor, corner: { x: cx, y: 0 }, point: { x: cx + x, y } });
+  assert.equal(LD.openBetween(well, at(g, 0, 100, 100), at(f2, 2000, 150, 50), inShapes), true, "both in the stairwell");
+  assert.equal(LD.openBetween(well, at(g, 0, 100, 100), at(f2, 2000, 500, 500), inShapes), false, "one of them out on the floor");
+  assert.equal(LD.openBetween(well, at(g, 0, 500, 500), at(f2, 2000, 500, 500), inShapes), false);
+  assert.equal(LD.openBetween([], at(g, 0, 100, 100), at(f2, 2000, 100, 100), inShapes), false, "no openings: every floor is solid");
+  assert.equal(LD.openBetween([{ ...well[0], stack: "Shop" }], at(g, 0, 100, 100), at(f2, 2000, 100, 100), inShapes), false, "another building's stairwell");
+  assert.equal(LD.openBetween(well, at(g, 0, 100, 100), at(g, 0, 150, 150), inShapes), false, "same floor: not a question of openings");
+
+  // At the table.
+  const scene = {
+    grid: { size: 100 },
+    regions: [{ id: "g", shapes: [rect(0, 0, 1000, 1000)] }, { id: "f2", shapes: [rect(2000, 0, 1000, 1000)] }, { id: "well", name: "Stairwell", shapes: [rect(2000, 0, 200, 200)] }],
+    flags: { [M]: { [FLOORS_FLAG]: [g, f2], [OPENINGS_FLAG]: ["well"] } }
+  };
+  const tok = (id, x, y) => ({ id, center: { x, y }, document: { id, parent: scene, elevation: 0, flags: {} } });
+  const prev = globalThis.canvas;
+  globalThis.canvas = { ...(prev ?? {}), scene, dimensions: { size: 100, distance: 2 }, grid: null };
+  try {
+    await Settings.set("levels", true);
+    await Settings.set("levelsView", "open");
+    // The opening was drawn on the 2nd floor: it's that part of the plan on every floor.
+    assert.deepEqual(Levels.openings(scene).map((o) => [o.id, o.stack, o.corner]), [["well", "Tower", { x: 2000, y: 0 }]]);
+    const below = tok("a", 100, 100);
+    const above = tok("b", 2150, 150);
+    const room = tok("c", 2700, 700);
+    assert.equal(Levels.floorBetween(below, above), false, "up the stairwell");
+    assert.equal(Levels.floorBetween(below, room), true, "through the floor: no shot");
+    assert.equal(Levels.floorBetween(above, room), false, "same floor");
+    // The GM's choice of see-through floors.
+    await Settings.set("levelsView", "all");
+    assert.equal(Levels.floorBetween(below, room), false);
+  } finally {
+    await Settings.set("levelsView", "open");
+    globalThis.canvas = prev;
+  }
+});

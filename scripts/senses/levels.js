@@ -2,7 +2,7 @@ import { MODULE_ID, LANG } from "../constants.js";
 import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { inShapes, boundsOf } from "./far-data.js";
-import { cleanFloor, floorIn, stacked, onto, through, apart } from "./levels-data.js";
+import { cleanFloor, floorIn, stacked, onto, through, apart, openBetween } from "./levels-data.js";
 import { L, esc } from "../util.js";
 
 /**
@@ -15,6 +15,7 @@ import { L, esc } from "../util.js";
  * clone is measured to the real one (its flag names it).
  */
 export const FLOORS_FLAG = "floors";
+export const OPENINGS_FLAG = "openings";
 const MLT = "multilevel-tokens";
 
 export const Levels = {
@@ -89,6 +90,64 @@ export const Levels = {
     return apart(this.place(this.real(a), scene), this.place(this.real(b), scene));
   },
 
+  /** Are floors solid: seen and shot through only at an opening? (The GM can make them glass with the setting.) */
+  get solid() {
+    return this.on && String(Settings.get("levelsView") || "open") === "open";
+  },
+
+  /** The ids of the Regions marked as openings. */
+  openingIds(scene = canvas?.scene) {
+    const list = scene?.flags?.[MODULE_ID]?.[OPENINGS_FLAG];
+    return Array.isArray(list) ? list.map(String) : [];
+  },
+
+  /** The scene's openings, each with the building it's in: [{ id, stack, shapes, corner }]. */
+  openings(scene = canvas?.scene) {
+    const regions = [...(scene?.regions ?? [])];
+    const floors = this.floors(scene);
+    const out = [];
+    for (const id of this.openingIds(scene)) {
+      const r = regions.find((x) => x.id === id);
+      const box = r ? boundsOf(r.shapes ?? []) : null;
+      if (!box) continue;
+      // The floor it's drawn on: the one its middle lies in.
+      const mid = { x: box.cx, y: box.cy };
+      const floor = floorIn(floors, regions.filter((x) => x.id !== id && inShapes(x.shapes ?? [], mid)).map((x) => x.id));
+      const fbox = floor ? boundsOf(regions.find((x) => x.id === floor.region)?.shapes ?? []) : null;
+      if (floor?.stack && fbox) out.push({ id, stack: floor.stack, shapes: r.shapes ?? [], corner: { x: fbox.x, y: fbox.y } });
+    }
+    return out;
+  },
+
+  /** Do two places on different floors of a building have a line between them (both in one opening)? */
+  openFor(pa, pb, scene = canvas?.scene) {
+    return openBetween(this.openings(scene), pa, pb, inShapes);
+  },
+
+  /** Is there a solid floor between two tokens (different floors of one building, no opening both stand in)? */
+  floorBetween(a, b) {
+    if (!this.solid) return false;
+    const scene = (a?.document ?? a)?.parent ?? canvas?.scene;
+    const pa = this.place(this.real(a), scene);
+    const pb = this.place(this.real(b), scene);
+    return apart(pa, pb) && !this.openFor(pa, pb, scene);
+  },
+
+  async saveOpenings(ids, scene = canvas?.scene) {
+    if (!game.user?.isGM || !scene) return [];
+    const clean = [...new Set(ids.map(String))].filter((id) => [...(scene.regions ?? [])].some((r) => r.id === id));
+    await scene.setFlag(MODULE_ID, OPENINGS_FLAG, clean);
+    Hooks.callAll(`${MODULE_ID}.fxChanged`);
+    return clean;
+  },
+
+  /** GM: mark a Region as an opening between floors, or (on: false) take the mark off. */
+  async opening(region, on = true, scene = canvas?.scene) {
+    const id = String(region?.id ?? region);
+    const rest = this.openingIds(scene).filter((x) => x !== id);
+    return this.saveOpenings(on ? [...rest, id] : rest, scene);
+  },
+
   /** The floor a token is on, for a label: { stack, height } or null. */
   floorOf(token) {
     return this.place(this.real(token), (token?.document ?? token)?.parent ?? canvas?.scene)?.floor ?? null;
@@ -126,11 +185,15 @@ export const Levels = {
     const name = (id) => esc(regions.find((r) => r.id === id)?.name || id);
     const floors = this.floors().sort((x, y) => x.stack.localeCompare(y.stack) || x.height - y.height);
     const rows = floors.map((f) => `<label class="ncm-check"><input type="checkbox" name="del-${esc(f.region)}"> ${f.stack ? `${esc(f.stack)} · ` : ""}${name(f.region)} · ${f.height} ${unit}</label>`).join("");
+    const open = this.openingIds();
+    const openRows = open.map((id) => `<label class="ncm-check"><input type="checkbox" name="shut-${esc(id)}"> ${name(id)}</label>`).join("");
     const content = `<div class="ncm-grid">${rows ? `<p class="ncm-ref">${L(`${LANG}.Levels.Existing`)}</p>${rows}` : ""}`
       + `<p class="ncm-ref">${L(`${LANG}.Levels.New`)}</p>`
       + `<label>${L(`${LANG}.Levels.Region`)}<select name="region">${regions.map((r) => `<option value="${esc(r.id)}">${esc(r.name || r.id)}</option>`).join("")}</select></label>`
       + `<label>${L(`${LANG}.Levels.Stack`)}<input type="text" name="stack" value="${esc(floors[0]?.stack ?? "")}" placeholder="${L(`${LANG}.Levels.StackHint`)}"></label>`
-      + `<label>${L(`${LANG}.Levels.Height`, { unit })}<input type="number" name="height" step="0.5" placeholder="4"></label></div>`;
+      + `<label>${L(`${LANG}.Levels.Height`, { unit })}<input type="number" name="height" step="0.5" placeholder="4"></label>`
+      + `<p class="ncm-ref">${L(`${LANG}.Levels.Openings`)}</p>${openRows}`
+      + `<label>${L(`${LANG}.Levels.Opening`)}<select name="opening"><option value="">${L(`${LANG}.Levels.NoOpening`)}</option>${regions.filter((r) => !open.includes(r.id)).map((r) => `<option value="${esc(r.id)}">${esc(r.name || r.id)}</option>`).join("")}</select></label></div>`;
     const picked = await Compat.DialogV2.prompt({
       window: { title: L(`${LANG}.Levels.Tool`) },
       classes: ["neon-combat", "ncm-dialog"],
@@ -139,7 +202,10 @@ export const Levels = {
         label: L(`${LANG}.Levels.Save`),
         callback: (event, button) => {
           const f = button.form.elements;
-          return { del: floors.filter((x) => f[`del-${x.region}`]?.checked).map((x) => x.region), region: f.region.value, stack: f.stack.value, height: f.height.value };
+          return {
+            del: floors.filter((x) => f[`del-${x.region}`]?.checked).map((x) => x.region), region: f.region.value, stack: f.stack.value, height: f.height.value,
+            shut: open.filter((id) => f[`shut-${id}`]?.checked), opening: f.opening.value
+          };
         }
       },
       rejectClose: false
@@ -148,6 +214,8 @@ export const Levels = {
     let next = this.floors().filter((x) => !picked.del.includes(x.region));
     const f = picked.height === "" ? null : cleanFloor(picked);
     if (f) next = [...next.filter((x) => x.region !== f.region), f];
+    const nextOpen = [...open.filter((id) => !picked.shut.includes(id)), ...(picked.opening ? [picked.opening] : [])];
+    if (nextOpen.length !== open.length || picked.opening) await this.saveOpenings(nextOpen);
     return this.save(next);
   }
 };
