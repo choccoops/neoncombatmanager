@@ -34,6 +34,7 @@ import { Scope } from "./arsenal/scope.js";
 import { Senses } from "./senses/senses.js";
 import { Cloak } from "./senses/cloak.js";
 import { Sight } from "./senses/sight.js";
+import { Far } from "./senses/far.js";
 import { Blood } from "./blood/blood.js";
 import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
@@ -319,6 +320,17 @@ const api = {
     /** GM: wipe the scene's blood (or, with { near: [points] }, within three squares of each). */
     clear: (options) => Blood.clear(options)
   },
+  /** Linked areas: places far apart, drawn on one scene. */
+  far: {
+    open: () => Far.open(),
+    /** The scene's links: [{ id, a, b, distance, both }] (a, b: Region ids). */
+    list: () => Far.links(),
+    /** GM: link two Regions with the distance between them (m/yds). */
+    add: (link) => Far.add(link),
+    remove: (id) => Far.remove(id),
+    /** The linked distance between two tokens, or null. */
+    distance: (a, b) => Far.distance(a, b)
+  },
   /** Cloaks against enhanced sight: the GM's secret DV17 Perception. */
   cloak: {
     /** GM: every watcher with a line to this cloaked token (or everyone, with none given) tries again now, in secret. */
@@ -455,6 +467,7 @@ Hooks.once("init", () => {
   Senses.init();
   Cloak.init();
   Sight.init();
+  Far.init();
   Blood.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
 

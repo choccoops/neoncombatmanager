@@ -250,7 +250,7 @@ export const Blast = {
     const center = centerOf(doc, grid);
     let dv;
     if (b.area.shape === "cone") dv = SHELL_DV;
-    else dv = await Dv.forWeapon(item, token ? Compat.measure(token.center, center) : 0);
+    else dv = await Dv.forWeapon(item, token ? Dv.distance(token, center) : 0);
     const total = Number(r.total) || 0;
     const known = Number.isFinite(dv) && dv !== null;
     const hit = known ? total > dv : true;
