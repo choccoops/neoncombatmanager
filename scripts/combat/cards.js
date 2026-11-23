@@ -174,6 +174,10 @@ export const Cards = {
       const { Arsenal } = await import("../arsenal/arsenal.js");
       return Arsenal.click(message, btn, event, actor);
     }
+    if (String(d.ncmAction).startsWith("cloak-")) {
+      const { Cloak } = await import("../senses/cloak.js");
+      return Cloak.click(message, btn);
+    }
     if (String(d.ncmAction).startsWith("humanity-")) {
       const { Humanity } = await import("../humanity/humanity.js");
       return Humanity.click(message, btn, event, actor);

@@ -3,7 +3,8 @@ import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { Conditions } from "../conditions/engine.js";
-import { MODES, HEAT_MODES, HEAT_TINT, modesOf, heatOf, torchOf, torchLight } from "./senses-data.js";
+import { MODES, HEAT_MODES, HEAT_TINT, UV_GLOW, bleeds, modesOf, heatOf, torchOf, torchLight } from "./senses-data.js";
+import { Cloak } from "./cloak.js";
 import { debounce, L } from "../util.js";
 
 /**
@@ -32,8 +33,19 @@ export const Senses = {
   },
 
   init() {
-    const soon = debounce(() => this.drawHeat(), 80);
+    const soon = debounce(() => {
+      this.drawHeat();
+      this.refreshMarks();
+    }, 80);
     this.soon = soon;
+    // UV-only marks: hidden as they're drawn, unless this client looks in UV (or is the GM).
+    for (const h of ["refreshDrawing", "refreshTile"]) {
+      Hooks.on(h, (p) => {
+        if (!this.uvOnly(p?.document)) return;
+        p.visible = this.showsUv();
+      });
+    }
+    for (const h of ["renderDrawingConfig", "renderTileConfig"]) Hooks.on(h, (app, html) => this.markConfig(app, html));
     for (const h of ["controlToken", "canvasReady", "updateToken", "refreshToken", "sightRefresh", "createActiveEffect", "deleteActiveEffect", `${MODULE_ID}.fxChanged`]) Hooks.on(h, () => soon());
     Hooks.on("canvasTearDown", () => this.clearHeat());
     // What gave the sight or the light is gone (unequipped, removed, uninstalled): it goes off.
@@ -221,6 +233,53 @@ export const Senses = {
     });
   },
 
+  /** Does a token show blood under UV? */
+  bleeds(token) {
+    const actor = token?.actor;
+    if (!actor || !CPR.isMeat(actor)) return false;
+    return bleeds(Conditions.has("dead", actor) ? "dead" : CPR.woundState(actor));
+  },
+
+  /** A drawing or tile the GM marked "UV only": seen by whoever looks in UV (and by the GM, always). */
+  uvOnly(doc) {
+    return !!doc?.flags?.[MODULE_ID]?.uvOnly;
+  },
+
+  showsUv() {
+    return !!game.user?.isGM || this.viewer()?.mode === "uv";
+  },
+
+  /** Hide or show the UV-only drawings and tiles on this client. */
+  refreshMarks() {
+    if (!canvas?.ready) return;
+    const show = this.showsUv();
+    for (const layer of [canvas.drawings, canvas.tiles]) {
+      for (const p of layer?.placeables ?? []) {
+        if (!this.uvOnly(p.document)) continue;
+        p.visible = show;
+        // A GM not looking in UV sees them faint: there, but not for the players.
+        if (game.user?.isGM && p.mesh !== undefined) p.alpha = this.viewer()?.mode === "uv" ? 1 : 0.45;
+        else if (game.user?.isGM) p.alpha = this.viewer()?.mode === "uv" ? 1 : 0.45;
+      }
+    }
+  },
+
+  /** "Visible only in UV" in a drawing's or tile's settings. */
+  markConfig(app, html) {
+    const root = Compat.element(html);
+    const doc = app.document ?? app.object;
+    if (!root || !doc || !game.user?.isGM || root.querySelector(".ncm-uv-only")) return;
+    const form = root.querySelector("form") ?? root;
+    const anchor = form.querySelector("footer, .form-footer, button[type=submit]");
+    const group = document.createElement("div");
+    group.className = "form-group ncm-uv-only";
+    group.innerHTML = `<label>${L(`${LANG}.Senses.UvOnly.Label`)}</label><div class="form-fields"><input type="checkbox" name="flags.${MODULE_ID}.uvOnly" ${this.uvOnly(doc) ? "checked" : ""}></div><p class="hint">${L(`${LANG}.Senses.UvOnly.Hint`)}</p>`;
+    const before = anchor?.closest("footer, .form-footer") ?? anchor;
+    if (before) before.before(group);
+    else form.append(group);
+    app.setPosition?.({ height: "auto" });
+  },
+
   clearHeat() {
     const box = this._heat;
     this._heat = null;
@@ -237,14 +296,16 @@ export const Senses = {
   drawHeat() {
     this.clearHeat();
     const v = this.viewer();
-    if (!v || !HEAT_MODES.includes(v.mode) || !Settings.get("visionHeat") || typeof PIXI === "undefined") return 0;
+    if (!v || typeof PIXI === "undefined") return 0;
+    if (v.mode === "uv") return this.drawBlood(v);
+    if (!HEAT_MODES.includes(v.mode) || !Settings.get("visionHeat")) return 0;
     const tint = HEAT_TINT[v.mode];
     const box = new PIXI.Container();
     box.name = HEAT_ID;
     box.eventMode = "none";
     let n = 0;
     for (const t of canvas.tokens?.placeables ?? []) {
-      if (t === v.token || !t.visible) continue;
+      if (t === v.token || !t.visible || Cloak.hides(t, v.token)) continue;
       const heat = this.heat(t);
       if (!heat) continue;
       const c = t.center;
@@ -281,6 +342,43 @@ export const Senses = {
       };
       canvas.app.ticker.add(this._tick);
     }
+    return n;
+  },
+
+  /** UV: fresh blood fluoresces on the badly wounded and the dead the viewer can see. This client only. */
+  drawBlood(v) {
+    if (!Settings.get("visionHeat")) return 0;
+    const box = new PIXI.Container();
+    box.name = HEAT_ID;
+    box.eventMode = "none";
+    let n = 0;
+    for (const t of canvas.tokens?.placeables ?? []) {
+      if (t === v.token || !t.visible || !this.bleeds(t) || Cloak.hides(t, v.token)) continue;
+      const c = t.center;
+      const r = Math.max(t.w, t.h) / 2;
+      const g = new PIXI.Graphics();
+      // Spatter, the same for a token each time (from its id), brightest where it pooled.
+      let seed = [...String(t.id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 9973, 7);
+      const rnd = () => (seed = (seed * 137 + 11) % 9973) / 9973;
+      for (let i = 0; i < 9; i++) {
+        const a = rnd() * Math.PI * 2;
+        const d = r * (0.2 + rnd() * 0.75);
+        g.beginFill(UV_GLOW, 0.55 + rnd() * 0.35).drawCircle(c.x + Math.cos(a) * d, c.y + Math.sin(a) * d, r * (0.05 + rnd() * 0.11)).endFill();
+      }
+      box.addChild(g);
+      n++;
+    }
+    if (!n) {
+      box.destroy();
+      return 0;
+    }
+    try {
+      if (PIXI.BlurFilter) box.filters = [new PIXI.BlurFilter(2)];
+    } catch {
+      /* drawn sharp */
+    }
+    (canvas.interface ?? canvas.stage).addChild(box);
+    this._heat = box;
     return n;
   },
 

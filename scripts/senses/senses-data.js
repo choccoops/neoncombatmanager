@@ -1,6 +1,16 @@
 /**
  * Enhanced sight and torches, pure (tests import it).
  *
+ * The three ways of seeing do different jobs here:
+ *   Low Light  an image intensifier: the scene as it is, amplified. Who's out in the dark shows
+ *              as themselves, in its green.
+ *   Infrared   heat: living bodies burn bright, a Full Body Conversion reads cold, and what has
+ *              no heat doesn't show.
+ *   UV         reflected ultraviolet: no heat, but traces. Who's out in the dark shows in its
+ *              violet; blood fluoresces on the badly wounded and the dead; and drawings and
+ *              tiles the GM marks "UV only" (a tag, a tripwire, writing in invisible ink)
+ *              appear for whoever looks in UV, and for nobody else.
+ *
  * 2070 Item Compendium: Low Light / Infrared / UV (cybereyes, or built into glasses, a helmet or
  * a Smart Scope) drops darkness, smoke and fog penalties to 0 and tells warm bodies from cold
  * metal; an Infrared Nightvision Scope does the same through the gun. A Full Body Conversion
@@ -10,15 +20,22 @@
 
 /** The three ways of seeing, in the order they're offered: each its own look on the screen. */
 export const MODES = ["lowlight", "infrared", "uv"];
-/** Which of them show heat. */
-export const HEAT_MODES = ["infrared", "uv"];
+/** Which of them show heat. Infrared reads what a body gives off; UV reads what light bounces back. */
+export const HEAT_MODES = ["infrared"];
 /** Each mode's colour (the screen's wash, the HUD's light). */
 export const MODE_TINT = { lowlight: "#39ff14", infrared: "#ff7a1a", uv: "#b26bff" };
 /** What a warm body and a cold one look like in each heat mode: fill colours. */
 export const HEAT_TINT = {
-  infrared: { warm: 0xff5a1f, cold: 0x2f7dff },
-  uv: { warm: 0xe9d4ff, cold: 0x4b2f8a }
+  infrared: { warm: 0xff5a1f, cold: 0x2f7dff }
 };
+/** What fluoresces under UV: blood, and whatever the GM has marked as UV-only. */
+export const UV_GLOW = 0xf2e6ff;
+
+/**
+ * Does someone show blood under UV, pure: wounded badly enough to be bleeding, or dead.
+ * (UV shows no heat: it shows traces. Fresh blood fluoresces.)
+ */
+export const bleeds = (wound) => ["seriouslyWounded", "mortallyWounded", "dead"].includes(String(wound ?? ""));
 
 const strip = (html) => String(html ?? "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ");
 

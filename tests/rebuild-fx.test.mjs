@@ -1859,7 +1859,8 @@ test("enhanced sight shows who's out in the dark as outlines to target: green in
   assert.equal(sensedColor("infrared", "warm"), 0xff5a1f);
   assert.equal(sensedColor("infrared", "cold"), 0x2f7dff);
   assert.equal(sensedColor("infrared", null), null, "no heat to read: nothing to show");
-  assert.equal(sensedColor("uv", "warm"), 0xe9d4ff);
+  assert.equal(sensedColor("uv", "warm"), 0xb26bff, "UV reads no heat: whoever's there, in its violet");
+  assert.equal(sensedColor("uv", null), 0xb26bff);
 
   for (const k of ["visionModes", "visionOutlines", "visionHeat"]) await Settings.set(k, true);
   const scout = crew("Scout", []);
@@ -1931,4 +1932,143 @@ test("enhanced sight shows who's out in the dark as outlines to target: green in
   canvas.walls.placeables = savedWalls;
   canvas.tokens.controlled = savedControlled;
   game.user.targets = savedTargets;
+});
+
+test("cloaks against enhanced sight: unseen in Low Light, Infrared and UV until the GM's secret DV17 Perception is beaten; UV shows blood, not heat", async () => {
+  const { Cloak, seesThrough, tryStamp, CLOAK_DV, SEEN_FLAG } = await import("../scripts/senses/cloak.js");
+  const { Xray: X } = await import("../scripts/arsenal/xray.js");
+  const { Senses } = await import("../scripts/senses/senses.js");
+  const D = await import("../scripts/senses/senses-data.js");
+  // Pure.
+  assert.equal(CLOAK_DV, 17);
+  assert.equal(seesThrough(18), true);
+  assert.equal(seesThrough(17), false, "it has to beat the DV");
+  assert.equal(tryStamp({ combatId: "c", round: 2, started: true }), "c:2");
+  assert.notEqual(tryStamp({ combatId: "c", round: 3, started: true }), tryStamp({ combatId: "c", round: 2, started: true }), "a new Round, a new try");
+  assert.equal(tryStamp({}), "idle", "out of a fight: one try");
+  assert.deepEqual(D.HEAT_MODES, ["infrared"], "UV shows no heat");
+  assert.deepEqual([D.bleeds("seriouslyWounded"), D.bleeds("mortallyWounded"), D.bleeds("dead"), D.bleeds("lightlyWounded"), D.bleeds("notWounded")], [true, true, true, false, false]);
+
+  for (const k of ["visionModes", "visionOutlines", "visionHeat"]) await Settings.set(k, true);
+  await Settings.set("cloakCheck", "auto");
+  const saved = { tokens: canvas.tokens.placeables, walls: canvas.walls.placeables, controlled: canvas.tokens.controlled, combat: game.combat, get: canvas.tokens.get };
+  game.combat = null;
+  const mk = (t) => {
+    t.isOwner = true;
+    t.document.flags = {};
+    t.document.update = async (u) => {
+      for (const [k, v] of Object.entries(u)) {
+        const parts = k.split(".");
+        if (parts[0] !== "flags") continue;
+        let o = (t.document.flags[parts[1]] ??= {});
+        for (const p of parts.slice(2, -1)) o = o[p.replace(/^-=/, "")] ??= {};
+        const last = parts.at(-1);
+        if (last.startsWith("-=")) delete o[last.slice(2)];
+        else o[last] = v;
+      }
+    };
+    return t;
+  };
+  const scout = crew("Scout", [{ _id: "perc", name: "Perception", type: "skill", system: { stat: "int", level: 6 } }]);
+  const me = mk(tokenAt(scout, 100, 500));
+  me.document.flags[M] = { vision: { mode: "infrared" } };
+  const ghostActor = makeActor({ name: "Ghost" });
+  const ghost = mk(tokenAt(ghostActor, 900, 500, { visible: false }));
+  const plain = mk(tokenAt(makeActor({ name: "Ganger" }), 900, 700, { visible: false }));
+  canvas.tokens.placeables = [me, ghost, plain];
+  canvas.tokens.get = (id) => canvas.tokens.placeables.find((t) => t.id === id);
+  canvas.tokens.controlled = [me];
+  canvas.walls.placeables = [];
+  assert.deepEqual(X.sensed().map((s) => s.token.name), ["Ghost", "Ganger"], "nobody cloaked: both show");
+
+  // The cloak goes on: gone from enhanced sight, with nothing to say so.
+  await Conditions.add("chromeCloak", ghostActor);
+  assert.equal(Cloak.cloaked(ghostActor), true);
+  assert.equal(Cloak.hides(ghost, me), true);
+  assert.deepEqual(X.sensed().map((s) => s.token.name), ["Ganger"]);
+
+  // The GM's client rolls for the watcher, in secret. INT + Perception 6 here, and a 1 on the die: nothing.
+  const base = Cloak.perception(scout);
+  chat.length = 0;
+  dice.length = 0;
+  dice.push(Math.max(1, CLOAK_DV - base - 1));
+  let done = await Cloak.sweep();
+  assert.equal(done.length, 1);
+  assert.equal(done[0].through, base + Math.max(1, CLOAK_DV - base - 1) > CLOAK_DV);
+  const card = chat.at(-1);
+  assert.deepEqual(card.whisper, game.users.filter((u) => u.isGM).map((u) => u.id), "told to the GM alone");
+  assert.match(card.content, /cloak-again/);
+  assert.equal(Cloak.hides(ghost, me), true, "the watcher still sees nothing");
+  // No second try until something changes (out of a fight: once).
+  dice.push(10);
+  assert.deepEqual(await Cloak.sweep(), [], "not rolled again");
+  dice.length = 0;
+  // The GM asks for another: this time they beat it, and the outline appears for that watcher.
+  dice.push(10);
+  done = await Cloak.ask(ghost);
+  assert.equal(done[0].through, base + 10 > CLOAK_DV);
+  if (done[0].through) {
+    assert.equal(ghost.document.flags[M][SEEN_FLAG][me.id], true);
+    assert.equal(Cloak.hides(ghost, me), false);
+    assert.deepEqual(X.sensed().map((s) => s.token.name), ["Ghost", "Ganger"]);
+    assert.match(chat.at(-1).content, /cloak-forget/);
+    // The GM hides them again from the card.
+    await Cloak.click(chat.at(-1), { dataset: { ncmAction: "cloak-forget", watcher: me.id, target: ghost.id }, disabled: false });
+    assert.equal(Cloak.hides(ghost, me), true);
+    ghost.document.flags[M][SEEN_FLAG] = { [me.id]: true };
+  }
+  // The cloak comes off: forgotten, and the next cloak is a fresh start.
+  await Conditions.remove("chromeCloak", ghostActor);
+  await Cloak.sweep();
+  assert.equal(ghost.document.flags[M]?.[SEEN_FLAG], undefined);
+  assert.equal(Cloak.hides(ghost, me), false, "no cloak, nothing hidden");
+  // Optical Camo is a cloak too, at −4 to the watcher.
+  await Conditions.add("chromeOpticalCamo", ghostActor);
+  assert.equal(Cloak.hides(ghost, me), true);
+  chat.length = 0;
+  dice.length = 0;
+  dice.push(5);
+  done = await Cloak.sweep();
+  assert.equal(done[0].total, base - 4 + 5);
+  assert.match(chat.at(-1).content, /Optical Camo/);
+  // "When the GM asks": nothing rolls by itself.
+  await Settings.set("cloakCheck", "gm");
+  Cloak.tried.clear();
+  assert.deepEqual(await Cloak.sweep(), []);
+  // Off: cloaks don't hide from enhanced sight.
+  await Settings.set("cloakCheck", "off");
+  assert.equal(Cloak.hides(ghost, me), false);
+  await Settings.set("cloakCheck", "auto");
+  await Conditions.remove("chromeOpticalCamo", ghostActor);
+
+  // UV: whoever's there in violet, as themselves; blood on the badly wounded.
+  me.document.flags[M].vision = { mode: "uv" };
+  await plain.actor.update({ "system.derivedStats.hp.value": 5, "system.derivedStats.currentWoundState": "seriouslyWounded" });
+  const uv = X.sensed();
+  assert.deepEqual(uv.map((s) => [s.token.name, s.look, s.color, s.blood]), [["Ghost", "image", 0xb26bff, false], ["Ganger", "image", 0xb26bff, Senses.bleeds(plain)]]);
+  assert.equal(Senses.bleeds(plain), true);
+  // A drawing the GM marked "UV only": seen in UV, and by the GM always.
+  const drawing = { document: { flags: { [M]: { uvOnly: true } } }, visible: true, alpha: 1 };
+  const savedLayers = [canvas.drawings, canvas.tiles];
+  canvas.drawings = { placeables: [drawing] };
+  canvas.tiles = { placeables: [] };
+  const gm = game.user.isGM;
+  game.user.isGM = false;
+  Senses.refreshMarks();
+  assert.equal(drawing.visible, true, "looking in UV");
+  me.document.flags[M].vision = { mode: "lowlight" };
+  Senses.refreshMarks();
+  assert.equal(drawing.visible, false, "not in Low Light");
+  game.user.isGM = true;
+  Senses.refreshMarks();
+  assert.equal(drawing.visible, true, "the GM always");
+  game.user.isGM = gm;
+  [canvas.drawings, canvas.tiles] = savedLayers;
+  delete me.document.flags[M].vision;
+  X.refresh();
+  canvas.tokens.placeables = saved.tokens;
+  canvas.walls.placeables = saved.walls;
+  canvas.tokens.controlled = saved.controlled;
+  canvas.tokens.get = saved.get;
+  game.combat = saved.combat;
 });

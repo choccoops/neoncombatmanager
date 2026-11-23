@@ -1197,6 +1197,21 @@ in Infrared and UV. Click an outline, press the Target key over it, or use *Targ
 on the Action HUD to target them, then fire. A wall that blocks sight blocks this too (setting
 *See who's out in the dark*).
 
+**What each is for.** *Low Light* is an image intensifier: the scene as it is, amplified.
+*Infrared* is heat: living bodies burn bright, a Full Body Conversion reads cold. *UV* is
+reflected light: no heat, but traces. Blood fluoresces on the badly wounded and the dead, and
+any drawing or tile the GM ticks *Visible only in UV* (in its settings: a tag, a tripwire,
+invisible ink) shows for whoever looks in UV and nobody else; the GM always sees those, faint.
+
+**Cloaks.** Under Optical Camo, an FBC's Chameleon Coating or a Ghostsuit (the last two get a
+*Cloaked* switch of their own), a character doesn't show in any of the three until the watcher
+beats DV17 Perception. The GM's client rolls it in secret (INT + Perception + 1d10, −4 against
+Optical Camo) when a token with enhanced sight on gets a clear line to them, once a Round in a
+fight, and whispers the result to the GM alone, with *Check again* or *Hide them again* on the
+card. Nobody is asked for anything: a watcher who fails sees what they'd see if nobody were
+there. A GM holding the cloaked token has *Secret Perception* on the Action HUD. Setting *Cloaks
+against enhanced sight*: Automatic in secret, When the GM asks, or Off.
+
 **Torch.** Carrying a flashlight (or a Flashlight Cyberfinger) gives a Torch action: the token
 throws a cone of light the way it faces, as far as the beam, and gets its own light back when
 it's switched off.

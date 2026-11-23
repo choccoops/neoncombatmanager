@@ -16,6 +16,27 @@
   edge.
 - Not through cover: a wall that blocks sight blocks this too. New setting *See who's out in
   the dark* (on).
+- **UV shows traces, not heat.** Infrared is the heat sight; UV now does a job of its own.
+  Who's out in the dark shows as themselves in UV's violet (as in Low Light's green); **blood
+  fluoresces** on the badly wounded and the dead (a bright halo on those in the dark, spatter
+  on those in view); and **drawings and tiles the GM marks *Visible only in UV*** (a new box in
+  their settings: a gang tag, a tripwire, writing in invisible ink) appear for whoever looks
+  in UV and for nobody else. The GM always sees them, faint.
+- **Cloaks hide from enhanced sight.** Someone under Optical Camo, an FBC's Chameleon Coating
+  or a Ghostsuit doesn't show in Low Light, Infrared or UV until the watcher beats DV17
+  Perception (−4 against Optical Camo).
+  - *The roll is the GM's secret.* Nobody is asked for anything. When a token with enhanced
+    sight on gets a clear line to someone cloaked, the GM's client rolls that watcher's
+    Perception itself (INT + Perception + 1d10), once a Round in a fight and once otherwise,
+    and whispers the result to the GM alone. On a success the cloaked token's outline appears
+    on that watcher's screen; on a failure they see what they'd see if nobody were there.
+  - The GM's card has *Check again* (after a failure) and *Hide them again* (after a
+    success); a GM with the cloaked token in hand has *Secret Perception* on the Action HUD
+    to ask for a try from everyone looking its way.
+  - A Chameleon Coating (installed) and a Ghostsuit (worn) get a **Cloaked** switch on the
+    Action HUD and Token HUD, as Optical Camo has. The cloak coming off forgets who had seen
+    through it.
+  - Setting *Cloaks against enhanced sight*: Automatic in secret, When the GM asks, Off.
 
 ## 1.38.0
 

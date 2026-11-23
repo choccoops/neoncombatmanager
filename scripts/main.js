@@ -32,6 +32,7 @@ import { Stakes } from "./stakes/stakes.js";
 import { Humanity } from "./humanity/humanity.js";
 import { Scope } from "./arsenal/scope.js";
 import { Senses } from "./senses/senses.js";
+import { Cloak } from "./senses/cloak.js";
 import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
 import { Roller } from "./roller/roller.js";
@@ -306,6 +307,12 @@ const api = {
     noSignal: (actor) => Hub.noSignal(actor),
     whereIs: (actor) => Hub.whereIs(actor)
   },
+  /** Cloaks against enhanced sight: the GM's secret DV17 Perception. */
+  cloak: {
+    /** GM: every watcher with a line to this cloaked token (or everyone, with none given) tries again now, in secret. */
+    check: (token) => Cloak.ask(token ?? null),
+    seen: (cloakedToken, watcherToken) => Cloak.seen(cloakedToken, watcherToken)
+  },
   /** Humanity Loss the GM calls for: what happened, how much, who rolls. */
   humanity: {
     open: () => Humanity.open(),
@@ -434,6 +441,7 @@ Hooks.once("init", () => {
   NeonRuler.init();
   Scope.init();
   Senses.init();
+  Cloak.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
 
   game.modules.get(MODULE_ID).api = api;
