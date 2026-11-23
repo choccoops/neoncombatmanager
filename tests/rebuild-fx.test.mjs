@@ -1881,6 +1881,7 @@ test("enhanced sight shows who's out in the dark as outlines to target: green in
   canvas.tokens.placeables = [me, dark, lit, walled, gmHidden, borg];
   canvas.walls.placeables = [wall([0, 300, 300, 300])];
   assert.deepEqual(X.sensed().map((s) => [s.token.name, s.color]), [["Ganger", 0x39ff14], ["Borg", 0x39ff14]], "in the dark with a clear line; not who's already seen, behind a wall, or hidden by the GM");
+  assert.deepEqual(X.sensed().map((s) => s.look), ["image", "image"], "Low Light: the token itself");
 
   played.length = 0;
   X.drawn.clear();
@@ -1889,6 +1890,9 @@ test("enhanced sight shows who's out in the dark as outlines to target: green in
   assert.equal(fx.length, 1, "an outline, like the Tech scope's");
   assert.ok(call(fx[0], "locally"), "on their screen only");
   assert.equal(fx[0].calls.find(([m, a]) => m === "filter" && a[0] === "Glow")[1][1].color, 0x39ff14);
+  assert.ok(!fx[0].calls.find(([m, a]) => m === "filter" && a[0] === "Glow")[1][1].knockout, "not an empty outline: the picture is there");
+  assert.equal(call(fx[0], "tint")[0], 0x39ff14, "in the intensifier's green");
+  assert.ok(fx[0].calls.some(([m, a]) => m === "filter" && a[0] === "ColorMatrix"));
   assert.ok(X.drawn.has(dark.id) && X.drawn.has(borg.id) && !X.drawn.has(lit.id));
 
   // They can be targeted: a click on the outline, or the HUD's button, nearest first.
@@ -1906,6 +1910,12 @@ test("enhanced sight shows who's out in the dark as outlines to target: green in
   played.length = 0;
   X.refresh();
   assert.equal(played.filter((s) => String(call(s, "name")?.[0]).startsWith("ncm-xray-")).length, 2, "redrawn in the new colours");
+  assert.deepEqual(X.sensed().map((s) => [s.look, s.heat]), [["heat", "warm"], ["heat", "cold"]]);
+  const hot = played.find((s) => String(call(s, "name")?.[0]).startsWith(`ncm-xray-${dark.id}`));
+  const cold = played.find((s) => String(call(s, "name")?.[0]).startsWith(`ncm-xray-${borg.id}`));
+  const glow = (s) => s.calls.find(([m, a]) => m === "filter" && a[0] === "Glow")[1][1];
+  assert.ok(glow(hot).innerStrength > glow(cold).innerStrength && glow(hot).distance > glow(cold).distance, "a warm body burns from the core out; a cold one is flat with a hard edge");
+  assert.ok(hot.calls.some(([m]) => m === "loopProperty") && !cold.calls.some(([m]) => m === "loopProperty"), "and breathes");
   // Off: gone.
   delete me.document.flags[M].vision;
   X.refresh();

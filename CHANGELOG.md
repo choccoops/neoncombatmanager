@@ -10,6 +10,10 @@
   Thermal Damping with the camo running).
 - **And they can be targeted.** Click an outline, press the Target key over it, or use the new
   *Target who you see* button on the Action HUD (each press, the next nearest), then fire.
+- *Low Light* shows the token itself, its own picture amplified in the intensifier's green,
+  as night vision does. *Infrared* (and UV) shows its shape filled with its heat: a warm body
+  bright from the core out and breathing, a cold Full Body Conversion flat and dark with a hard
+  edge.
 - Not through cover: a wall that blocks sight blocks this too. New setting *See who's out in
   the dark* (on).
 

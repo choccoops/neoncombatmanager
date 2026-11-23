@@ -91,6 +91,13 @@ export function sensedColor(mode, heat) {
   return Number.parseInt(String(MODE_TINT[mode] ?? "#39ff14").slice(1), 16);
 }
 
+/**
+ * How someone enhanced sight shows is drawn, pure: "image" (Low Light: the token itself, as an
+ * image intensifier shows it, in its green), or "heat" (Infrared, UV: its shape filled with its
+ * heat, a warm body bright, a cold one dark and hard-edged).
+ */
+export const sensedLook = (mode) => (HEAT_MODES.includes(mode) ? "heat" : "image");
+
 export const Xray = {
   /** tokenId -> effect name, the outlines drawn here. */
   drawn: new Map(),
@@ -161,7 +168,7 @@ export const Xray = {
       if (!t.actor || t === v.token || t.document?.hidden || t.visible) continue;
       if (!clearSight(v.token.center, t.center, walls)) continue;
       const color = sensedColor(v.mode, Senses.heat(t));
-      if (color !== null) out.push({ token: t, color });
+      if (color !== null) out.push({ token: t, color, look: sensedLook(v.mode), heat: Senses.heat(t) });
     }
     return out;
   },
@@ -173,7 +180,7 @@ export const Xray = {
     for (const s of this.sensed()) if (!marks.has(s.token.id)) marks.set(s.token.id, s);
     const want = [...marks.values()].map((m) => m.token);
     // The Tech scope's keep their name; a way of seeing's carry their colour (it changes with the mode).
-    const nameOf = (m) => (m.color === CYAN ? `${XRAY}-${m.token.id}` : `${XRAY}-${m.token.id}-${m.color.toString(16)}`);
+    const nameOf = (m) => (m.look ? `${XRAY}-${m.token.id}-${m.look}-${m.color.toString(16)}` : `${XRAY}-${m.token.id}`);
     for (const [id, name] of this.drawn) {
       const m = marks.get(id);
       if (m && nameOf(m) === name) continue;
@@ -192,10 +199,26 @@ export const Xray = {
       const t = m.token;
       const name = nameOf(m);
       this.drawn.set(t.id, name);
-      seq.effect().name(name).copySprite(t).attachTo(t, { bindVisibility: false, bindAlpha: false }).size(Core.artSize(t)).rotate(0)
-        .filter("Glow", { color: m.color, distance: 8, outerStrength: 3, innerStrength: 0, quality: 0.2, knockout: true })
-        .xray(true).zIndex(20).persist().locally().fadeIn(250).fadeOut(250)
-        .loopProperty("sprite", "alpha", { values: [0.5, 0.95], duration: 900, pingPong: true, absolute: true });
+      const fx = seq.effect().name(name).copySprite(t).attachTo(t, { bindVisibility: false, bindAlpha: false }).size(Core.artSize(t)).rotate(0);
+      if (m.look === "image") {
+        // Low Light: the token itself, amplified: its own picture in the intensifier's green, a thin rim to pick it out.
+        fx.filter("ColorMatrix", { saturate: -1, brightness: 1.6, contrast: 0.25 }).tint(m.color)
+          .filter("Glow", { color: m.color, distance: 5, outerStrength: 1.5, innerStrength: 0, quality: 0.2 })
+          .xray(true).zIndex(20).persist().locally().fadeIn(250).fadeOut(250)
+          .loopProperty("sprite", "alpha", { values: [0.82, 1], duration: 1400, pingPong: true, absolute: true });
+      } else if (m.look === "heat") {
+        // Infrared, UV: the shape, filled with its heat. A warm body burns bright from the core out; a cold one is flat and dark with a hard edge.
+        const warm = m.heat === "warm";
+        fx.filter("ColorMatrix", { saturate: -1, brightness: warm ? 2.6 : 0.9, contrast: warm ? -0.6 : 0.2 }).tint(m.color)
+          .filter("Glow", { color: m.color, distance: warm ? 12 : 4, outerStrength: warm ? 3 : 1.2, innerStrength: warm ? 3 : 0.6, quality: 0.2 })
+          .xray(true).zIndex(20).persist().locally().fadeIn(250).fadeOut(250);
+        if (warm) fx.loopProperty("sprite", "alpha", { values: [0.8, 1], duration: 900, pingPong: true, absolute: true });
+      } else {
+        // The Tech scope: an outline alone.
+        fx.filter("Glow", { color: m.color, distance: 8, outerStrength: 3, innerStrength: 0, quality: 0.2, knockout: true })
+          .xray(true).zIndex(20).persist().locally().fadeIn(250).fadeOut(250)
+          .loopProperty("sprite", "alpha", { values: [0.5, 0.95], duration: 900, pingPong: true, absolute: true });
+      }
     }
     seq.play();
     return want;
