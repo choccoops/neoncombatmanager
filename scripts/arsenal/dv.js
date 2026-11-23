@@ -1,5 +1,6 @@
 import { MODULE_ID, SYSTEM_ID, NEON_HUB_ID } from "../constants.js";
 import { Compat } from "../compat.js";
+import { Far } from "../senses/far.js";
 import { Settings } from "../settings.js";
 import { autofireTable } from "./kinds.js";
 
@@ -103,6 +104,10 @@ export const Dv = {
     const ca = a?.center ?? a;
     const cb = b?.center ?? b;
     if (!ca || !cb) return 0;
+    // Between two linked areas (a rooftop and the plaza it overlooks, drawn side by side): the
+    // distance the GM gave the link, not the squares between where they were drawn.
+    const linked = Far.distance(a, b);
+    if (linked !== null) return linked;
     return Compat.measure(ca, cb);
   },
 

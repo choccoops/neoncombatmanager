@@ -8,6 +8,7 @@ import { specialsOf } from "./specials.js";
 import { Senses } from "../senses/senses.js";
 import { HEAT_MODES, HEAT_TINT, MODE_TINT, UV_GLOW } from "../senses/senses-data.js";
 import { Cloak } from "../senses/cloak.js";
+import { Far } from "../senses/far.js";
 
 /**
  * A Tech scope's view through thin cover (2070 Ch07: "its scope shows outlines through Thin
@@ -181,6 +182,8 @@ export const Xray = {
     // The Tech scope's (cyan), then what enhanced sight shows (its own colours).
     const marks = new Map((this.on ? this.wanted() : []).map((t) => [t.id, { token: t, color: CYAN }]));
     for (const s of this.sensed()) if (!marks.has(s.token.id)) marks.set(s.token.id, s);
+    // And whoever is in a far area the viewer sees into (a linked area, through a scope that reaches it).
+    for (const s of Far.sensed()) if (!marks.has(s.token.id)) marks.set(s.token.id, s);
     const want = [...marks.values()].map((m) => m.token);
     // The Tech scope's keep their name; a way of seeing's carry their colour (it changes with the mode).
     const nameOf = (m) => (m.look ? `${XRAY}-${m.token.id}-${m.look}-${m.color.toString(16)}${m.blood ? "-b" : ""}` : `${XRAY}-${m.token.id}`);
@@ -210,6 +213,10 @@ export const Xray = {
           .filter("Glow", m.blood ? { color: UV_GLOW, distance: 10, outerStrength: 3.5, innerStrength: 1.2, quality: 0.2 } : { color: m.color, distance: 5, outerStrength: 1.5, innerStrength: 0, quality: 0.2 })
           .xray(true).zIndex(20).persist().locally().fadeIn(250).fadeOut(250)
           .loopProperty("sprite", "alpha", { values: [0.82, 1], duration: 1400, pingPong: true, absolute: true });
+      } else if (m.look === "far") {
+        // Seen across a linked distance: the token as it is, picked out with a thin pale rim.
+        fx.filter("Glow", { color: m.color, distance: 4, outerStrength: 1.2, innerStrength: 0, quality: 0.2 })
+          .xray(true).zIndex(20).persist().locally().fadeIn(250).fadeOut(250);
       } else if (m.look === "heat") {
         // Infrared, UV: the shape, filled with its heat. A warm body burns bright from the core out; a cold one is flat and dark with a hard edge.
         const warm = m.heat === "warm";
