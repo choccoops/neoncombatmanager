@@ -1845,3 +1845,80 @@ test("nothing of ours stands in the way of an ordinary change to a combat: begin
   assert.equal(Hooks.call("preUpdateCombat", live, changes, { direction: 1 }), true);
   assert.equal(changes.turn, 1, "back to whoever was cut into");
 });
+
+test("enhanced sight shows who's out in the dark as outlines to target: green in Low Light, by heat in Infrared and UV, never through a wall", async () => {
+  const { Xray: X, clearSight, sensedColor, readWall: rw } = await import("../scripts/arsenal/xray.js");
+  const { Senses } = await import("../scripts/senses/senses.js");
+  // Pure: a line of sight, and the colour each way of seeing gives.
+  const solid = rw({ c: [500, 0, 500, 1000], sight: 20 });
+  const open = rw({ c: [500, 0, 500, 1000], sight: 20, door: 1, ds: 1 });
+  assert.equal(clearSight({ x: 100, y: 500 }, { x: 900, y: 500 }, [solid]), false);
+  assert.equal(clearSight({ x: 100, y: 500 }, { x: 900, y: 500 }, [open]), true, "an open door is no wall");
+  assert.equal(clearSight({ x: 100, y: 500 }, { x: 400, y: 500 }, [solid]), true);
+  assert.equal(sensedColor("lowlight", null), 0x39ff14, "Low Light shows whoever's there");
+  assert.equal(sensedColor("infrared", "warm"), 0xff5a1f);
+  assert.equal(sensedColor("infrared", "cold"), 0x2f7dff);
+  assert.equal(sensedColor("infrared", null), null, "no heat to read: nothing to show");
+  assert.equal(sensedColor("uv", "warm"), 0xe9d4ff);
+
+  for (const k of ["visionModes", "visionOutlines", "visionHeat"]) await Settings.set(k, true);
+  const scout = crew("Scout", []);
+  const me = tokenAt(scout, 100, 500);
+  me.isOwner = true;
+  me.document.flags = { [M]: { vision: { mode: "lowlight" } } };
+  const savedTokens = canvas.tokens.placeables;
+  const savedWalls = canvas.walls.placeables;
+  const savedControlled = canvas.tokens.controlled;
+  const savedTargets = game.user.targets;
+  canvas.tokens.controlled = [me];
+  const dark = tokenAt(makeActor({ name: "Ganger" }), 900, 500, { visible: false });
+  const lit = tokenAt(makeActor({ name: "Bystander" }), 900, 900, { visible: true });
+  const walled = tokenAt(makeActor({ name: "Boss" }), 100, 100, { visible: false });
+  const gmHidden = tokenAt(makeActor({ name: "Ambush" }), 700, 500, { visible: false, hidden: true });
+  const borgActor = makeActor({ name: "Borg" });
+  borgActor.flags["cpr-neon-full-borg"] = { fbc: { body: { id: "b", name: "Gemini" } } };
+  const borg = tokenAt(borgActor, 900, 300, { visible: false });
+  canvas.tokens.placeables = [me, dark, lit, walled, gmHidden, borg];
+  canvas.walls.placeables = [wall([0, 300, 300, 300])];
+  assert.deepEqual(X.sensed().map((s) => [s.token.name, s.color]), [["Ganger", 0x39ff14], ["Borg", 0x39ff14]], "in the dark with a clear line; not who's already seen, behind a wall, or hidden by the GM");
+
+  played.length = 0;
+  X.drawn.clear();
+  X.refresh();
+  const fx = played.filter((s) => String(call(s, "name")?.[0]).startsWith(`ncm-xray-${dark.id}`));
+  assert.equal(fx.length, 1, "an outline, like the Tech scope's");
+  assert.ok(call(fx[0], "locally"), "on their screen only");
+  assert.equal(fx[0].calls.find(([m, a]) => m === "filter" && a[0] === "Glow")[1][1].color, 0x39ff14);
+  assert.ok(X.drawn.has(dark.id) && X.drawn.has(borg.id) && !X.drawn.has(lit.id));
+
+  // They can be targeted: a click on the outline, or the HUD's button, nearest first.
+  game.user.targets = new Set();
+  dark.setTarget = (on) => (on ? game.user.targets.add(dark) : game.user.targets.delete(dark));
+  borg.setTarget = (on) => (on ? game.user.targets.add(borg) : game.user.targets.delete(borg));
+  assert.equal(X.at({ x: dark.center.x + 10, y: dark.center.y - 10 })?.name, "Ganger");
+  assert.equal(X.target(dark), true);
+  assert.ok(game.user.targets.has(dark));
+  assert.ok(X.cycle(), "and on to the next");
+
+  // Infrared: the same people by their heat; the mode changing redraws them in its colours.
+  me.document.flags[M].vision = { mode: "infrared" };
+  assert.deepEqual(X.sensed().map((s) => [s.token.name, s.color]), [["Ganger", 0xff5a1f], ["Borg", 0x2f7dff]], "a warm body, a cold Full Body Conversion");
+  played.length = 0;
+  X.refresh();
+  assert.equal(played.filter((s) => String(call(s, "name")?.[0]).startsWith("ncm-xray-")).length, 2, "redrawn in the new colours");
+  // Off: gone.
+  delete me.document.flags[M].vision;
+  X.refresh();
+  assert.equal(X.drawn.size, 0);
+  // Switched off in the settings.
+  me.document.flags[M].vision = { mode: "lowlight" };
+  await Settings.set("visionOutlines", false);
+  assert.deepEqual(X.sensed(), []);
+  await Settings.set("visionOutlines", true);
+  delete me.document.flags[M].vision;
+  X.refresh();
+  canvas.tokens.placeables = savedTokens;
+  canvas.walls.placeables = savedWalls;
+  canvas.tokens.controlled = savedControlled;
+  game.user.targets = savedTargets;
+});

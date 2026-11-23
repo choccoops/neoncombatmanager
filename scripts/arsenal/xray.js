@@ -5,6 +5,8 @@ import { Conditions } from "../conditions/engine.js";
 import { Core } from "../neonfx/core.js";
 import { L, debounce } from "../util.js";
 import { specialsOf } from "./specials.js";
+import { Senses } from "../senses/senses.js";
+import { HEAT_MODES, HEAT_TINT, MODE_TINT } from "../senses/senses-data.js";
 
 /**
  * A Tech scope's view through thin cover (2070 Ch07: "its scope shows outlines through Thin
@@ -70,6 +72,25 @@ export function readWall(doc, { doorsThin = true } = {}) {
   return { c: doc?.c ?? [0, 0, 0, 0], blocks, thin };
 }
 
+/**
+ * Is there a clear line of sight between two points: no wall that blocks sight across it? Pure.
+ * (Enhanced sight sees in the dark, not through cover.)
+ */
+export function clearSight(from, to, walls) {
+  return !walls.some((w) => w.blocks && segmentsCross(from, to, { x: w.c[0], y: w.c[1] }, { x: w.c[2], y: w.c[3] }));
+}
+
+/**
+ * The outline someone gets in a way of seeing, pure: a colour, or null for nothing to show.
+ * Low Light shows everyone there in its green; Infrared and UV show bodies by their heat (warm
+ * or cold), and nothing where there's no heat to read (Thermal Damping under running camo, a
+ * crate).
+ */
+export function sensedColor(mode, heat) {
+  if (HEAT_MODES.includes(mode)) return heat ? HEAT_TINT[mode][heat] : null;
+  return Number.parseInt(String(MODE_TINT[mode] ?? "#39ff14").slice(1), 16);
+}
+
 export const Xray = {
   /** tokenId -> effect name, the outlines drawn here. */
   drawn: new Map(),
@@ -125,12 +146,37 @@ export const Xray = {
     });
   },
 
+  /**
+   * Who enhanced sight shows this player: with Low Light, Infrared or UV on for the token they
+   * look through, everyone it has a clear line of sight to whom Foundry isn't drawing (out in the
+   * dark, past what the token's own eyes reach), each in the colour that way of seeing gives
+   * them: [{ token, color }]. Not through cover: a wall that blocks sight blocks this too.
+   */
+  sensed() {
+    const v = Senses.viewer();
+    if (!v || !canvas?.ready || !Settings.get("visionOutlines")) return [];
+    const walls = (canvas.walls?.placeables ?? []).map((w) => readWall(w.document));
+    const out = [];
+    for (const t of canvas.tokens?.placeables ?? []) {
+      if (!t.actor || t === v.token || t.document?.hidden || t.visible) continue;
+      if (!clearSight(v.token.center, t.center, walls)) continue;
+      const color = sensedColor(v.mode, Senses.heat(t));
+      if (color !== null) out.push({ token: t, color });
+    }
+    return out;
+  },
+
   /** Draw the outlines that are missing and end the ones no longer wanted (this screen only). */
   refresh() {
-    const want = this.on ? this.wanted() : [];
-    const ids = new Set(want.map((t) => t.id));
+    // The Tech scope's (cyan), then what enhanced sight shows (its own colours).
+    const marks = new Map((this.on ? this.wanted() : []).map((t) => [t.id, { token: t, color: CYAN }]));
+    for (const s of this.sensed()) if (!marks.has(s.token.id)) marks.set(s.token.id, s);
+    const want = [...marks.values()].map((m) => m.token);
+    // The Tech scope's keep their name; a way of seeing's carry their colour (it changes with the mode).
+    const nameOf = (m) => (m.color === CYAN ? `${XRAY}-${m.token.id}` : `${XRAY}-${m.token.id}-${m.color.toString(16)}`);
     for (const [id, name] of this.drawn) {
-      if (ids.has(id)) continue;
+      const m = marks.get(id);
+      if (m && nameOf(m) === name) continue;
       this.drawn.delete(id);
       try {
         Sequencer.EffectManager.endEffects({ name });
@@ -138,15 +184,16 @@ export const Xray = {
         /* gone */
       }
     }
-    const add = want.filter((t) => !this.drawn.has(t.id));
+    const add = [...marks.values()].filter((m) => !this.drawn.has(m.token.id));
     this.drawPads(want);
     if (!add.length) return want;
     const seq = new Sequence({ moduleName: MODULE_ID, softFail: true });
-    for (const t of add) {
-      const name = `${XRAY}-${t.id}`;
+    for (const m of add) {
+      const t = m.token;
+      const name = nameOf(m);
       this.drawn.set(t.id, name);
       seq.effect().name(name).copySprite(t).attachTo(t, { bindVisibility: false, bindAlpha: false }).size(Core.artSize(t)).rotate(0)
-        .filter("Glow", { color: CYAN, distance: 8, outerStrength: 3, innerStrength: 0, quality: 0.2, knockout: true })
+        .filter("Glow", { color: m.color, distance: 8, outerStrength: 3, innerStrength: 0, quality: 0.2, knockout: true })
         .xray(true).zIndex(20).persist().locally().fadeIn(250).fadeOut(250)
         .loopProperty("sprite", "alpha", { values: [0.5, 0.95], duration: 900, pingPong: true, absolute: true });
     }
@@ -160,7 +207,7 @@ export const Xray = {
 
   /** The outlined tokens, nearest the viewer first. */
   seen() {
-    const [v] = this.viewers();
+    const v = this.viewers()[0] ?? Senses.viewer()?.token ?? null;
     const list = [...this.drawn.keys()].map((id) => canvas.tokens?.get?.(id) ?? canvas.tokens?.placeables?.find((t) => t.id === id)).filter(Boolean);
     const d = (t) => (v ? Math.hypot(t.center.x - v.center.x, t.center.y - v.center.y) : 0);
     return list.sort((a, b) => d(a) - d(b));
@@ -209,7 +256,7 @@ export const Xray = {
       const original = proto._onClickLeft;
       const self = this;
       proto._onClickLeft = function (event, ...rest) {
-        const hit = self.on ? self.at(self.pointOf(event)) : null;
+        const hit = self.drawn.size ? self.at(self.pointOf(event)) : null;
         if (!hit) return original.call(this, event, ...rest);
         self.target(hit, { add: !!(event?.shiftKey ?? event?.data?.originalEvent?.shiftKey) });
         return undefined;
@@ -230,7 +277,7 @@ export const Xray = {
 
   /** The Target key with the pointer over an outline (and no token of its own under it). */
   onKey(event) {
-    if (!this.on || !this.drawn.size || event.repeat || canvas?.tokens?.hover) return false;
+    if (!this.drawn.size || event.repeat || canvas?.tokens?.hover) return false;
     const el = event.target;
     if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName ?? ""))) return false;
     let keys = ["KeyT"];

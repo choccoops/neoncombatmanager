@@ -1190,6 +1190,13 @@ else any chrome named `FBC ...`) is a cold outline, unless Realskinn
 Plating covers it; Thermal Damping with Optical Camo running shows nothing; the dead are cold.
 It shows what the token already sees, never through walls.
 
+**Who's out in the dark.** With a way of seeing on, everyone the token has a clear line of sight
+to shows as an outline even where Foundry draws nobody (too dark, or past the token's own eyes),
+the way a Tech weapon's scope shows people behind thin cover: green in Low Light; by their heat
+in Infrared and UV. Click an outline, press the Target key over it, or use *Target who you see*
+on the Action HUD to target them, then fire. A wall that blocks sight blocks this too (setting
+*See who's out in the dark*).
+
 **Torch.** Carrying a flashlight (or a Flashlight Cyberfinger) gives a Torch action: the token
 throws a cone of light the way it faces, as far as the beam, and gets its own light back when
 it's switched off.

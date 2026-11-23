@@ -1399,6 +1399,10 @@
       "torchAngle": {
         "name": "Torch's cone (degrees)",
         "hint": "How wide a torch's light is."
+      },
+      "visionOutlines": {
+        "name": "See who's out in the dark",
+        "hint": "With Low Light, Infrared or UV on, everyone the token has a clear line of sight to shows as an outline, even where it's too dark (or too far) for the token's own eyes: green in Low Light; by their heat in Infrared and UV (warm bodies, cold Full Body Conversions, nothing under Thermal Damping). Click an outline, press the Target key over it, or use the Action HUD's Target button to target them and fire. Not through cover: a wall that blocks sight blocks this too."
       }
     },
     "SceneWeather": {
@@ -3014,7 +3018,8 @@
         "infrared": "Infrared",
         "uv": "UV"
       },
-      "Torch": "Torch"
+      "Torch": "Torch",
+      "Target": "Target who you see"
     }
   }
 }

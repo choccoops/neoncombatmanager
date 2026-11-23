@@ -142,6 +142,8 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   if (Scope.on) out.weapons.push(...Scope.entries(actor, token, scopes));
   // Ways of seeing (Low Light, Infrared, UV) and a torch.
   out.weapons.push(...Senses.entries(actor, token));
+  // Who that way of seeing shows out in the dark: target them one after another (or click an outline).
+  if (Senses.vision(token?.document ?? token) && Xray.drawn.size) out.weapons.push({ key: "sense:target", label: L(`${LANG}.Senses.Target`), sub: String(Xray.drawn.size), icon: "fa-solid fa-crosshairs" });
 
   // Equip / Change Weapon: the hands, what's in them, and the Carried weapons to put in them.
   const hands = Hands.state(actor);

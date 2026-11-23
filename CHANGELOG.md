@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.39.0
+
+- **Enhanced sight shows who's out in the dark.** With Low Light, Infrared or UV on, the
+  screen changed but the people Foundry wasn't drawing (out in the dark, past the token's own
+  eyes) stayed unseen. Everyone the token has a clear line of sight to now shows as an
+  outline, the way a Tech weapon's scope shows people behind thin cover: green in Low Light;
+  by their heat in Infrared and UV (warm bodies, cold Full Body Conversions, nothing under
+  Thermal Damping with the camo running).
+- **And they can be targeted.** Click an outline, press the Target key over it, or use the new
+  *Target who you see* button on the Action HUD (each press, the next nearest), then fire.
+- Not through cover: a wall that blocks sight blocks this too. New setting *See who's out in
+  the dark* (on).
+
 ## 1.38.0
 
 - **Low Light, Infrared and UV, as actions.** A character with Low Light / Infrared / UV

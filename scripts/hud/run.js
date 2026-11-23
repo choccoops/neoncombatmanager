@@ -68,6 +68,7 @@ export const Run = {
       }
       case "sense": {
         const { Senses } = await import("../senses/senses.js");
+        if (id === "target") return (await import("../arsenal/xray.js")).Xray.cycle();
         return id === "torch" ? Senses.toggleTorch(actor, { token }) : Senses.toggleVision(actor, id, { token });
       }
       case "zoom":
