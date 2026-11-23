@@ -18,7 +18,7 @@ import { debounce, L, esc } from "../util.js";
  * It hides in plain light too: a cloaked token isn't drawn for anyone but the GM and its own
  * player, until one of their tokens has seen through it.
  *
- * A Ghostsuit only gives watchers at Alert or higher a try (its card): for the other side in an
+ * Only watchers at Alert or higher get a try, whatever the cloak: for the other side in an
  * encounter, that's the Awareness Ladder at Alert or above. The players' own characters always
  * get theirs.
  *
@@ -66,13 +66,14 @@ export function perceptionMods(effects = []) {
 }
 
 /**
- * May a watcher try to see through this cloak at all, pure. A Ghostsuit gives only watchers at
- * Alert or higher a try: for someone on the other side from the players that's the encounter's
- * Awareness Ladder; the players' own characters always may.
+ * May a watcher try to see through a cloak at all, pure. Any cloak (Optical Camo, a Chameleon
+ * Coating, a Ghostsuit) gives only watchers at Alert or higher a try: someone who isn't looking
+ * for trouble doesn't spot what's hidden from all sight. For the other side from the players
+ * that's the encounter's Awareness Ladder at Alert or above (no encounter, no Alert); the
+ * players' own characters always may (the Ladder is the enemy's, not theirs).
  */
-export function mayTry({ ghostsuit = false, watcherIsPlayer = false, level = "unaware" } = {}) {
-  if (!ghostsuit || watcherIsPlayer) return true;
-  return isAlert(level);
+export function mayTry({ watcherIsPlayer = false, level = "unaware" } = {}) {
+  return !!watcherIsPlayer || isAlert(level);
 }
 
 /** Has a watcher's Perception seen through a cloak? It has to beat the DV. Pure. */
@@ -191,7 +192,6 @@ export const Cloak = {
     const out = [];
     for (const t of tokens) {
       if (!t.actor || t.document?.hidden || !this.cloaked(t.actor)) continue;
-      const ghostsuit = this.ghostsuit(t.actor);
       // Out in the dark, only enhanced sight has anything to see through.
       let dark = false;
       try {
@@ -204,7 +204,7 @@ export const Cloak = {
         // The other side only: the cloaked one's own crew aren't looking for them.
         if (!!w.actor.hasPlayerOwner === !!t.actor.hasPlayerOwner) continue;
         if (dark && !Senses.vision(w)) continue;
-        if (!mayTry({ ghostsuit, watcherIsPlayer: !!w.actor.hasPlayerOwner, level })) continue;
+        if (!mayTry({ watcherIsPlayer: !!w.actor.hasPlayerOwner, level })) continue;
         if (clearSight(w.center, t.center, walls)) out.push({ watcher: w, target: t });
       }
     }

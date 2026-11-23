@@ -2081,12 +2081,13 @@ test("cloaks against enhanced sight: unseen in Low Light, Infrared and UV until 
   game.user.isGM = gmWas;
   ghost.visible = false;
 
-  // A Ghostsuit: only watchers at Alert or higher get a try (the Awareness Ladder); the players' characters always do.
-  assert.equal(mayTry({ ghostsuit: true, watcherIsPlayer: false, level: "suspicious" }), false);
-  assert.equal(mayTry({ ghostsuit: true, watcherIsPlayer: false, level: "alert" }), true);
-  assert.equal(mayTry({ ghostsuit: true, watcherIsPlayer: false, level: "spotted" }), true);
-  assert.equal(mayTry({ ghostsuit: true, watcherIsPlayer: true, level: "unaware" }), true);
-  assert.equal(mayTry({ ghostsuit: false, watcherIsPlayer: false, level: "unaware" }), true, "a Chameleon Coating or Optical Camo: anyone");
+  // Any cloak: only watchers at Alert or higher get a try (the Awareness Ladder); the players' characters always do.
+  assert.equal(mayTry({ watcherIsPlayer: false, level: "suspicious" }), false);
+  assert.equal(mayTry({ watcherIsPlayer: false, level: "searching" }), false);
+  assert.equal(mayTry({ watcherIsPlayer: false, level: "alert" }), true);
+  assert.equal(mayTry({ watcherIsPlayer: false, level: "spotted" }), true);
+  assert.equal(mayTry({ watcherIsPlayer: true, level: "unaware" }), true);
+  assert.equal(mayTry({}), false, "no encounter, no Ladder: nobody on the other side is at Alert");
   await Conditions.remove("chromeCloak", ghostActor);
   // A player's character in a Ghostsuit, a guard looking their way: nothing until the Ladder reaches Alert.
   const sneakActor = makeActor({ name: "Sneak", hasPlayerOwner: true }, [{ _id: "gs", name: "Militech M97 Ghostsuit", type: "gear", system: { equipped: "equipped" } }]);
@@ -2106,6 +2107,17 @@ test("cloaks against enhanced sight: unseen in Low Light, Infrared and UV until 
   assert.deepEqual((await Cloak.pairs()).map((x) => [x.watcher.name, x.target.name]), [["Guard", "Sneak"]], "at Alert: the guard gets theirs");
   game.combat = null;
   assert.deepEqual(await Cloak.pairs(), [], "no encounter, no Ladder: nobody is at Alert");
+  // The same for Optical Camo and a Chameleon Coating: a guard below Alert gets no try.
+  await Conditions.remove("chromeCloak", sneakActor);
+  await Conditions.add("chromeOpticalCamo", sneakActor);
+  game.combat = fight;
+  fight.flags[M] = { ladder: "searching" };
+  assert.deepEqual(await Cloak.pairs(), [], "Optical Camo, below Alert");
+  fight.flags[M] = { ladder: "spotted" };
+  assert.deepEqual((await Cloak.pairs()).map((x) => x.watcher.name), ["Guard"]);
+  game.combat = null;
+  await Conditions.remove("chromeOpticalCamo", sneakActor);
+  await Conditions.add("chromeCloak", sneakActor);
   // The same side doesn't look for its own.
   const mate = mk(tokenAt(makeActor({ name: "Mate", hasPlayerOwner: true }), 500, 800));
   canvas.tokens.placeables = [sneak, mate];

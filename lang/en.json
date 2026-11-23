@@ -535,7 +535,7 @@
       },
       "chromeOpticalCamo": {
         "name": "Optical Camo",
-        "hint": "Optical Camo running for a minute, until you attack, Run or get hit: free Stealth Checks even in plain sight, Perception against you at −4, and nobody targets you without beating your Stealth with Perception. An Action to start; 10-minute recharge. The token stays where everyone can see it: who can see the character is the table's call."
+        "hint": "Optical Camo running for a minute, until you attack, Run or get hit: free Stealth Checks even in plain sight, and nobody targets you without beating your Stealth with Perception. Hidden from all sight, Low Light, Infrared and UV included: only watchers at Alert or higher may try to spot you, at −4, and they must beat DV17 Perception. An Action to start; 10-minute recharge. The token stays where the GM and you can see it."
       },
       "chromeMicrorotors": {
         "name": "Microrotors",
@@ -635,7 +635,7 @@
       },
       "chromeCloak": {
         "name": "Cloaked",
-        "hint": "A Chameleon Coating or Ghostsuit running: hidden from all sight, Low Light, Infrared and UV included, unless a watcher beats DV17 Perception (a Ghostsuit: only watchers at Alert or higher may try). Moving more than 2 m/yds in a Round drops it."
+        "hint": "A Chameleon Coating or Ghostsuit running: hidden from all sight, Low Light, Infrared and UV included. Only watchers at Alert or higher may try to spot them, and they must beat DV17 Perception. Moving more than 2 m/yds in a Round drops it."
       }
     },
     "Key": {
@@ -1410,7 +1410,7 @@
       },
       "cloakCheck": {
         "name": "Cloaks against enhanced sight",
-        "hint": "Someone under Optical Camo, an FBC's Chameleon Coating or a Ghostsuit isn't drawn for anyone but the GM and their own player, in any light and in Low Light, Infrared or UV, until a watcher on the other side beats DV17 Perception. The roll is the GM's secret: nobody is asked for anything. Automatic: when a watcher gets a clear line to someone cloaked, the GM's client rolls their Perception (INT + Perception + 1d10, with whatever their conditions add or take; −4 against Optical Camo), once a Round in a fight and once otherwise, whispers the result to the GM alone, and on a success the cloaked token appears for that watcher's player. A Ghostsuit gives only watchers at Alert or higher on the Awareness Ladder a try (the players' characters always get theirs). GM asks: nothing is rolled until the GM presses \"Secret Perception\" on the cloaked token's Action HUD. Off: cloaks hide nobody."
+        "hint": "Someone under Optical Camo, an FBC's Chameleon Coating or a Ghostsuit isn't drawn for anyone but the GM and their own player, in any light and in Low Light, Infrared or UV, until a watcher on the other side beats DV17 Perception. The roll is the GM's secret: nobody is asked for anything. Automatic: when a watcher gets a clear line to someone cloaked, the GM's client rolls their Perception (INT + Perception + 1d10, with whatever their conditions add or take; −4 against Optical Camo), once a Round in a fight and once otherwise, whispers the result to the GM alone, and on a success the cloaked token appears for that watcher's player. Only watchers at Alert or higher get a try, whatever the cloak: the other side needs the encounter's Awareness Ladder at Alert or above; the players' characters always get theirs. GM asks: nothing is rolled until the GM presses \"Secret Perception\" on the cloaked token's Action HUD. Off: cloaks hide nobody."
       },
       "CloakCheck": {
         "auto": "Automatic, in secret",
@@ -3064,7 +3064,7 @@
       "Again": "Check again",
       "Forget": "Hide them again",
       "Ask": "Secret Perception",
-      "NoOne": "Nobody on the other side has a clear line to a cloak they haven't already seen through (or, against a Ghostsuit, they aren't at Alert)."
+      "NoOne": "Nobody on the other side has a clear line to a cloak they haven't already seen through, or they aren't at Alert."
     },
     "Blood": {
       "Tool": "Blood",

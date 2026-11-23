@@ -1212,8 +1212,8 @@ card. Nobody is asked for anything: a watcher who fails sees what they'd see if 
 there. It hides in plain light too: a cloaked token isn't drawn for anyone but the GM and its own
 player until one of their tokens has seen through it. Watchers are the other side only, and their
 conditions count (every active modifier to Perception, sight or all Actions is in the roll and on
-the GM's card). A Ghostsuit gives only watchers at Alert or higher a try: the Awareness Ladder has
-to be at Alert for the other side; the players' characters always get theirs. A GM holding the
+the GM's card). Only watchers at Alert or higher get a try, whatever the cloak: the Awareness
+Ladder has to be at Alert for the other side; the players' characters always get theirs. A GM holding the
 cloaked token has *Secret Perception* on the Action HUD. Setting *Cloaks
 against enhanced sight*: Automatic in secret, When the GM asks, or Off.
 

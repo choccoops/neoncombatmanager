@@ -514,7 +514,8 @@ test("movement this Turn: every move costs what it measures from where the token
   game.combats = [combat];
   game.combat = combat;
   Compat.measure = (a, b) => (Math.hypot(b.x - a.x, b.y - a.y) / 100) * 2;
-  const wait = (ms = 40) => new Promise((r) => setTimeout(r, ms));
+  // Generous: each write here takes a few milliseconds, and the machine may be busy.
+  const wait = (ms = 160) => new Promise((r) => setTimeout(r, ms));
   const go = async (y, options = {}) => {
     doc.y = y;
     Turns.onMove(doc, { y }, options);
@@ -532,7 +533,7 @@ test("movement this Turn: every move costs what it measures from where the token
   // One square down, at once, the same length as last Turn's whole move.
   doc.y = 100;
   Turns.onMove(doc, { y: 100 }, {});
-  await wait(60);
+  await wait(220);
   assert.equal(Turns.metres(cb.id), 2, "the first square counts");
   assert.equal(server.metres, 2, "and reaches the combatant, for the carousel and the ruler");
   await go(200);
