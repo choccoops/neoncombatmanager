@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.40.0
+
+- **Sight range.** Foundry lets a token see as far as its line of sight runs, so on a lit map
+  a figure 400 m off is as plain as one across the street and a scope adds nothing. With
+  *Sight range* on (it's off until you switch it on):
+  - *The naked eye*: characters make out other people only to 50 m/yds (a setting). Past
+    that the map is still there, but nobody on it shows until they're closer.
+  - *Haze*: the map past what a player's token makes out is dimmed on their own screen, all
+    round or, for a token whose vision is a cone, down that cone. Each player can switch their
+    haze off.
+  - *Walls* block as they always did: this is Foundry's own detection, given a range.
+  - *How*: the GM's client sets that range as each character token's light perception as a
+    scene opens and on new tokens, and keeps what the token had; switching the feature off
+    puts every token back exactly as it was.
+- **Scopes reach past it, down a narrow cone.** A scope up now lets its user make people out
+  as far as it sees (a Long Scope 100 m, a Sniping Scope 800 m...), in a 20° wedge the way the
+  token faces, and gives up everything to the sides while it's up. *Scope's field of view* now
+  defaults to 20° (0 keeps the token's own cone, as before). Binoculars triple the naked-eye
+  range.
+
 ## 1.39.1
 
 - **Every cloak waits for Alert.** The secret Perception against a cloak was open to any

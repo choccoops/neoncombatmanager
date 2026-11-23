@@ -1378,7 +1378,7 @@
       },
       "scopeVision": {
         "name": "Scopes: see as far as the scope does",
-        "hint": "A character with a scope on the gun in their hands, TeleOptics (installed, or in the glasses or helmet they wear) or binoculars gets a Scope action on the Action HUD. On, their token's vision reaches as far as the scope sees (a Long Scope 100 m, a Sniping Scope or TeleOptics 800 m, a Gaki 1,000 m; binoculars triple it), no further than the scene; off, it sees as it did. Stowing the gun lowers it."
+        "hint": "A character with a scope on the gun in their hands, TeleOptics (installed, or in the glasses or helmet they wear) or binoculars gets a Scope action on the Action HUD. On, their token sees and makes people out as far as the scope does (a Long Scope 100 m, a Sniping Scope or TeleOptics 800 m, a Gaki 1,000 m; binoculars triple it), no further than the scene, down a narrow cone the way it faces; off, it sees as it did. Stowing the gun lowers it. It comes into its own with Sight range on."
       },
       "scopeSniper": {
         "name": "A Sniper Rifle is scoped",
@@ -1386,7 +1386,7 @@
       },
       "scopeAngle": {
         "name": "Scope's field of view (degrees)",
-        "hint": "The vision cone while looking through a scope. 0 keeps the cone the token already has (so a token set to 160° stays at 160°); any other number narrows it to that while the scope is up, never widens it."
+        "hint": "The vision cone while looking through a scope: a narrow wedge the way the token faces, as far as the scope sees, and nothing to the sides. 20 by default. 0 keeps the cone the token already has; it never widens it."
       },
       "visionModes": {
         "name": "Low Light, Infrared and UV as actions",
@@ -1432,6 +1432,18 @@
       "bloodShow": {
         "name": "Show blood",
         "hint": "Off: no blood is drawn on your screen."
+      },
+      "sightRange": {
+        "name": "Sight range",
+        "hint": "Characters make out other people only as far as the naked eye reaches; past that the map is still there, hazed on their screen, but nobody on it shows until they're closer or looked at through a scope. Walls block as they always do. On, the GM's client sets that range as each character token's light perception on a scene as it opens (and on new tokens), keeping what the token had; off, every token is put back as it was."
+      },
+      "sightBase": {
+        "name": "Sight range: the naked eye (m/yds)",
+        "hint": "How far a character makes out other people unaided. 50 is where the scopes' bonuses begin."
+      },
+      "sightHaze": {
+        "name": "Haze past my sight range",
+        "hint": "With Sight range on: the map past what the token you're looking through makes out is dimmed on your screen (all round, or down the cone of a scope). Off: no haze for you; who you can see is the same."
       }
     },
     "SceneWeather": {

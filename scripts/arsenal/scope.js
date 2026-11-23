@@ -2,6 +2,7 @@ import { MODULE_ID, LANG } from "../constants.js";
 import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { scopeOf, better, scopedRange, scopeLabel, SCOPE_RANGES } from "./scope-data.js";
+import { lightRange } from "../senses/sight-data.js";
 import { L } from "../util.js";
 
 /**
@@ -140,7 +141,9 @@ export const Scope = {
     const held = this.active(doc);
     const modes = Array.isArray(doc.detectionModes) ? doc.detectionModes.map((m) => ({ id: m.id, enabled: m.enabled, range: m.range })) : null;
     const was = held?.was ?? { range: Number(doc.sight?.range) || 0, angle: Number(doc.sight?.angle) || 360, modes };
-    const range = scopedRange({ base: was.range, scope: src.scope, max: this._max(doc) });
+    // Unaided, they see as far as their eyes do in the dark or, with Sight range on, as far as they make people out.
+    const eye = lightRange(was.modes ?? []);
+    const range = scopedRange({ base: Number.isFinite(eye) ? Math.max(was.range, eye) : was.range, scope: src.scope, max: this._max(doc) });
     const angle = Number(Settings.get("scopeAngle")) || 0;
     const update = { "sight.range": range, [`flags.${MODULE_ID}.${SCOPE_FLAG}`]: { key: src.key, name: src.name, scope: src.scope, range, was } };
     if (angle > 0 && angle < was.angle) update["sight.angle"] = angle;

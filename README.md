@@ -1154,6 +1154,22 @@ The GM's client checks the clock really moved after each Round and moves it if n
 combat ends, a card says how many Rounds it ran, how long that was and the time of day.
 Seconds per Round (and per skipped Turn) are settings.
 
+## Sight range
+
+Foundry lets a token see as far as its line of sight runs: on a lit map a figure 400 m off is as
+plain as one across the street. With **Sight range** on (off by default), a character makes out
+other people only as far as the naked eye reaches, 50 m/yds unless you change it. Past that the
+map is still there, hazed on that player's screen, but nobody on it shows until they are closer,
+or looked at through a scope. Walls block as they always do.
+
+It works through Foundry's own detection: the GM's client gives each character token on a scene
+that range as its light perception when the scene opens (and on new tokens), keeping what the
+token had, and puts every token back as it was when the setting goes off. A token is looked
+through when it is the one selected (or, for a player with nothing selected, their character's).
+
+A scope is how you see further: see below. Settings: *Sight range*, *Sight range: the naked eye*,
+and each player's *Haze past my sight range*.
+
 ## Scopes
 
 A character with something to look through gets a **Scope** action on the Action HUD. Switched
@@ -1167,8 +1183,9 @@ on, their token's vision reaches as far as the scope sees; switched off, it sees
 | TeleOptics: installed, or in the glasses or helmet worn | *Scope: TeleOptics* in the Weapons group | 800 m |
 | Binoculars carried | *Scope: Binoculars* in the Weapons group | three times what the token sees unaided |
 
-The vision cone is the token's own (set a token to 160° and it stays 160° through the scope);
-*Scope's field of view* narrows it while scoped if you'd rather. It never reaches further than
+Through a scope the token looks down a narrow wedge the way it faces (*Scope's field of view*,
+20° by default; 0 keeps the token's own cone) and gives up everything to the sides while it's up.
+With Sight range on, the scope is also how far its user makes people out. It never reaches further than
 the scene, and stowing or dropping the gun lowers the scope. Short Scopes and Targeting Scopes
 give no distance, so they give no action.
 

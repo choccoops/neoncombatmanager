@@ -33,6 +33,7 @@ import { Humanity } from "./humanity/humanity.js";
 import { Scope } from "./arsenal/scope.js";
 import { Senses } from "./senses/senses.js";
 import { Cloak } from "./senses/cloak.js";
+import { Sight } from "./senses/sight.js";
 import { Blood } from "./blood/blood.js";
 import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
@@ -453,6 +454,7 @@ Hooks.once("init", () => {
   Scope.init();
   Senses.init();
   Cloak.init();
+  Sight.init();
   Blood.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
 

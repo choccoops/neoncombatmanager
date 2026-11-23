@@ -9,7 +9,7 @@ export const MENUS = {
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxChrome", "fxPause", "bloodFx", "bloodTrails", "bloodMax", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
-  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "scopeVision", "scopeSniper", "scopeAngle", "visionModes", "visionOutlines", "visionHeat", "cloakCheck", "torchAction", "torchAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
+  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "sightRange", "sightBase", "scopeVision", "scopeSniper", "scopeAngle", "visionModes", "visionOutlines", "visionHeat", "cloakCheck", "torchAction", "torchAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -140,10 +140,14 @@ const DEFS = [
   ["visionHeat", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   ["torchAction", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["torchAngle", "world", Number, 60, { range: { min: 10, max: 360, step: 5 } }],
+  // Sight range: who a character makes out with the naked eye, and the haze past it
+  ["sightRange", "world", Boolean, false, { onChange: () => Hooks.callAll(`${MODULE_ID}.sightChanged`) }],
+  ["sightBase", "world", Number, 50, { range: { min: 10, max: 400, step: 10 }, onChange: () => Hooks.callAll(`${MODULE_ID}.sightChanged`) }],
+  ["sightHaze", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Looking through a scope: the token sees as far as the scope does
   ["scopeVision", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   ["scopeSniper", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
-  ["scopeAngle", "world", Number, 0, { range: { min: 0, max: 360, step: 5 } }],
+  ["scopeAngle", "world", Number, 20, { range: { min: 0, max: 360, step: 5 } }],
   ["arsenalAreas", "world", Boolean, true, {}],
   // A blast's template clears from the map once the blast has gone off
   ["arsenalAreaClear", "world", Boolean, true, {}],
