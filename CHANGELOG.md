@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.39.1
+
+- **Every cloak waits for Alert.** The secret Perception against a cloak was open to any
+  watcher for Optical Camo and a Chameleon Coating, and only a Ghostsuit asked for Alert. All
+  three now do: the other side gets a try only once the encounter's Awareness Ladder is at
+  Alert or higher (and not outside an encounter); the players' own characters always get
+  theirs. The Cloaked and Optical Camo conditions say so.
+
 ## 1.39.0
 
 - **Blood.** Drawn on the map under the tokens, for everyone, and kept with the scene.
