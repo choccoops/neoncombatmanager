@@ -435,3 +435,104 @@ test("scopes: how far each sees, read from its card; the Scope action raises a t
   await Settings.set("scopeVision", true);
   ui.notifications.info = info;
 });
+
+test("ways of seeing and a torch: what gives them, switching one on, what heat shows, and the light a torch throws", async () => {
+  const D = await import("../scripts/senses/senses-data.js");
+  assert.deepEqual(D.modesOf({ name: "Low Light / Infrared / UV", description: "Paired. Darkness, smoke and fog penalties drop to 0." }), ["lowlight", "infrared", "uv"]);
+  assert.deepEqual(D.modesOf({ name: "Infrared Nightvision Scope", description: "Cuts penalties for darkness, smoke and fog to 0. Shows warm bodies against cold metal." }), ["infrared"]);
+  assert.deepEqual(D.modesOf({ name: "M-98A3 Enhanced Combat Helmet", description: "Smart Glasses with Anti-Dazzle, Low Light/Infrared/UV and Targeting Scope" }), ["lowlight", "infrared", "uv"], "built into what's worn");
+  assert.deepEqual(D.modesOf({ name: "IR/UV Laser Sight", description: "A Laser Sight that only works if you see in infrared or nightvision." }), [], "a sight that needs such eyes isn't such eyes");
+  assert.deepEqual(D.modesOf({ name: "TeleOptics", description: "See detail to 800m/yds." }), []);
+  // Heat.
+  assert.equal(D.heatOf({ meat: true }), "warm");
+  assert.equal(D.heatOf({ meat: true, borg: true }), "cold", "a Full Body Conversion reads cold");
+  assert.equal(D.heatOf({ meat: true, borg: true, skinned: true }), "warm", "unless Realskinn covers it");
+  assert.equal(D.heatOf({ meat: true, damped: true }), null, "Thermal Damping with the camo running: nothing");
+  assert.equal(D.heatOf({ meat: false }), null, "a vehicle, a crate");
+  assert.equal(D.heatOf({ meat: true, dead: true }), "cold");
+  assert.equal(D.isBorgPart("FBC EMP Coating"), true);
+  assert.equal(D.isBorgPart("Sycust Cyberspine"), false, "a Cyberspine alone isn't a Full Body Conversion");
+  // Torches.
+  assert.deepEqual(D.torchOf({ name: "Flashlight", description: "100m/yd beam, 10 hours a charge." }), { range: 100 });
+  assert.deepEqual(D.torchOf({ name: "Flashlight Cyberfinger", description: "A flashlight in the fingertip." }), { range: 20 });
+  assert.equal(D.torchOf({ name: "Centurion Essentials Thermo-Dirk", description: "A heated blade." }), null);
+  assert.equal(D.torchOf({ name: "Binoculars", description: "2–3× magnification." }), null);
+  assert.deepEqual(D.torchLight({ range: 100, angle: 60, max: 80 }), { dim: 80, bright: 20, angle: 60, color: "#fff1c9", alpha: 0.35, luminosity: 0.5, attenuation: 0.6 });
+
+  const { Senses } = await import("../scripts/senses/senses.js");
+  const { Settings } = await import("../scripts/settings.js");
+  const { withVision } = await import("../scripts/neonfx/screen.js");
+  const { Conditions } = await import("../scripts/conditions/engine.js");
+  for (const k of ["visionModes", "visionHeat", "torchAction"]) await Settings.set(k, true);
+  await Settings.set("torchAngle", 60);
+  const M6 = "cpr-neon-combat-manager";
+  const eyes = { _id: "eyes", name: "Low Light / Infrared / UV", type: "cyberware", system: { isInstalled: true, description: { value: "Darkness, smoke and fog penalties drop to 0." } } };
+  const actor = makeActor({ name: "Scout" }, [eyes, { _id: "torch", name: "Flashlight", type: "gear", system: { equipped: "carried", description: { value: "100m/yd beam." } } }]);
+  const plain = makeActor({ name: "Plain" }, [
+    { _id: "rifle", name: "Rifle", type: "weapon", system: { isRanged: true, equipped: "equipped", installedItems: { list: ["ir"] } } },
+    { _id: "ir", name: "Infrared Nightvision Scope", type: "itemUpgrade", system: { description: { value: "Shows warm bodies against cold metal." } } }
+  ]);
+  assert.deepEqual(Senses.modes(actor).map((m) => m.mode), ["lowlight", "infrared", "uv"]);
+  assert.deepEqual(Senses.modes(plain).map((m) => [m.mode, m.by]), [["infrared", "Infrared Nightvision Scope"]], "through the scope on the gun in hand");
+  assert.deepEqual(Senses.modes(makeActor({ name: "Nobody" })), []);
+  assert.deepEqual(Senses.torch(actor), { range: 100, by: "Flashlight" });
+  assert.equal(Senses.torch(plain), null);
+
+  const mkDoc = (name) => ({
+    id: name, name, flags: {}, light: { dim: 0, bright: 0, angle: 360, color: null, alpha: 0.5 }, parent: { dimensions: { size: 100, distance: 2, sceneWidth: 3000, sceneHeight: 4000 } },
+    async update(u) {
+      for (const [k, v] of Object.entries(u)) {
+        if (k === "light") this.light = { ...this.light, ...v };
+        else if (k.startsWith(`flags.${M6}.-=`)) delete this.flags[M6]?.[k.split("-=")[1]];
+        else if (k.startsWith(`flags.${M6}.`)) (this.flags[M6] ??= {})[k.split(".").pop()] = v;
+      }
+    }
+  });
+  const doc = mkDoc("Scout");
+  // One way of seeing at a time; the same again switches it off.
+  assert.equal(await Senses.toggleVision(actor, "infrared", { token: doc }), "infrared");
+  assert.equal(Senses.vision(doc), "infrared");
+  assert.equal(await Senses.toggleVision(actor, "lowlight", { token: doc }), "lowlight");
+  assert.equal(Senses.vision(doc), "lowlight");
+  assert.equal(await Senses.toggleVision(plain, "uv", { token: mkDoc("Plain") }), null, "not theirs to switch on");
+  // The HUD.
+  const c = catalog(actor, { token: doc });
+  assert.deepEqual(c.weapons.filter((w) => String(w.key).startsWith("sense:")).map((w) => [w.key, w.on]), [["sense:lowlight", true], ["sense:infrared", false], ["sense:uv", false], ["sense:torch", false]]);
+  assert.equal(await Senses.toggleVision(actor, "lowlight", { token: doc }), null);
+  assert.equal(Senses.vision(doc), null);
+
+  // The torch: a cone as far as the beam, no further than the scene (100 m here); off, the light it had.
+  doc.light = { dim: 4, bright: 2, angle: 360, color: "#00ff00", alpha: 0.5 };
+  assert.equal(await Senses.toggleTorch(actor, { token: doc }), true);
+  assert.deepEqual([doc.light.dim, doc.light.bright, doc.light.angle], [100, 25, 60]);
+  assert.equal(Senses.torchOn(doc), true);
+  assert.equal(await Senses.toggleTorch(actor, { token: doc }), false);
+  assert.deepEqual([doc.light.dim, doc.light.bright, doc.light.angle, doc.light.color], [4, 2, 360, "#00ff00"]);
+  assert.equal(await Senses.toggleTorch(plain, { token: mkDoc("Plain") }), null, "no flashlight");
+
+  // What heat sight makes of people.
+  const person = { actor: makeActor({ name: "Ganger" }) };
+  const borg = { actor: makeActor({ name: "Borg" }, [{ _id: "fbc", name: "FBC Gemini Sculpt", type: "cyberware", system: { isInstalled: true } }]) };
+  const skinned = { actor: makeActor({ name: "Skinned" }, [{ _id: "fbc", name: "FBC EMP Coating", type: "cyberware", system: { isInstalled: true } }, { _id: "rs", name: "Realskinn Plating", type: "cyberware", system: { isInstalled: true } }]) };
+  const ghost = { actor: makeActor({ name: "Ghost" }, [{ _id: "td", name: "Thermal Damping", type: "itemUpgrade", system: {} }]) };
+  assert.deepEqual([Senses.heat(person), Senses.heat(borg), Senses.heat(skinned)], ["warm", "cold", "warm"]);
+  assert.equal(Senses.heat(ghost), "warm", "the damping does nothing until the camo runs");
+  await Conditions.add("chromeOpticalCamo", ghost.actor);
+  assert.equal(Senses.heat(ghost), null);
+  assert.equal(Senses.heat({ actor: makeActor({ name: "Truck", type: "vehicle" }) }), null);
+
+  // The screen: the mode's look under running chrome, over a Kerenzikov.
+  const v = { mode: "infrared", tint: "#ff7a1a" };
+  assert.deepEqual(withVision(null, v), { kind: "infrared", tint: "#ff7a1a" });
+  assert.deepEqual(withVision({ kind: "kerenzikov", tint: "#3d8bff" }, v), { kind: "infrared", tint: "#ff7a1a" });
+  assert.deepEqual(withVision({ kind: "sandevistan", tint: "#39ff14" }, v), { kind: "sandevistan", tint: "#39ff14" });
+  assert.equal(withVision(null, v, { enabled: false }), null);
+  assert.equal(withVision(null, null), null);
+
+  // Switched off in the settings: no actions.
+  await Settings.set("visionModes", false);
+  await Settings.set("torchAction", false);
+  assert.ok(!catalog(actor, { token: doc }).weapons.some((w) => String(w.key).startsWith("sense:")));
+  await Settings.set("visionModes", true);
+  await Settings.set("torchAction", true);
+});

@@ -2,6 +2,27 @@
 
 ## 1.38.0
 
+- **Low Light, Infrared and UV, as actions.** A character with Low Light / Infrared / UV
+  (cybereyes, or built into glasses, a helmet or a Smart Scope) or an Infrared Nightvision
+  Scope on the gun in hand gets an action for each way of seeing on the Action HUD; one is on
+  at a time.
+  - *While one is on*, darkness, smoke, fog and the weather's obscurement cost their sight
+    nothing: the Low Light, Darkness and Obscured conditions come off, and go back on when it's
+    switched off. **This changes how the chrome worked**: it used to cancel those penalties all
+    the time, just by being installed. The setting *Low Light, Infrared and UV as actions*
+    puts that back.
+  - *Each has its own look on the screen*, for whoever is looking through that token (its
+    player; a GM while it's the one token selected): amplified green with scan lines for Low
+    Light, heat's false colour for Infrared, violet for UV. It sits under running chrome's
+    look and follows *Chrome on my screen*.
+  - *Heat, in Infrared and UV*: the bodies in sight show on that viewer's screen alone.
+    People and animals glow warm; a Full Body Conversion reads cold, a hard outline with no
+    glow, unless Realskinn Plating covers it; Thermal Damping with Optical Camo running shows
+    nothing; the dead are cold. Only what the token can already see: no looking through walls.
+- **Torch.** A character carrying a flashlight (or with one built in, a Flashlight
+  Cyberfinger) gets a Torch action: on, their token throws a cone of light the way it faces,
+  as far as the beam (a Flashlight's 100 m, no further than the scene); off, it has the light
+  it had. *Torch's cone* sets how wide (60°).
 - **Scopes: see as far as the scope does.** A character with something to look through gets
   a **Scope** action on the Action HUD. On, their token's vision reaches as far as the scope
   sees, in the cone the token already looks through (a token set to 160° stays at 160°); off,

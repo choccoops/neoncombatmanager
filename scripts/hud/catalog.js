@@ -1,6 +1,7 @@
 import { MODULE_ID, LANG } from "../constants.js";
 import { ranThisTurn, RUN_FLAG } from "../ruler/ruler-core.js";
 import { Scope } from "../arsenal/scope.js";
+import { Senses } from "../senses/senses.js";
 import { CPR } from "../cpr.js";
 import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
@@ -139,6 +140,8 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
 
   // Eyes that magnify (TeleOptics, in the head or in what's worn) and binoculars.
   if (Scope.on) out.weapons.push(...Scope.entries(actor, token, scopes));
+  // Ways of seeing (Low Light, Infrared, UV) and a torch.
+  out.weapons.push(...Senses.entries(actor, token));
 
   // Equip / Change Weapon: the hands, what's in them, and the Carried weapons to put in them.
   const hands = Hands.state(actor);

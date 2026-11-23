@@ -6,6 +6,8 @@ import { debounce } from "../util.js";
 import { Chrome, CHROME_TINT } from "./chrome.js";
 import { KERENZIKOV } from "./switches.js";
 import { Interrupt } from "./interrupt.js";
+import { Senses } from "../senses/senses.js";
+import { MODE_TINT } from "../senses/senses-data.js";
 
 /**
  * What running chrome does to its owner's view. While your character's Sandevistan or Berserk
@@ -68,6 +70,16 @@ export function withPause(own, paused, { enabled = true } = {}) {
 /** The edge of a paused screen: a cold blue (an Apogee's stopped world is edged in its own gold). */
 export const PAUSE_TINT = "#7fb8ff";
 
+/**
+ * A way of seeing (Low Light, Infrared, UV), pure: the screen takes its look while the token
+ * being looked through has it on, under anything stronger (running chrome), over a Kerenzikov.
+ */
+export function withVision(own, vision, { enabled = true } = {}) {
+  if (!vision || !enabled) return own;
+  if (own && own.kind !== "kerenzikov") return own;
+  return { kind: vision.mode, tint: vision.tint };
+}
+
 export const Screen = {
   init() {
     const soon = debounce(() => this.refresh(), 120);
@@ -93,7 +105,10 @@ export const Screen = {
 
   look() {
     const enabled = !!Settings.get("fxScreen") && !!Settings.get("fxEnabled") && Chrome.on;
-    const look = withFreeze(screenLook(this.state(), { enabled }), Interrupt.active(), { enabled });
+    const screens = !!Settings.get("fxScreen") && !!Settings.get("fxEnabled");
+    const eyes = Senses.viewer();
+    const seen = withVision(screenLook(this.state(), { enabled }), eyes ? { mode: eyes.mode, tint: MODE_TINT[eyes.mode] } : null, { enabled: screens });
+    const look = withFreeze(seen, Interrupt.active(), { enabled });
     // Paused: needs only "Chrome on my screen" and the world's setting, not chrome running.
     return withPause(look, !!game.paused, { enabled: !!Settings.get("fxScreen") && !!Settings.get("fxEnabled") && !!Settings.get("fxPause") });
   },

@@ -274,3 +274,31 @@ test("ambience follows the scene's weather; Indoors, Off and the GM's switch sil
   // Quiet: a loop is a third of the player's FX volume or less.
   for (const a of Object.values(AMBIENCE)) assert.ok(WeatherFx.volume(a.level) <= 0.4 * 0.45 + 1e-9);
 });
+
+test("enhanced sight is switched on, not just owned: in the dark and the rain, the penalties go while Low Light, Infrared or UV is on, and come back when it's off", async () => {
+  const { Senses } = await import("../scripts/senses/senses.js");
+  const M7 = "cpr-neon-combat-manager";
+  await Settings.set("visionModes", true);
+  await Settings.set("visibilityEnabled", true);
+  const actor = makeActor({ name: "Scout", hasPlayerOwner: false }, [{ _id: "eyes", name: "Low Light / Infrared / UV", type: "cyberware", system: { isInstalled: true } }]);
+  const doc = { id: "Scout", name: "Scout", actor, x: 2000, y: 2000, width: 1, height: 1, elevation: 0, texture: {}, flags: {} };
+  const scene = makeScene({ tokens: [doc] });
+  doc.parent = scene;
+  const savedCanvas = globalThis.canvas;
+  const savedLevel = Environment.levelFor;
+  globalThis.canvas = { scene, ready: true };
+  Environment.levelFor = () => "dark";
+  const ids = () => [...Environment.evaluate(doc, Sources.weather()).desired.keys()];
+  assert.ok(ids().includes("darkness") && ids().includes("obscured"), "owned, but off: in the dark like anyone");
+  doc.flags[M7] = { vision: { mode: "infrared" } };
+  assert.equal(Senses.vision(doc), "infrared");
+  assert.ok(!ids().includes("darkness") && !ids().includes("obscured") && !ids().includes("lowLight"), "on: nothing off their sight");
+  delete doc.flags[M7].vision;
+  assert.ok(ids().includes("darkness"), "off again: back in the dark");
+  // With the actions switched off in the settings, the chrome works as it always did: all the time.
+  await Settings.set("visionModes", false);
+  assert.ok(!ids().includes("darkness") && !ids().includes("obscured"));
+  await Settings.set("visionModes", true);
+  Environment.levelFor = savedLevel;
+  globalThis.canvas = savedCanvas;
+});

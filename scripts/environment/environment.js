@@ -6,6 +6,7 @@ import { Registry, sightChanges } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
 import { Cards } from "../combat/cards.js";
 import { Sources } from "./sources.js";
+import { Senses } from "../senses/senses.js";
 import { weatherFor, HAZARDS, WEATHER_CONDITION } from "./weather-data.js";
 import { sightParts, worse } from "./visibility-data.js";
 import { debounce, L, esc } from "../util.js";
@@ -120,6 +121,9 @@ export const Environment = {
     const mode = Sources.sceneMode(doc.parent);
     const outdoors = mode === "outdoor" && !Sources.sheltered(doc);
     const gear = Sources.gear(actor);
+    // Enhanced sight is switched on, not just owned: with ways of seeing on the Action HUD, the
+    // penalties go while one is on (Low Light, Infrared or UV), and come back when it's off.
+    if (Senses.on) gear.vision = !!Senses.vision(doc);
     const w = outdoors && weather.keys.length ? weatherFor(weather.keys, gear, { armorPenalty: CPR.armorPenalty(actor) }) : { conditions: [], sight: 0, extra: [], hazards: [] };
     // Light and darkness, like the weather's own obscurement, go to everyone the weather reaches,
     // in a fight or not: a character standing in the dark is in the dark before Initiative too.

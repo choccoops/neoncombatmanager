@@ -1172,6 +1172,31 @@ The vision cone is the token's own (set a token to 160° and it stays 160° thro
 the scene, and stowing or dropping the gun lowers the scope. Short Scopes and Targeting Scopes
 give no distance, so they give no action.
 
+## Ways of seeing, heat and torches
+
+**Low Light, Infrared, UV.** A character with Low Light / Infrared / UV (cybereyes, or built
+into glasses, a helmet or a Smart Scope), or an Infrared Nightvision Scope on the gun in hand,
+gets an action for each on the Action HUD (Weapons group); one is on at a time. While it's on:
+
+- darkness, smoke, fog and weather cost their sight nothing (the Low Light, Darkness and
+  Obscured conditions come off; they go back on when it's switched off);
+- the screen of whoever looks through that token takes the mode's look: amplified green for Low
+  Light, heat's false colour for Infrared, violet for UV. A player sees it for their own token;
+  a GM while it is the one token selected.
+
+**Heat** (Infrared and UV). The bodies in sight show on that viewer's screen only: people and
+animals glow warm; a Full Body Conversion (any `FBC` chrome) is a cold outline, unless Realskinn
+Plating covers it; Thermal Damping with Optical Camo running shows nothing; the dead are cold.
+It shows what the token already sees, never through walls.
+
+**Torch.** Carrying a flashlight (or a Flashlight Cyberfinger) gives a Torch action: the token
+throws a cone of light the way it faces, as far as the beam, and gets its own light back when
+it's switched off.
+
+Settings: *Low Light, Infrared and UV as actions* (off: the chrome cancels sight penalties all
+the time, as it used to, with no actions), *Heat, in Infrared and UV*, *Torch action*, *Torch's
+cone*.
+
 ## Humanity Loss events
 
 For when something costs the crew a piece of themselves. The GM opens **Humanity Loss** (the
