@@ -35,6 +35,8 @@ import { Senses } from "./senses/senses.js";
 import { Cloak } from "./senses/cloak.js";
 import { Sight } from "./senses/sight.js";
 import { Far } from "./senses/far.js";
+import { Levels } from "./senses/levels.js";
+import { Hold } from "./combat/hold.js";
 import { Blood } from "./blood/blood.js";
 import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
@@ -320,6 +322,25 @@ const api = {
     /** GM: wipe the scene's blood (or, with { near: [points] }, within three squares of each). */
     clear: (options) => Blood.clear(options)
   },
+  /** Levels: Regions as floors, with heights, so distance counts the height between people. */
+  levels: {
+    open: () => Levels.open(),
+    /** The scene's floors: [{ region, stack, height }]. */
+    list: () => Levels.floors(),
+    /** GM: make a Region a floor of a building (stack) at a height (m/yds). */
+    add: (floor) => Levels.add(floor),
+    remove: (region) => Levels.remove(region),
+    /** The real distance between two tokens, or null where the map's own is right. */
+    distance: (a, b) => Levels.distance(a, b)
+  },
+  /** Holds: a Grapple the map knows about. Tokens or token documents. */
+  hold: {
+    grab: (holder, target) => Hold.grab(holder, target),
+    shield: (holder, on) => Hold.shield(holder, on),
+    release: (token) => Hold.release(token),
+    held: (holder) => Hold.held(holder),
+    heldBy: (token) => Hold.heldBy(token)
+  },
   /** Linked areas: places far apart, drawn on one scene. */
   far: {
     open: () => Far.open(),
@@ -468,6 +489,8 @@ Hooks.once("init", () => {
   Cloak.init();
   Sight.init();
   Far.init();
+  Levels.init();
+  Hold.init();
   Blood.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
 

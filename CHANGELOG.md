@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.42.0
+
+- **Levels: height counts in the distance.** Floors of a building are often drawn side by side
+  on one scene (with a module such as Multilevel Tokens showing who's on the others), and the
+  squares between them say nothing about how far apart two people are.
+  - *Floors*: draw a Region over each floor, then open **Levels** (the layers button in the
+    token controls) and give each Region its height above the ground and the name of its
+    building. Floors with the same building name are taken as the same ground plan.
+  - *Distance*: between two floors of one building, an attack's DV is taken from the distance
+    across the plan and the height between them, together: someone 6 m along and one floor
+    (8 m) up is 10 m away, however far apart the two floors were drawn. A floor with no
+    building named (a rooftop over the street) keeps the map's distance and adds its height.
+  - *Elevation*: a token's own elevation counts the same way everywhere, floors or not.
+  - *Multilevel Tokens*: a shot at a clone is measured to the real token it stands in for.
+  - Setting *Levels* (on by default). `api.levels` has `open`, `list`, `add`, `remove` and
+    `distance`.
+- **Grabs and Human Shields, on the map.**
+  - *Grab*: after winning the Brawling check, target them, stand next to them and press
+    **Grab** on the Action HUD. You get Grappling, they get Grappled, and the hold is recorded.
+  - *Carried along*: when the holder's token moves, the held token moves with it, where it was
+    held, and that costs the held one none of its own movement. The GM can still reposition the
+    held token by hand; it's then carried from there.
+  - *Human Shield*: while holding, **Human Shield** on the Action HUD holds them up (and puts
+    the Human Shield condition on them). A ranged attack aimed at the holder is aimed at the
+    shield instead: the attacker's target switches to it, the attack card says who it was meant
+    for, and the shield gets no dodge.
+  - *Let go / Break free*: either side's button ends the hold and clears the conditions. Taking
+    Grappled off the held one, or deleting either token, ends it too.
+  - Setting *Grabs and Human Shields* (on by default). `api.hold` has `grab`, `shield`,
+    `release`, `held` and `heldBy`. No other module is needed for any of this.
+
 ## 1.41.0
 
 - **Linked areas.** One map often has to hold places that are far apart: the rooftop a sniper

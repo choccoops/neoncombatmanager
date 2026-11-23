@@ -1194,6 +1194,40 @@ Walls inside the far area still block the view from its middle, where the point 
 Setting: *Linked areas*. For macros: `api.far.add({ a, b, distance, both })` with Region ids,
 `api.far.list()`, `api.far.remove(id)`, `api.far.distance(tokenA, tokenB)`.
 
+## Levels
+
+When the floors of a building are drawn side by side on one scene, or tokens fly, the map's
+distance isn't the real one. With **Levels** on (the default):
+
+1. Draw a **Region** over each floor and name it.
+2. As GM, open **Levels** (the layers button in the token controls). Pick a Region, give the
+   building's name (the same for every floor of it) and the floor's height above the ground.
+
+- Between two floors of one building, distance is measured across the floor plan (each floor's
+  Region lined up by its top left corner) and up, together. Draw the floors the same size.
+- A floor with no building named keeps the map's distance to everyone else and adds its height:
+  a rooftop drawn over the street it overlooks.
+- A token's elevation always counts.
+- A Multilevel Tokens clone is measured to the real token behind it.
+
+This changes the distance an attack's DV is taken at. It doesn't decide who sees whom: that
+stays with the map, with Multilevel Tokens' clones, or with Linked areas above.
+
+## Grabs and Human Shields
+
+The Brawling checks are rolled as always; this is what happens on the map afterwards.
+
+- **Grab**: target the one you won against, stand next to them, press **Grab** on the Action
+  HUD. Both get their Grapple conditions.
+- **Moving**: the held token is carried along wherever the holder's token goes, without
+  spending its own movement.
+- **Human Shield**: press it while holding. A ranged attack aimed at you is aimed at them
+  instead, the card says so, and they can't dodge it. Press again to lower them.
+- **Let go** (holder) or **Break free** (held, after winning the check) ends it.
+
+Setting: *Grabs and Human Shields*. For macros: `api.hold.grab(holderToken, targetToken)`,
+`api.hold.shield(holderToken)`, `api.hold.release(token)`.
+
 ## Scopes
 
 A character with something to look through gets a **Scope** action on the Action HUD. Switched

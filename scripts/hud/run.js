@@ -72,6 +72,8 @@ export const Run = {
         if (id === "cloak") return (await import("../senses/cloak.js")).Cloak.ask(token ?? actor.getActiveTokens?.()[0] ?? null);
         return id === "torch" ? Senses.toggleTorch(actor, { token }) : Senses.toggleVision(actor, id, { token });
       }
+      case "hold":
+        return (await import("../combat/hold.js")).Hold.run(actor, id, { token });
       case "far":
         return (await import("../senses/far.js")).Far.look(actor, id, { token });
       case "zoom":
