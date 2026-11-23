@@ -33,6 +33,7 @@ import { Humanity } from "./humanity/humanity.js";
 import { Scope } from "./arsenal/scope.js";
 import { Senses } from "./senses/senses.js";
 import { Cloak } from "./senses/cloak.js";
+import { Blood } from "./blood/blood.js";
 import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
 import { Roller } from "./roller/roller.js";
@@ -307,6 +308,16 @@ const api = {
     noSignal: (actor) => Hub.noSignal(actor),
     whereIs: (actor) => Hub.whereIs(actor)
   },
+  /** Blood on the map: spatters, pools and trails. */
+  blood: {
+    open: () => Blood.open(),
+    /** GM: add marks, [{ x, y, t }] with t one of faint, trail, drag, splat, pool. */
+    add: (marks) => Blood.add(marks),
+    /** GM: paint a tier with the mouse until right-click or Escape. */
+    paint: (tier) => Blood.paint(tier),
+    /** GM: wipe the scene's blood (or, with { near: [points] }, within three squares of each). */
+    clear: (options) => Blood.clear(options)
+  },
   /** Cloaks against enhanced sight: the GM's secret DV17 Perception. */
   cloak: {
     /** GM: every watcher with a line to this cloaked token (or everyone, with none given) tries again now, in secret. */
@@ -442,6 +453,7 @@ Hooks.once("init", () => {
   Scope.init();
   Senses.init();
   Cloak.init();
+  Blood.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
 
   game.modules.get(MODULE_ID).api = api;

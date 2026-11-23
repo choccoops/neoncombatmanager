@@ -8,7 +8,7 @@ export const MENUS = {
   conditions: ["replaceStatuses", "conditionChat", "mirrorWounds", "mirrorCyberpsychosis", "mirrorCriticals", "critItems", "fireEscalates", "wakeOnDamage", "cltShim", "conditionSheetNotes"],
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
-  fx: ["fxEnabled", "fxConditions", "fxChrome", "fxPause", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
+  fx: ["fxEnabled", "fxConditions", "fxChrome", "fxPause", "bloodFx", "bloodTrails", "bloodMax", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
   arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "scopeVision", "scopeSniper", "scopeAngle", "visionModes", "visionOutlines", "visionHeat", "cloakCheck", "torchAction", "torchAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
@@ -128,6 +128,11 @@ const DEFS = [
   ["arsenalAutoInstall", "world", Boolean, true, {}],
   ["arsenalProfile", "world", String, "", { config: false }],
   ["arsenalSounds", "world", Boolean, true, {}],
+  // Blood on the map: spatters, pools, trails
+  ["bloodFx", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  ["bloodTrails", "world", Boolean, true, {}],
+  ["bloodMax", "world", Number, 600, { range: { min: 100, max: 2000, step: 100 } }],
+  ["bloodShow", "client", Boolean, true, { config: true, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Low Light, Infrared, UV as actions; heat on what's seen; a torch
   ["visionModes", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.environmentConfig`) }],
   ["visionOutlines", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],

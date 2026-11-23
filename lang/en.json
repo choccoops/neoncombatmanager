@@ -1416,6 +1416,22 @@
         "auto": "Automatic, in secret",
         "gm": "When the GM asks",
         "off": "Off"
+      },
+      "bloodFx": {
+        "name": "Blood",
+        "hint": "Blood on the map, under the tokens, for everyone: a spatter where a character takes a Critical Injury or becomes Seriously Wounded; a pool where they become Mortally Wounded or flatline. People and animals bleed; Full Body Conversions don't. Under UV it fluoresces. The GM paints and wipes it from the droplet button in the token controls."
+      },
+      "bloodTrails": {
+        "name": "Blood trails",
+        "hint": "The wounded leave a trail as they move: faint drops Lightly Wounded (too little for the naked eye: only UV picks them up, and the GM); a plain trail Seriously Wounded; a smear where a Mortally Wounded or dead body is dragged."
+      },
+      "bloodMax": {
+        "name": "Blood: marks kept on a scene",
+        "hint": "The oldest marks go as new ones pass this number."
+      },
+      "bloodShow": {
+        "name": "Show blood",
+        "hint": "Off: no blood is drawn on your screen."
       }
     },
     "SceneWeather": {
@@ -3049,6 +3065,24 @@
       "Forget": "Hide them again",
       "Ask": "Secret Perception",
       "NoOne": "Nobody on the other side has a clear line to a cloak they haven't already seen through (or, against a Ghostsuit, they aren't at Alert)."
+    },
+    "Blood": {
+      "Tool": "Blood",
+      "Tier": "What to paint",
+      "Tiers": {
+        "faint": "Faint trail (UV only)",
+        "trail": "Trail",
+        "drag": "Drag smear",
+        "splat": "Spatter",
+        "pool": "Pool"
+      },
+      "Paint": "Paint",
+      "ClearNear": "Wipe near selected",
+      "ClearAll": "Wipe the scene",
+      "PaintHint": "Paint: hold the left button and drag across the map (one mark where you press for a spatter or a pool). Right-click or Escape stops.",
+      "Painting": "Painting blood: {tier}. Hold the left button and drag; right-click or Escape to stop.",
+      "PaintDone": "Done painting blood.",
+      "SelectFirst": "Select the tokens to wipe around first."
     }
   }
 }

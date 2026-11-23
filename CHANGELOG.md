@@ -2,6 +2,19 @@
 
 ## 1.39.0
 
+- **Blood.** Drawn on the map under the tokens, for everyone, and kept with the scene.
+  - *Spatters and pools*: a spatter where a character takes a Critical Injury or becomes
+    Seriously Wounded; a pool where they become Mortally Wounded or flatline.
+  - *Trails*: the wounded leave one as they move. Lightly Wounded, faint drops too slight for
+    the naked eye: only UV picks them up (and the GM sees them, dim). Seriously Wounded, a
+    plain trail. A Mortally Wounded or dead body that's moved leaves a drag smear.
+  - *Who bleeds*: people and animals. A Full Body Conversion doesn't.
+  - *Under UV* all of it fluoresces.
+  - *The GM's hand*: the droplet button in the token controls opens Blood: pick a tier (faint
+    trail, trail, drag smear, spatter, pool) and **Paint** it with the mouse (hold and drag;
+    right-click or Escape stops), **Wipe near selected** tokens, or **Wipe the scene**.
+  - Settings: *Blood*, *Blood trails*, *Blood: marks kept on a scene* (600; the oldest go),
+    and each player's *Show blood*.
 - **Enhanced sight shows who's out in the dark.** With Low Light, Infrared or UV on, the
   screen changed but the people Foundry wasn't drawing (out in the dark, past the token's own
   eyes) stayed unseen. Everyone the token has a clear line of sight to now shows as an

@@ -1225,6 +1225,28 @@ Settings: *Low Light, Infrared and UV as actions* (off: the chrome cancels sight
 the time, as it used to, with no actions), *Heat, in Infrared and UV*, *Torch action*, *Torch's
 cone*.
 
+## Blood
+
+Blood is drawn on the map under the tokens, the same for everyone, and stays with the scene.
+
+| What happens | What it leaves |
+| --- | --- |
+| A Critical Injury; becoming Seriously Wounded | a spatter |
+| Becoming Mortally Wounded; flatlining | a pool |
+| Moving while Lightly Wounded | faint drops: only UV picks them up (the GM sees them, dim) |
+| Moving while Seriously Wounded | a trail |
+| A Mortally Wounded or dead body being moved | a drag smear |
+
+People and animals bleed; a Full Body Conversion doesn't. Under UV all of it fluoresces.
+
+**The GM's hand.** The droplet button in the token controls opens Blood: pick a tier and
+**Paint** it with the mouse (hold the left button and drag; a spatter or a pool goes where you
+press; right-click or Escape stops), **Wipe near selected** tokens (three squares around each),
+or **Wipe the scene**. `api.blood`: `open()`, `add(marks)`, `paint(tier)`, `clear(options)`.
+
+Settings: *Blood*, *Blood trails*, *Blood: marks kept on a scene* (the oldest go past it), and
+each player's own *Show blood*.
+
 ## Humanity Loss events
 
 For when something costs the crew a piece of themselves. The GM opens **Humanity Loss** (the
