@@ -334,3 +334,221 @@ test("templates read their own values: a helper another module registers under t
     Handlebars.unregisterHelper("sub");
   }
 });
+
+test("scopes: how far each sees, read from its card; the Scope action raises a token's vision to it and puts it back", async () => {
+  const { scopeOf, better, scopedRange, scopeLabel } = await import("../scripts/arsenal/scope-data.js");
+  assert.deepEqual(scopeOf({ name: "Long Scope", description: "<p>See detail out to 100m. Two-handed Single Shots at 13–50m get +1.</p>" }), { range: 100 });
+  assert.deepEqual(scopeOf({ name: "Sniping Scope", description: "See detail out to 800m/yds." }), { range: 800 });
+  assert.deepEqual(scopeOf({ name: "Gaki Sniping Scope", description: "A Sniping Scope that sees detail out to 1,000m." }), { range: 1000 });
+  assert.deepEqual(scopeOf({ name: "Jue Long Scope", description: "A Long Scope with a built-in Targeting Scope." }), { range: 100 }, "says what it is: that kind's distance");
+  assert.deepEqual(scopeOf({ name: "TeleOptics", description: "See detail to 800m/yds." }), { range: 800 });
+  assert.deepEqual(scopeOf({ name: "Aviation Tactical Optics Platform", description: "Smart Glasses with Anti-Dazzle, Image Enhance and TeleOptics." }), { range: 800 }, "TeleOptics built into what's worn");
+  assert.deepEqual(scopeOf({ name: "Binoculars", description: "2–3× magnification." }), { factor: 3 });
+  assert.equal(scopeOf({ name: "Short Scope", description: "Two-handed Single Shots at 0–12m get +1." }), null);
+  assert.equal(scopeOf({ name: "Targeting Scope", description: "+1 to Aimed Shots." }), null);
+  assert.deepEqual(better({ range: 100 }, { range: 800 }), { range: 800 });
+  assert.deepEqual(better({ factor: 3 }, { range: 100 }), { range: 100 });
+  assert.deepEqual(better(null, { factor: 3 }), { factor: 3 });
+  assert.equal(scopedRange({ base: 30, scope: { range: 800 }, max: 240 }), 240, "no further than the scene");
+  assert.equal(scopedRange({ base: 30, scope: { range: 100 } }), 100);
+  assert.equal(scopedRange({ base: 30, scope: { factor: 3 } }), 90);
+  assert.equal(scopedRange({ base: 200, scope: { range: 100 } }), 200, "never less than unaided");
+  assert.equal(scopedRange({ base: 30 }), 30);
+  assert.deepEqual([scopeLabel({ range: 800 }), scopeLabel({ factor: 3 })], ["800 m", "×3"]);
+
+  const { Scope } = await import("../scripts/arsenal/scope.js");
+  const { Settings } = await import("../scripts/settings.js");
+  await Settings.set("scopeVision", true);
+  await Settings.set("scopeSniper", true);
+  await Settings.set("scopeAngle", 0);
+  const M5 = "cpr-neon-combat-manager";
+  const actor = makeActor({ name: "Shooter" }, [
+    { _id: "rifle", name: "Assault Rifle", type: "weapon", system: { isRanged: true, equipped: "equipped", weaponType: "assaultRifle", installedItems: { list: ["mount"] } } },
+    { _id: "mount", name: "Variable Scope Mount", type: "itemUpgrade", system: { description: { value: "Adds 3 slots for scopes only." }, installedItems: { list: ["long", "snipe"] } } },
+    { _id: "long", name: "Long Scope", type: "itemUpgrade", system: { description: { value: "See detail out to 100m." } } },
+    { _id: "snipe", name: "Sniping Scope", type: "itemUpgrade", system: { description: { value: "See detail out to 800m/yds." } } },
+    { _id: "sr", name: "Sniper Rifle", type: "weapon", system: { isRanged: true, equipped: "equipped", weaponType: "sniperRifle" } },
+    { _id: "pistol", name: "Heavy Pistol", type: "weapon", system: { isRanged: true, equipped: "equipped", weaponType: "heavyPistol" } },
+    { _id: "stowed", name: "Spare Rifle", type: "weapon", system: { isRanged: true, equipped: "carried", weaponType: "sniperRifle" } },
+    { _id: "eyes", name: "TeleOptics", type: "cyberware", system: { isInstalled: true, description: { value: "See detail to 800m/yds." } } },
+    { _id: "binos", name: "Binoculars", type: "gear", system: { equipped: "carried", description: { value: "2–3× magnification." } } }
+  ]);
+  const src = Scope.sources(actor);
+  assert.deepEqual(src.map((s) => [s.key, s.name, s.scope.range ?? `x${s.scope.factor}`]), [
+    ["zoom:rifle", "Sniping Scope", 800],
+    ["zoom:sr", "Sniper Rifle", 800],
+    ["zoom:eyes", "TeleOptics", 800],
+    ["zoom:binos", "Binoculars", "x3"]
+  ], "the best scope fitted (through the mount); a bare Sniper Rifle; eyes; binoculars. A pistol and a stowed rifle have none");
+  await Settings.set("scopeSniper", false);
+  assert.ok(!Scope.sources(actor).some((s) => s.key === "zoom:sr"), "a bare Sniper Rifle, by setting");
+  await Settings.set("scopeSniper", true);
+
+  // The token: 30 m of sight in a 160° cone, a limited basic sight; a 400 m scene.
+  const doc = {
+    id: "tok", name: "Shooter", sight: { range: 30, angle: 160 }, flags: {}, parent: { dimensions: { size: 100, distance: 2, sceneWidth: 12000, sceneHeight: 16000 }, grid: { units: "m" } },
+    detectionModes: [{ id: "basicSight", enabled: true, range: 30 }, { id: "lightPerception", enabled: true, range: null }],
+    async update(u) {
+      for (const [k, v] of Object.entries(u)) {
+        if (k === "sight.range") this.sight.range = v;
+        else if (k === "sight.angle") this.sight.angle = v;
+        else if (k === "detectionModes") this.detectionModes = v;
+        else if (k === `flags.${M5}.scope`) (this.flags[M5] ??= {}).scope = v;
+        else if (k === `flags.${M5}.-=scope`) delete this.flags[M5]?.scope;
+      }
+    }
+  };
+  const info = ui.notifications.info;
+  ui.notifications.info = () => {};
+  assert.equal(await Scope.toggle(actor, "zoom:rifle", { token: doc }), true);
+  assert.deepEqual([doc.sight.range, doc.sight.angle], [400, 160], "to the edge of the scene (800 m is past it), in the token's own cone");
+  assert.equal(doc.detectionModes[0].range, 400, "a limited basic sight reaches as far");
+  assert.equal(doc.detectionModes[1].range, null, "an unlimited sense is left alone");
+  assert.equal(Scope.active(doc).key, "zoom:rifle");
+  // The HUD: the rifle's button is lit; eyes and binoculars are entries of their own.
+  const c = catalog(actor, { token: doc });
+  const row = c.weapons.find((w) => w.label === "Assault Rifle");
+  assert.equal(row.buttons.find((b) => b.key === "zoom:rifle").on, true);
+  assert.ok(!c.weapons.find((w) => w.label === "Heavy Pistol").buttons.some((b) => b.key.startsWith("zoom:")));
+  assert.deepEqual(c.weapons.filter((w) => String(w.key).startsWith("zoom:")).map((w) => [w.key, w.sub]), [["zoom:eyes", "800 m"], ["zoom:binos", "×3"]]);
+  // Switching to the binoculars: three times what the token sees unaided, not three times the scope.
+  await Scope.toggle(actor, "zoom:binos", { token: doc });
+  assert.equal(doc.sight.range, 90);
+  // Off: as it was.
+  assert.equal(await Scope.toggle(actor, "zoom:binos", { token: doc }), false);
+  assert.deepEqual([doc.sight.range, doc.sight.angle, doc.detectionModes[0].range, Scope.active(doc)], [30, 160, 30, null]);
+  // A narrower field of view, by setting; never a wider one.
+  await Settings.set("scopeAngle", 40);
+  await Scope.toggle(actor, "zoom:eyes", { token: doc });
+  assert.equal(doc.sight.angle, 40);
+  await Scope.toggle(actor, "zoom:eyes", { token: doc });
+  assert.equal(doc.sight.angle, 160);
+  await Settings.set("scopeAngle", 200);
+  await Scope.toggle(actor, "zoom:eyes", { token: doc });
+  assert.equal(doc.sight.angle, 160, "not widened");
+  await Scope.toggle(actor, "zoom:eyes", { token: doc });
+  await Settings.set("scopeAngle", 0);
+  // Switched off in the settings: no action, no entries.
+  await Settings.set("scopeVision", false);
+  assert.equal(await Scope.toggle(actor, "zoom:rifle", { token: doc }), null);
+  assert.ok(!catalog(actor, { token: doc }).weapons.some((w) => String(w.key).startsWith("zoom:") || (w.buttons ?? []).some((b) => b.key.startsWith("zoom:"))));
+  await Settings.set("scopeVision", true);
+  ui.notifications.info = info;
+});
+
+test("ways of seeing and a torch: what gives them, switching one on, what heat shows, and the light a torch throws", async () => {
+  const D = await import("../scripts/senses/senses-data.js");
+  assert.deepEqual(D.modesOf({ name: "Low Light / Infrared / UV", description: "Paired. Darkness, smoke and fog penalties drop to 0." }), ["lowlight", "infrared", "uv"]);
+  assert.deepEqual(D.modesOf({ name: "Infrared Nightvision Scope", description: "Cuts penalties for darkness, smoke and fog to 0. Shows warm bodies against cold metal." }), ["infrared"]);
+  assert.deepEqual(D.modesOf({ name: "M-98A3 Enhanced Combat Helmet", description: "Smart Glasses with Anti-Dazzle, Low Light/Infrared/UV and Targeting Scope" }), ["lowlight", "infrared", "uv"], "built into what's worn");
+  assert.deepEqual(D.modesOf({ name: "IR/UV Laser Sight", description: "A Laser Sight that only works if you see in infrared or nightvision." }), [], "a sight that needs such eyes isn't such eyes");
+  assert.deepEqual(D.modesOf({ name: "TeleOptics", description: "See detail to 800m/yds." }), []);
+  // Heat.
+  assert.equal(D.heatOf({ meat: true }), "warm");
+  assert.equal(D.heatOf({ meat: true, borg: true }), "cold", "a Full Body Conversion reads cold");
+  assert.equal(D.heatOf({ meat: true, borg: true, skinned: true }), "warm", "unless Realskinn covers it");
+  assert.equal(D.heatOf({ meat: true, damped: true }), null, "Thermal Damping with the camo running: nothing");
+  assert.equal(D.heatOf({ meat: false }), null, "a vehicle, a crate");
+  assert.equal(D.heatOf({ meat: true, dead: true }), "cold");
+  assert.equal(D.isBorgPart("FBC EMP Coating"), true);
+  assert.equal(D.isBorgPart("Sycust Cyberspine"), false, "a Cyberspine alone isn't a Full Body Conversion");
+  // Torches.
+  assert.deepEqual(D.torchOf({ name: "Flashlight", description: "100m/yd beam, 10 hours a charge." }), { range: 100 });
+  assert.deepEqual(D.torchOf({ name: "Flashlight Cyberfinger", description: "A flashlight in the fingertip." }), { range: 20 });
+  assert.equal(D.torchOf({ name: "Centurion Essentials Thermo-Dirk", description: "A heated blade." }), null);
+  assert.equal(D.torchOf({ name: "Binoculars", description: "2–3× magnification." }), null);
+  assert.deepEqual(D.torchLight({ range: 100, angle: 60, max: 80 }), { dim: 80, bright: 20, angle: 60, color: "#fff1c9", alpha: 0.35, luminosity: 0.5, attenuation: 0.6 });
+
+  const { Senses } = await import("../scripts/senses/senses.js");
+  const { Settings } = await import("../scripts/settings.js");
+  const { withVision } = await import("../scripts/neonfx/screen.js");
+  const { Conditions } = await import("../scripts/conditions/engine.js");
+  for (const k of ["visionModes", "visionHeat", "torchAction"]) await Settings.set(k, true);
+  await Settings.set("torchAngle", 60);
+  const M6 = "cpr-neon-combat-manager";
+  const eyes = { _id: "eyes", name: "Low Light / Infrared / UV", type: "cyberware", system: { isInstalled: true, description: { value: "Darkness, smoke and fog penalties drop to 0." } } };
+  const actor = makeActor({ name: "Scout" }, [eyes, { _id: "torch", name: "Flashlight", type: "gear", system: { equipped: "carried", description: { value: "100m/yd beam." } } }]);
+  const plain = makeActor({ name: "Plain" }, [
+    { _id: "rifle", name: "Rifle", type: "weapon", system: { isRanged: true, equipped: "equipped", installedItems: { list: ["ir"] } } },
+    { _id: "ir", name: "Infrared Nightvision Scope", type: "itemUpgrade", system: { description: { value: "Shows warm bodies against cold metal." } } }
+  ]);
+  assert.deepEqual(Senses.modes(actor).map((m) => m.mode), ["lowlight", "infrared", "uv"]);
+  assert.deepEqual(Senses.modes(plain).map((m) => [m.mode, m.by]), [["infrared", "Infrared Nightvision Scope"]], "through the scope on the gun in hand");
+  assert.deepEqual(Senses.modes(makeActor({ name: "Nobody" })), []);
+  assert.deepEqual(Senses.torch(actor), { range: 100, by: "Flashlight" });
+  assert.equal(Senses.torch(plain), null);
+
+  const mkDoc = (name) => ({
+    id: name, name, flags: {}, light: { dim: 0, bright: 0, angle: 360, color: null, alpha: 0.5 }, parent: { dimensions: { size: 100, distance: 2, sceneWidth: 3000, sceneHeight: 4000 } },
+    async update(u) {
+      for (const [k, v] of Object.entries(u)) {
+        if (k === "light") this.light = { ...this.light, ...v };
+        else if (k.startsWith(`flags.${M6}.-=`)) delete this.flags[M6]?.[k.split("-=")[1]];
+        else if (k.startsWith(`flags.${M6}.`)) (this.flags[M6] ??= {})[k.split(".").pop()] = v;
+      }
+    }
+  });
+  const doc = mkDoc("Scout");
+  // One way of seeing at a time; the same again switches it off.
+  assert.equal(await Senses.toggleVision(actor, "infrared", { token: doc }), "infrared");
+  assert.equal(Senses.vision(doc), "infrared");
+  assert.equal(await Senses.toggleVision(actor, "lowlight", { token: doc }), "lowlight");
+  assert.equal(Senses.vision(doc), "lowlight");
+  assert.equal(await Senses.toggleVision(plain, "uv", { token: mkDoc("Plain") }), null, "not theirs to switch on");
+  // The HUD.
+  const c = catalog(actor, { token: doc });
+  assert.deepEqual(c.weapons.filter((w) => String(w.key).startsWith("sense:")).map((w) => [w.key, w.on]), [["sense:lowlight", true], ["sense:infrared", false], ["sense:uv", false], ["sense:torch", false]]);
+  assert.equal(await Senses.toggleVision(actor, "lowlight", { token: doc }), null);
+  assert.equal(Senses.vision(doc), null);
+
+  // The torch: a cone as far as the beam, no further than the scene (100 m here); off, the light it had.
+  doc.light = { dim: 4, bright: 2, angle: 360, color: "#00ff00", alpha: 0.5 };
+  assert.equal(await Senses.toggleTorch(actor, { token: doc }), true);
+  assert.deepEqual([doc.light.dim, doc.light.bright, doc.light.angle], [100, 25, 60]);
+  assert.equal(Senses.torchOn(doc), true);
+  assert.equal(await Senses.toggleTorch(actor, { token: doc }), false);
+  assert.deepEqual([doc.light.dim, doc.light.bright, doc.light.angle, doc.light.color], [4, 2, 360, "#00ff00"]);
+  assert.equal(await Senses.toggleTorch(plain, { token: mkDoc("Plain") }), null, "no flashlight");
+
+  // What heat sight makes of people.
+  const person = { actor: makeActor({ name: "Ganger" }) };
+  const borg = { actor: makeActor({ name: "Borg" }, [{ _id: "fbc", name: "FBC Gemini Sculpt", type: "cyberware", system: { isInstalled: true } }]) };
+  const skinned = { actor: makeActor({ name: "Skinned" }, [{ _id: "fbc", name: "FBC EMP Coating", type: "cyberware", system: { isInstalled: true } }, { _id: "rs", name: "Realskinn Plating", type: "cyberware", system: { isInstalled: true } }]) };
+  const ghost = { actor: makeActor({ name: "Ghost" }, [{ _id: "td", name: "Thermal Damping", type: "itemUpgrade", system: {} }]) };
+  assert.deepEqual([Senses.heat(person), Senses.heat(borg), Senses.heat(skinned)], ["warm", "cold", "warm"]);
+  assert.equal(Senses.heat(ghost), "warm", "the damping does nothing until the camo runs");
+  await Conditions.add("chromeOpticalCamo", ghost.actor);
+  assert.equal(Senses.heat(ghost), null);
+  assert.equal(Senses.heat({ actor: makeActor({ name: "Truck", type: "vehicle" }) }), null);
+  // Neon Hub's Full Borg module says who is in a body: moved in with Go Metal, a body from its
+  // compendium, or carrying a piece a body put in. No chrome with "FBC" in its name needed.
+  const { CPR: Sys } = await import("../scripts/cpr.js");
+  const FB = "cpr-neon-full-borg";
+  const metal = makeActor({ name: "Gone Metal" });
+  metal.flags[FB] = { fbc: { body: { id: "b1", name: "Gemini" }, since: 0 } };
+  const body = makeActor({ name: "Dragoon" });
+  body.flags[FB] = { fbcBody: { maker: "Militech" } };
+  const piece = makeActor({ name: "Pieces" }, [{ _id: "p1", name: "Chassis", type: "cyberware", system: { isInstalled: true }, flags: { [FB]: { body: "b1" } } }]);
+  const out = makeActor({ name: "Out Again" });
+  out.flags[FB] = { fbc: { body: null, coreSlots: null } };
+  assert.deepEqual([metal, body, piece, out, person.actor, borg.actor].map((x) => Sys.isBorg(x)), [true, true, true, false, false, true]);
+  assert.deepEqual([Senses.heat({ actor: metal }), Senses.heat({ actor: body }), Senses.heat({ actor: piece }), Senses.heat({ actor: out })], ["cold", "cold", "cold", "warm"]);
+  const { OS: Cards2 } = await import("../scripts/neonfx/os.js");
+  assert.equal(Cards2.framed(metal), true, "and it carries an Apogee's load, for the chrome cards");
+  assert.equal(Cards2.framed(person.actor), false);
+
+  // The screen: the mode's look under running chrome, over a Kerenzikov.
+  const v = { mode: "infrared", tint: "#ff7a1a" };
+  assert.deepEqual(withVision(null, v), { kind: "infrared", tint: "#ff7a1a" });
+  assert.deepEqual(withVision({ kind: "kerenzikov", tint: "#3d8bff" }, v), { kind: "infrared", tint: "#ff7a1a" });
+  assert.deepEqual(withVision({ kind: "sandevistan", tint: "#39ff14" }, v), { kind: "sandevistan", tint: "#39ff14" });
+  assert.equal(withVision(null, v, { enabled: false }), null);
+  assert.equal(withVision(null, null), null);
+
+  // Switched off in the settings: no actions.
+  await Settings.set("visionModes", false);
+  await Settings.set("torchAction", false);
+  assert.ok(!catalog(actor, { token: doc }).weapons.some((w) => String(w.key).startsWith("sense:")));
+  await Settings.set("visionModes", true);
+  await Settings.set("torchAction", true);
+});

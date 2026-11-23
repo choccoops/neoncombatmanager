@@ -1390,3 +1390,15 @@ li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; li
 #ncm-carousel .ncm-move-text em { font-style: normal; color: var(--ncm-yellow); }
 #ncm-carousel .ncm-move.is-spent { border-color: rgba(255, 42, 109, 0.6); background: rgba(255, 42, 109, 0.12); }
 #ncm-carousel .ncm-move.is-spent .ncm-move-fill { border-right-color: transparent; }
+
+/* Ways of seeing: the screen through Low Light (amplified green), Infrared (heat's false colour), UV (violet). */
+#ncm-screen-fx[data-kind="lowlight"] .ncm-screen-tone { backdrop-filter: grayscale(1) brightness(1.55) contrast(1.15); background: rgba(40, 255, 40, 0.2); mix-blend-mode: multiply; }
+#ncm-screen-fx[data-kind="lowlight"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 20, 0, 0.75) 100%), repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 3px); animation: ncm-screen-noise 0.18s steps(2) infinite; }
+#ncm-screen-fx[data-kind="lowlight"] .ncm-screen-streaks { display: none; }
+#ncm-screen-fx[data-kind="infrared"] .ncm-screen-tone { backdrop-filter: grayscale(1) contrast(1.35) brightness(0.8); background: linear-gradient(180deg, rgba(60, 20, 140, 0.5), rgba(20, 30, 120, 0.5)); mix-blend-mode: screen; }
+#ncm-screen-fx[data-kind="infrared"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 58%, rgba(255, 90, 20, 0.22) 100%); }
+#ncm-screen-fx[data-kind="infrared"] .ncm-screen-streaks { display: none; }
+#ncm-screen-fx[data-kind="uv"] .ncm-screen-tone { backdrop-filter: saturate(0.35) contrast(1.25) brightness(0.9) hue-rotate(250deg); background: rgba(120, 60, 255, 0.16); }
+#ncm-screen-fx[data-kind="uv"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 55%, rgba(178, 107, 255, 0.3) 100%); animation: ncm-screen-breathe 4s ease-in-out infinite alternate; }
+#ncm-screen-fx[data-kind="uv"] .ncm-screen-streaks { display: none; }
+@keyframes ncm-screen-noise { from { opacity: 0.92; } to { opacity: 1; } }

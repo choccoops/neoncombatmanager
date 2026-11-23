@@ -122,7 +122,8 @@ export const OS = {
   },
 
   framed(actor) {
-    return framed(items(actor));
+    // A Full Body Conversion as Neon Hub's Full Borg module marks it, or by the chrome's name; or a Cyberspine.
+    return CPR.isBorg(actor) || framed(items(actor));
   },
 
   /** The chrome that lets someone dodge bullets whatever their REF right now: its condition's name, or null. */

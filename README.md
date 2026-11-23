@@ -1154,6 +1154,50 @@ The GM's client checks the clock really moved after each Round and moves it if n
 combat ends, a card says how many Rounds it ran, how long that was and the time of day.
 Seconds per Round (and per skipped Turn) are settings.
 
+## Scopes
+
+A character with something to look through gets a **Scope** action on the Action HUD. Switched
+on, their token's vision reaches as far as the scope sees; switched off, it sees as it did
+(what it saw before is kept on the token).
+
+| Looking through | Where the action is | Sees to |
+| --- | --- | --- |
+| A scope on the gun in hand (also inside a Variable Scope Mount or Smart Scope) | a magnifying-glass button on the weapon's row | what the attachment's card says: Long Scope 100 m, Sniping Scope 800 m, Gaki Sniping Scope 1,000 m |
+| A Sniper Rifle with no scope fitted (setting *A Sniper Rifle is scoped*) | the same button | 800 m |
+| TeleOptics: installed, or in the glasses or helmet worn | *Scope: TeleOptics* in the Weapons group | 800 m |
+| Binoculars carried | *Scope: Binoculars* in the Weapons group | three times what the token sees unaided |
+
+The vision cone is the token's own (set a token to 160° and it stays 160° through the scope);
+*Scope's field of view* narrows it while scoped if you'd rather. It never reaches further than
+the scene, and stowing or dropping the gun lowers the scope. Short Scopes and Targeting Scopes
+give no distance, so they give no action.
+
+## Ways of seeing, heat and torches
+
+**Low Light, Infrared, UV.** A character with Low Light / Infrared / UV (cybereyes, or built
+into glasses, a helmet or a Smart Scope), or an Infrared Nightvision Scope on the gun in hand,
+gets an action for each on the Action HUD (Weapons group); one is on at a time. While it's on:
+
+- darkness, smoke, fog and weather cost their sight nothing (the Low Light, Darkness and
+  Obscured conditions come off; they go back on when it's switched off);
+- the screen of whoever looks through that token takes the mode's look: amplified green for Low
+  Light, heat's false colour for Infrared, violet for UV. A player sees it for their own token;
+  a GM while it is the one token selected.
+
+**Heat** (Infrared and UV). The bodies in sight show on that viewer's screen only: people and
+animals glow warm; a Full Body Conversion (as Neon Hub's Full Borg module marks the character,
+else any chrome named `FBC ...`) is a cold outline, unless Realskinn
+Plating covers it; Thermal Damping with Optical Camo running shows nothing; the dead are cold.
+It shows what the token already sees, never through walls.
+
+**Torch.** Carrying a flashlight (or a Flashlight Cyberfinger) gives a Torch action: the token
+throws a cone of light the way it faces, as far as the beam, and gets its own light back when
+it's switched off.
+
+Settings: *Low Light, Infrared and UV as actions* (off: the chrome cancels sight penalties all
+the time, as it used to, with no actions), *Heat, in Infrared and UV*, *Torch action*, *Torch's
+cone*.
+
 ## Humanity Loss events
 
 For when something costs the crew a piece of themselves. The GM opens **Humanity Loss** (the

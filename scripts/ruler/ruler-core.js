@@ -71,44 +71,37 @@ export function movementLeft({ walked = 0, r = { move: 0, run: 0, why: null }, r
   return { left: round(Math.max(0, open.run - w)), total: round(open.run), walked: round(w), run: round(Math.max(0, r.run - open.run)), why: r.why ?? null };
 }
 
-const samePoint = (a, b) => !!a && !!b && Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1;
-
 /**
- * The trail a token has walked this Turn after one more move, pure. A trail is the points it
- * stood on with what each leg cost: [{ x, y, d }] (the first: d 0).
+ * What a token has walked this Turn after one more move, pure: { metres, points }.
  *
- * A move that takes it back is given back, not added: straight back to where it stood before
- * the last leg (the move reversed), or, undone (Foundry's undo), back to wherever on the trail
- * it now stands. Only a move somewhere new costs.
- * @param {object[]} trail
- * @param {{x, y}} to - where it stands now (centre)
- * @param {number} distance - what this move measured
- * @param {object} [o] - undo: Foundry says this move is an undo
- * @returns {{ trail: object[], metres: number, back: boolean }}
+ * Every move costs what it measures, from where the token stood to where it stands, whichever
+ * way it goes: walking back is walking. Only Foundry's undo (Ctrl+Z) gives a move back: its
+ * distance comes off and its point leaves the path. A move that wasn't theirs to make (thrown,
+ * pushed, dodging out of a blast) costs nothing: the path's end just goes with the token.
+ * @param {{ metres: number, points: {x, y}[] }} walked - so far this Turn
+ * @param {object} move - from: where it stood (centre, or null when unknown); to: where it
+ *   stands; distance: what the move measured; undo; forced
  */
-export function stepTrail(trail = [], to, distance = 0, { undo = false } = {}) {
-  const t = trail.map((p) => ({ ...p }));
-  let back = false;
-  if (t.length >= 2 && samePoint(t[t.length - 2], to)) {
-    t.pop();
-    back = true;
-  } else if (undo && t.length) {
-    let i = t.length - 2;
-    while (i >= 0 && !samePoint(t[i], to)) i--;
-    if (i >= 0) t.length = i + 1;
-    else {
-      // Undone to somewhere the trail doesn't know: the last leg is given back, and it stands there.
-      const last = t.pop();
-      t.push({ x: to.x, y: to.y, d: t.length ? Math.max(0, (Number(last?.d) || 0) - (Number(distance) || 0)) : 0 });
-    }
-    back = true;
-  } else t.push({ x: to.x, y: to.y, d: t.length ? Math.max(0, Number(distance) || 0) : 0 });
-  const metres = t.reduce((sum, p) => sum + (Number(p.d) || 0), 0);
-  return { trail: t, metres: Math.round(metres * 100) / 100, back };
+export function stepPath(walked = {}, { from = null, to, distance = 0, undo = false, forced = false } = {}) {
+  const points = (walked.points ?? []).map((p) => ({ x: p.x, y: p.y }));
+  let metres = Math.max(0, Number(walked.metres) || 0);
+  const d = Math.max(0, Number(distance) || 0);
+  if (forced) {
+    if (points.length) points[points.length - 1] = { x: to.x, y: to.y };
+    else points.push({ x: to.x, y: to.y });
+  } else if (undo) {
+    metres = Math.max(0, metres - d);
+    if (points.length > 1) points.pop();
+    if (points.length) points[points.length - 1] = { x: to.x, y: to.y };
+    else points.push({ x: to.x, y: to.y });
+  } else {
+    // The path starts where the token stood, known or not until now.
+    if (!points.length && from) points.push({ x: from.x, y: from.y });
+    points.push({ x: to.x, y: to.y });
+    metres += d;
+  }
+  return { metres: Math.round(metres * 100) / 100, points };
 }
-
-/** Is a move straight back to where the token stood before its last leg (so: a move taken back)? Pure. */
-export const isStepBack = (points = [], to) => points.length >= 2 && samePoint(points[points.length - 2], to);
 
 /** The band a distance falls in. */
 export function bandOf(distance, r) {

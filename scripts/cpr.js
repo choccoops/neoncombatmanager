@@ -16,6 +16,20 @@ export const CPR = {
     return (actor?.type === "character" || actor?.type === "mook") && !actor.flags?.[MODULE_ID]?.cover;
   },
 
+  /**
+   * Is this character in a Full Body Conversion? Neon Hub's Full Borg module says so first: a
+   * character moved into a body (Go Metal) carries it as a flag, a body from its compendium is
+   * one, and every piece a body put in is marked. Without that module, by the chrome's name
+   * ("FBC ...", "Full Body Conversion").
+   */
+  isBorg(actor) {
+    const FULL_BORG = "cpr-neon-full-borg";
+    const f = actor?.flags?.[FULL_BORG];
+    if (f?.fbc?.body || f?.fbcBody) return true;
+    return [...(actor?.items ?? [])].some((i) => !!i.flags?.[FULL_BORG]?.body
+      || (i.type === "cyberware" && !!i.system?.isInstalled && /\bfbc\b|full[- ]body (?:conversion|cyborg|replacement)/i.test(i.name ?? "")));
+  },
+
   hp(actor) {
     const hp = getProperty(actor, "system.derivedStats.hp") ?? {};
     return { value: Number(hp.value) || 0, max: Number(hp.max) || 0 };

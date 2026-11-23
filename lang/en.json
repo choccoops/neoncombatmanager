@@ -1371,6 +1371,34 @@
       "fxPause": {
         "name": "Time stands still while the game is paused",
         "hint": "While the game is paused, every screen shows the world stopped: the colour drained, a cold blue ring at the edges, the same look as an Apogee's Sandevistan Time. It lifts the moment the game goes on. Each player's \"Chrome on my screen\" turns it off for them."
+      },
+      "scopeVision": {
+        "name": "Scopes: see as far as the scope does",
+        "hint": "A character with a scope on the gun in their hands, TeleOptics (installed, or in the glasses or helmet they wear) or binoculars gets a Scope action on the Action HUD. On, their token's vision reaches as far as the scope sees (a Long Scope 100 m, a Sniping Scope or TeleOptics 800 m, a Gaki 1,000 m; binoculars triple it), no further than the scene; off, it sees as it did. Stowing the gun lowers it."
+      },
+      "scopeSniper": {
+        "name": "A Sniper Rifle is scoped",
+        "hint": "A Sniper Rifle with no scope attachment still gets the Scope action, at a Sniping Scope's 800 m. Off: only rifles with a scope fitted."
+      },
+      "scopeAngle": {
+        "name": "Scope's field of view (degrees)",
+        "hint": "The vision cone while looking through a scope. 0 keeps the cone the token already has (so a token set to 160° stays at 160°); any other number narrows it to that while the scope is up, never widens it."
+      },
+      "visionModes": {
+        "name": "Low Light, Infrared and UV as actions",
+        "hint": "A character with Low Light / Infrared / UV (cybereyes, or built into glasses, a helmet or a Smart Scope) or an Infrared Nightvision Scope on the gun in hand gets an action for each way of seeing on the Action HUD. While one is on, darkness, smoke, fog and weather cost their sight nothing, and their screen takes that mode's look while their token is the one selected. Off: the chrome works as before, all the time, with no action and no look."
+      },
+      "visionHeat": {
+        "name": "Heat, in Infrared and UV",
+        "hint": "Looking in Infrared or UV, the bodies in sight show warm or cold, on that viewer's screen only: people and animals warm; a Full Body Conversion cold, unless Realskinn Plating covers it; nothing at all under Thermal Damping with Optical Camo running."
+      },
+      "torchAction": {
+        "name": "Torch action",
+        "hint": "A character carrying a flashlight (or with one built in) gets a Torch action on the Action HUD: on, their token throws a cone of light the way it faces, as far as the flashlight's beam (no further than the scene); off, it has the light it had before."
+      },
+      "torchAngle": {
+        "name": "Torch's cone (degrees)",
+        "hint": "How wide a torch's light is."
       }
     },
     "SceneWeather": {
@@ -2973,6 +3001,20 @@
       "Roll": "Roll {formula} Humanity Loss",
       "Lost": "{name} loses {n} Humanity ({now} left).",
       "AlreadyTaken": "That Humanity Loss has already been taken."
+    },
+    "Scope": {
+      "Button": "Scope: {scope} ({range})",
+      "Entry": "Scope: {scope}",
+      "Up": "{name} looks through {scope}: sees to {range} {unit}.",
+      "NoToken": "{name} has no token on this scene to look from."
+    },
+    "Senses": {
+      "Mode": {
+        "lowlight": "Low Light",
+        "infrared": "Infrared",
+        "uv": "UV"
+      },
+      "Torch": "Torch"
     }
   }
 }

@@ -6,7 +6,7 @@ import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
 import { Cards } from "./cards.js";
 import { L, esc } from "../util.js";
-import { stepTrail } from "../ruler/ruler-core.js";
+import { stepPath } from "../ruler/ruler-core.js";
 
 /** Moving more than this many m/yds on foot in a Turn reopens some Critical Injuries (p.187-188). */
 export const MOVE_LIMIT = 4;
@@ -31,6 +31,10 @@ export const Turns = {
     Hooks.on("updateCombat", (combat, changed, options) => this.onUpdate(combat, changed, options));
     Hooks.on("deleteCombat", (combat) => this.last.delete(combat.id));
     Hooks.on("updateToken", (token, changed, options) => this.onMove(token, changed, options));
+    // Where every token stands, as this client last saw it: a move is measured from there.
+    Hooks.on("canvasReady", () => this.seeAll());
+    Hooks.on("createToken", (token) => this.see(token));
+    Hooks.on("deleteToken", (token) => this.pos.delete(token.id));
   },
 
   state(combat) {
@@ -116,9 +120,24 @@ export const Turns = {
   /*  Movement                                */
   /* ---------------------------------------- */
 
+  /** token id -> { x, y, width, height, grid } where it stood when this client last saw it move (or first saw it). */
+  pos: new Map(),
+
+  see(token) {
+    if (!token?.id) return;
+    this.pos.set(token.id, { x: token.x, y: token.y, width: token.width, height: token.height, parent: token.parent });
+  },
+
+  seeAll() {
+    this.pos.clear();
+    for (const t of canvas?.scene?.tokens ?? []) this.see(t);
+  },
+
   resetMove(combatant) {
-    const t = combatant.token;
-    this.moved.set(combatant.id, { metres: 0, at: t ? { x: t.x, y: t.y } : null, trail: t ? [{ ...this.centre(t), d: 0 }] : [] });
+    // The combatant's own token; failing that (a combat not tied to its scene), the one on the canvas.
+    const t = combatant.token ?? canvas?.scene?.tokens?.get?.(combatant.tokenId) ?? null;
+    if (t) this.see(t);
+    this.moved.set(combatant.id, { metres: 0, points: t ? [this.centre(t)] : [] });
     // The path walked this Turn, for every client's movement ruler (scripts/ruler/ruler.js).
     if (Compat.isActiveGM && Settings.get("trackMovement")) {
       const c = t ? this.centre(t) : null;
@@ -155,39 +174,30 @@ export const Turns = {
   },
 
   /**
-   * The current combatant's token moved: add up the distance (active GM). A move taken back
-   * (Foundry's undo, or the token put straight back where it stood) gives its distance back; a
-   * move that wasn't theirs to make (thrown, pushed, dodging out of a blast) costs nothing.
+   * A token moved. Whoever it is, where it stands is noted (the next move is measured from
+   * there). For the current combatant's (active GM) the distance is added up: every move costs
+   * what it measures, whichever way; only Foundry's undo (Ctrl+Z) gives one back; a move that
+   * wasn't theirs to make (thrown, pushed, dodging out of a blast) costs nothing.
    */
   onMove(token, changed, options = {}) {
-    if (!Compat.isActiveGM || !("x" in changed || "y" in changed)) return;
+    if (!("x" in changed || "y" in changed)) return;
+    const stood = this.pos.get(token.id) ?? null;
+    this.see(token);
+    if (!Compat.isActiveGM) return;
     const combat = game.combats?.find((c) => c.started && c.combatant?.tokenId === token.id && (!c.scene || c.scene.id === token.parent?.id));
     if (!combat) return;
     const cb = combat.combatant;
     const path = cb.flags?.[MODULE_ID]?.path ?? {};
-    const entry = this.moved.get(cb.id) ?? { metres: 0, at: null };
+    // This Turn's sums so far: this client's own, else what the combatant carries (a reload mid-Turn).
+    const entry = this.moved.get(cb.id) ?? { metres: Number(path.metres) || 0, points: Array.isArray(path.points) ? path.points : [] };
+    if (!Array.isArray(entry.points)) entry.points = Array.isArray(path.points) ? path.points : [];
     const to = this.centre(token);
-    // A trail to go by: this Turn's own, else rebuilt from what the combatant carries (a reload mid-Turn).
-    if (!Array.isArray(entry.trail)) {
-      const pts = Array.isArray(path.points) ? path.points : [];
-      entry.trail = pts.map((p, i) => ({ x: p.x, y: p.y, d: i ? Compat.measure(pts[i - 1], p) : 0 }));
-    }
-    const from = entry.trail.at(-1) ?? null;
-    const forced = !!options?.[MODULE_ID]?.free;
-    if (forced) {
-      // Where it stands changes; what it has walked doesn't.
-      if (entry.trail.length) entry.trail[entry.trail.length - 1] = { ...to, d: entry.trail.at(-1).d };
-      else entry.trail.push({ ...to, d: 0 });
-    } else {
-      const next = stepTrail(entry.trail, to, from ? Compat.measure(from, to) : 0, { undo: !!options?.isUndo });
-      entry.trail = next.trail;
-      entry.metres = next.metres;
-    }
-    entry.at = { x: token.x, y: token.y };
-    this.moved.set(cb.id, entry);
+    const from = stood ? this.centre({ ...stood, parent: token.parent }) : entry.points.at(-1) ?? null;
+    const next = stepPath(entry, { from, to, distance: from ? Compat.measure(from, to) : 0, undo: !!options?.isUndo, forced: !!options?.[MODULE_ID]?.free });
+    this.moved.set(cb.id, { metres: next.metres, points: next.points });
     if (Settings.get("trackMovement")) {
-      const points = entry.trail.map((p) => ({ x: p.x, y: p.y })).slice(-60);
-      const metres = entry.metres;
+      const points = next.points.slice(-60);
+      const metres = next.metres;
       this._keepPath(cb, (now) => ({ ...now, points, metres }));
     }
   },

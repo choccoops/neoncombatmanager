@@ -30,6 +30,8 @@ import { Sources } from "./environment/sources.js";
 import { WeatherFx, presetFor } from "./environment/weather-fx.js";
 import { Stakes } from "./stakes/stakes.js";
 import { Humanity } from "./humanity/humanity.js";
+import { Scope } from "./arsenal/scope.js";
+import { Senses } from "./senses/senses.js";
 import { Awareness } from "./awareness/awareness.js";
 import { Hub } from "./hub/hub.js";
 import { Roller } from "./roller/roller.js";
@@ -430,6 +432,8 @@ Hooks.once("init", () => {
   Alert.init();
   Cover.init();
   NeonRuler.init();
+  Scope.init();
+  Senses.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
 
   game.modules.get(MODULE_ID).api = api;

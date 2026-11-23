@@ -66,6 +66,12 @@ export const Run = {
         const { Arsenal } = await import("../arsenal/arsenal.js");
         return Arsenal.toggle(actor, item, { rico: "ricochet", chg: "charge", "2h": "twoHands", rnd: "round" }[kind], { token });
       }
+      case "sense": {
+        const { Senses } = await import("../senses/senses.js");
+        return id === "torch" ? Senses.toggleTorch(actor, { token }) : Senses.toggleVision(actor, id, { token });
+      }
+      case "zoom":
+        return (await import("../arsenal/scope.js")).Scope.toggle(actor, key, { token });
       case "chrome":
         return (await import("../neonfx/switches.js")).Switches.toggle(actor, `chrome:${id}`, { token });
       case "scope":

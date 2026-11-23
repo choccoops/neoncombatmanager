@@ -1,5 +1,7 @@
 import { MODULE_ID, LANG } from "../constants.js";
 import { ranThisTurn, RUN_FLAG } from "../ruler/ruler-core.js";
+import { Scope } from "../arsenal/scope.js";
+import { Senses } from "../senses/senses.js";
 import { CPR } from "../cpr.js";
 import { Registry } from "../conditions/registry.js";
 import { Conditions } from "../conditions/engine.js";
@@ -67,6 +69,7 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   const out = Object.fromEntries(["turn", "weapons", "skills", "role", "net", "chrome", "status", "utility", "macros", "stats", "gear"].map((s) => [s, []]));
   if (!actor) return out;
   const items = [...(actor.items ?? [])];
+  const scopes = Scope.on ? Scope.sources(actor) : [];
 
   // Turn: Initiative, End Turn, Death Save, Facedown.
   const cb = combatantOf(actor, token, combat);
@@ -117,6 +120,9 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
       const seen = Xray.drawn.size;
       buttons.push({ key: `scope:${w.id}`, label: L(`${LANG}.Arsenal.ScopeTarget`), icon: "fa-solid fa-binoculars", sub: seen ? String(seen) : "", off: !seen });
     }
+    // A scope on the gun: look through it (the token sees as far as the scope does).
+    const zoom = Scope.on && ranged ? Scope.buttonFor(actor, w, token, scopes) : null;
+    if (zoom) buttons.push(zoom);
     const mag = s.magazine;
     out.weapons.push({
       key: `weapon:${slug(w.name)}`, label: w.name, img: w.img,
@@ -131,6 +137,11 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     const base = brawl ? CPR.stat(actor, brawl.system?.stat || "dex") + (Number(brawl.system?.level) || 0) : null;
     out.weapons.push({ key: "hands:bare", run: "brawl:attack", label: L(`${LANG}.Hud.BareHands`), icon: "fa-solid fa-hand-back-fist", sub: base === null ? "" : `+${base}` });
   }
+
+  // Eyes that magnify (TeleOptics, in the head or in what's worn) and binoculars.
+  if (Scope.on) out.weapons.push(...Scope.entries(actor, token, scopes));
+  // Ways of seeing (Low Light, Infrared, UV) and a torch.
+  out.weapons.push(...Senses.entries(actor, token));
 
   // Equip / Change Weapon: the hands, what's in them, and the Carried weapons to put in them.
   const hands = Hands.state(actor);

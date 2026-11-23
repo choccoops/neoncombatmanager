@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.38.0
+
+- **Low Light, Infrared and UV, as actions.** A character with Low Light / Infrared / UV
+  (cybereyes, or built into glasses, a helmet or a Smart Scope) or an Infrared Nightvision
+  Scope on the gun in hand gets an action for each way of seeing on the Action HUD; one is on
+  at a time.
+  - *While one is on*, darkness, smoke, fog and the weather's obscurement cost their sight
+    nothing: the Low Light, Darkness and Obscured conditions come off, and go back on when it's
+    switched off. **This changes how the chrome worked**: it used to cancel those penalties all
+    the time, just by being installed. The setting *Low Light, Infrared and UV as actions*
+    puts that back.
+  - *Each has its own look on the screen*, for whoever is looking through that token (its
+    player; a GM while it's the one token selected): amplified green with scan lines for Low
+    Light, heat's false colour for Infrared, violet for UV. It sits under running chrome's
+    look and follows *Chrome on my screen*.
+  - *Heat, in Infrared and UV*: the bodies in sight show on that viewer's screen alone.
+    People and animals glow warm; a Full Body Conversion reads cold, a hard outline with no
+    glow, unless Realskinn Plating covers it; Thermal Damping with Optical Camo running shows
+    nothing; the dead are cold. Only what the token can already see: no looking through walls.
+  - *Who is a Full Body Conversion* comes from Neon Hub's Full Borg module where it's in use: a
+    character moved into a body with Go Metal, a body from its compendium, or any piece a body
+    put in. Without it, chrome named "FBC ..." or "Full Body Conversion". The chrome cards'
+    "an FBC or Cyberspine carries it" reads the same.
+- **Torch.** A character carrying a flashlight (or with one built in, a Flashlight
+  Cyberfinger) gets a Torch action: on, their token throws a cone of light the way it faces,
+  as far as the beam (a Flashlight's 100 m, no further than the scene); off, it has the light
+  it had. *Torch's cone* sets how wide (60°).
+- **Scopes: see as far as the scope does.** A character with something to look through gets
+  a **Scope** action on the Action HUD. On, their token's vision reaches as far as the scope
+  sees, in the cone the token already looks through (a token set to 160° stays at 160°); off,
+  it sees as it did.
+  - *On the gun in their hands*: a magnifying-glass button on the weapon's row, for the best
+    scope fitted (also through a Variable Scope Mount or a Smart Scope): a Long Scope 100 m,
+    a Sniping Scope 800 m, a Gaki Sniping Scope 1,000 m, each read from the attachment's own
+    card. A Sniper Rifle with no scope fitted counts as carrying a Sniping Scope (a setting).
+  - *Cybereyes*: TeleOptics installed, or built into the glasses or helmet they wear: 800 m.
+  - *Binoculars* they carry: three times what the token sees unaided.
+  - Never further than the scene itself. Stowing or dropping the gun lowers the scope.
+  - Settings: *Scopes: see as far as the scope does*, *A Sniper Rifle is scoped*, and
+    *Scope's field of view* (0 keeps the token's own cone; a number narrows it while scoped).
+
+## 1.37.3
+
+- **Every move counts, from the first square.** A move is now measured from where the token
+  last stood, which the module keeps track of for every token on the scene, not from a
+  starting point noted at the top of the Turn (which could be missing, so the first move cost
+  nothing and the sums after it were off).
+- **Only undo gives movement back.** Walking back the way you came is walking: it costs like
+  any move. Ctrl+Z on the token takes the move back and its distance with it, and is never
+  held by the movement limit.
+
 ## 1.37.2
 
 - **The first move of a Turn counts, and the sums hold.** The path a token has walked is
