@@ -1,5 +1,66 @@
 # Changelog
 
+## 1.39.0
+
+- **Blood.** Drawn on the map under the tokens, for everyone, and kept with the scene.
+  - *Spatters and pools*: a spatter where a character takes a Critical Injury or becomes
+    Seriously Wounded; a pool where they become Mortally Wounded or flatline.
+  - *Trails*: the wounded leave one as they move. Lightly Wounded, faint drops too slight for
+    the naked eye: only UV picks them up (and the GM sees them, dim). Seriously Wounded, a
+    plain trail. A Mortally Wounded or dead body that's moved leaves a drag smear.
+  - *Who bleeds*: people and animals. A Full Body Conversion doesn't.
+  - *Under UV* all of it fluoresces.
+  - *The GM's hand*: the droplet button in the token controls opens Blood: pick a tier (faint
+    trail, trail, drag smear, spatter, pool) and **Paint** it with the mouse (hold and drag;
+    right-click or Escape stops), **Wipe near selected** tokens, or **Wipe the scene**.
+  - Settings: *Blood*, *Blood trails*, *Blood: marks kept on a scene* (600; the oldest go),
+    and each player's *Show blood*.
+- **Enhanced sight shows who's out in the dark.** With Low Light, Infrared or UV on, the
+  screen changed but the people Foundry wasn't drawing (out in the dark, past the token's own
+  eyes) stayed unseen. Everyone the token has a clear line of sight to now shows as an
+  outline, the way a Tech weapon's scope shows people behind thin cover: green in Low Light;
+  by their heat in Infrared and UV (warm bodies, cold Full Body Conversions, nothing under
+  Thermal Damping with the camo running).
+- **And they can be targeted.** Click an outline, press the Target key over it, or use the new
+  *Target who you see* button on the Action HUD (each press, the next nearest), then fire.
+- *Low Light* shows the token itself, its own picture amplified in the intensifier's green,
+  as night vision does. *Infrared* (and UV) shows its shape filled with its heat: a warm body
+  bright from the core out and breathing, a cold Full Body Conversion flat and dark with a hard
+  edge.
+- Not through cover: a wall that blocks sight blocks this too. New setting *See who's out in
+  the dark* (on).
+- **UV shows traces, not heat.** Infrared is the heat sight; UV now does a job of its own.
+  Who's out in the dark shows as themselves in UV's violet (as in Low Light's green); **blood
+  fluoresces** on the badly wounded and the dead (a bright halo on those in the dark, spatter
+  on those in view); and **drawings and tiles the GM marks *Visible only in UV*** (a new box in
+  their settings: a gang tag, a tripwire, writing in invisible ink) appear for whoever looks
+  in UV and for nobody else. The GM always sees them, faint.
+- **Cloaks hide from enhanced sight.** Someone under Optical Camo, an FBC's Chameleon Coating
+  or a Ghostsuit doesn't show in Low Light, Infrared or UV until the watcher beats DV17
+  Perception (−4 against Optical Camo).
+  - *The roll is the GM's secret.* Nobody is asked for anything. When a token with enhanced
+    sight on gets a clear line to someone cloaked, the GM's client rolls that watcher's
+    Perception itself (INT + Perception + 1d10), once a Round in a fight and once otherwise,
+    and whispers the result to the GM alone. On a success the cloaked token's outline appears
+    on that watcher's screen; on a failure they see what they'd see if nobody were there.
+  - The GM's card has *Check again* (after a failure) and *Hide them again* (after a
+    success); a GM with the cloaked token in hand has *Secret Perception* on the Action HUD
+    to ask for a try from everyone looking its way.
+  - A Chameleon Coating (installed) and a Ghostsuit (worn) get a **Cloaked** switch on the
+    Action HUD and Token HUD, as Optical Camo has. The cloak coming off forgets who had seen
+    through it.
+  - *In plain light too.* A cloaked token isn't drawn for anyone but the GM and its own
+    player, in any light, until one of their tokens has seen through it. Watchers are the
+    other side only (a crew doesn't roll to find its own); out in the dark, only those with
+    enhanced sight on have anything to see through.
+  - *The Awareness Ladder.* A Ghostsuit gives only watchers at Alert or higher a try: the
+    other side in an encounter gets theirs once the Ladder reaches Alert, and not before (nor
+    outside an encounter). The players' own characters always get theirs.
+  - *The watcher's conditions count*: every active modifier to Perception by sight
+    (Perception, sight, all Actions), situational ones included, is added to the secret roll
+    and named on the GM's card.
+  - Setting *Cloaks against enhanced sight*: Automatic in secret, When the GM asks, Off.
+
 ## 1.38.0
 
 - **Low Light, Infrared and UV, as actions.** A character with Low Light / Infrared / UV

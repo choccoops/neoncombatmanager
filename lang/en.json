@@ -632,6 +632,10 @@
       "chromeFalconEvasion": {
         "name": "Falcon: +4 Evasion",
         "hint": "The Falcon's choice for this Turn: +4 on one Evasion Check before their next Turn (tick it in the roll)."
+      },
+      "chromeCloak": {
+        "name": "Cloaked",
+        "hint": "A Chameleon Coating or Ghostsuit running: hidden from all sight, Low Light, Infrared and UV included, unless a watcher beats DV17 Perception (a Ghostsuit: only watchers at Alert or higher may try). Moving more than 2 m/yds in a Round drops it."
       }
     },
     "Key": {
@@ -1389,8 +1393,8 @@
         "hint": "A character with Low Light / Infrared / UV (cybereyes, or built into glasses, a helmet or a Smart Scope) or an Infrared Nightvision Scope on the gun in hand gets an action for each way of seeing on the Action HUD. While one is on, darkness, smoke, fog and weather cost their sight nothing, and their screen takes that mode's look while their token is the one selected. Off: the chrome works as before, all the time, with no action and no look."
       },
       "visionHeat": {
-        "name": "Heat, in Infrared and UV",
-        "hint": "Looking in Infrared or UV, the bodies in sight show warm or cold, on that viewer's screen only: people and animals warm; a Full Body Conversion cold, unless Realskinn Plating covers it; nothing at all under Thermal Damping with Optical Camo running."
+        "name": "Heat in Infrared, blood in UV",
+        "hint": "On the viewer's screen only. Infrared: the bodies in sight show by their heat: people and animals warm; a Full Body Conversion cold, unless Realskinn Plating covers it; nothing under Thermal Damping with Optical Camo running. UV shows no heat but traces: blood fluoresces on the badly wounded and the dead."
       },
       "torchAction": {
         "name": "Torch action",
@@ -1399,6 +1403,35 @@
       "torchAngle": {
         "name": "Torch's cone (degrees)",
         "hint": "How wide a torch's light is."
+      },
+      "visionOutlines": {
+        "name": "See who's out in the dark",
+        "hint": "With Low Light, Infrared or UV on, everyone the token has a clear line of sight to shows even where it's too dark (or too far) for the token's own eyes: as themselves in Low Light's green or UV's violet; as a shape filled with its heat in Infrared. Click one, press the Target key over it, or use the Action HUD's Target button to target them and fire. Not through cover: a wall that blocks sight blocks this too."
+      },
+      "cloakCheck": {
+        "name": "Cloaks against enhanced sight",
+        "hint": "Someone under Optical Camo, an FBC's Chameleon Coating or a Ghostsuit isn't drawn for anyone but the GM and their own player, in any light and in Low Light, Infrared or UV, until a watcher on the other side beats DV17 Perception. The roll is the GM's secret: nobody is asked for anything. Automatic: when a watcher gets a clear line to someone cloaked, the GM's client rolls their Perception (INT + Perception + 1d10, with whatever their conditions add or take; −4 against Optical Camo), once a Round in a fight and once otherwise, whispers the result to the GM alone, and on a success the cloaked token appears for that watcher's player. A Ghostsuit gives only watchers at Alert or higher on the Awareness Ladder a try (the players' characters always get theirs). GM asks: nothing is rolled until the GM presses \"Secret Perception\" on the cloaked token's Action HUD. Off: cloaks hide nobody."
+      },
+      "CloakCheck": {
+        "auto": "Automatic, in secret",
+        "gm": "When the GM asks",
+        "off": "Off"
+      },
+      "bloodFx": {
+        "name": "Blood",
+        "hint": "Blood on the map, under the tokens, for everyone: a spatter where a character takes a Critical Injury or becomes Seriously Wounded; a pool where they become Mortally Wounded or flatline. People and animals bleed; Full Body Conversions don't. Under UV it fluoresces. The GM paints and wipes it from the droplet button in the token controls."
+      },
+      "bloodTrails": {
+        "name": "Blood trails",
+        "hint": "The wounded leave a trail as they move: faint drops Lightly Wounded (too little for the naked eye: only UV picks them up, and the GM); a plain trail Seriously Wounded; a smear where a Mortally Wounded or dead body is dragged."
+      },
+      "bloodMax": {
+        "name": "Blood: marks kept on a scene",
+        "hint": "The oldest marks go as new ones pass this number."
+      },
+      "bloodShow": {
+        "name": "Show blood",
+        "hint": "Off: no blood is drawn on your screen."
       }
     },
     "SceneWeather": {
@@ -3014,7 +3047,42 @@
         "infrared": "Infrared",
         "uv": "UV"
       },
-      "Torch": "Torch"
+      "Torch": "Torch",
+      "Target": "Target who you see",
+      "UvOnly": {
+        "Label": "Visible only in UV",
+        "Hint": "Players see this only while they look in UV (a tag, a tripwire, writing in invisible ink). The GM always sees it, faint."
+      }
+    },
+    "Cloak": {
+      "Kicker": "Secret",
+      "Title": "{watcher} against {target}'s cloak",
+      "Through": "Perception {total} ({base} + {die}) beats DV{dv}: they see them now.",
+      "Nothing": "Perception {total} ({base} + {die}) against DV{dv}: nothing. They see what they'd see if nobody were there.",
+      "Camo": "(−4 for Optical Camo.)",
+      "Secret": "Only GMs see this card. The player was asked for nothing.",
+      "Again": "Check again",
+      "Forget": "Hide them again",
+      "Ask": "Secret Perception",
+      "NoOne": "Nobody on the other side has a clear line to a cloak they haven't already seen through (or, against a Ghostsuit, they aren't at Alert)."
+    },
+    "Blood": {
+      "Tool": "Blood",
+      "Tier": "What to paint",
+      "Tiers": {
+        "faint": "Faint trail (UV only)",
+        "trail": "Trail",
+        "drag": "Drag smear",
+        "splat": "Spatter",
+        "pool": "Pool"
+      },
+      "Paint": "Paint",
+      "ClearNear": "Wipe near selected",
+      "ClearAll": "Wipe the scene",
+      "PaintHint": "Paint: hold the left button and drag across the map (one mark where you press for a spatter or a pool). Right-click or Escape stops.",
+      "Painting": "Painting blood: {tier}. Hold the left button and drag; right-click or Escape to stop.",
+      "PaintDone": "Done painting blood.",
+      "SelectFirst": "Select the tokens to wipe around first."
     }
   }
 }

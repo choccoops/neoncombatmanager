@@ -240,6 +240,8 @@ export const CONDITIONS = [
   { id: "chromeKerenzikov", category: "chrome", img: `${A}/qh-speedware.svg`, page: "2070", hud: false, changes: [init(2), { key: "bonuses.perception", value: 2, situational: true, onByDefault: false }] },
   // Chrome switched on from the Action HUD or the Token HUD, with nothing a roll key can carry: the hint says what it does.
   { id: "chromeOpticalCamo", category: "chrome", img: `${A}/chrome-running.svg`, page: "2070", duration: R20 },
+  // A cloak other than Optical Camo: an FBC's Chameleon Coating, a Ghostsuit. Hidden from all sight, enhanced sight included, short of DV17 Perception.
+  { id: "chromeCloak", category: "chrome", img: `${A}/chrome-running.svg`, page: "2070" },
   { id: "chromeMicrorotors", category: "chrome", img: `${A}/chrome-running.svg`, page: "2070", duration: 6 },
   { id: "chromeKers", category: "chrome", img: `${A}/chrome-running.svg`, page: "2070" },
   // Tactile Boost (p.359): a hand on a surface feels motion within 20 m/yds; Neon FX shows it (scripts/neonfx/tactile.js).

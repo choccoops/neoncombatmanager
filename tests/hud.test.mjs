@@ -443,6 +443,14 @@ test("ways of seeing and a torch: what gives them, switching one on, what heat s
   assert.deepEqual(D.modesOf({ name: "M-98A3 Enhanced Combat Helmet", description: "Smart Glasses with Anti-Dazzle, Low Light/Infrared/UV and Targeting Scope" }), ["lowlight", "infrared", "uv"], "built into what's worn");
   assert.deepEqual(D.modesOf({ name: "IR/UV Laser Sight", description: "A Laser Sight that only works if you see in infrared or nightvision." }), [], "a sight that needs such eyes isn't such eyes");
   assert.deepEqual(D.modesOf({ name: "TeleOptics", description: "See detail to 800m/yds." }), []);
+  // What switches a cloak on: an FBC's Chameleon Coating (installed), a Ghostsuit (worn).
+  const { switchesOf: sw } = await import("../scripts/neonfx/switches.js");
+  const cloaks = sw([
+    { id: "cc", name: "FBC Chameleon Coating", type: "cyberware", installed: true, effects: [] },
+    { id: "gs", name: "Militech M97 Ghostsuit", type: "gear", worn: true, installed: false, effects: [] },
+    { id: "g2", name: "Militech M97 Ghostsuit", type: "gear", worn: false, installed: false, effects: [] }
+  ], []);
+  assert.deepEqual(cloaks.map((c) => [c.kind, c.id]), [["condition", "chromeCloak"]], "one Cloaked switch, from either; a Ghostsuit in the bag gives none");
   // Heat.
   assert.equal(D.heatOf({ meat: true }), "warm");
   assert.equal(D.heatOf({ meat: true, borg: true }), "cold", "a Full Body Conversion reads cold");

@@ -19,7 +19,9 @@ import { isTactileBoost, TACTILE_CONDITION } from "./tactile.js";
 /** Chrome that runs as a condition of its own, by a word of its name. */
 export const ACTIVATED = [
   { test: isTactileBoost, id: TACTILE_CONDITION },
-  { test: (n) => /optical camo/i.test(n), id: "chromeOpticalCamo" },
+  { test: (n) => /optical camo(?! chassis)/i.test(n), id: "chromeOpticalCamo" },
+  // A cloak of another make: an FBC's Chameleon Coating, a Ghostsuit (worn).
+  { test: (n) => /chameleon (?:coating|skin)|ghostsuit|stealth ?suit/i.test(n), id: "chromeCloak" },
   { test: (n) => /microrotor/i.test(n), id: "chromeMicrorotors" },
   { test: (n) => /\bkers\b|kaleidoscopic/i.test(n), id: "chromeKers" }
 ];
@@ -41,7 +43,7 @@ export function switchesOf(items = [], conditions = []) {
   const out = [];
   const byId = new Map(items.map((i) => [i.id, i]));
   // An upgrade counts when the piece it sits in is installed.
-  const live = (i) => installed(i) || (i.type === "itemUpgrade" && installed(byId.get(i.in)));
+  const live = (i) => installed(i) || (i.type === "itemUpgrade" && installed(byId.get(i.in))) || (!!i.worn && ACTIVATED.some((a) => a.test(i.name ?? "")));
   for (const kind of ["sandevistan", "berserk"]) {
     const base = items.find((i) => installed(i) && chromeKind(i.name)?.kind === kind && !chromeKind(i.name).os);
     const os = items.find((i) => live(i) && chromeKind(i.name)?.kind === kind && chromeKind(i.name).os);
@@ -103,6 +105,7 @@ export const Switches = {
     return list.map((i) => ({
       id: i.id, name: i.name, type: i.type, img: i.img, in: host.get(i.id) ?? null,
       installed: i.type === "cyberware" && !!(i.system?.isInstalled ?? i.system?.isInstalledInActor),
+      worn: ["gear", "armor", "clothing"].includes(i.type) && i.system?.equipped === "equipped",
       effects: [...(i.effects ?? [])].map((e) => ({ name: e.name, disabled: !!e.disabled }))
     }));
   },

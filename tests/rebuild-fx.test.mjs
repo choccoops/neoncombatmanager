@@ -1845,3 +1845,302 @@ test("nothing of ours stands in the way of an ordinary change to a combat: begin
   assert.equal(Hooks.call("preUpdateCombat", live, changes, { direction: 1 }), true);
   assert.equal(changes.turn, 1, "back to whoever was cut into");
 });
+
+test("enhanced sight shows who's out in the dark as outlines to target: green in Low Light, by heat in Infrared and UV, never through a wall", async () => {
+  const { Xray: X, clearSight, sensedColor, readWall: rw } = await import("../scripts/arsenal/xray.js");
+  const { Senses } = await import("../scripts/senses/senses.js");
+  // Pure: a line of sight, and the colour each way of seeing gives.
+  const solid = rw({ c: [500, 0, 500, 1000], sight: 20 });
+  const open = rw({ c: [500, 0, 500, 1000], sight: 20, door: 1, ds: 1 });
+  assert.equal(clearSight({ x: 100, y: 500 }, { x: 900, y: 500 }, [solid]), false);
+  assert.equal(clearSight({ x: 100, y: 500 }, { x: 900, y: 500 }, [open]), true, "an open door is no wall");
+  assert.equal(clearSight({ x: 100, y: 500 }, { x: 400, y: 500 }, [solid]), true);
+  assert.equal(sensedColor("lowlight", null), 0x39ff14, "Low Light shows whoever's there");
+  assert.equal(sensedColor("infrared", "warm"), 0xff5a1f);
+  assert.equal(sensedColor("infrared", "cold"), 0x2f7dff);
+  assert.equal(sensedColor("infrared", null), null, "no heat to read: nothing to show");
+  assert.equal(sensedColor("uv", "warm"), 0xb26bff, "UV reads no heat: whoever's there, in its violet");
+  assert.equal(sensedColor("uv", null), 0xb26bff);
+
+  for (const k of ["visionModes", "visionOutlines", "visionHeat"]) await Settings.set(k, true);
+  const scout = crew("Scout", []);
+  const me = tokenAt(scout, 100, 500);
+  me.isOwner = true;
+  me.document.flags = { [M]: { vision: { mode: "lowlight" } } };
+  const savedTokens = canvas.tokens.placeables;
+  const savedWalls = canvas.walls.placeables;
+  const savedControlled = canvas.tokens.controlled;
+  const savedTargets = game.user.targets;
+  canvas.tokens.controlled = [me];
+  const dark = tokenAt(makeActor({ name: "Ganger" }), 900, 500, { visible: false });
+  const lit = tokenAt(makeActor({ name: "Bystander" }), 900, 900, { visible: true });
+  const walled = tokenAt(makeActor({ name: "Boss" }), 100, 100, { visible: false });
+  const gmHidden = tokenAt(makeActor({ name: "Ambush" }), 700, 500, { visible: false, hidden: true });
+  const borgActor = makeActor({ name: "Borg" });
+  borgActor.flags["cpr-neon-full-borg"] = { fbc: { body: { id: "b", name: "Gemini" } } };
+  const borg = tokenAt(borgActor, 900, 300, { visible: false });
+  canvas.tokens.placeables = [me, dark, lit, walled, gmHidden, borg];
+  canvas.walls.placeables = [wall([0, 300, 300, 300])];
+  assert.deepEqual(X.sensed().map((s) => [s.token.name, s.color]), [["Ganger", 0x39ff14], ["Borg", 0x39ff14]], "in the dark with a clear line; not who's already seen, behind a wall, or hidden by the GM");
+  assert.deepEqual(X.sensed().map((s) => s.look), ["image", "image"], "Low Light: the token itself");
+
+  played.length = 0;
+  X.drawn.clear();
+  X.refresh();
+  const fx = played.filter((s) => String(call(s, "name")?.[0]).startsWith(`ncm-xray-${dark.id}`));
+  assert.equal(fx.length, 1, "an outline, like the Tech scope's");
+  assert.ok(call(fx[0], "locally"), "on their screen only");
+  assert.equal(fx[0].calls.find(([m, a]) => m === "filter" && a[0] === "Glow")[1][1].color, 0x39ff14);
+  assert.ok(!fx[0].calls.find(([m, a]) => m === "filter" && a[0] === "Glow")[1][1].knockout, "not an empty outline: the picture is there");
+  assert.equal(call(fx[0], "tint")[0], 0x39ff14, "in the intensifier's green");
+  assert.ok(fx[0].calls.some(([m, a]) => m === "filter" && a[0] === "ColorMatrix"));
+  assert.ok(X.drawn.has(dark.id) && X.drawn.has(borg.id) && !X.drawn.has(lit.id));
+
+  // They can be targeted: a click on the outline, or the HUD's button, nearest first.
+  game.user.targets = new Set();
+  dark.setTarget = (on) => (on ? game.user.targets.add(dark) : game.user.targets.delete(dark));
+  borg.setTarget = (on) => (on ? game.user.targets.add(borg) : game.user.targets.delete(borg));
+  assert.equal(X.at({ x: dark.center.x + 10, y: dark.center.y - 10 })?.name, "Ganger");
+  assert.equal(X.target(dark), true);
+  assert.ok(game.user.targets.has(dark));
+  assert.ok(X.cycle(), "and on to the next");
+
+  // Infrared: the same people by their heat; the mode changing redraws them in its colours.
+  me.document.flags[M].vision = { mode: "infrared" };
+  assert.deepEqual(X.sensed().map((s) => [s.token.name, s.color]), [["Ganger", 0xff5a1f], ["Borg", 0x2f7dff]], "a warm body, a cold Full Body Conversion");
+  played.length = 0;
+  X.refresh();
+  assert.equal(played.filter((s) => String(call(s, "name")?.[0]).startsWith("ncm-xray-")).length, 2, "redrawn in the new colours");
+  assert.deepEqual(X.sensed().map((s) => [s.look, s.heat]), [["heat", "warm"], ["heat", "cold"]]);
+  const hot = played.find((s) => String(call(s, "name")?.[0]).startsWith(`ncm-xray-${dark.id}`));
+  const cold = played.find((s) => String(call(s, "name")?.[0]).startsWith(`ncm-xray-${borg.id}`));
+  const glow = (s) => s.calls.find(([m, a]) => m === "filter" && a[0] === "Glow")[1][1];
+  assert.ok(glow(hot).innerStrength > glow(cold).innerStrength && glow(hot).distance > glow(cold).distance, "a warm body burns from the core out; a cold one is flat with a hard edge");
+  assert.ok(hot.calls.some(([m]) => m === "loopProperty") && !cold.calls.some(([m]) => m === "loopProperty"), "and breathes");
+  // Off: gone.
+  delete me.document.flags[M].vision;
+  X.refresh();
+  assert.equal(X.drawn.size, 0);
+  // Switched off in the settings.
+  me.document.flags[M].vision = { mode: "lowlight" };
+  await Settings.set("visionOutlines", false);
+  assert.deepEqual(X.sensed(), []);
+  await Settings.set("visionOutlines", true);
+  delete me.document.flags[M].vision;
+  X.refresh();
+  canvas.tokens.placeables = savedTokens;
+  canvas.walls.placeables = savedWalls;
+  canvas.tokens.controlled = savedControlled;
+  game.user.targets = savedTargets;
+});
+
+test("cloaks against enhanced sight: unseen in Low Light, Infrared and UV until the GM's secret DV17 Perception is beaten; UV shows blood, not heat", async () => {
+  const { Cloak, seesThrough, tryStamp, CLOAK_DV, SEEN_FLAG } = await import("../scripts/senses/cloak.js");
+  const { Xray: X } = await import("../scripts/arsenal/xray.js");
+  const { Senses } = await import("../scripts/senses/senses.js");
+  const D = await import("../scripts/senses/senses-data.js");
+  // Pure.
+  assert.equal(CLOAK_DV, 17);
+  assert.equal(seesThrough(18), true);
+  assert.equal(seesThrough(17), false, "it has to beat the DV");
+  assert.equal(tryStamp({ combatId: "c", round: 2, started: true }), "c:2");
+  assert.notEqual(tryStamp({ combatId: "c", round: 3, started: true }), tryStamp({ combatId: "c", round: 2, started: true }), "a new Round, a new try");
+  assert.equal(tryStamp({}), "idle", "out of a fight: one try");
+  assert.deepEqual(D.HEAT_MODES, ["infrared"], "UV shows no heat");
+  assert.deepEqual([D.bleeds("seriouslyWounded"), D.bleeds("mortallyWounded"), D.bleeds("dead"), D.bleeds("lightlyWounded"), D.bleeds("notWounded")], [true, true, true, false, false]);
+
+  for (const k of ["visionModes", "visionOutlines", "visionHeat"]) await Settings.set(k, true);
+  await Settings.set("cloakCheck", "auto");
+  const saved = { tokens: canvas.tokens.placeables, walls: canvas.walls.placeables, controlled: canvas.tokens.controlled, combat: game.combat, get: canvas.tokens.get };
+  game.combat = null;
+  const mk = (t) => {
+    t.isOwner = true;
+    t.document.flags = {};
+    t.document.update = async (u) => {
+      for (const [k, v] of Object.entries(u)) {
+        const parts = k.split(".");
+        if (parts[0] !== "flags") continue;
+        let o = (t.document.flags[parts[1]] ??= {});
+        for (const p of parts.slice(2, -1)) o = o[p.replace(/^-=/, "")] ??= {};
+        const last = parts.at(-1);
+        if (last.startsWith("-=")) delete o[last.slice(2)];
+        else o[last] = v;
+      }
+    };
+    return t;
+  };
+  const scout = crew("Scout", [{ _id: "perc", name: "Perception", type: "skill", system: { stat: "int", level: 6 } }]);
+  scout.hasPlayerOwner = true;
+  const me = mk(tokenAt(scout, 100, 500));
+  me.document.flags[M] = { vision: { mode: "infrared" } };
+  const ghostActor = makeActor({ name: "Ghost", hasPlayerOwner: false });
+  const ghost = mk(tokenAt(ghostActor, 900, 500, { visible: false }));
+  const plain = mk(tokenAt(makeActor({ name: "Ganger", hasPlayerOwner: false }), 900, 700, { visible: false }));
+  canvas.tokens.placeables = [me, ghost, plain];
+  canvas.tokens.get = (id) => canvas.tokens.placeables.find((t) => t.id === id);
+  canvas.tokens.controlled = [me];
+  canvas.walls.placeables = [];
+  assert.deepEqual(X.sensed().map((s) => s.token.name), ["Ghost", "Ganger"], "nobody cloaked: both show");
+
+  // The cloak goes on: gone from enhanced sight, with nothing to say so.
+  await Conditions.add("chromeCloak", ghostActor);
+  assert.equal(Cloak.cloaked(ghostActor), true);
+  assert.equal(Cloak.hides(ghost, me), true);
+  assert.deepEqual(X.sensed().map((s) => s.token.name), ["Ganger"]);
+
+  // The GM's client rolls for the watcher, in secret. INT + Perception 6 here, and a 1 on the die: nothing.
+  const base = Cloak.perception(scout);
+  chat.length = 0;
+  dice.length = 0;
+  dice.push(Math.max(1, CLOAK_DV - base - 1));
+  let done = await Cloak.sweep();
+  assert.equal(done.length, 1);
+  assert.equal(done[0].through, base + Math.max(1, CLOAK_DV - base - 1) > CLOAK_DV);
+  const card = chat.at(-1);
+  assert.deepEqual(card.whisper, game.users.filter((u) => u.isGM).map((u) => u.id), "told to the GM alone");
+  assert.match(card.content, /cloak-again/);
+  assert.equal(Cloak.hides(ghost, me), true, "the watcher still sees nothing");
+  // No second try until something changes (out of a fight: once).
+  dice.push(10);
+  assert.deepEqual(await Cloak.sweep(), [], "not rolled again");
+  dice.length = 0;
+  // The GM asks for another: this time they beat it, and the outline appears for that watcher.
+  dice.push(10);
+  done = await Cloak.ask(ghost);
+  assert.equal(done[0].through, base + 10 > CLOAK_DV);
+  if (done[0].through) {
+    assert.equal(ghost.document.flags[M][SEEN_FLAG][me.id], true);
+    assert.equal(Cloak.hides(ghost, me), false);
+    assert.deepEqual(X.sensed().map((s) => s.token.name), ["Ghost", "Ganger"]);
+    assert.match(chat.at(-1).content, /cloak-forget/);
+    // The GM hides them again from the card.
+    await Cloak.click(chat.at(-1), { dataset: { ncmAction: "cloak-forget", watcher: me.id, target: ghost.id }, disabled: false });
+    assert.equal(Cloak.hides(ghost, me), true);
+    ghost.document.flags[M][SEEN_FLAG] = { [me.id]: true };
+  }
+  // The cloak comes off: forgotten, and the next cloak is a fresh start.
+  await Conditions.remove("chromeCloak", ghostActor);
+  await Cloak.sweep();
+  assert.equal(ghost.document.flags[M]?.[SEEN_FLAG], undefined);
+  assert.equal(Cloak.hides(ghost, me), false, "no cloak, nothing hidden");
+  // Optical Camo is a cloak too, at −4 to the watcher.
+  await Conditions.add("chromeOpticalCamo", ghostActor);
+  assert.equal(Cloak.hides(ghost, me), true);
+  chat.length = 0;
+  dice.length = 0;
+  dice.push(5);
+  done = await Cloak.sweep();
+  assert.equal(done[0].total, base - 4 + 5);
+  assert.match(chat.at(-1).content, /Optical Camo/);
+  // "When the GM asks": nothing rolls by itself.
+  await Settings.set("cloakCheck", "gm");
+  Cloak.tried.clear();
+  assert.deepEqual(await Cloak.sweep(), []);
+  // Off: cloaks don't hide from enhanced sight.
+  await Settings.set("cloakCheck", "off");
+  assert.equal(Cloak.hides(ghost, me), false);
+  await Settings.set("cloakCheck", "auto");
+  await Conditions.remove("chromeOpticalCamo", ghostActor);
+
+  // The watcher's conditions count in the secret roll, situational ones too.
+  const { perceptionMods, mayTry } = await import("../scripts/senses/cloak.js");
+  assert.deepEqual(perceptionMods([
+    { name: "Deafened", changes: [{ key: "bonuses.perceptionHearing", value: -4, mode: 2 }] },
+    { name: "Stressed", changes: [{ key: "bonuses.allActions", value: -2, mode: 2 }] },
+    { name: "Focus", changes: [{ key: "bonuses.perception", value: "2", mode: 2 }, { key: "bonuses.perceptionSight", value: 1, mode: 2 }] },
+    { name: "Off", disabled: true, changes: [{ key: "bonuses.perception", value: 5, mode: 2 }] },
+    { name: "Set", changes: [{ key: "bonuses.perception", value: 9, mode: 5 }] }
+  ]), { total: 1, parts: [{ name: "Stressed", value: -2 }, { name: "Focus", value: 3 }] }, "sight and all-action modifiers, added up; hearing, switched-off and non-additive ones left out");
+  await Conditions.add("chromeCloak", ghostActor);
+  Cloak.tried.clear();
+  scout.effects.push?.({ id: "fx-focus", name: "Focus", disabled: false, changes: [{ key: "bonuses.perception", value: 3, mode: 2 }], statuses: new Set(), flags: {}, getFlag: () => undefined });
+  const withMods = Cloak.mods(scout).total;
+  chat.length = 0;
+  dice.length = 0;
+  dice.push(2);
+  done = await Cloak.sweep();
+  assert.equal(done[0].total, base + withMods + 2, "INT + Perception + what their conditions give + the die");
+  if (withMods) assert.match(chat.at(-1).content, /Focus \+3/, "and the GM's card says which");
+
+  // In plain light too: a cloaked token isn't drawn for anyone but the GM and its own player, until one of their tokens has seen through it.
+  const gmWas = game.user.isGM;
+  ghost.visible = true;
+  ghost.mesh.visible = true;
+  ghost.isOwner = false;
+  ghost.document.flags[M] = {};
+  assert.equal(Cloak.unseen(ghost), false, "the GM always sees it");
+  game.user.isGM = false;
+  assert.equal(Cloak.unseen(ghost), true);
+  assert.equal(Cloak.veil(ghost), true);
+  assert.deepEqual([ghost.visible, ghost.mesh.visible], [false, false], "the token and its art");
+  ghost.document.flags[M] = { [SEEN_FLAG]: { [me.id]: true } };
+  assert.equal(Cloak.unseen(ghost), false, "their token has seen through it");
+  ghost.document.flags[M] = {};
+  ghost.isOwner = true;
+  assert.equal(Cloak.unseen(ghost), false, "its own player");
+  game.user.isGM = gmWas;
+  ghost.visible = false;
+
+  // A Ghostsuit: only watchers at Alert or higher get a try (the Awareness Ladder); the players' characters always do.
+  assert.equal(mayTry({ ghostsuit: true, watcherIsPlayer: false, level: "suspicious" }), false);
+  assert.equal(mayTry({ ghostsuit: true, watcherIsPlayer: false, level: "alert" }), true);
+  assert.equal(mayTry({ ghostsuit: true, watcherIsPlayer: false, level: "spotted" }), true);
+  assert.equal(mayTry({ ghostsuit: true, watcherIsPlayer: true, level: "unaware" }), true);
+  assert.equal(mayTry({ ghostsuit: false, watcherIsPlayer: false, level: "unaware" }), true, "a Chameleon Coating or Optical Camo: anyone");
+  await Conditions.remove("chromeCloak", ghostActor);
+  // A player's character in a Ghostsuit, a guard looking their way: nothing until the Ladder reaches Alert.
+  const sneakActor = makeActor({ name: "Sneak", hasPlayerOwner: true }, [{ _id: "gs", name: "Militech M97 Ghostsuit", type: "gear", system: { equipped: "equipped" } }]);
+  const sneak = mk(tokenAt(sneakActor, 500, 900, { visible: true }));
+  const guard = mk(tokenAt(makeActor({ name: "Guard", hasPlayerOwner: false }), 800, 900));
+  canvas.tokens.placeables = [sneak, guard];
+  await Conditions.add("chromeCloak", sneakActor);
+  assert.equal(Cloak.ghostsuit(sneakActor), true);
+  const { Ladder: Lad } = await import("../scripts/roller/ladder.js");
+  const fight = { id: "ladder-fight", started: true, round: 1, turn: 0, flags: {}, combatants: [] };
+  game.combat = fight;
+  Cloak.tried.clear();
+  fight.flags[M] = { ladder: "suspicious" };
+  assert.equal(Lad.level(fight), "suspicious");
+  assert.deepEqual((await Cloak.pairs()).map((x) => x.watcher.name), [], "below Alert: no try");
+  fight.flags[M] = { ladder: "alert" };
+  assert.deepEqual((await Cloak.pairs()).map((x) => [x.watcher.name, x.target.name]), [["Guard", "Sneak"]], "at Alert: the guard gets theirs");
+  game.combat = null;
+  assert.deepEqual(await Cloak.pairs(), [], "no encounter, no Ladder: nobody is at Alert");
+  // The same side doesn't look for its own.
+  const mate = mk(tokenAt(makeActor({ name: "Mate", hasPlayerOwner: true }), 500, 800));
+  canvas.tokens.placeables = [sneak, mate];
+  assert.deepEqual(await Cloak.pairs(), []);
+  await Conditions.remove("chromeCloak", sneakActor);
+  canvas.tokens.placeables = [me, ghost, plain];
+
+  // UV: whoever's there in violet, as themselves; blood on the badly wounded.
+  me.document.flags[M].vision = { mode: "uv" };
+  await plain.actor.update({ "system.derivedStats.hp.value": 5, "system.derivedStats.currentWoundState": "seriouslyWounded" });
+  const uv = X.sensed();
+  assert.deepEqual(uv.map((s) => [s.token.name, s.look, s.color, s.blood]), [["Ghost", "image", 0xb26bff, false], ["Ganger", "image", 0xb26bff, Senses.bleeds(plain)]]);
+  assert.equal(Senses.bleeds(plain), true);
+  // A drawing the GM marked "UV only": seen in UV, and by the GM always.
+  const drawing = { document: { flags: { [M]: { uvOnly: true } } }, visible: true, alpha: 1 };
+  const savedLayers = [canvas.drawings, canvas.tiles];
+  canvas.drawings = { placeables: [drawing] };
+  canvas.tiles = { placeables: [] };
+  const gm = game.user.isGM;
+  game.user.isGM = false;
+  Senses.refreshMarks();
+  assert.equal(drawing.visible, true, "looking in UV");
+  me.document.flags[M].vision = { mode: "lowlight" };
+  Senses.refreshMarks();
+  assert.equal(drawing.visible, false, "not in Low Light");
+  game.user.isGM = true;
+  Senses.refreshMarks();
+  assert.equal(drawing.visible, true, "the GM always");
+  game.user.isGM = gm;
+  [canvas.drawings, canvas.tiles] = savedLayers;
+  delete me.document.flags[M].vision;
+  X.refresh();
+  canvas.tokens.placeables = saved.tokens;
+  canvas.walls.placeables = saved.walls;
+  canvas.tokens.controlled = saved.controlled;
+  canvas.tokens.get = saved.get;
+  game.combat = saved.combat;
+});

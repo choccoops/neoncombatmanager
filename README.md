@@ -1190,6 +1190,33 @@ else any chrome named `FBC ...`) is a cold outline, unless Realskinn
 Plating covers it; Thermal Damping with Optical Camo running shows nothing; the dead are cold.
 It shows what the token already sees, never through walls.
 
+**Who's out in the dark.** With a way of seeing on, everyone the token has a clear line of sight
+to shows as an outline even where Foundry draws nobody (too dark, or past the token's own eyes),
+the way a Tech weapon's scope shows people behind thin cover: green in Low Light; by their heat
+in Infrared and UV. Click an outline, press the Target key over it, or use *Target who you see*
+on the Action HUD to target them, then fire. A wall that blocks sight blocks this too (setting
+*See who's out in the dark*).
+
+**What each is for.** *Low Light* is an image intensifier: the scene as it is, amplified.
+*Infrared* is heat: living bodies burn bright, a Full Body Conversion reads cold. *UV* is
+reflected light: no heat, but traces. Blood fluoresces on the badly wounded and the dead, and
+any drawing or tile the GM ticks *Visible only in UV* (in its settings: a tag, a tripwire,
+invisible ink) shows for whoever looks in UV and nobody else; the GM always sees those, faint.
+
+**Cloaks.** Under Optical Camo, an FBC's Chameleon Coating or a Ghostsuit (the last two get a
+*Cloaked* switch of their own), a character doesn't show in any of the three until the watcher
+beats DV17 Perception. The GM's client rolls it in secret (INT + Perception + 1d10, −4 against
+Optical Camo) when a token with enhanced sight on gets a clear line to them, once a Round in a
+fight, and whispers the result to the GM alone, with *Check again* or *Hide them again* on the
+card. Nobody is asked for anything: a watcher who fails sees what they'd see if nobody were
+there. It hides in plain light too: a cloaked token isn't drawn for anyone but the GM and its own
+player until one of their tokens has seen through it. Watchers are the other side only, and their
+conditions count (every active modifier to Perception, sight or all Actions is in the roll and on
+the GM's card). A Ghostsuit gives only watchers at Alert or higher a try: the Awareness Ladder has
+to be at Alert for the other side; the players' characters always get theirs. A GM holding the
+cloaked token has *Secret Perception* on the Action HUD. Setting *Cloaks
+against enhanced sight*: Automatic in secret, When the GM asks, or Off.
+
 **Torch.** Carrying a flashlight (or a Flashlight Cyberfinger) gives a Torch action: the token
 throws a cone of light the way it faces, as far as the beam, and gets its own light back when
 it's switched off.
@@ -1197,6 +1224,28 @@ it's switched off.
 Settings: *Low Light, Infrared and UV as actions* (off: the chrome cancels sight penalties all
 the time, as it used to, with no actions), *Heat, in Infrared and UV*, *Torch action*, *Torch's
 cone*.
+
+## Blood
+
+Blood is drawn on the map under the tokens, the same for everyone, and stays with the scene.
+
+| What happens | What it leaves |
+| --- | --- |
+| A Critical Injury; becoming Seriously Wounded | a spatter |
+| Becoming Mortally Wounded; flatlining | a pool |
+| Moving while Lightly Wounded | faint drops: only UV picks them up (the GM sees them, dim) |
+| Moving while Seriously Wounded | a trail |
+| A Mortally Wounded or dead body being moved | a drag smear |
+
+People and animals bleed; a Full Body Conversion doesn't. Under UV all of it fluoresces.
+
+**The GM's hand.** The droplet button in the token controls opens Blood: pick a tier and
+**Paint** it with the mouse (hold the left button and drag; a spatter or a pool goes where you
+press; right-click or Escape stops), **Wipe near selected** tokens (three squares around each),
+or **Wipe the scene**. `api.blood`: `open()`, `add(marks)`, `paint(tier)`, `clear(options)`.
+
+Settings: *Blood*, *Blood trails*, *Blood: marks kept on a scene* (the oldest go past it), and
+each player's own *Show blood*.
 
 ## Humanity Loss events
 

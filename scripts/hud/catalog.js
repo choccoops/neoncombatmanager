@@ -10,6 +10,7 @@ import { Hub } from "../hub/hub.js";
 import { Rebuilds, traitsOf } from "../arsenal/rebuilds.js";
 import { flavorOf } from "../arsenal/kinds.js";
 import { Xray } from "../arsenal/xray.js";
+import { Cloak } from "../senses/cloak.js";
 import { specialsOf, singleShots } from "../arsenal/specials.js";
 import { Iconics } from "../arsenal/iconics.js";
 import { Switches } from "../neonfx/switches.js";
@@ -142,6 +143,10 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   if (Scope.on) out.weapons.push(...Scope.entries(actor, token, scopes));
   // Ways of seeing (Low Light, Infrared, UV) and a torch.
   out.weapons.push(...Senses.entries(actor, token));
+  // The GM, with a cloaked token in hand: a secret Perception for everyone looking its way.
+  if (game.user?.isGM && Cloak.mode !== "off" && Cloak.cloaked(actor)) out.weapons.push({ key: "sense:cloak", label: L(`${LANG}.Cloak.Ask`), icon: "fa-solid fa-user-secret" });
+  // Who that way of seeing shows out in the dark: target them one after another (or click an outline).
+  if (Senses.vision(token?.document ?? token) && Xray.drawn.size) out.weapons.push({ key: "sense:target", label: L(`${LANG}.Senses.Target`), sub: String(Xray.drawn.size), icon: "fa-solid fa-crosshairs" });
 
   // Equip / Change Weapon: the hands, what's in them, and the Carried weapons to put in them.
   const hands = Hands.state(actor);
