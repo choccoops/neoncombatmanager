@@ -520,6 +520,22 @@ test("ways of seeing and a torch: what gives them, switching one on, what heat s
   await Conditions.add("chromeOpticalCamo", ghost.actor);
   assert.equal(Senses.heat(ghost), null);
   assert.equal(Senses.heat({ actor: makeActor({ name: "Truck", type: "vehicle" }) }), null);
+  // Neon Hub's Full Borg module says who is in a body: moved in with Go Metal, a body from its
+  // compendium, or carrying a piece a body put in. No chrome with "FBC" in its name needed.
+  const { CPR: Sys } = await import("../scripts/cpr.js");
+  const FB = "cpr-neon-full-borg";
+  const metal = makeActor({ name: "Gone Metal" });
+  metal.flags[FB] = { fbc: { body: { id: "b1", name: "Gemini" }, since: 0 } };
+  const body = makeActor({ name: "Dragoon" });
+  body.flags[FB] = { fbcBody: { maker: "Militech" } };
+  const piece = makeActor({ name: "Pieces" }, [{ _id: "p1", name: "Chassis", type: "cyberware", system: { isInstalled: true }, flags: { [FB]: { body: "b1" } } }]);
+  const out = makeActor({ name: "Out Again" });
+  out.flags[FB] = { fbc: { body: null, coreSlots: null } };
+  assert.deepEqual([metal, body, piece, out, person.actor, borg.actor].map((x) => Sys.isBorg(x)), [true, true, true, false, false, true]);
+  assert.deepEqual([Senses.heat({ actor: metal }), Senses.heat({ actor: body }), Senses.heat({ actor: piece }), Senses.heat({ actor: out })], ["cold", "cold", "cold", "warm"]);
+  const { OS: Cards2 } = await import("../scripts/neonfx/os.js");
+  assert.equal(Cards2.framed(metal), true, "and it carries an Apogee's load, for the chrome cards");
+  assert.equal(Cards2.framed(person.actor), false);
 
   // The screen: the mode's look under running chrome, over a Kerenzikov.
   const v = { mode: "infrared", tint: "#ff7a1a" };

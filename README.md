@@ -1185,7 +1185,8 @@ gets an action for each on the Action HUD (Weapons group); one is on at a time. 
   a GM while it is the one token selected.
 
 **Heat** (Infrared and UV). The bodies in sight show on that viewer's screen only: people and
-animals glow warm; a Full Body Conversion (any `FBC` chrome) is a cold outline, unless Realskinn
+animals glow warm; a Full Body Conversion (as Neon Hub's Full Borg module marks the character,
+else any chrome named `FBC ...`) is a cold outline, unless Realskinn
 Plating covers it; Thermal Damping with Optical Camo running shows nothing; the dead are cold.
 It shows what the token already sees, never through walls.
 

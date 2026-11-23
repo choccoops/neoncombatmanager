@@ -19,6 +19,10 @@
     People and animals glow warm; a Full Body Conversion reads cold, a hard outline with no
     glow, unless Realskinn Plating covers it; Thermal Damping with Optical Camo running shows
     nothing; the dead are cold. Only what the token can already see: no looking through walls.
+  - *Who is a Full Body Conversion* comes from Neon Hub's Full Borg module where it's in use: a
+    character moved into a body with Go Metal, a body from its compendium, or any piece a body
+    put in. Without it, chrome named "FBC ..." or "Full Body Conversion". The chrome cards'
+    "an FBC or Cyberspine carries it" reads the same.
 - **Torch.** A character carrying a flashlight (or with one built in, a Flashlight
   Cyberfinger) gets a Torch action: on, their token throws a cone of light the way it faces,
   as far as the beam (a Flashlight's 100 m, no further than the scene); off, it has the light

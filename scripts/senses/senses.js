@@ -3,7 +3,7 @@ import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { Conditions } from "../conditions/engine.js";
-import { MODES, HEAT_MODES, HEAT_TINT, modesOf, isBorgPart, heatOf, torchOf, torchLight } from "./senses-data.js";
+import { MODES, HEAT_MODES, HEAT_TINT, modesOf, heatOf, torchOf, torchLight } from "./senses-data.js";
 import { debounce, L } from "../util.js";
 
 /**
@@ -14,7 +14,8 @@ import { debounce, L } from "../util.js";
  *   (darkness, smoke, fog, the weather's obscurement) are gone, and their screen takes that
  *   mode's look (scripts/neonfx/screen.js) while their token is the one being looked through.
  * - Heat: in Infrared or UV, the bodies they can see show warm or cold on their screen alone:
- *   people and animals warm; a Full Body Conversion cold unless Realskinn covers it; Thermal
+ *   people and animals warm; a Full Body Conversion (as Neon Hub's Full Borg module marks it,
+ *   else by its chrome's name) cold unless Realskinn covers it; Thermal
  *   Damping on running Optical Camo, nothing.
  * - Torch: a flashlight carried (or built in) throws a cone of light the way the token faces.
  *
@@ -213,7 +214,7 @@ export const Senses = {
     const camo = Conditions.has("chromeOpticalCamo", actor);
     return heatOf({
       meat: CPR.isMeat(actor),
-      borg: chrome.some((i) => i.type === "cyberware" && i.system?.isInstalled && isBorgPart(i.name)),
+      borg: CPR.isBorg(actor),
       skinned: chrome.some((i) => /realskinn/i.test(i.name ?? "")),
       damped: camo && chrome.some((i) => /thermal damping/i.test(i.name ?? "")),
       dead: Conditions.has("dead", actor)
