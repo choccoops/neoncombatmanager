@@ -9,7 +9,7 @@ export const MENUS = {
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxChrome", "fxPause", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
-  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
+  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "scopeVision", "scopeSniper", "scopeAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -128,6 +128,10 @@ const DEFS = [
   ["arsenalAutoInstall", "world", Boolean, true, {}],
   ["arsenalProfile", "world", String, "", { config: false }],
   ["arsenalSounds", "world", Boolean, true, {}],
+  // Looking through a scope: the token sees as far as the scope does
+  ["scopeVision", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
+  ["scopeSniper", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
+  ["scopeAngle", "world", Number, 0, { range: { min: 0, max: 360, step: 5 } }],
   ["arsenalAreas", "world", Boolean, true, {}],
   // A blast's template clears from the map once the blast has gone off
   ["arsenalAreaClear", "world", Boolean, true, {}],

@@ -1154,6 +1154,24 @@ The GM's client checks the clock really moved after each Round and moves it if n
 combat ends, a card says how many Rounds it ran, how long that was and the time of day.
 Seconds per Round (and per skipped Turn) are settings.
 
+## Scopes
+
+A character with something to look through gets a **Scope** action on the Action HUD. Switched
+on, their token's vision reaches as far as the scope sees; switched off, it sees as it did
+(what it saw before is kept on the token).
+
+| Looking through | Where the action is | Sees to |
+| --- | --- | --- |
+| A scope on the gun in hand (also inside a Variable Scope Mount or Smart Scope) | a magnifying-glass button on the weapon's row | what the attachment's card says: Long Scope 100 m, Sniping Scope 800 m, Gaki Sniping Scope 1,000 m |
+| A Sniper Rifle with no scope fitted (setting *A Sniper Rifle is scoped*) | the same button | 800 m |
+| TeleOptics: installed, or in the glasses or helmet worn | *Scope: TeleOptics* in the Weapons group | 800 m |
+| Binoculars carried | *Scope: Binoculars* in the Weapons group | three times what the token sees unaided |
+
+The vision cone is the token's own (set a token to 160° and it stays 160° through the scope);
+*Scope's field of view* narrows it while scoped if you'd rather. It never reaches further than
+the scene, and stowing or dropping the gun lowers the scope. Short Scopes and Targeting Scopes
+give no distance, so they give no action.
+
 ## Humanity Loss events
 
 For when something costs the crew a piece of themselves. The GM opens **Humanity Loss** (the

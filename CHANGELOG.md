@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.38.0
+
+- **Scopes: see as far as the scope does.** A character with something to look through gets
+  a **Scope** action on the Action HUD. On, their token's vision reaches as far as the scope
+  sees, in the cone the token already looks through (a token set to 160° stays at 160°); off,
+  it sees as it did.
+  - *On the gun in their hands*: a magnifying-glass button on the weapon's row, for the best
+    scope fitted (also through a Variable Scope Mount or a Smart Scope): a Long Scope 100 m,
+    a Sniping Scope 800 m, a Gaki Sniping Scope 1,000 m, each read from the attachment's own
+    card. A Sniper Rifle with no scope fitted counts as carrying a Sniping Scope (a setting).
+  - *Cybereyes*: TeleOptics installed, or built into the glasses or helmet they wear: 800 m.
+  - *Binoculars* they carry: three times what the token sees unaided.
+  - Never further than the scene itself. Stowing or dropping the gun lowers the scope.
+  - Settings: *Scopes: see as far as the scope does*, *A Sniper Rifle is scoped*, and
+    *Scope's field of view* (0 keeps the token's own cone; a number narrows it while scoped).
+
 ## 1.37.3
 
 - **Every move counts, from the first square.** A move is now measured from where the token
