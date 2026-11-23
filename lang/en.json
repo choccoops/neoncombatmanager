@@ -635,7 +635,7 @@
       },
       "chromeCloak": {
         "name": "Cloaked",
-        "hint": "A Chameleon Coating or Ghostsuit running: hidden from all sight, Low Light, Infrared and UV included, unless a watcher beats DV17 Perception. Moving more than 2 m/yds in a Round drops it."
+        "hint": "A Chameleon Coating or Ghostsuit running: hidden from all sight, Low Light, Infrared and UV included, unless a watcher beats DV17 Perception (a Ghostsuit: only watchers at Alert or higher may try). Moving more than 2 m/yds in a Round drops it."
       }
     },
     "Key": {
@@ -1410,7 +1410,7 @@
       },
       "cloakCheck": {
         "name": "Cloaks against enhanced sight",
-        "hint": "Someone under Optical Camo, an FBC's Chameleon Coating or a Ghostsuit doesn't show in Low Light, Infrared or UV until whoever is looking beats DV17 Perception. The roll is the GM's secret: nobody is asked for anything. Automatic: when a token with enhanced sight on gets a clear line to someone cloaked, the GM's client rolls that watcher's Perception (once a Round in a fight; once otherwise), whispers the result to the GM alone, and on a success the outline appears for that watcher. GM asks: nothing is rolled until the GM presses \"Secret Perception\" on the cloaked token's Action HUD. Off: cloaks don't hide from enhanced sight."
+        "hint": "Someone under Optical Camo, an FBC's Chameleon Coating or a Ghostsuit isn't drawn for anyone but the GM and their own player, in any light and in Low Light, Infrared or UV, until a watcher on the other side beats DV17 Perception. The roll is the GM's secret: nobody is asked for anything. Automatic: when a watcher gets a clear line to someone cloaked, the GM's client rolls their Perception (INT + Perception + 1d10, with whatever their conditions add or take; −4 against Optical Camo), once a Round in a fight and once otherwise, whispers the result to the GM alone, and on a success the cloaked token appears for that watcher's player. A Ghostsuit gives only watchers at Alert or higher on the Awareness Ladder a try (the players' characters always get theirs). GM asks: nothing is rolled until the GM presses \"Secret Perception\" on the cloaked token's Action HUD. Off: cloaks hide nobody."
       },
       "CloakCheck": {
         "auto": "Automatic, in secret",
@@ -3048,7 +3048,7 @@
       "Again": "Check again",
       "Forget": "Hide them again",
       "Ask": "Secret Perception",
-      "NoOne": "Nobody with enhanced sight on has a clear line to a cloak they haven't already seen through."
+      "NoOne": "Nobody on the other side has a clear line to a cloak they haven't already seen through (or, against a Ghostsuit, they aren't at Alert)."
     }
   }
 }

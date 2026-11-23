@@ -36,6 +36,16 @@
   - A Chameleon Coating (installed) and a Ghostsuit (worn) get a **Cloaked** switch on the
     Action HUD and Token HUD, as Optical Camo has. The cloak coming off forgets who had seen
     through it.
+  - *In plain light too.* A cloaked token isn't drawn for anyone but the GM and its own
+    player, in any light, until one of their tokens has seen through it. Watchers are the
+    other side only (a crew doesn't roll to find its own); out in the dark, only those with
+    enhanced sight on have anything to see through.
+  - *The Awareness Ladder.* A Ghostsuit gives only watchers at Alert or higher a try: the
+    other side in an encounter gets theirs once the Ladder reaches Alert, and not before (nor
+    outside an encounter). The players' own characters always get theirs.
+  - *The watcher's conditions count*: every active modifier to Perception by sight
+    (Perception, sight, all Actions), situational ones included, is added to the secret roll
+    and named on the GM's card.
   - Setting *Cloaks against enhanced sight*: Automatic in secret, When the GM asks, Off.
 
 ## 1.38.0
