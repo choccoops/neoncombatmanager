@@ -1448,6 +1448,14 @@
       "farLinks": {
         "name": "Linked areas",
         "hint": "Places far apart, drawn on one scene: a rooftop beside the plaza it overlooks. The GM draws a Region over each and links the two with the distance really between them (the binoculars button in the token controls). Someone in one whose scope sees that far sees into the other: everyone there shows and can be targeted, and \"Look across\" on the Action HUD moves the view there and back. An attack from one into the other is made at the linked distance."
+      },
+      "levels": {
+        "name": "Levels",
+        "hint": "Distance for a DV counts height. A token's elevation always counts; and the GM can mark Regions as floors (the layers button in the token controls), each with a height and the building it belongs to. Between two floors of one building, drawn side by side, the distance is measured across the floor plan and up, not across the map. A Multilevel Tokens clone is measured to the real token."
+      },
+      "holds": {
+        "name": "Grabs and Human Shields",
+        "hint": "After winning a Grab, press Grab on the Action HUD with them targeted: both get their Grapple conditions and the held token is carried along when the holder moves, at no cost to its own movement. While holding, Human Shield holds them up: ranged attacks aimed at the holder are aimed at the shield instead, and it can't dodge them. Let go (or Break free) ends it."
       }
     },
     "SceneWeather": {
@@ -3115,6 +3123,25 @@
       "Both": "It works both ways",
       "Save": "Save",
       "Bad": "A link needs two different areas and a distance."
+    },
+    "Levels": {
+      "Tool": "Levels",
+      "NeedRegions": "Draw a Region over each floor first (the Regions tool), and name them.",
+      "Existing": "Floors on this scene (tick one to remove it):",
+      "New": "A new floor (or a new height for one):",
+      "Region": "Region",
+      "Stack": "Building",
+      "StackHint": "the same name for every floor of one building",
+      "Height": "Height above the ground ({unit})",
+      "Save": "Save"
+    },
+    "Hold": {
+      "Grab": "Grab: {name}",
+      "AfterCheck": "after winning the check",
+      "Shield": "Human Shield",
+      "LetGo": "Let go",
+      "BreakFree": "Break free",
+      "Takes": "Human Shield: takes the shot meant for {holder}, and can't dodge it."
     }
   }
 }

@@ -145,7 +145,8 @@ export const Defense = {
       const ab = this.ability(target, { attacker, ricochet: a.ricochet });
       // The weapon's own rule (its card): its Aimed Shots are harder to dodge.
       const pen = ab.penalty ? { penalty: ab.penalty } : a.dodgePenalty ? { penalty: a.dodgePenalty, penaltyKey: "WeaponDodge" } : {};
-      if (ab.can) await this.prompt(target, tok, { ...base, dv, why: ab.why, ...pen });
+      // Held up as a Human Shield: nothing to dodge with.
+      if (ab.can && !Conditions.has("humanShield", target)) await this.prompt(target, tok, { ...base, dv, why: ab.why, ...pen });
     }
   },
 

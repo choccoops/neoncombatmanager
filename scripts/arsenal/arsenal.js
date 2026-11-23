@@ -13,6 +13,7 @@ import { soundPlan } from "./profile.js";
 import { Rebuilds, RebuildRegistry, REBUILD_HOOK, traitsOf, attackMods, damageArgs } from "./rebuilds.js";
 import { AA, loadedAmmo } from "./aa.js";
 import { Cover } from "../cover/cover.js";
+import { Hold } from "../combat/hold.js";
 import { Blast, damageFromHtml } from "./blast.js";
 import { Dv } from "./dv.js";
 import { Sound } from "./sound.js";
@@ -270,7 +271,9 @@ export const Arsenal = {
     const mode = actor.flags?.[SYSTEM_ID]?.[`firetype-${item.id}`] || "single";
     const state = Rebuilds.state(actor, item);
     const token = this.tokenFor(actor);
-    const targets = [...(game.user.targets ?? [])];
+    // A ranged attack at someone behind a Human Shield goes at the shield.
+    const shielded = Hold.retarget([...(game.user.targets ?? [])], { ranged: !!info.ranged && kind !== "damage" });
+    const targets = kind === "damage" ? [...(game.user.targets ?? [])] : shielded.targets;
     const tag = {
       kind, actorId: actor.id, itemId: item.id, tokenId: token?.id ?? null, mode, weapon: info.kind, flavor: info.flavor,
       ammoType: info.ammoType, ammoVariety: info.ammoVariety, explosive: info.explosive, area: !!info.area, ranged: info.ranged,
@@ -365,7 +368,8 @@ export const Arsenal = {
           const dv = await Dv.forWeapon(item, Dv.distance(token, t), { autofire: mode === "autofire" });
           // Cover in the way (a charged Tech shot goes through Thin cover): the card says so, and the damage card can hit it.
           const cover = Cover.forShot(token, t, { throughThin: tag.charged && !sp?.noThrough });
-          tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref"), dodge: Defense.ability(t.actor, { attacker: actor, ricochet: tag.ricochet }).can, ...(cover ? { cover } : {}) });
+          const behind = shielded.swapped.find((s) => s.shield === t.name)?.holder;
+          tag.hits.push({ name: t.name, dv, ref: CPR.stat(t.actor, "ref"), dodge: !Hold.cantDodge(t.actor) && Defense.ability(t.actor, { attacker: actor, ricochet: tag.ricochet }).can, ...(cover ? { cover } : {}), ...(behind ? { shieldFor: behind } : {}) });
         }
         tag.dv = tag.hits[0]?.dv ?? null;
         tag.cap = Number(item.system?.fireModes?.autoFire) || 0;
@@ -582,6 +586,8 @@ export const Arsenal = {
         if (h.dodge) line += ` ${L(`${LANG}.Arsenal.HitCheck.dodge`)}`;
         const cover = a.hits.find((x) => x.name === h.name)?.cover;
         if (cover) line += ` ${L(`${LANG}.Cover.${cover.self ? "Shooting" : "Behind"}`, { cover: esc(cover.label), hp: cover.hp })}`;
+        const shieldFor = a.hits.find((x) => x.name === h.name)?.shieldFor;
+        if (shieldFor) line += ` ${L(`${LANG}.Hold.Takes`, { holder: esc(shieldFor) })}`;
         notes.push(`<span class="ncm-hit ${h.hit ? "is-hit" : "is-miss"}">${line}</span>`);
       }
     }

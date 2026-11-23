@@ -12,6 +12,7 @@ import { flavorOf } from "../arsenal/kinds.js";
 import { Xray } from "../arsenal/xray.js";
 import { Cloak } from "../senses/cloak.js";
 import { Far } from "../senses/far.js";
+import { Hold } from "../combat/hold.js";
 import { specialsOf, singleShots } from "../arsenal/specials.js";
 import { Iconics } from "../arsenal/iconics.js";
 import { Switches } from "../neonfx/switches.js";
@@ -146,6 +147,8 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   out.weapons.push(...Senses.entries(actor, token));
   // Linked areas: look across to the far one (a scope that reaches the linked distance).
   out.weapons.push(...Far.entries(actor, token));
+  // Grab, Human Shield, let go.
+  out.weapons.push(...Hold.entries(actor, token));
   // The GM, with a cloaked token in hand: a secret Perception for everyone looking its way.
   if (game.user?.isGM && Cloak.mode !== "off" && Cloak.cloaked(actor)) out.weapons.push({ key: "sense:cloak", label: L(`${LANG}.Cloak.Ask`), icon: "fa-solid fa-user-secret" });
   // Who that way of seeing shows out in the dark: target them one after another (or click an outline).
