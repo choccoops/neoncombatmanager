@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.41.0
+
+- **Linked areas.** One map often has to hold places that are far apart: the rooftop a sniper
+  lies on, drawn beside the plaza it overlooks 300 m away. Now the GM can say so.
+  - *Linking*: draw a Region over each place (Foundry's Regions tool) and name it, then open
+    **Linked areas** (the binoculars in the token controls), pick the two and give the distance
+    really between them. A link works both ways unless you untick it. Links are kept on the
+    scene; tick one in the same window to remove it.
+  - *Seeing across*: someone standing in one area whose scope sees as far as the linked
+    distance (or whose eyes do) sees into the other. The far area is revealed on their screen
+    while that holds, everyone in it shows, pale-rimmed where the map's own sight doesn't reach
+    them, and can be targeted. Hidden tokens and cloaks nobody has seen through stay unseen.
+  - *Look across*: the Action HUD gets an entry per linked area out of where the character
+    stands, with its distance. It moves your view to the far area; press it again to come back.
+    Without a scope that reaches, it says what distance it needs.
+  - *Shooting across*: an attack from one area into the other, a thrown or launched explosive
+    included, is made at the linked distance, not at however many squares apart the two were
+    drawn.
+  - Setting *Linked areas* (on by default; it does nothing on a scene without links).
+    `game.modules.get("cpr-neon-combat-manager").api.far` has `open`, `list`, `add`, `remove`
+    and `distance`.
+
 ## 1.40.0
 
 - **Sight range.** Foundry lets a token see as far as its line of sight runs, so on a lit map

@@ -1444,6 +1444,10 @@
       "sightHaze": {
         "name": "Haze past my sight range",
         "hint": "With Sight range on: the map past what the token you're looking through makes out is dimmed on your screen (all round, or down the cone of a scope). Off: no haze for you; who you can see is the same."
+      },
+      "farLinks": {
+        "name": "Linked areas",
+        "hint": "Places far apart, drawn on one scene: a rooftop beside the plaza it overlooks. The GM draws a Region over each and links the two with the distance really between them (the binoculars button in the token controls). Someone in one whose scope sees that far sees into the other: everyone there shows and can be targeted, and \"Look across\" on the Action HUD moves the view there and back. An attack from one into the other is made at the linked distance."
       }
     },
     "SceneWeather": {
@@ -3095,6 +3099,22 @@
       "Painting": "Painting blood: {tier}. Hold the left button and drag; right-click or Escape to stop.",
       "PaintDone": "Done painting blood.",
       "SelectFirst": "Select the tokens to wipe around first."
+    },
+    "Far": {
+      "Tool": "Linked areas",
+      "Area": "the far area",
+      "Look": "Look across: {area}",
+      "Needs": "needs {distance} {unit}",
+      "TooFar": "{area} is {distance} {unit} away: it takes a scope that sees that far.",
+      "NeedRegions": "Draw a Region over each of the two places first (the Regions tool), and name them.",
+      "Existing": "Links on this scene (tick one to remove it):",
+      "New": "A new link:",
+      "From": "From",
+      "To": "To",
+      "Distance": "Distance between them ({unit})",
+      "Both": "It works both ways",
+      "Save": "Save",
+      "Bad": "A link needs two different areas and a distance."
     }
   }
 }

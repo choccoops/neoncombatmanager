@@ -1170,6 +1170,30 @@ through when it is the one selected (or, for a player with nothing selected, the
 A scope is how you see further: see below. Settings: *Sight range*, *Sight range: the naked eye*,
 and each player's *Haze past my sight range*.
 
+## Linked areas
+
+One map often holds places that are far apart: a rooftop drawn beside the plaza it overlooks
+300 m away. To make that distance real:
+
+1. Draw a **Region** over each place with Foundry's Regions tool, and name them.
+2. As GM, open **Linked areas** (the binoculars in the token controls), pick the two Regions
+   and enter the distance between them. Links work both ways unless you untick that. The same
+   window lists the scene's links; tick one to remove it.
+
+From then on, for anyone standing in one of the two:
+
+- **Seeing across.** With a scope up that sees as far as the linked distance (or eyes that
+  do), the far area is shown on that player's screen and everyone in it can be seen and
+  targeted. Hidden tokens stay hidden, and so do cloaks nobody has seen through.
+- **Look across.** The Action HUD lists each linked area with its distance; the button moves
+  your view there, and back when pressed again. Without enough scope it tells you what it needs.
+- **Shooting across.** Attacks and explosives from one area into the other use the linked
+  distance for their DV, not the squares between the two drawings.
+
+Walls inside the far area still block the view from its middle, where the point of view sits.
+Setting: *Linked areas*. For macros: `api.far.add({ a, b, distance, both })` with Region ids,
+`api.far.list()`, `api.far.remove(id)`, `api.far.distance(tokenA, tokenB)`.
+
 ## Scopes
 
 A character with something to look through gets a **Scope** action on the Action HUD. Switched
