@@ -560,3 +560,105 @@ test("ways of seeing and a torch: what gives them, switching one on, what heat s
   await Settings.set("visionModes", true);
   await Settings.set("torchAction", true);
 });
+
+test("sight range: the naked eye's reach on every character token, put back exactly when it's switched off; a scope reaches past it down a narrow cone; the haze follows", async () => {
+  const D = await import("../scripts/senses/sight-data.js");
+  // The token's own modes, with light perception held to a range, and back.
+  let r = D.withRange([], 50);
+  assert.deepEqual(r, { modes: [{ id: "lightPerception", enabled: true, range: 50 }], was: null, changed: true });
+  assert.deepEqual(D.withoutRange(r.modes, r.was), [], "there was none: none again");
+  r = D.withRange([{ id: "basicSight", enabled: true, range: 10 }, { id: "lightPerception", enabled: true, range: null }], 50);
+  assert.deepEqual(r.modes, [{ id: "basicSight", enabled: true, range: 10 }, { id: "lightPerception", enabled: true, range: 50 }]);
+  assert.deepEqual(r.was, { id: "lightPerception", enabled: true, range: null });
+  assert.deepEqual(D.withoutRange(r.modes, r.was), [{ id: "basicSight", enabled: true, range: 10 }, { id: "lightPerception", enabled: true, range: null }]);
+  assert.equal(D.withRange(r.modes, 50).changed, false, "already there");
+  assert.equal(D.lightRange(r.modes), 50);
+  assert.equal(D.lightRange([{ id: "lightPerception", enabled: true, range: null }]), Infinity);
+  assert.equal(D.lightRange([]), Infinity);
+  // The clear part of the map: all round, or a wedge the way the token faces with its feet.
+  const circle = D.clearShape({ center: { x: 1000, y: 1000 }, range: 2500, angle: 360 });
+  assert.equal(circle.kind, "circle");
+  assert.equal(D.inClear(circle, { x: 3400, y: 1000 }), true);
+  assert.equal(D.inClear(circle, { x: 3600, y: 1000 }), false);
+  // Foundry's rotation 0 faces down the screen; 270 faces right.
+  const cone = D.clearShape({ center: { x: 1000, y: 1000 }, range: 40000, angle: 20, rotation: 270, near: 90 });
+  assert.equal(cone.kind, "cone");
+  assert.equal(D.inClear(cone, { x: 30000, y: 1000 }), true, "far down the scope");
+  assert.equal(D.inClear(cone, { x: 3000, y: 3000 }), false, "off to the side: nothing");
+  assert.equal(D.inClear(cone, { x: 400, y: 1000 }), false, "behind");
+  assert.equal(D.inClear(cone, { x: 1050, y: 1050 }), true, "their own feet");
+  assert.equal(D.inClear(D.clearShape({ center: { x: 0, y: 0 }, range: 500, angle: 20, rotation: 0 }), { x: 0, y: 400 }), true, "rotation 0: down the screen");
+
+  const { Sight, BASE_FLAG } = await import("../scripts/senses/sight.js");
+  const { Scope } = await import("../scripts/arsenal/scope.js");
+  const { Settings } = await import("../scripts/settings.js");
+  const M8 = "cpr-neon-combat-manager";
+  await Settings.set("sightBase", 50);
+  await Settings.set("scopeVision", true);
+  await Settings.set("scopeAngle", 20);
+  const actor = makeActor({ name: "Sniper" }, [
+    { _id: "sr", name: "Sniper Rifle", type: "weapon", system: { isRanged: true, equipped: "equipped", weaponType: "sniperRifle", installedItems: { list: ["sc"] } } },
+    { _id: "sc", name: "Sniping Scope", type: "itemUpgrade", system: { description: { value: "See detail out to 800m/yds." } } }
+  ]);
+  const mkDoc = (name, a) => ({
+    id: name, name, actor: a, rotation: 270, sight: { range: 0, angle: 160 }, flags: {}, detectionModes: [], _source: { detectionModes: [] },
+    parent: { dimensions: { size: 100, distance: 2, sceneWidth: 30000, sceneHeight: 30000 }, grid: { units: "m" } },
+    async update(u) {
+      for (const [k, v] of Object.entries(u)) {
+        if (k === "detectionModes") { this.detectionModes = v; this._source.detectionModes = v; }
+        else if (k === "sight.range") this.sight.range = v;
+        else if (k === "sight.angle") this.sight.angle = v;
+        else if (k.startsWith(`flags.${M8}.-=`)) delete this.flags[M8]?.[k.split("-=")[1]];
+        else if (k.startsWith(`flags.${M8}.`)) (this.flags[M8] ??= {})[k.split(".").pop()] = v;
+      }
+    }
+  });
+  const doc = mkDoc("Sniper", actor);
+  const crate = mkDoc("Crate", makeActor({ name: "Crate", type: "container" }));
+  const gm = game.user.isGM;
+  game.user.isGM = true;
+  await Settings.set("sightRange", true);
+  assert.equal(await Sight.apply(doc), true);
+  assert.deepEqual(doc.detectionModes, [{ id: "lightPerception", enabled: true, range: 50 }]);
+  assert.deepEqual(doc.flags[M8][BASE_FLAG], { range: 50, was: null });
+  assert.equal(await Sight.apply(doc), false, "once");
+  assert.equal(await Sight.apply(crate), false, "a crate has no eyes");
+  // The setting moves: the token follows, still remembering what it first had.
+  await Settings.set("sightBase", 80);
+  assert.equal(await Sight.apply(doc), true);
+  assert.deepEqual([doc.detectionModes[0].range, doc.flags[M8][BASE_FLAG].was], [80, null]);
+  await Settings.set("sightBase", 50);
+  await Sight.apply(doc);
+
+  // The scope up: past the naked eye, down a narrow cone; and this feature leaves a scoped token alone.
+  const info = ui.notifications.info;
+  ui.notifications.info = () => {};
+  assert.equal(await Scope.toggle(actor, "zoom:sr", { token: doc }), true);
+  assert.equal(doc.detectionModes.find((m) => m.id === "lightPerception").range, 800, "they make people out as far as the scope sees");
+  assert.equal(doc.sight.angle, 20, "down a narrow cone");
+  assert.equal(await Sight.apply(doc), false);
+  assert.equal(await Sight.release(doc), false);
+  const savedCanvas = globalThis.canvas;
+  globalThis.canvas = { ready: true, dimensions: { size: 100, distance: 2, width: 30000, height: 30000 }, tokens: { controlled: [] } };
+  const tok = { document: doc, center: { x: 1000, y: 1000 }, w: 100, h: 100, isOwner: true };
+  const scoped = Sight.shapeFor(tok);
+  assert.deepEqual([scoped.kind, scoped.r], ["cone", 40000], "800 m on 2 m squares");
+  assert.equal(D.inClear(scoped, { x: 20000, y: 1000 }), true);
+  assert.equal(D.inClear(scoped, { x: 1000, y: 5000 }), false);
+  // Down again: the naked eye, the token's own cone.
+  assert.equal(await Scope.toggle(actor, "zoom:sr", { token: doc }), false);
+  assert.deepEqual([doc.detectionModes.find((m) => m.id === "lightPerception").range, doc.sight.angle], [50, 160]);
+  const plain = Sight.shapeFor(tok);
+  assert.deepEqual([plain.kind, plain.r], ["cone", 2500], "50 m, in the token's own 160°");
+  // A token with no range of its own: no haze to draw.
+  assert.equal(Sight.shapeFor({ document: mkDoc("Free", actor), center: { x: 0, y: 0 } }), null);
+  globalThis.canvas = savedCanvas;
+  ui.notifications.info = info;
+
+  // Switched off: exactly as it was.
+  await Settings.set("sightRange", false);
+  assert.equal(await Sight.release(doc), true);
+  assert.deepEqual([doc.detectionModes, doc.flags[M8][BASE_FLAG]], [[], undefined]);
+  game.user.isGM = gm;
+  await Settings.set("scopeAngle", 0);
+});
