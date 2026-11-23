@@ -35,3 +35,31 @@ export const onto = (p, from, to) => ({ x: p.x - from.x + to.x, y: p.y - from.y 
 
 /** Across and up, together, to the whole m/yd. */
 export const through = (across, up) => Math.round(Math.hypot(Number(across) || 0, Number(up) || 0));
+
+/** Which other floors are looked onto: "off" none, "near" the next one up and down, "all" every floor of the building. */
+export const VIEW_MODES = ["all", "near", "off"];
+
+/**
+ * Who shows on the viewer's floor as a figure from another floor of the same building.
+ * @param {object} viewer - { floor, corner } (from Levels.place)
+ * @param {object[]} others - [{ id, floor, corner, point, height }]
+ * @param {object[]} floors - every floor of the scene
+ * @param {string} mode - one of VIEW_MODES
+ * @returns {{ id: string, x: number, y: number, up: number }[]} (up: how far above the viewer's floor; negative below)
+ */
+export function ghostsFor(viewer, others = [], floors = [], mode = "all") {
+  if (mode === "off" || !viewer?.floor?.stack || !viewer.corner) return [];
+  const heights = [...new Set(floors.filter((f) => f.stack === viewer.floor.stack).map((f) => f.height))].sort((x, y) => x - y);
+  const at = heights.indexOf(viewer.floor.height);
+  const out = [];
+  for (const o of others) {
+    if (!stacked(viewer.floor, o.floor) || !o.corner || o.floor.height === viewer.floor.height) continue;
+    if (mode === "near" && Math.abs(heights.indexOf(o.floor.height) - at) !== 1) continue;
+    const p = onto(o.point, o.corner, viewer.corner);
+    out.push({ id: o.id, x: p.x, y: p.y, up: Math.round((o.floor.height - viewer.floor.height) * 10) / 10 });
+  }
+  return out;
+}
+
+/** Is the viewer's target on another floor of its building (the map between them means nothing)? */
+export const apart = (pa, pb) => stacked(pa?.floor, pb?.floor);

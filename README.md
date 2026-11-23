@@ -1210,8 +1210,22 @@ distance isn't the real one. With **Levels** on (the default):
 - A token's elevation always counts.
 - A Multilevel Tokens clone is measured to the real token behind it.
 
-This changes the distance an attack's DV is taken at. It doesn't decide who sees whom: that
-stays with the map, with Multilevel Tokens' clones, or with Linked areas above.
+### Seeing the other floors
+
+Select your token on a floor of a building: everyone on its other floors shows on yours, at the
+spot straight above or below them, as a pale figure. Blue with ▲ is above, amber with ▼ is
+below, and the number is the height between you. Click a figure to target the real token
+(Shift-click adds it); the attack is then measured up or down the building. Hidden tokens and
+unseen cloaks don't show to players. Setting *Levels: seeing the other floors* picks every
+floor, only the next one up and down, or none.
+
+### Stairs and ladders
+
+In the Tiles controls, select the two tiles at either end of a staircase or ladder and press the
+**stairs** button; press it again with both selected to unlink. A token that ends its move on
+one comes out on the other, at no cost to its movement, with whoever it's holding and with its
+player's view following. Use the staircase's own art, or a blank tile laid over stairs already
+on the map. Setting: *Stairs and ladders*.
 
 ## Grabs and Human Shields
 

@@ -9,7 +9,7 @@ export const MENUS = {
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["fxEnabled", "fxConditions", "fxChrome", "fxPause", "bloodFx", "bloodTrails", "bloodMax", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
-  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "sightRange", "sightBase", "farLinks", "levels", "holds", "scopeVision", "scopeSniper", "scopeAngle", "visionModes", "visionOutlines", "visionHeat", "cloakCheck", "torchAction", "torchAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
+  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "sightRange", "sightBase", "farLinks", "levels", "levelsView", "stairs", "holds", "scopeVision", "scopeSniper", "scopeAngle", "visionModes", "visionOutlines", "visionHeat", "cloakCheck", "torchAction", "torchAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -147,7 +147,11 @@ const DEFS = [
   // Linked areas: places far apart on one scene, seen across through a scope, shot across at the linked distance
   ["farLinks", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Levels: Regions as floors with heights, and a token's elevation, count in the distance for a DV
-  ["levels", "world", Boolean, true, {}],
+  ["levels", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  // Who on the other floors of a building shows on the viewer's own
+  ["levelsView", "world", String, "all", { choices: { all: K("LevelsView.all"), near: K("LevelsView.near"), off: K("LevelsView.off") }, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  // Stairs and ladders: two linked Tiles
+  ["stairs", "world", Boolean, true, {}],
   // Holds: Grab carries the held token along, a Human Shield takes the ranged attacks aimed at its holder
   ["holds", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   // Looking through a scope: the token sees as far as the scope does
