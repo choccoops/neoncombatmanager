@@ -1456,6 +1456,19 @@
       "holds": {
         "name": "Grabs and Human Shields",
         "hint": "After winning a Grab, press Grab on the Action HUD with them targeted: both get their Grapple conditions and the held token is carried along when the holder moves, at no cost to its own movement. While holding, Human Shield holds them up: ranged attacks aimed at the holder are aimed at the shield instead, and it can't dodge them. Let go (or Break free) ends it."
+      },
+      "levelsView": {
+        "name": "Levels: seeing the other floors",
+        "hint": "Whoever is on another floor of the building your token is in shows on your own floor, at the spot straight above or below: a pale figure, blue with ▲ for those above and amber with ▼ for those below, with the height between you. Click one to target the real token. Hidden tokens and cloaks you haven't seen through don't show."
+      },
+      "LevelsView": {
+        "all": "Every floor of the building",
+        "near": "The next floor up and down",
+        "off": "Off"
+      },
+      "stairs": {
+        "name": "Stairs and ladders",
+        "hint": "The GM selects two Tiles and presses the stairs button in the tile controls to link them (again to unlink). A token whose move ends on one is put on the other, at no cost to its movement; whoever it holds comes along and its player's view follows."
       }
     },
     "SceneWeather": {
@@ -3142,6 +3155,12 @@
       "LetGo": "Let go",
       "BreakFree": "Break free",
       "Takes": "Human Shield: takes the shot meant for {holder}, and can't dodge it."
+    },
+    "Stairs": {
+      "Tool": "Link as stairs or a ladder",
+      "Pick": "Select the two Tiles at either end (the foot and the head of the stairs), then press this. One linked Tile selected: unlinks it.",
+      "Linked": "Linked: a token that steps onto one comes out on the other.",
+      "Unlinked": "Unlinked."
     }
   }
 }

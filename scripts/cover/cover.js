@@ -5,6 +5,8 @@ import { Socket } from "../socket.js";
 import { CPR } from "../cpr.js";
 import { Cards } from "../combat/cards.js";
 import { L, esc, debounce } from "../util.js";
+import { Levels } from "../senses/levels.js";
+import { Far } from "../senses/far.js";
 import {
   MATERIALS, THICKNESS, LEAN_METRES, VAS, coverHp, readWallCover, readPieceCover, readGlassCover, seatOf, coverFor, hitCover, splitAt, coverLabel, areaPlan, pieceWalls
 } from "./data.js";
@@ -118,6 +120,8 @@ export const Cover = {
       const piece = readPieceCover(doc, this.grid(doc.parent));
       return piece && piece.hp[0] > 0 ? { ...this.ref(piece, 0, doc.parent), self: true } : null;
     }
+    // On another floor of the building, or across a linked distance: the walls drawn between the two on the map aren't between them.
+    if (Levels.apart(from, to) || Far.distance(from, to) !== null) return null;
     return this.between(from, to, opts);
   },
 

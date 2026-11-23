@@ -2,7 +2,7 @@ import { MODULE_ID, LANG } from "../constants.js";
 import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { inShapes, boundsOf } from "./far-data.js";
-import { cleanFloor, floorIn, stacked, onto, through } from "./levels-data.js";
+import { cleanFloor, floorIn, stacked, onto, through, apart } from "./levels-data.js";
 import { L, esc } from "../util.js";
 
 /**
@@ -82,6 +82,13 @@ export const Levels = {
     return through(Compat.measure(pa.point, there), up);
   },
 
+  /** Are two tokens on different floors of one building, or in two linked areas far apart? What's drawn between them on the map isn't between them. */
+  apart(a, b) {
+    if (!this.on) return false;
+    const scene = (a?.document ?? a)?.parent ?? canvas?.scene;
+    return apart(this.place(this.real(a), scene), this.place(this.real(b), scene));
+  },
+
   /** The floor a token is on, for a label: { stack, height } or null. */
   floorOf(token) {
     return this.place(this.real(token), (token?.document ?? token)?.parent ?? canvas?.scene)?.floor ?? null;
@@ -91,6 +98,7 @@ export const Levels = {
     if (!game.user?.isGM || !scene) return [];
     const clean = floors.map(cleanFloor).filter(Boolean);
     await scene.setFlag(MODULE_ID, FLOORS_FLAG, clean);
+    Hooks.callAll(`${MODULE_ID}.fxChanged`);
     return clean;
   },
 

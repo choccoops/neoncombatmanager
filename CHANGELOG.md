@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.43.0
+
+- **Seeing the other floors.** With floors set up under Levels, whoever is on another floor of
+  the building your token is in now shows on your own floor, at the spot straight above or
+  below them:
+  - a pale figure of the token, cool blue with ▲ for those above and warm amber with ▼ for
+    those below, with the height between you underneath;
+  - click a figure to target the real token (Shift-click to add it to your targets); it gets a
+    red ring and crosshair while targeted, and the attack is measured up or down the building;
+  - hidden tokens and cloaks you haven't seen through don't show to players, and anyone
+    Multilevel Tokens has already cloned onto your floor isn't drawn twice;
+  - the figures are drawn on each player's own screen: nothing is added to the scene.
+  - Setting *Levels: seeing the other floors*: every floor of the building (the default), the
+    next floor up and down only, or off.
+- **Stairs and ladders.** Select two Tiles and press the stairs button in the tile controls to
+  link them (press it again with them selected to unlink). A token whose move ends on one,
+  coming from off it, is put in the middle of the other once its walk has played. Taking the
+  stairs costs no movement, whoever the token holds in a Grab comes along, and the view of
+  whoever controls the token follows it. Any tile works: a staircase's art, or a blank tile laid
+  over stairs already painted on the map. Setting *Stairs and ladders* (on by default);
+  `api.stairs` has `link`, `unlink` and `list`.
+- **Cover between floors.** A shot at someone on another floor of the building, or across a
+  linked distance, no longer counts the walls drawn between the two places on the map as cover.
+
 ## 1.42.0
 
 - **Levels: height counts in the distance.** Floors of a building are often drawn side by side

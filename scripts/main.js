@@ -36,6 +36,8 @@ import { Cloak } from "./senses/cloak.js";
 import { Sight } from "./senses/sight.js";
 import { Far } from "./senses/far.js";
 import { Levels } from "./senses/levels.js";
+import { FloorView } from "./senses/floor-view.js";
+import { Stairs } from "./senses/stairs.js";
 import { Hold } from "./combat/hold.js";
 import { Blood } from "./blood/blood.js";
 import { Awareness } from "./awareness/awareness.js";
@@ -333,6 +335,12 @@ const api = {
     /** The real distance between two tokens, or null where the map's own is right. */
     distance: (a, b) => Levels.distance(a, b)
   },
+  /** Stairs and ladders: two linked Tiles; a token stepping onto one is put on the other. */
+  stairs: {
+    link: (a, b) => Stairs.link(a, b),
+    unlink: (tile) => Stairs.unlink(tile),
+    list: () => Stairs.tiles()
+  },
   /** Holds: a Grapple the map knows about. Tokens or token documents. */
   hold: {
     grab: (holder, target) => Hold.grab(holder, target),
@@ -490,6 +498,8 @@ Hooks.once("init", () => {
   Sight.init();
   Far.init();
   Levels.init();
+  FloorView.init();
+  Stairs.init();
   Hold.init();
   Blood.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
