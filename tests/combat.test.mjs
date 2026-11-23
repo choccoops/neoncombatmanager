@@ -74,7 +74,7 @@ test("Turn end: fire burns; moving over 4 m/yds reopens Broken Ribs and locks a 
   await Conditions.add(["onFireStrong", "brokenRibs", "damagedEar"], actor, { force: true });
   const combat = makeCombat([actor]);
   const cb = combat.combatant;
-  Turns.moved.set(cb.id, { metres: 6, at: null });
+  Turns.moved.set(cb.id, { metres: 6, points: [] });
   await Turns.turnEnd(combat, cb);
   assert.ok(chat.some((m) => m.content.includes("4 damage")), "Strong fire: 4");
   assert.ok(chat.some((m) => m.content.includes("5 damage") && m.content.includes("Broken Ribs")), "ribs reopen: 5");
@@ -461,31 +461,29 @@ test("the carousel says how far the acting character can still go this Turn, and
   assert.match(html, /class="ncm-move/, "the line is on the card");
 });
 
-test("a move taken back gives its movement back: undone, or the token put straight back; being thrown or pushed costs nothing", async () => {
-  const { stepTrail, isStepBack } = await import("../scripts/ruler/ruler-core.js");
+test("movement this Turn: every move costs what it measures from where the token stood, the first square included; only undo gives one back; being thrown or pushed costs nothing", async () => {
+  const { stepPath } = await import("../scripts/ruler/ruler-core.js");
   const p = (x, y = 0) => ({ x, y });
-  let t = stepTrail([], p(50), 0);
-  assert.deepEqual([t.trail.length, t.metres], [1, 0], "where it starts costs nothing");
-  t = stepTrail(t.trail, p(250), 4);
-  t = stepTrail(t.trail, p(450), 4);
-  assert.deepEqual([t.trail.length, t.metres, t.back], [3, 8, false]);
-  // Put straight back where it stood before the last move: that move is given back.
-  t = stepTrail(t.trail, p(250), 4);
-  assert.deepEqual([t.trail.length, t.metres, t.back], [2, 4, true]);
-  // On somewhere new again: it costs again.
-  t = stepTrail(t.trail, p(250, 200), 4);
-  assert.equal(t.metres, 8);
-  // Foundry's undo, two moves at once back to the start.
-  t = stepTrail(t.trail, p(50), 9, { undo: true });
-  assert.deepEqual([t.trail.length, t.metres, t.back], [1, 0, true]);
-  // Walking back to somewhere earlier without it being an undo or the last move reversed is a move like any other.
-  t = stepTrail([{ ...p(50), d: 0 }, { ...p(250), d: 4 }, { ...p(450), d: 4 }], p(50), 8);
-  assert.deepEqual([t.trail.length, t.metres, t.back], [4, 16, false]);
-  assert.equal(isStepBack([p(50), p(250)], p(50)), true);
-  assert.equal(isStepBack([p(50), p(250)], p(450)), false);
-  assert.equal(isStepBack([p(50)], p(50)), false);
+  // The first move of a Turn with nothing noted yet: it still costs, and the path starts where the token stood.
+  let w = stepPath({}, { from: p(50), to: p(50, 200), distance: 2 });
+  assert.deepEqual(w, { metres: 2, points: [p(50), p(50, 200)] });
+  w = stepPath(w, { from: p(50, 200), to: p(50, 400), distance: 2 });
+  assert.equal(w.metres, 4);
+  // Walking back the way it came is walking.
+  w = stepPath(w, { from: p(50, 400), to: p(50, 200), distance: 2 });
+  assert.deepEqual([w.metres, w.points.length], [6, 4]);
+  // Ctrl+Z: that move comes off, and its point with it.
+  w = stepPath(w, { from: p(50, 200), to: p(50, 400), distance: 2, undo: true });
+  assert.deepEqual([w.metres, w.points.length, w.points.at(-1)], [4, 3, p(50, 400)]);
+  w = stepPath(w, { from: p(50, 400), to: p(50, 200), distance: 2, undo: true });
+  w = stepPath(w, { from: p(50, 200), to: p(50), distance: 2, undo: true });
+  assert.deepEqual(w, { metres: 0, points: [p(50)] }, "undone all the way");
+  assert.equal(stepPath(w, { from: p(50), to: p(250), distance: 9, undo: true }).metres, 0, "never below nothing");
+  // Thrown: where it stands changes, what it walked doesn't.
+  w = stepPath({ metres: 4, points: [p(50), p(250)] }, { from: p(250), to: p(850), distance: 12, forced: true });
+  assert.deepEqual(w, { metres: 4, points: [p(50), p(850)] });
 
-  // At the table: the tracker, the bar's number and the limit.
+  // At the table.
   const { Turns } = await import("../scripts/combat/turns.js");
   const { NeonRuler } = await import("../scripts/ruler/ruler.js");
   const { Compat } = await import("../scripts/compat.js");
@@ -493,106 +491,88 @@ test("a move taken back gives its movement back: undone, or the token put straig
   await S.set("trackMovement", true);
   await S.set("movementLimit", "block");
   await S.set("movementRun", false);
-  const actor = makeActor({ name: "Runner" });
-  const combat = makeCombat([actor, makeActor({ name: "Ganger" })]);
-  const cb = combat.turns[0];
-  const doc = { id: "tk", name: "Runner", x: 0, y: 0, width: 1, height: 1, actor, parent: { id: combat.scene?.id, grid: { size: 100 } } };
-  cb.tokenId = "tk";
-  cb.token = doc;
-  cb.parent = combat;
-  combat.combatant; // the first: Runner's Turn
-  const saved = { combats: game.combats, combat: game.combat, measure: Compat.measure, gm: game.user.isGM };
-  game.combats = [combat];
-  game.combat = combat;
-  Compat.measure = (a, b) => (Math.hypot(b.x - a.x, b.y - a.y) / 100) * 2;
   const M3 = "cpr-neon-combat-manager";
-  Turns.resetMove(cb);
-  const go = async (x, options = {}) => {
-    doc.x = x;
-    Turns.onMove(doc, { x }, options);
-    await new Promise((r) => setTimeout(r, 2));
-  };
-  await go(300);
-  assert.equal(Turns.metres(cb.id), 6);
-  await go(500);
-  assert.equal(Turns.metres(cb.id), 10);
-  assert.equal(cb.flags[M3].path.metres, 10, "what the carousel and the ruler read");
-  await go(300);
-  assert.equal(Turns.metres(cb.id), 6, "put straight back: given back");
-  assert.equal(cb.flags[M3].path.points.length, 2);
-  await go(0, { isUndo: true });
-  assert.equal(Turns.metres(cb.id), 0, "undone: all of it back");
-  // Thrown by a blast: where it stands changes, what it walked doesn't.
-  await go(400);
-  await go(900, { [M3]: { free: true } });
-  assert.equal(Turns.metres(cb.id), 8);
-  // Out of movement, a player can still take the last move back.
-  game.user.isGM = false;
-  const move = Number(actor.system.stats.move.value) * 2;
-  cb.flags[M3].path = { points: [{ x: 50, y: 50 }, { x: 450, y: 50 }], metres: move * 2 };
-  doc.x = 400;
-  const warn = ui.notifications.warn;
-  ui.notifications.warn = () => {};
-  assert.equal(NeonRuler.limit(doc, { x: 600 }, {}), false, "no further");
-  assert.equal(NeonRuler.limit(doc, { x: 0 }, {}), true, "but back where it stood");
-  assert.equal(NeonRuler.limit(doc, { x: 200 }, { isUndo: true }), true, "and an undo, wherever to");
-  ui.notifications.warn = warn;
-  game.user.isGM = saved.gm;
-  Compat.measure = saved.measure;
-  game.combats = saved.combats;
-  game.combat = saved.combat;
-  await S.set("movementRun", true);
-});
-
-test("the path is written one write at a time: a first move as long as last Turn's total still goes out with its distance", async () => {
-  const { Turns } = await import("../scripts/combat/turns.js");
-  const { Compat } = await import("../scripts/compat.js");
-  const { Settings: S } = await import("../scripts/settings.js");
-  await S.set("trackMovement", true);
-  const M4 = "cpr-neon-combat-manager";
   const actor = makeActor({ name: "Runner" });
   const combat = makeCombat([actor, makeActor({ name: "Ganger" })]);
   const cb = combat.turns[0];
   const doc = { id: "tk", name: "Runner", x: 0, y: 0, width: 1, height: 1, actor, parent: { id: combat.scene?.id, grid: { size: 100 } } };
   cb.tokenId = "tk";
-  cb.token = doc;
-  // Last Turn: one square, 2 m. That's what this client still holds when the new Turn begins.
-  cb.flags[M4] = { path: { points: [{ x: -150, y: 50 }, { x: 50, y: 50 }], metres: 2, noMove: false } };
-  // The server, as Foundry talks to it: each write is the difference from what the client holds
-  // when it's made, and comes back a moment later.
-  const server = { ...cb.flags[M4].path };
+  cb.parent = combat;
+  // The server, as Foundry talks to it: each write is the difference from what the client holds, back a moment later.
+  cb.flags[M3] = { path: { points: [{ x: -150, y: 50 }, { x: 50, y: 50 }], metres: 2, noMove: false } };
+  const server = { ...cb.flags[M3].path };
   cb.setFlag = async (scope, key, value) => {
     const local = cb.flags[scope]?.[key] ?? {};
     const diff = Object.fromEntries(Object.entries(value).filter(([k, v]) => JSON.stringify(local[k]) !== JSON.stringify(v)));
-    await new Promise((r) => setTimeout(r, 8));
+    await new Promise((r) => setTimeout(r, 6));
     Object.assign(server, diff);
     cb.flags[scope] ??= {};
     cb.flags[scope][key] = { ...server };
     return cb;
   };
-  const saved = { combats: game.combats, combat: game.combat, measure: Compat.measure };
+  const saved = { combats: game.combats, combat: game.combat, measure: Compat.measure, gm: game.user.isGM, canvas: globalThis.canvas };
   game.combats = [combat];
   game.combat = combat;
   Compat.measure = (a, b) => (Math.hypot(b.x - a.x, b.y - a.y) / 100) * 2;
-  // The Turn begins and the token moves one square at once, before the first write is back.
+  const wait = (ms = 40) => new Promise((r) => setTimeout(r, ms));
+  const go = async (y, options = {}) => {
+    doc.y = y;
+    Turns.onMove(doc, { y }, options);
+    await wait();
+  };
+  // The Turn begins with the combatant not knowing its token (a combat not tied to its scene) and
+  // nothing noted for it: where the token stands is still known from the scene.
+  Turns.moved.delete(cb.id);
+  Turns.pos.clear();
+  cb.token = null;
+  globalThis.canvas = { scene: { tokens: { get: (id) => (id === "tk" ? doc : null), [Symbol.iterator]: function* () { yield doc; } } } };
+  Turns.seeAll();
   Turns.resetMove(cb);
+  cb.token = doc;
+  // One square down, at once, the same length as last Turn's whole move.
   doc.y = 100;
   Turns.onMove(doc, { y: 100 }, {});
-  await new Promise((r) => setTimeout(r, 60));
-  assert.equal(server.metres, 2, "this Turn's 2 m, not last Turn's left alone at 0");
-  assert.equal(server.points.length, 2);
-  assert.equal(cb.flags[M4].path.metres, 2, "what the carousel and the ruler read");
-  // And on: move, take it back, move again, each landing as it should.
-  doc.y = 200;
-  Turns.onMove(doc, { y: 200 }, {});
-  doc.y = 100;
-  Turns.onMove(doc, { y: 100 }, {});
-  doc.y = 300;
-  Turns.onMove(doc, { y: 300 }, {});
-  await new Promise((r) => setTimeout(r, 90));
-  assert.equal(server.metres, 6);
+  await wait(60);
+  assert.equal(Turns.metres(cb.id), 2, "the first square counts");
+  assert.equal(server.metres, 2, "and reaches the combatant, for the carousel and the ruler");
+  await go(200);
+  assert.equal(Turns.metres(cb.id), 4);
+  await go(100);
+  assert.equal(Turns.metres(cb.id), 6, "walking back costs like any move");
+  await go(200, { isUndo: true });
+  assert.equal(Turns.metres(cb.id), 4, "Ctrl+Z gives that move back");
+  await go(100, { isUndo: true });
+  await go(0, { isUndo: true });
+  assert.equal(Turns.metres(cb.id), 0, "undone all the way");
+  assert.equal(server.metres, 0);
+  // Even with nothing noted at all for this Turn, a move is measured from where the token was last seen.
+  Turns.moved.delete(cb.id);
+  cb.flags[M3].path = { points: [], metres: 0 };
+  await go(300);
   assert.equal(Turns.metres(cb.id), 6);
+  // Thrown by a blast: nothing walked.
+  await go(900, { [M3]: { free: true } });
+  assert.equal(Turns.metres(cb.id), 6);
+  // Another token moving is noted, and costs this one nothing.
+  Turns.onMove({ id: "other", x: 500, y: 500, width: 1, height: 1, parent: doc.parent }, { x: 500 }, {});
+  assert.deepEqual([Turns.pos.get("other").x, Turns.metres(cb.id)], [500, 6]);
+
+  // The limit: out of movement, nothing further, not even back the way it came; an undo always goes.
+  game.user.isGM = false;
+  const move = Number(actor.system.stats.move.value) * 2;
+  cb.flags[M3].path = { points: [{ x: 50, y: 50 }, { x: 450, y: 50 }], metres: move * 2 };
+  doc.x = 400;
+  doc.y = 0;
+  const warn = ui.notifications.warn;
+  ui.notifications.warn = () => {};
+  assert.equal(NeonRuler.limit(doc, { x: 600 }, {}), false, "no further");
+  assert.equal(NeonRuler.limit(doc, { x: 0 }, {}), false, "nor back: that's walking too");
+  assert.equal(NeonRuler.limit(doc, { x: 0 }, { isUndo: true }), true, "but an undo, always");
+  ui.notifications.warn = warn;
+  game.user.isGM = saved.gm;
   Compat.measure = saved.measure;
   game.combats = saved.combats;
   game.combat = saved.combat;
+  globalThis.canvas = saved.canvas;
+  await S.set("movementRun", true);
 });

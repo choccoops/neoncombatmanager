@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.37.3
+
+- **Every move counts, from the first square.** A move is now measured from where the token
+  last stood, which the module keeps track of for every token on the scene, not from a
+  starting point noted at the top of the Turn (which could be missing, so the first move cost
+  nothing and the sums after it were off).
+- **Only undo gives movement back.** Walking back the way you came is walking: it costs like
+  any move. Ctrl+Z on the token takes the move back and its distance with it, and is never
+  held by the movement limit.
+
 ## 1.37.2
 
 - **The first move of a Turn counts, and the sums hold.** The path a token has walked is

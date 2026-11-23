@@ -3,7 +3,7 @@ import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { CPR } from "../cpr.js";
 import { Conditions } from "../conditions/engine.js";
-import { reach, legs, squaresAlong, label, bandOf, moveCheck, movementLeft, ranThisTurn, reachTaken, isStepBack, RUN_FLAG, COLORS } from "./ruler-core.js";
+import { reach, legs, squaresAlong, label, bandOf, moveCheck, movementLeft, ranThisTurn, reachTaken, RUN_FLAG, COLORS } from "./ruler-core.js";
 import { Cards } from "../combat/cards.js";
 import { L } from "../util.js";
 
@@ -101,8 +101,8 @@ export const NeonRuler = {
     const half = { x: ((Number(doc.width) || 1) * size) / 2, y: ((Number(doc.height) || 1) * size) / 2 };
     const from = { x: doc.x + half.x, y: doc.y + half.y };
     const to = { x: (changes.x ?? doc.x) + half.x, y: (changes.y ?? doc.y) + half.y };
-    // Taking a move back is never held: Foundry's undo, or the token put straight back where it stood.
-    if (options?.isUndo || isStepBack(this.historyFor(doc).points, to)) return true;
+    // Undoing a move (Ctrl+Z) is never held.
+    if (options?.isUndo) return true;
     const full = this.reachFor(doc);
     // Past the Move Action takes a Run (the Action HUD's button), where there's an Action HUD to take it on.
     const ran = !this.runTaken || this.ran(cb, combat);
