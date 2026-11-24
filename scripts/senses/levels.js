@@ -184,16 +184,29 @@ export const Levels = {
     const unit = esc(canvas.scene.grid?.units || "m");
     const name = (id) => esc(regions.find((r) => r.id === id)?.name || id);
     const floors = this.floors().sort((x, y) => x.stack.localeCompare(y.stack) || x.height - y.height);
-    const rows = floors.map((f) => `<label class="ncm-check"><input type="checkbox" name="del-${esc(f.region)}"> ${f.stack ? `${esc(f.stack)} · ` : ""}${name(f.region)} · ${f.height} ${unit}</label>`).join("");
+    const T = (k, d) => L(`${LANG}.Levels.${k}`, d);
+    const remove = (field) => `<label class="ncm-check ncm-levels-remove"><input type="checkbox" name="${field}"> ${T("Remove")}</label>`;
+    const rows = floors.map((f) => `<li><span><b>${name(f.region)}</b> · ${f.stack ? esc(f.stack) : T("NoBuilding")} · ${f.height} ${unit}</span>${remove(`del-${esc(f.region)}`)}</li>`).join("");
     const open = this.openingIds();
-    const openRows = open.map((id) => `<label class="ncm-check"><input type="checkbox" name="shut-${esc(id)}"> ${name(id)}</label>`).join("");
-    const content = `<div class="ncm-grid">${rows ? `<p class="ncm-ref">${L(`${LANG}.Levels.Existing`)}</p>${rows}` : ""}`
-      + `<p class="ncm-ref">${L(`${LANG}.Levels.New`)}</p>`
-      + `<label>${L(`${LANG}.Levels.Region`)}<select name="region">${regions.map((r) => `<option value="${esc(r.id)}">${esc(r.name || r.id)}</option>`).join("")}</select></label>`
-      + `<label>${L(`${LANG}.Levels.Stack`)}<input type="text" name="stack" value="${esc(floors[0]?.stack ?? "")}" placeholder="${L(`${LANG}.Levels.StackHint`)}"></label>`
-      + `<label>${L(`${LANG}.Levels.Height`, { unit })}<input type="number" name="height" step="0.5" placeholder="4"></label>`
-      + `<p class="ncm-ref">${L(`${LANG}.Levels.Openings`)}</p>${openRows}`
-      + `<label>${L(`${LANG}.Levels.Opening`)}<select name="opening"><option value="">${L(`${LANG}.Levels.NoOpening`)}</option>${regions.filter((r) => !open.includes(r.id)).map((r) => `<option value="${esc(r.id)}">${esc(r.name || r.id)}</option>`).join("")}</select></label></div>`;
+    const openRows = open.map((id) => `<li><span><b>${name(id)}</b></span>${remove(`shut-${esc(id)}`)}</li>`).join("");
+    const options = (list) => list.map((r) => `<option value="${esc(r.id)}">${esc(r.name || r.id)}</option>`).join("");
+    const content = `<div class="ncm-levels">`
+      + `<p class="ncm-hint">${T("Intro")}</p>`
+      + `<fieldset><legend>${T("FloorsTitle")}</legend>`
+      + `<p class="ncm-hint">${T("FloorsHint")}</p>`
+      + (rows ? `<ul class="ncm-levels-list">${rows}</ul>` : `<p class="ncm-ref">${T("NoFloors")}</p>`)
+      + `<p class="ncm-kicker">${T("New")}</p>`
+      + `<div class="ncm-grid">`
+      + `<label>${T("Region")}<select name="region"><option value="">${T("PickRegion")}</option>${options(regions)}</select></label>`
+      + `<label>${T("Stack")}<input type="text" name="stack" value="${esc(floors[0]?.stack ?? "")}" placeholder="${T("StackHint")}"></label>`
+      + `<label>${T("Height", { unit })}<input type="number" name="height" step="0.5" placeholder="0"></label>`
+      + `</div></fieldset>`
+      + `<fieldset><legend>${T("OpeningsTitle")}</legend>`
+      + `<p class="ncm-hint">${T("OpeningsHint")}</p>`
+      + (openRows ? `<ul class="ncm-levels-list">${openRows}</ul>` : `<p class="ncm-ref">${T("NoOpenings")}</p>`)
+      + `<p class="ncm-kicker">${T("NewOpening")}</p>`
+      + `<div class="ncm-grid"><label>${T("Opening")}<select name="opening"><option value="">${T("NoOpening")}</option>${options(regions.filter((r) => !open.includes(r.id)))}</select></label></div>`
+      + `</fieldset></div>`;
     const picked = await Compat.DialogV2.prompt({
       window: { title: L(`${LANG}.Levels.Tool`) },
       classes: ["neon-combat", "ncm-dialog"],
@@ -212,7 +225,10 @@ export const Levels = {
     }).catch(() => null);
     if (!picked) return null;
     let next = this.floors().filter((x) => !picked.del.includes(x.region));
-    const f = picked.height === "" ? null : cleanFloor(picked);
+    // A floor needs its Region and its height; say so when only half was filled in.
+    const half = (picked.region && picked.height === "") || (!picked.region && picked.height !== "");
+    if (half) ui.notifications?.warn(L(`${LANG}.Levels.Half`));
+    const f = !picked.region || picked.height === "" ? null : cleanFloor(picked);
     if (f) next = [...next.filter((x) => x.region !== f.region), f];
     const nextOpen = [...open.filter((id) => !picked.shut.includes(id)), ...(picked.opening ? [picked.opening] : [])];
     if (nextOpen.length !== open.length || picked.opening) await this.saveOpenings(nextOpen);

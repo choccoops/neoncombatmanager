@@ -1402,3 +1402,12 @@ li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; li
 #ncm-screen-fx[data-kind="uv"] .ncm-screen-rim { background: radial-gradient(ellipse at center, transparent 55%, rgba(178, 107, 255, 0.3) 100%); animation: ncm-screen-breathe 4s ease-in-out infinite alternate; }
 #ncm-screen-fx[data-kind="uv"] .ncm-screen-streaks { display: none; }
 @keyframes ncm-screen-noise { from { opacity: 0.92; } to { opacity: 1; } }
+
+/* The Levels window: two numbered sections, each a list of what's set up and a row to add to it */
+.neon-combat .ncm-levels { display: grid; gap: 12px; }
+.neon-combat .ncm-levels fieldset { display: grid; gap: 8px; margin: 0; padding: 10px 12px 12px; border: 1px solid var(--ncm-line-2); background: var(--ncm-bg-2); }
+.neon-combat .ncm-levels legend { padding: 0 6px; font-family: var(--ncm-display); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ncm-cyan); }
+.neon-combat .ncm-levels .ncm-hint { color: var(--ncm-text); opacity: 0.8; line-height: 1.4; }
+.neon-combat .ncm-levels-list { display: grid; gap: 4px; }
+.neon-combat .ncm-levels-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 5px 8px; font-size: 13px; color: var(--ncm-text); background: var(--ncm-bg-3); border-left: 2px solid var(--ncm-cyan); }
+.neon-combat .ncm-levels-remove { flex: none; color: var(--ncm-orange); }
