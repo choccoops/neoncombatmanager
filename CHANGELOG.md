@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.45.1
+
+- **Stairs take a token that walks onto them.** A token only counted as on a stairs tile when
+  its exact middle was inside the tile, so a ladder, a hatch or any tile smaller than the token
+  or set off the grid was walked straight over. A token now counts as on a tile when its middle
+  is on the tile or the tile's middle is under the token. The wait for the walk animation
+  before the trip can also no longer hang: it gives up after two seconds.
+  `api.stairs.why(token)` in the console says what the stairs see for a token.
+
 ## 1.45.0
 
 - **Neon look for Foundry and the sheets** (on by default; the setting *Neon look for Foundry

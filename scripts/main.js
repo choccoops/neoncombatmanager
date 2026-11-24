@@ -342,7 +342,9 @@ const api = {
   stairs: {
     link: (a, b) => Stairs.link(a, b),
     unlink: (tile) => Stairs.unlink(tile),
-    list: () => Stairs.tiles()
+    list: () => Stairs.tiles(),
+    /** Why the stairs would or wouldn't take a token (the selected one when none is given). */
+    why: (token) => Stairs.why(token)
   },
   /** Holds: a Grapple the map knows about. Tokens or token documents. */
   hold: {

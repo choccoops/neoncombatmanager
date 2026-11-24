@@ -45,6 +45,13 @@ test("stairs (pure): stepping on takes the way, standing on it or stepping off d
   assert.equal(SD.wayTaken(tiles, { x: 150, y: 100 }, { x: 300, y: 100 }), null, "stepping off");
   assert.equal(SD.wayTaken(tiles, null, { x: 2100, y: 100 }).to.id, "foot", "unknown start counts as off it");
   assert.equal(SD.wayTaken(tiles, { x: 0, y: 900 }, { x: 550, y: 550 }), null, "the far end is gone");
+  // A ladder thinner than the token, set off the grid: the token's middle misses it, but it's under the token.
+  const ladder = [{ id: "ladder", x: 470, y: 20, width: 30, height: 60, to: "top" }, { id: "top", x: 3000, y: 0, width: 30, height: 60, to: "ladder" }];
+  const size = { w: 100, h: 100 };
+  assert.equal(SD.wayTaken(ladder, { x: 250, y: 50 }, { x: 450, y: 50 }), null, "by its middle alone: missed");
+  assert.equal(SD.wayTaken(ladder, { x: 250, y: 50 }, { x: 450, y: 50 }, size).to.id, "top");
+  assert.equal(SD.wayTaken(ladder, { x: 250, y: 50 }, { x: 350, y: 50 }, size), null, "the square beside it");
+  assert.equal(SD.wayTaken(ladder, { x: 450, y: 50 }, { x: 450, y: 50 }, size), null, "already on it");
   assert.deepEqual(SD.landing(tiles[1], 100, 100), { x: 2050, y: 50 });
   assert.deepEqual(SD.landing(tiles[1], 200, 200), { x: 2000, y: 0 });
 });

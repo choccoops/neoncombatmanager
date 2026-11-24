@@ -1,7 +1,7 @@
 import { MODULE_ID, LANG } from "../constants.js";
 import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
-import { STAIRS_FLAG, wayTaken, landing } from "./stairs-data.js";
+import { STAIRS_FLAG, wayTaken, landing, onTile } from "./stairs-data.js";
 import { L } from "../util.js";
 
 /**
@@ -118,6 +118,37 @@ export const Stairs = {
     if (far && this.linkOf(far) === doc.id) await far.unsetFlag(MODULE_ID, STAIRS_FLAG);
   },
 
+  /** The token's walk has played (or two seconds have passed, whichever is first). */
+  async walked(doc) {
+    try {
+      const name = doc.object?.animationName;
+      const Anim = globalThis.foundry?.canvas?.animation?.CanvasAnimation ?? globalThis.CanvasAnimation;
+      const playing = name ? Anim?.getAnimation?.(name)?.promise : null;
+      if (playing) await Promise.race([playing, new Promise((r) => setTimeout(r, 2000))]);
+    } catch {
+      /* no animation to wait for */
+    }
+  },
+
+  /**
+   * Why a token standing where it is would or wouldn't be taken by the stairs, for the console:
+   * `game.modules.get("cpr-neon-combat-manager").api.stairs.why(token)`.
+   */
+  why(token) {
+    const doc = token?.document ?? token ?? canvas?.tokens?.controlled?.[0]?.document ?? null;
+    if (!doc) return { token: false };
+    const s = this.size(doc);
+    const size = { w: (Number(doc.width) || 1) * s, h: (Number(doc.height) || 1) * s };
+    const tiles = this.tiles(doc.parent);
+    const at = this.centre(doc);
+    return {
+      setting: this.on, activeGM: Compat.activeGM?.name ?? null, thisIsTheActiveGM: Compat.isActiveGM,
+      linkedTiles: tiles.length, tokenMiddle: at, tokenSize: size,
+      standingOn: tiles.filter((t) => onTile(t, at, size)).map((t) => t.id),
+      lastSeenAt: this.was.get(doc.uuid ?? doc.id) ?? null
+    };
+  },
+
   /** A token moved: onto the foot of a way, it's put at the other end. */
   async onMove(doc, changed, options = {}) {
     if (!("x" in (changed ?? {}) || "y" in (changed ?? {}))) return;
@@ -134,17 +165,13 @@ export const Stairs = {
     this.was.set(key, to);
     // Put there by the stairs, carried by whoever holds it, or taken back with Ctrl+Z: it stays where it is.
     if (!this.on || mine.stairs || mine.carried || options?.isUndo) return;
-    const way = wayTaken(this.tiles(doc.parent), from, to);
-    if (!way) return;
-    // Let the walk onto the stairs play out first.
-    try {
-      const name = doc.object?.animationName;
-      await (name ? globalThis.CanvasAnimation?.getAnimation?.(name)?.promise : null);
-    } catch {
-      /* no animation to wait for */
-    }
     const s = this.size(doc);
-    const at = landing(way.to, (Number(doc.width) || 1) * s, (Number(doc.height) || 1) * s);
+    const size = { w: (Number(doc.width) || 1) * s, h: (Number(doc.height) || 1) * s };
+    const way = wayTaken(this.tiles(doc.parent), from, to, size);
+    if (!way) return;
+    // Let the walk onto the stairs play out first, but never wait on it for long.
+    await this.walked(doc);
+    const at = landing(way.to, size.w, size.h);
     await doc.update(at, { animate: false, [MODULE_ID]: { free: true, stairs: true } });
   }
 };

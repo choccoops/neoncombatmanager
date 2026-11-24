@@ -7,8 +7,22 @@
  */
 export const STAIRS_FLAG = "stairs";
 
-/** Is a point on a tile (its rectangle; rotation isn't counted)? */
-export const onTile = (tile, p) => !!tile && !!p && p.x >= tile.x && p.x <= tile.x + tile.width && p.y >= tile.y && p.y <= tile.y + tile.height;
+/**
+ * Is a token on a tile (its rectangle; rotation isn't counted)? Its middle is on the tile, or,
+ * for a tile smaller than the token (a ladder, a hatch, a tile set off the grid), the tile's
+ * middle is under the token.
+ * @param {object} tile - { x, y, width, height }
+ * @param {{x,y}} p - the token's middle
+ * @param {{w,h}} [size] - the token's size in px
+ */
+export function onTile(tile, p, size = null) {
+  if (!tile || !p) return false;
+  if (p.x >= tile.x && p.x <= tile.x + tile.width && p.y >= tile.y && p.y <= tile.y + tile.height) return true;
+  if (!size) return false;
+  const cx = tile.x + tile.width / 2;
+  const cy = tile.y + tile.height / 2;
+  return Math.abs(cx - p.x) <= size.w / 2 && Math.abs(cy - p.y) <= size.h / 2;
+}
 
 /**
  * The way a move takes: the linked tile it steps onto, coming from off it. Null when the move
@@ -16,11 +30,12 @@ export const onTile = (tile, p) => !!tile && !!p && p.x >= tile.x && p.x <= tile
  * @param {object[]} tiles - [{ id, x, y, width, height, to }] (to: the linked tile's id, or null)
  * @param {{x,y}|null} from - where the token's middle was (null: unknown, taken as off any tile)
  * @param {{x,y}} to - where it is now
+ * @param {{w,h}} [size] - the token's size in px
  * @returns {{ from: object, to: object }|null}
  */
-export function wayTaken(tiles = [], from, to) {
+export function wayTaken(tiles = [], from, to, size = null) {
   for (const t of tiles) {
-    if (!t.to || !onTile(t, to) || (from && onTile(t, from))) continue;
+    if (!t.to || !onTile(t, to, size) || (from && onTile(t, from, size))) continue;
     const far = tiles.find((x) => x.id === t.to);
     if (far) return { from: t, to: far };
   }
