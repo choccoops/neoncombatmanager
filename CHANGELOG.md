@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.45.0
+
+- **Neon look for Foundry and the sheets** (off until you switch it on: *Neon look for Foundry
+  and the sheets*, under the module's FX settings). Foundry's own windows, forms, dropdown
+  lists, tables, sidebar, chat messages, menus and the bars round the map, and the Cyberpunk
+  RED character, mook and item sheets, take this module's dark panels and pink and cyan
+  accents, so text is readable on every window rather than dark-on-dark in some.
+  - It's only a look, held by one class on the page. Switching the setting off puts everything
+    back as it was at once, for everyone, with no reload.
+  - The system's sheets are recoloured through the system's own colour variables, the way its
+    built-in dark mode works; nothing in the system is changed.
+  - Other modules' windows get readable text and dark fields where they follow Foundry's
+    colours. One that paints its own fixed colours keeps them.
+- **The Levels window, made clear.** It's now two numbered sections, each with a line saying
+  what it's for, a list of what's set up, and a row to add to it:
+  - *1 · Floors*: which Region is which floor, its building and height. Each floor listed has
+    its own **Remove** tick.
+  - *2 · Openings between floors*: says what an opening is (a stairwell, an atrium, a fire
+    escape) and what marking one does. With none set up it says so, where before it told you
+    to "tick one" with nothing there to tick.
+  - Nothing is added unless you pick a Region, and a floor filled in halfway is called out.
+
 ## 1.44.0
 
 - **Floors are solid.** 1.43.0 showed everyone on the other floors of a building, and let them

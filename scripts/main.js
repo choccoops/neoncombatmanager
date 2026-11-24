@@ -511,6 +511,12 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("setup", () => {
+  // The Neon look for Foundry and the system's sheets: one class on the page, so switching the setting off undoes all of it.
+  try {
+    document.documentElement.classList.toggle("ncm-neon-theme", !!Settings.get("neonTheme"));
+  } catch (err) {
+    console.warn(`${MODULE_ID} | neon theme`, err);
+  }
   // Other modules add their conditions now (or call api.conditions.register during init).
   Hooks.callAll(HOOKS.registerConditions, api.conditions);
   Registry.refresh();

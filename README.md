@@ -1194,6 +1194,18 @@ Walls inside the far area still block the view from its middle, where the point 
 Setting: *Linked areas*. For macros: `api.far.add({ a, b, distance, both })` with Region ids,
 `api.far.list()`, `api.far.remove(id)`, `api.far.distance(tokenA, tokenB)`.
 
+## Neon look
+
+**Neon look for Foundry and the sheets** (a world setting, off by default) gives Foundry's own
+interface and the Cyberpunk RED sheets this module's colours: dark panels, light text, pink and
+cyan accents. Windows, forms, dropdowns, tables, the sidebar, chat, menus and the map's bars
+are covered. It exists so that no window ends up with text you can't read.
+
+It is a look and nothing more: one class on the page, and one stylesheet
+(`styles/neon-theme.css`) whose every rule depends on it. Switch the setting off and it's all
+back as it was, at once and without a reload. Modules that hard-code their own colours keep
+them.
+
 ## Levels
 
 When the floors of a building are drawn side by side on one scene, or tokens fly, the map's

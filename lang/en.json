@@ -1470,6 +1470,10 @@
       "stairs": {
         "name": "Stairs and ladders",
         "hint": "The GM selects two Tiles and presses the stairs button in the tile controls to link them (again to unlink). A token whose move ends on one is put on the other, at no cost to its movement; whoever it holds comes along and its player's view follows."
+      },
+      "neonTheme": {
+        "name": "Neon look for Foundry and the sheets",
+        "hint": "Dresses Foundry's own windows, sidebar, chat and forms and the Cyberpunk RED character, mook and item sheets in this module's dark neon colours, so text stays readable everywhere. It's only a look: switch it off and everything is back as it was at once, for everyone, without a reload."
       }
     },
     "SceneWeather": {
@@ -3141,16 +3145,26 @@
     "Levels": {
       "Tool": "Levels",
       "NeedRegions": "Draw a Region over each floor first (the Regions tool), and name them.",
-      "Existing": "Floors on this scene (tick one to remove it):",
-      "New": "A new floor (or a new height for one):",
-      "Region": "Region",
-      "Stack": "Building",
-      "StackHint": "the same name for every floor of one building",
+      "Intro": "For buildings whose floors are drawn side by side on this scene. Regions come from Foundry's Regions tool: draw and name them there first.",
+      "FloorsTitle": "1 · Floors",
+      "FloorsHint": "Tell the map which Region is which floor. Distance for attacks then counts the height between floors.",
+      "NoFloors": "No floors set up on this scene yet.",
+      "NoBuilding": "no building",
+      "Remove": "Remove",
+      "New": "Add a floor, or change one",
+      "Region": "Which Region is the floor",
+      "PickRegion": "(pick a Region)",
+      "Stack": "Building it belongs to",
+      "StackHint": "e.g. Tower (same for all its floors)",
       "Height": "Height above the ground ({unit})",
+      "Half": "A floor needs both its Region and its height: nothing was added.",
+      "OpeningsTitle": "2 · Openings between floors",
+      "OpeningsHint": "Floors are solid: nobody sees or shoots through them. An opening is a spot where the building is open from floor to floor, such as a stairwell, an atrium or a fire escape. Draw a Region over that spot on any one floor and pick it here. People on different floors who both stand in it can see and shoot each other.",
+      "NoOpenings": "No openings yet: every floor is solid everywhere.",
+      "NewOpening": "Add an opening",
+      "Opening": "Region that is open between floors",
+      "NoOpening": "(don't add one)",
       "Save": "Save",
-      "Openings": "Open between floors (a stairwell, an atrium, a fire escape). Tick one to close it:",
-      "Opening": "Mark a Region as an opening",
-      "NoOpening": "(none)",
       "NoShot": "{name}: a floor lies between you. No shot."
     },
     "Hold": {

@@ -1,0 +1,270 @@
+/*
+ * The Neon look for Foundry's own interface and the Cyberpunk RED sheets.
+ *
+ * Everything here hangs off one class, html.ncm-neon-theme, which the "Neon look" setting puts on
+ * the page and takes off again. With the class gone, not one rule in this file applies.
+ *
+ * How it works:
+ *  1. Cyberpunk RED - CORE styles its sheets, and its own pass over Foundry's forms and windows,
+ *     entirely through --cpr-* variables (it ships a dark mode the same way). Giving those
+ *     variables this module's colours restyles the system without touching its rules.
+ *  2. Foundry's windows assume dark text on parchment. Inside a window the "dark text" variables
+ *     are turned light, so anything written for parchment stays readable on the dark panel.
+ *  3. A short list of direct rules for what variables don't reach: window frames, fields,
+ *     dropdown lists, tables, chat messages, menus.
+ * This module's own windows (.neon-combat) already look like this and are left alone.
+ */
+
+html.ncm-neon-theme,
+html.ncm-neon-theme[data-cpr-theme] {
+  --ncm-bg: #07070b;
+  --ncm-bg-2: #0d0d15;
+  --ncm-bg-3: #14141f;
+  --ncm-line: #26263a;
+  --ncm-line-2: #36364f;
+  --ncm-text: #d8dbec;
+  --ncm-soft: #a4a9c6;
+  --ncm-dim: #6e7290;
+  --ncm-pink: #ff2a6d;
+  --ncm-cyan: #05d9e8;
+  --ncm-yellow: #f3e600;
+  --ncm-green: #39ff88;
+  --ncm-red: #ff4b4b;
+  --ncm-display: "Neon Combat Tektur", "Signika", sans-serif;
+
+  /* Cyberpunk RED - CORE: backgrounds */
+  --cpr-background-window: var(--ncm-bg-2);
+  --cpr-background-box: var(--ncm-bg-2);
+  --cpr-background-header: var(--ncm-bg);
+  --cpr-background-border: var(--ncm-pink);
+  --cpr-background-pill: var(--ncm-bg-3);
+  --cpr-background-row-even: #11111b;
+  --cpr-background-row-odd: #181826;
+  --cpr-background-tab-active: var(--ncm-pink);
+  --cpr-background-tab-inactive: var(--ncm-bg);
+  --cpr-background-tab-underlay: var(--ncm-line);
+  --cpr-background-code: var(--ncm-bg-3);
+  --cpr-background-chat-card: var(--ncm-bg-2);
+  --cpr-background-chat-card-block: var(--ncm-pink);
+  --cpr-background-chat-card-block-before: var(--ncm-bg-3);
+  --cpr-background-chat-border: var(--ncm-line-2);
+  --cpr-background-chat-inline-roll: rgba(255, 255, 255, 0.08);
+  --cpr-background-foundry-input: var(--ncm-bg-3);
+  --cpr-background-foundry-button: var(--ncm-bg-3);
+  --cpr-background-foundry-hover: var(--ncm-line-2);
+  --cpr-background-editor-header: var(--ncm-bg);
+  --cpr-background-editor-button: var(--ncm-bg-3);
+  --cpr-background-editor-button-selected: var(--ncm-line-2);
+  --cpr-background-editor-button-hover: var(--ncm-line-2);
+  --cpr-background-editor-button-active: var(--ncm-line-2);
+  --cpr-background-cyberdeck-section-header: var(--ncm-line);
+  --cpr-background-dialog-border: var(--ncm-pink);
+  --cpr-background-dialog-selected: var(--ncm-line-2);
+  --cpr-background-dialog-hr-gradient-start: var(--ncm-bg-2);
+  --cpr-background-dialog-hr-gradient-middle: var(--ncm-cyan);
+  --cpr-background-dialog-hr-gradient-end: var(--ncm-bg-2);
+  --cpr-background-journal-blockquote: var(--ncm-bg-3);
+  --cpr-background-content-link: var(--ncm-bg-3);
+  --cpr-background-toggle-unchecked: var(--ncm-line-2);
+  --cpr-background-toggle-checked: var(--ncm-cyan);
+  --cpr-background-toggle-dot: var(--ncm-text);
+
+  /* Cyberpunk RED - CORE: text and icons */
+  --cpr-text-normal: var(--ncm-text);
+  --cpr-text-window: var(--ncm-text);
+  --cpr-text-pill: var(--ncm-text);
+  --cpr-text-header: var(--ncm-text);
+  --cpr-text-input: var(--ncm-text);
+  --cpr-text-foundry-input: var(--ncm-text);
+  --cpr-text-tab-normal: var(--ncm-text);
+  --cpr-text-tab-highlight: var(--ncm-yellow);
+  --cpr-text-mook-normal: var(--ncm-text);
+  --cpr-text-mook-header: var(--ncm-text);
+  --cpr-text-mook-name: var(--ncm-text);
+  --cpr-text-chat-normal: var(--ncm-text);
+  --cpr-text-chat-failure: var(--ncm-red);
+  --cpr-text-chat-success: var(--ncm-green);
+  --cpr-text-editor-header: var(--ncm-text);
+  --cpr-text-editor-button: var(--ncm-text);
+  --cpr-text-dir-list: var(--ncm-text);
+  --cpr-text-journal-table-header: var(--ncm-text);
+  --cpr-text-hint: var(--ncm-soft);
+  --cpr-text-foundry-hint: var(--ncm-soft);
+  --cpr-text-foundry-hover: var(--ncm-cyan);
+  --cpr-text-header-line: var(--ncm-pink);
+  --cpr-text-header-line-box: var(--ncm-cyan);
+  --cpr-text-header-arrow: var(--ncm-pink);
+  --cpr-text-icon-normal: #b8bcd6;
+  --cpr-text-icon-dimmed: var(--ncm-dim);
+  --cpr-text-icon-highlight: var(--ncm-pink);
+  --cpr-text-content-link-icon: var(--ncm-cyan);
+  --cpr-icon-actor-image-overlay-border: var(--ncm-line-2);
+
+  /* Foundry's own accents: the glow under a hovered link, the ring round an active tool */
+  --color-shadow-primary: var(--ncm-pink);
+  --color-shadow-highlight: var(--ncm-cyan);
+  --color-border-highlight: var(--ncm-cyan);
+  --color-border-highlight-alt: var(--ncm-pink);
+  --color-text-hyperlink: var(--ncm-cyan);
+  --color-underline-header: var(--ncm-line-2);
+  --color-underline-active: var(--ncm-pink);
+  --color-border-light-primary: var(--ncm-line-2);
+  --color-border-light-1: var(--ncm-line-2);
+}
+
+/* Inside a window, what Foundry and other modules call "dark text" has a dark panel behind it now. */
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) {
+  --color-text-dark-primary: var(--ncm-text);
+  --color-text-dark-secondary: var(--ncm-soft);
+  --color-text-dark-header: var(--ncm-text);
+  --color-text-dark-heading: var(--ncm-text);
+  --color-text-dark-highlight: #ffffff;
+  --color-text-dark-inactive: var(--ncm-dim);
+  --color-text-dark-1: #f2f3fa;
+  --color-text-dark-2: var(--ncm-text);
+  --color-text-dark-3: #c3c7de;
+  --color-text-dark-4: var(--ncm-soft);
+  --color-text-dark-5: #8a8fae;
+  --color-text-dark-6: var(--ncm-dim);
+  --color-border-light-tertiary: var(--ncm-line-2);
+  --color-border-light-secondary: var(--ncm-line-2);
+  --color-border-light-highlight: var(--ncm-cyan);
+  --color-border-dark-tertiary: var(--ncm-line-2);
+  --color-border-dark-secondary: var(--ncm-line);
+}
+
+/* Window frames */
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) {
+  border: 1px solid var(--ncm-line-2);
+  border-radius: 0;
+  box-shadow: 0 0 0 1px #000, 0 10px 34px rgba(0, 0, 0, 0.7);
+  color: var(--ncm-text);
+}
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) > .window-header {
+  background: linear-gradient(90deg, var(--ncm-bg) 0%, var(--ncm-bg-3) 100%);
+  border-bottom: 1px solid var(--ncm-pink);
+  color: var(--ncm-text);
+}
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) > .window-header .window-title {
+  font-family: var(--ncm-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) > .window-header :is(a, button) { color: var(--ncm-soft); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) > .window-header :is(a, button):hover { color: var(--ncm-cyan); text-shadow: none; }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content {
+  background: var(--ncm-bg-2);
+  color: var(--ncm-text);
+}
+
+/* Fields, and the lists that drop out of them (the usual place for unreadable text) */
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(input[type="text"], input[type="number"], input[type="password"], input[type="search"], input[type="email"], input[type="url"], input[type="date"], input[type="time"], input:not([type]), select, textarea) {
+  background: var(--ncm-bg-3);
+  color: var(--ncm-text);
+  border: 1px solid var(--ncm-line-2);
+  border-radius: 0;
+}
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(input, select, textarea):focus {
+  outline: none;
+  border-color: var(--ncm-cyan);
+  box-shadow: 0 0 0 1px rgba(5, 217, 232, 0.35);
+}
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(input, select, textarea):disabled { color: var(--ncm-dim); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content ::placeholder { color: var(--ncm-dim); opacity: 1; }
+html.ncm-neon-theme :is(select, datalist) :is(option, optgroup) { background: var(--ncm-bg-2); color: var(--ncm-text); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(input[type="checkbox"], input[type="radio"], input[type="range"]) { accent-color: var(--ncm-cyan); }
+
+/* Buttons */
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content button {
+  background: var(--ncm-bg-3);
+  color: var(--ncm-text);
+  border: 1px solid var(--ncm-line-2);
+  border-radius: 0;
+}
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content button:is(:hover, :focus-visible) {
+  border-color: var(--ncm-cyan);
+  color: var(--ncm-cyan);
+  box-shadow: none;
+}
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content button:disabled { color: var(--ncm-dim); border-color: var(--ncm-line); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(.dialog-buttons, .form-footer, footer) button:is(.default, .bright, [data-action="ok"], [type="submit"]) { border-color: var(--ncm-pink); }
+
+/* Labels, hints, headings, rules */
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(label, .form-group > label) { color: var(--ncm-text); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(.hint, .notes, p.notes, .units) { color: var(--ncm-soft); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(h1, h2, h3, h4) { color: var(--ncm-text); border-color: var(--ncm-line-2); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content hr { border: 0; border-top: 1px solid var(--ncm-line-2); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content a:not(.content-link):not(.inline-roll):hover { color: var(--ncm-cyan); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content fieldset { border: 1px solid var(--ncm-line-2); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content legend { color: var(--ncm-cyan); }
+
+/* Tabs */
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content nav.tabs:not(.cpr-tabs) { border-color: var(--ncm-line-2); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content nav.tabs:not(.cpr-tabs) :is(.item, [data-tab]) { color: var(--ncm-soft); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content nav.tabs:not(.cpr-tabs) :is(.item, [data-tab]).active { color: var(--ncm-cyan); text-shadow: none; }
+
+/* Tables */
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content table { background: transparent; border-color: var(--ncm-line-2); color: var(--ncm-text); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content table :is(thead, th) { background: var(--ncm-bg); color: var(--ncm-cyan); text-shadow: none; border-color: var(--ncm-line-2); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content table tr:nth-child(even) { background: rgba(255, 255, 255, 0.03); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content table td { border-color: var(--ncm-line); }
+
+/* Links to documents, inline rolls, code */
+html.ncm-neon-theme :is(.window-app, .application, #chat-log) :is(a.content-link, a.inline-roll) { background: var(--ncm-bg-3); color: var(--ncm-text); border: 1px solid var(--ncm-line-2); }
+html.ncm-neon-theme :is(.window-app, .application, #chat-log) :is(a.content-link, a.inline-roll) i { color: var(--ncm-cyan); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(code, pre) { background: var(--ncm-bg-3); color: var(--ncm-green); border-color: var(--ncm-line-2); }
+
+/* Chat: Foundry's parchment messages (the system's and this module's cards have their own look) */
+html.ncm-neon-theme #chat-log .chat-message {
+  background: var(--ncm-bg-2);
+  color: var(--ncm-text);
+  border: 1px solid var(--ncm-line-2);
+  border-radius: 0;
+}
+html.ncm-neon-theme #chat-log .chat-message .message-header { color: var(--ncm-soft); }
+html.ncm-neon-theme #chat-log .chat-message .message-header .message-sender { color: var(--ncm-text); }
+html.ncm-neon-theme #chat-log .chat-message .message-header .message-metadata { color: var(--ncm-dim); }
+html.ncm-neon-theme #chat-log .chat-message.whisper { border-color: var(--ncm-cyan); background: #0b1318; }
+html.ncm-neon-theme #chat-log .chat-message.blind { border-color: #9d4dff; background: #100d18; }
+html.ncm-neon-theme #chat-log .chat-message .dice-roll :is(.dice-formula, .dice-total) { background: var(--ncm-bg-3); color: var(--ncm-text); border: 1px solid var(--ncm-line-2); box-shadow: none; }
+html.ncm-neon-theme #chat-log .chat-message .dice-roll .dice-total.critical { color: var(--ncm-green); }
+html.ncm-neon-theme #chat-log .chat-message .dice-roll .dice-total.fumble { color: var(--ncm-red); }
+html.ncm-neon-theme #chat-log .chat-message .dice-tooltip { color: var(--ncm-text); }
+html.ncm-neon-theme #chat-log .chat-message .dice-tooltip .part-header { border-color: var(--ncm-line-2); }
+html.ncm-neon-theme #chat-form textarea { background: var(--ncm-bg-2); color: var(--ncm-text); border: 1px solid var(--ncm-line-2); border-radius: 0; }
+
+/* Sidebar */
+html.ncm-neon-theme #sidebar { background: rgba(7, 7, 11, 0.92); border: 1px solid var(--ncm-line-2); border-radius: 0; box-shadow: 0 0 18px rgba(0, 0, 0, 0.8); }
+html.ncm-neon-theme #sidebar-tabs { border-bottom: 1px solid var(--ncm-line-2); box-shadow: none; }
+html.ncm-neon-theme #sidebar-tabs > .item { color: var(--ncm-soft); }
+html.ncm-neon-theme #sidebar-tabs > .item.active { color: var(--ncm-cyan); border-color: var(--ncm-cyan); box-shadow: none; text-shadow: none; }
+html.ncm-neon-theme #sidebar .directory-header :is(input, button), html.ncm-neon-theme #sidebar .directory-footer button, html.ncm-neon-theme #sidebar .action-buttons button, html.ncm-neon-theme #sidebar #settings button {
+  background: var(--ncm-bg-3);
+  color: var(--ncm-text);
+  border: 1px solid var(--ncm-line-2);
+  border-radius: 0;
+}
+html.ncm-neon-theme #sidebar :is(.directory-header, .directory-footer, .action-buttons, #settings) button:hover { border-color: var(--ncm-cyan); color: var(--ncm-cyan); box-shadow: none; }
+html.ncm-neon-theme #sidebar .directory-list .directory-item { border-color: var(--ncm-line); }
+html.ncm-neon-theme #sidebar .directory-list .folder > .folder-header { text-shadow: none; border-color: var(--ncm-line-2); }
+
+/* Menus and tips */
+html.ncm-neon-theme #context-menu { background: var(--ncm-bg-2); color: var(--ncm-text); border: 1px solid var(--ncm-line-2); border-radius: 0; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7); }
+html.ncm-neon-theme #context-menu li.context-item:hover { color: var(--ncm-cyan); background: var(--ncm-bg-3); text-shadow: none; }
+html.ncm-neon-theme #tooltip, html.ncm-neon-theme .locked-tooltip { background: var(--ncm-bg); color: var(--ncm-text); border: 1px solid var(--ncm-line-2); border-radius: 0; }
+
+/* The bars round the map */
+html.ncm-neon-theme #hotbar .macro { background: rgba(7, 7, 11, 0.85); border: 1px solid var(--ncm-line-2); border-radius: 0; box-shadow: none; }
+html.ncm-neon-theme #hotbar .macro:hover { border-color: var(--ncm-cyan); }
+html.ncm-neon-theme #controls ol :is(.scene-control, .control-tool) { background: rgba(7, 7, 11, 0.85); border: 1px solid var(--ncm-line-2); border-radius: 0; color: var(--ncm-soft); box-shadow: none; }
+html.ncm-neon-theme #controls ol :is(.scene-control, .control-tool):is(.active, :hover) { color: var(--ncm-cyan); border-color: var(--ncm-cyan); box-shadow: 0 0 8px rgba(5, 217, 232, 0.35); }
+html.ncm-neon-theme #navigation :is(#nav-toggle, .scene) { background: rgba(7, 7, 11, 0.85); border: 1px solid var(--ncm-line-2); border-radius: 0; box-shadow: none; }
+html.ncm-neon-theme #navigation .scene.view { border-color: var(--ncm-cyan); }
+html.ncm-neon-theme #navigation .scene.active { border-color: var(--ncm-pink); }
+html.ncm-neon-theme #players { background: rgba(7, 7, 11, 0.85); border: 1px solid var(--ncm-line-2); border-radius: 0; box-shadow: none; }
+
+/* Scrollbars */
+html.ncm-neon-theme ::-webkit-scrollbar-thumb { background: var(--ncm-line-2); border: 1px solid var(--ncm-line); border-radius: 0; }
+html.ncm-neon-theme ::-webkit-scrollbar-thumb:hover { background: var(--ncm-cyan); }
+html.ncm-neon-theme ::-webkit-scrollbar-track { background: transparent; box-shadow: none; }
+html.ncm-neon-theme * { scrollbar-color: var(--ncm-line-2) transparent; }
