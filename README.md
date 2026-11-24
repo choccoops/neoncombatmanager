@@ -1196,7 +1196,7 @@ Setting: *Linked areas*. For macros: `api.far.add({ a, b, distance, both })` wit
 
 ## Neon look
 
-**Neon look for Foundry and the sheets** (a world setting, off by default) gives Foundry's own
+**Neon look for Foundry and the sheets** (a world setting, on by default) gives Foundry's own
 interface and the Cyberpunk RED sheets this module's colours: dark panels, light text, pink and
 cyan accents. Windows, forms, dropdowns, tables, the sidebar, chat, menus and the map's bars
 are covered. It exists so that no window ends up with text you can't read.

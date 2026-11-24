@@ -2,8 +2,8 @@
 
 ## 1.45.0
 
-- **Neon look for Foundry and the sheets** (off until you switch it on: *Neon look for Foundry
-  and the sheets*, under the module's FX settings). Foundry's own windows, forms, dropdown
+- **Neon look for Foundry and the sheets** (on by default; the setting *Neon look for Foundry
+  and the sheets*, under the module's FX settings, switches it off). Foundry's own windows, forms, dropdown
   lists, tables, sidebar, chat messages, menus and the bars round the map, and the Cyberpunk
   RED character, mook and item sheets, take this module's dark panels and pink and cyan
   accents, so text is readable on every window rather than dark-on-dark in some.

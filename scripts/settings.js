@@ -153,7 +153,7 @@ const DEFS = [
   // Stairs and ladders: two linked Tiles
   ["stairs", "world", Boolean, true, {}],
   // The Neon look on Foundry's own windows and the Cyberpunk RED sheets (styles/neon-theme.css); off puts everything back at once
-  ["neonTheme", "world", Boolean, false, { onChange: (on) => document.documentElement.classList.toggle("ncm-neon-theme", !!on) }],
+  ["neonTheme", "world", Boolean, true, { onChange: (on) => document.documentElement.classList.toggle("ncm-neon-theme", !!on) }],
   // Holds: Grab carries the held token along, a Human Shield takes the ranged attacks aimed at its holder
   ["holds", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.refreshUI`) }],
   // Looking through a scope: the token sees as far as the scope does
