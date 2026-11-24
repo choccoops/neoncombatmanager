@@ -13,6 +13,7 @@ import { Xray } from "../arsenal/xray.js";
 import { Cloak } from "../senses/cloak.js";
 import { Far } from "../senses/far.js";
 import { Hold } from "../combat/hold.js";
+import { Stairs } from "../senses/stairs.js";
 import { specialsOf, singleShots } from "../arsenal/specials.js";
 import { Iconics } from "../arsenal/iconics.js";
 import { Switches } from "../neonfx/switches.js";
@@ -147,6 +148,8 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   out.weapons.push(...Senses.entries(actor, token));
   // Linked areas: look across to the far one (a scope that reaches the linked distance).
   out.weapons.push(...Far.entries(actor, token));
+  // Standing on stairs, a ladder or a door: take it.
+  out.weapons.push(...Stairs.entries(actor, token));
   // Grab, Human Shield, let go.
   out.weapons.push(...Hold.entries(actor, token));
   // The GM, with a cloaked token in hand: a secret Perception for everyone looking its way.

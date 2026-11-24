@@ -1468,12 +1468,16 @@
         "off": "Off"
       },
       "stairs": {
-        "name": "Stairs and ladders",
-        "hint": "The GM selects two Tiles and presses the stairs button in the tile controls to link them (again to unlink). A token whose move ends on one is put on the other, at no cost to its movement; whoever it holds comes along and its player's view follows."
+        "name": "Stairs, ladders and doors",
+        "hint": "The GM selects two Tiles and presses the stairs, ladder or door button in the tile controls to link them as the two ends of a way (again to unlink). A token standing on one end can be put on the other, at no cost to its movement; whoever it holds comes along and its player's view follows."
       },
       "neonTheme": {
         "name": "Neon look for Foundry and the sheets",
         "hint": "Dresses Foundry's own windows, sidebar, chat and forms and the Cyberpunk RED character, mook and item sheets in this module's dark neon colours, so text stays readable everywhere. It's only a look: switch it off and everything is back as it was at once, for everyone, without a reload."
+      },
+      "stairsAsk": {
+        "name": "Stairs, ladders and doors: ask first",
+        "hint": "On: whoever controls a token standing on stairs, a ladder or a door gets a prompt at the foot of the screen (and an Action HUD entry) and chooses whether to take it. Off: a token is taken as soon as it steps on."
       }
     },
     "SceneWeather": {
@@ -3176,9 +3180,25 @@
       "Takes": "Human Shield: takes the shot meant for {holder}, and can't dodge it."
     },
     "Stairs": {
-      "Tool": "Link as stairs or a ladder",
-      "Pick": "Select the two Tiles at either end (the foot and the head of the stairs), then press this. One linked Tile selected: unlinks it.",
-      "Linked": "Linked: a token that steps onto one comes out on the other.",
+      "Tool": {
+        "stairs": "Link two tiles as stairs",
+        "ladder": "Link two tiles as a ladder",
+        "door": "Link two tiles as a door"
+      },
+      "Kind": {
+        "stairs": "Stairs",
+        "ladder": "Ladder",
+        "door": "Door"
+      },
+      "To": "{kind} · to {to}",
+      "Take": {
+        "stairs": "Take the stairs",
+        "ladder": "Climb the ladder",
+        "door": "Go through the door"
+      },
+      "Stay": "Stay here",
+      "Pick": "Select the two Tiles at either end, then press this. With one linked Tile selected, it unlinks it.",
+      "Linked": "Linked ({kind}): a token standing on one end can be put on the other.",
       "Unlinked": "Unlinked."
     }
   }

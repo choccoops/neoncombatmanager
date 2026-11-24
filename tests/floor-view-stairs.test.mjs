@@ -8,6 +8,9 @@ const Settings = await registerSettings();
 const LD = await import("../scripts/senses/levels-data.js");
 const SD = await import("../scripts/senses/stairs-data.js");
 const { Stairs } = await import("../scripts/senses/stairs.js");
+// What Stairs.init() registers for the GM's client.
+const { Socket } = await import("../scripts/socket.js");
+Socket.on("wayTake", (data, userId) => Stairs._take(data, userId));
 
 test("the other floors (pure): who shows on the viewer's floor, and where", () => {
   const g = { region: "g", stack: "Tower", height: 0 };
@@ -52,19 +55,28 @@ test("stairs (pure): stepping on takes the way, standing on it or stepping off d
   assert.equal(SD.wayTaken(ladder, { x: 250, y: 50 }, { x: 450, y: 50 }, size).to.id, "top");
   assert.equal(SD.wayTaken(ladder, { x: 250, y: 50 }, { x: 350, y: 50 }, size), null, "the square beside it");
   assert.equal(SD.wayTaken(ladder, { x: 450, y: 50 }, { x: 450, y: 50 }, size), null, "already on it");
+  // Standing on an end: that's the way on offer, whichever way the token came.
+  assert.equal(SD.wayAt(tiles, { x: 150, y: 100 }).to.id, "head");
+  assert.equal(SD.wayAt(tiles, { x: 2100, y: 100 }).to.id, "foot");
+  assert.equal(SD.wayAt(tiles, { x: 300, y: 100 }), null);
+  assert.equal(SD.wayAt(tiles, { x: 550, y: 550 }), null, "the far end is gone");
+  assert.equal(SD.wayAt(ladder, { x: 450, y: 50 }, size).to.id, "top");
+  assert.equal(SD.kindOf("door"), "door");
+  assert.equal(SD.kindOf("lift"), "stairs");
   assert.deepEqual(SD.landing(tiles[1], 100, 100), { x: 2050, y: 50 });
   assert.deepEqual(SD.landing(tiles[1], 200, 200), { x: 2000, y: 0 });
 });
 
-test("stairs at the table: linking two tiles, a token taken up and not straight back down", async () => {
+test("ways at the table: linked as stairs or a door, taken when asked for, or by themselves in the automatic mode", async () => {
   asGM(true);
   await Settings.set("stairs", true);
+  await Settings.set("stairsAsk", true);
   class Docs extends Map {
     [Symbol.iterator]() {
       return this.values();
     }
   }
-  const scene = { id: "sc", grid: { size: 100 }, tiles: new Docs(), tokens: new Docs() };
+  const scene = { id: "sc", grid: { size: 100 }, tiles: new Docs(), tokens: new Docs(), regions: [], flags: {} };
   const tile = (id, x, y) => {
     const d = {
       id, x, y, width: 200, height: 200, parent: scene, flags: {},
@@ -77,52 +89,71 @@ test("stairs at the table: linking two tiles, a token taken up and not straight 
   const foot = tile("foot", 0, 0);
   const head = tile("head", 2000, 0);
   const other = tile("other", 4000, 0);
-  assert.equal(await Stairs.link(foot, head), true);
-  assert.deepEqual([Stairs.linkOf(foot), Stairs.linkOf(head)], ["head", "foot"]);
-  assert.equal(Stairs.tiles(scene).length, 2);
-  const tok = {
-    id: "t", uuid: "Scene.sc.Token.t", x: 300, y: 0, width: 1, height: 1, parent: scene, moves: [],
-    async update(data, options) { Object.assign(this, data); this.moves.push({ data, options }); }
-  };
-  scene.tokens.set("t", tok);
-  Stairs.see(tok);
-  // Walks onto the foot: comes out in the middle of the head, for free.
-  Object.assign(tok, { x: 100, y: 0 });
-  await Stairs.onMove(tok, { x: 100 }, {});
-  assert.deepEqual([tok.x, tok.y], [2050, 50]);
-  assert.deepEqual(tok.moves.at(-1).options, { animate: false, [M]: { free: true, stairs: true } });
-  // That arrival isn't a step onto the head.
-  await Stairs.onMove(tok, { x: 2050, y: 50 }, { [M]: { free: true, stairs: true } });
-  assert.equal(tok.moves.length, 1);
-  // Shuffling about on the head: stays.
-  Object.assign(tok, { x: 2000, y: 0 });
-  await Stairs.onMove(tok, { x: 2000, y: 0 }, {});
-  assert.equal(tok.moves.length, 1);
-  // Off, and back on: down again.
-  Object.assign(tok, { x: 2300, y: 0 });
-  await Stairs.onMove(tok, { x: 2300 }, {});
-  Object.assign(tok, { x: 2100, y: 0 });
-  await Stairs.onMove(tok, { x: 2100 }, {});
-  assert.deepEqual([tok.x, tok.y], [50, 50]);
-  // Carried there by whoever holds it, or taken back with Ctrl+Z: left alone.
-  Object.assign(tok, { x: 300, y: 0 });
-  await Stairs.onMove(tok, { x: 300 }, {});
-  Object.assign(tok, { x: 100, y: 0 });
-  await Stairs.onMove(tok, { x: 100 }, { [M]: { carried: true } });
-  assert.deepEqual([tok.x, tok.y], [100, 0]);
-  // Switched off: tiles are tiles.
-  await Settings.set("stairs", false);
-  Object.assign(tok, { x: 300, y: 0 });
-  await Stairs.onMove(tok, { x: 300 }, {});
-  Object.assign(tok, { x: 100, y: 0 });
-  await Stairs.onMove(tok, { x: 100 }, {});
-  assert.deepEqual([tok.x, tok.y], [100, 0]);
-  await Settings.set("stairs", true);
-  // Linking one end elsewhere lets the old end go; unlinking clears both.
-  await Stairs.link(foot, other);
-  assert.deepEqual([Stairs.linkOf(foot), Stairs.linkOf(head), Stairs.linkOf(other)], ["other", null, "foot"]);
-  await Stairs.unlink(other);
-  assert.equal(Stairs.tiles(scene).length, 0);
+  const prevScenes = game.scenes;
+  game.scenes = { get: () => scene };
+  try {
+    assert.equal(await Stairs.link(foot, head, "door"), true);
+    assert.deepEqual([Stairs.linkOf(foot), Stairs.linkOf(head)], ["head", "foot"]);
+    assert.deepEqual(Stairs.tiles(scene).map((t) => t.kind), ["door", "door"]);
+    const tok = {
+      id: "t", uuid: "Scene.sc.Token.t", x: 300, y: 0, width: 1, height: 1, parent: scene, isOwner: true, moves: [],
+      async update(data, options) { Object.assign(this, data); this.moves.push({ data, options }); }
+    };
+    scene.tokens.set("t", tok);
+    Stairs.see(tok);
+    assert.equal(Stairs.wayFor(tok), null, "beside it");
+    // Walks onto the foot: nothing happens by itself, but the way is there to take.
+    Object.assign(tok, { x: 100, y: 0 });
+    await Stairs.onMove(tok, { x: 100 }, {});
+    assert.deepEqual([tok.x, tok.y], [100, 0]);
+    assert.equal(Stairs.wayFor(tok).to.id, "head");
+    assert.deepEqual(Stairs.entries(null, tok).map((e) => e.key), ["way:foot"]);
+    // Chosen: comes out in the middle of the far end, for free.
+    assert.equal(await Stairs.take(tok), true);
+    assert.deepEqual([tok.x, tok.y], [2050, 50]);
+    assert.deepEqual(tok.moves.at(-1).options, { animate: false, [M]: { free: true, stairs: true } });
+    // And from there it can be taken back.
+    assert.equal(Stairs.wayFor(tok).to.id, "foot");
+    // Someone asking for a tile the token isn't on gets nothing.
+    assert.equal(await Stairs._take({ scene: "sc", token: "t", tile: "other" }, null), false);
+    // Off its tile: nothing to take.
+    Object.assign(tok, { x: 2300, y: 0 });
+    assert.equal(await Stairs.take(tok), false);
+
+    // The automatic mode: stepping on takes it, arriving and shuffling about don't.
+    await Settings.set("stairsAsk", false);
+    Stairs.see(tok);
+    const before = tok.moves.length;
+    Object.assign(tok, { x: 2100, y: 0 });
+    await Stairs.onMove(tok, { x: 2100 }, {});
+    assert.deepEqual([tok.x, tok.y], [50, 50]);
+    await Stairs.onMove(tok, { x: 50, y: 50 }, { [M]: { free: true, stairs: true } });
+    Object.assign(tok, { x: 0, y: 0 });
+    await Stairs.onMove(tok, { x: 0, y: 0 }, {});
+    assert.equal(tok.moves.length, before + 1);
+    // Carried there by whoever holds it: left alone.
+    Object.assign(tok, { x: 300, y: 0 });
+    await Stairs.onMove(tok, { x: 300 }, {});
+    Object.assign(tok, { x: 100, y: 0 });
+    await Stairs.onMove(tok, { x: 100 }, { [M]: { carried: true } });
+    assert.deepEqual([tok.x, tok.y], [100, 0]);
+    await Settings.set("stairsAsk", true);
+
+    // Switched off: tiles are tiles.
+    await Settings.set("stairs", false);
+    assert.equal(Stairs.wayFor(tok), null);
+    assert.equal(await Stairs.take(tok), false);
+    await Settings.set("stairs", true);
+    // Linking one end elsewhere lets the old end go; unlinking clears both.
+    await Stairs.link(foot, other);
+    assert.deepEqual([Stairs.linkOf(foot), Stairs.linkOf(head), Stairs.linkOf(other)], ["other", null, "foot"]);
+    assert.equal(Stairs.tiles(scene)[0].kind, "stairs");
+    await Stairs.unlink(other);
+    assert.equal(Stairs.tiles(scene).length, 0);
+  } finally {
+    game.scenes = prevScenes;
+    await Settings.set("stairsAsk", true);
+  }
 });
 
 test("openings: a floor is solid except where the building is open between floors", async () => {
