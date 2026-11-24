@@ -1411,3 +1411,23 @@ li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; li
 .neon-combat .ncm-levels-list { display: grid; gap: 4px; }
 .neon-combat .ncm-levels-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 5px 8px; font-size: 13px; color: var(--ncm-text); background: var(--ncm-bg-3); border-left: 2px solid var(--ncm-cyan); }
 .neon-combat .ncm-levels-remove { flex: none; color: var(--ncm-orange); }
+
+/* The prompt for stairs, a ladder or a door: at the foot of the screen, above the hotbar */
+#ncm-way.ncm-way {
+  position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 90;
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px;
+  background: rgba(7, 7, 11, 0.94); color: var(--ncm-text); border: 1px solid var(--ncm-cyan);
+  clip-path: var(--ncm-notch); box-shadow: 0 0 18px rgba(5, 217, 232, 0.25);
+  font-size: 13px; pointer-events: auto; animation: ncm-way-in 0.18s ease-out;
+}
+#ncm-way.ncm-way > i { color: var(--ncm-cyan); font-size: 16px; }
+#ncm-way.ncm-way .ncm-way-text { white-space: nowrap; }
+#ncm-way.ncm-way button {
+  width: auto; margin: 0; padding: 4px 12px; line-height: 1.4; cursor: pointer;
+  font-family: var(--ncm-display); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  background: var(--ncm-cyan); color: #04121a; border: 0; border-radius: 0;
+}
+#ncm-way.ncm-way button:hover { background: #7ff3fb; box-shadow: none; }
+#ncm-way.ncm-way button[data-way="stay"] { padding: 4px 8px; background: transparent; color: var(--ncm-dim); border: 1px solid var(--ncm-line-2); }
+#ncm-way.ncm-way button[data-way="stay"]:hover { color: var(--ncm-text); border-color: var(--ncm-text); background: transparent; }
+@keyframes ncm-way-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }

@@ -1236,13 +1236,20 @@ unseen cloaks don't show to players. An attack at someone with a floor between y
 on the card as no shot. Setting *Levels: seeing the other floors*: only through openings (the
 default), see-through for every floor or the next one up and down, or off.
 
-### Stairs and ladders
+### Stairs, ladders and doors
 
-In the Tiles controls, select the two tiles at either end of a staircase or ladder and press the
-**stairs** button; press it again with both selected to unlink. A token that ends its move on
-one comes out on the other, at no cost to its movement, with whoever it's holding and with its
-player's view following. Use the staircase's own art, or a blank tile laid over stairs already
-on the map. Setting: *Stairs and ladders*.
+In the Tiles controls, select the two tiles at either end of a way and press **stairs**,
+**ladder** or **door**; press the same button again with both selected to unlink. Use the art of
+a staircase or a door, or a blank tile laid over one already on the map. A door suits a room
+drawn elsewhere on the scene.
+
+When your selected token stands on one end, a prompt comes up at the foot of the screen saying
+what it is and where it leads, with a button to take it and one to stay; the Action HUD has the
+same entry. Taking it puts the token on the other end at no cost to its movement, with whoever
+it's holding in a Grab, and your view follows. Nobody is moved without choosing to be.
+
+Settings: *Stairs, ladders and doors*, and *ask first* (switch that off to have a token taken as
+soon as it steps on).
 
 ## Grabs and Human Shields
 

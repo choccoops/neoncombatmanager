@@ -340,9 +340,14 @@ const api = {
   },
   /** Stairs and ladders: two linked Tiles; a token stepping onto one is put on the other. */
   stairs: {
-    link: (a, b) => Stairs.link(a, b),
+    /** GM: link two tiles; kind is "stairs", "ladder" or "door". */
+    link: (a, b, kind) => Stairs.link(a, b, kind),
+    /** Take the way a token stands on. */
+    take: (token) => Stairs.take(token),
     unlink: (tile) => Stairs.unlink(tile),
-    list: () => Stairs.tiles()
+    list: () => Stairs.tiles(),
+    /** Why the stairs would or wouldn't take a token (the selected one when none is given). */
+    why: (token) => Stairs.why(token)
   },
   /** Holds: a Grapple the map knows about. Tokens or token documents. */
   hold: {

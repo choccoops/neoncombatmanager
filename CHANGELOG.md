@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.46.0
+
+- **Stairs ask first.** Nobody is taken anywhere by walking over a tile any more. Whoever
+  controls a token standing on stairs gets a prompt at the foot of the screen, naming the token
+  and where the way leads ("Stairs · to Upper floor"), with a button to take them and one to
+  stay. The same choice is on the Action HUD. The prompt comes up as the token arrives, again
+  when you select a token already standing there, and goes when the token steps off.
+  - *Finding the token on the tile* no longer depends on the GM's client having seen where it
+    came from: each player's own client looks at where their token stands now. A token counts as
+    on a tile when its middle is on the tile, or the tile's middle is under the token, so a
+    ladder or hatch smaller than the token, or a tile set off the grid, is found too.
+  - *Taking it* is done by the GM's client for whoever may move that token: it costs no
+    movement, a token held in a Grab comes along by itself, and the view follows.
+  - Several tokens selected on the same tile all go together.
+  - *Stairs, ladders and doors: ask first* (on by default) can be switched off to get the old
+    behaviour: taken on stepping on.
+- **Ladders and doors.** The tile controls now have three buttons: link two tiles as
+  **stairs**, as a **ladder** or as a **door**. They work the same way; the prompt and the
+  Action HUD name them properly ("Climb the ladder", "Go through the door"). A door is for a
+  room drawn elsewhere on the map: its inside, a back room, the next building.
+- `api.stairs.link(a, b, kind)`, `api.stairs.take(token)` and `api.stairs.why(token)` (what the
+  ways see for a token, for the console).
+
 ## 1.45.0
 
 - **Neon look for Foundry and the sheets** (on by default; the setting *Neon look for Foundry
