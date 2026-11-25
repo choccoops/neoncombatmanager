@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.46.2
+
+- **Neon look: the Region window is readable.** Its field names, hints, tab names, "Bottom" and
+  "Top" and its button text were black on the dark panel. The system forces that window's
+  labels and hints black when its own dark mode meets Foundry's light colour scheme, and
+  Foundry writes all of those as labels. They're light now, with hints in the soft grey and the
+  active tab in cyan. Foundry's newer windows in general also take the look's colours whichever
+  colour scheme the browser asks for.
+
 ## 1.46.1
 
 - **Plays by libWrapper's rules.** The click on a sensed outline (Tech scope, Low Light,

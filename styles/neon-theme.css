@@ -268,3 +268,69 @@ html.ncm-neon-theme ::-webkit-scrollbar-thumb { background: var(--ncm-line-2); b
 html.ncm-neon-theme ::-webkit-scrollbar-thumb:hover { background: var(--ncm-cyan); }
 html.ncm-neon-theme ::-webkit-scrollbar-track { background: transparent; box-shadow: none; }
 html.ncm-neon-theme * { scrollbar-color: var(--ncm-line-2) transparent; }
+
+/*
+ * Foundry's newer windows (Application V2: Region config and the like) take their colours from
+ * their own set of variables, which follow Foundry's light or dark colour scheme. Under this
+ * look they're always on a dark panel, whichever scheme the browser asked for.
+ */
+html.ncm-neon-theme .application:not(.neon-combat) {
+  --background: var(--ncm-bg-2);
+  --color-text-primary: var(--ncm-text);
+  --color-text-secondary: var(--ncm-soft);
+  --color-text-emphatic: #ffffff;
+  --color-text-subtle: var(--ncm-dim);
+  --color-text-selection: #04121a;
+  --color-text-selection-bg: var(--ncm-cyan);
+  --color-header-background: var(--ncm-bg);
+  --color-border: var(--ncm-line-2);
+  --color-fieldset-border: var(--ncm-line-2);
+  --color-form-label: var(--ncm-text);
+  --color-form-label-hover: #ffffff;
+  --color-form-hint: var(--ncm-soft);
+  --color-form-hint-hover: var(--ncm-text);
+  --color-select-option-bg: var(--ncm-bg-2);
+  --input-background-color: var(--ncm-bg-3);
+  --input-border-color: var(--ncm-line-2);
+  --input-text-color: var(--ncm-text);
+  --input-placeholder-color: var(--ncm-dim);
+  --input-focus-outline-color: var(--ncm-cyan);
+  --button-background-color: var(--ncm-bg-3);
+  --button-border-color: var(--ncm-line-2);
+  --button-text-color: var(--ncm-text);
+  --button-focus-outline-color: var(--ncm-cyan);
+  --button-hover-background-color: var(--ncm-bg-3);
+  --button-hover-border-color: var(--ncm-cyan);
+  --button-hover-text-color: var(--ncm-cyan);
+  --checkbox-checked-color: var(--ncm-cyan);
+  --checkbox-background-color: var(--ncm-bg-3);
+  --checkbox-disabled-color: var(--ncm-dim);
+  --range-thumb-background-color: var(--ncm-cyan);
+  --range-thumb-border-color: var(--ncm-line-2);
+  --range-track-color: var(--ncm-line-2);
+  --table-header-bg-color: var(--ncm-bg);
+  --table-header-border-color: var(--ncm-line-2);
+  --table-row-color-even: rgba(255, 255, 255, 0.03);
+  --table-row-color-odd: transparent;
+  --table-row-color-highlight: var(--ncm-bg-3);
+  --toggle-active-bg-color: var(--ncm-cyan);
+  --toggle-active-border-color: var(--ncm-cyan);
+  --toggle-bg-color: var(--ncm-bg-3);
+  --toggle-border-color: var(--ncm-line-2);
+}
+
+/*
+ * The Region window: the system forces its labels and hints black (with !important) when its own
+ * dark mode meets Foundry's light scheme, and Foundry writes that window's tab names, its
+ * "Bottom" and "Top" and its button text as labels too. Every label there takes the colour of
+ * what it sits in (light text, the soft tab, the active tab's cyan), and hints the soft grey.
+ */
+html.ncm-neon-theme.ncm-neon-theme.ncm-neon-theme body :is(form.region-config, .region-config, .region-behavior-config) label { color: inherit !important; }
+html.ncm-neon-theme.ncm-neon-theme.ncm-neon-theme body :is(form.region-config, .region-config, .region-behavior-config) :is(.hint, .notes) { color: var(--ncm-soft) !important; }
+html.ncm-neon-theme.ncm-neon-theme.ncm-neon-theme body :is(form.region-config, .region-config, .region-behavior-config) .window-content { color: var(--ncm-text); }
+
+/* Any window's labels and hints, when nothing more specific has spoken: light, never the parchment's dark. */
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(.form-group, .form-fields, fieldset, .standard-form) label { color: var(--ncm-text); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(a, button, nav) label { color: inherit; }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(nav.tabs, nav.sheet-tabs) > :is(a, .item, [data-tab]):not(.active) { color: var(--ncm-soft); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(nav.tabs, nav.sheet-tabs):not(.cpr-tabs) > :is(a, .item, [data-tab]).active { color: var(--ncm-cyan); }
