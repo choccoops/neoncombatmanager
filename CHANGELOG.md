@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.50.1
+
+- **DVs show for climbers drawn apart on a ladder.** The DV display for a shrunk, fanned-out
+  climber is now drawn by this module on the map beside where the token is drawn, at normal
+  size, instead of inside the shrunk token. It shows while the pointer is over the climber
+  and stays for as long as you have it targeted. Diwako's settings still decide it (on or
+  off, only in combat, weapon names, left or right), and a token of yours must be selected.
+  Every other token's DV display is unchanged.
+
 ## 1.50.0
 
 - **Falls follow the book (corebook pg. 181).** Anyone who comes off a climb now falls by the

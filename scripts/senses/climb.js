@@ -13,6 +13,7 @@ import { inShapes, boundsOf } from "./far-data.js";
 import { CLIMB_FLAG, WALL_FLAG, GAP, LEAP_DV, CATCH_DV, factorOf, stretch, aheadOf, heightAt, across, toSegment, elevationAfter, d10Total, within, inFront, beats, leapTo, fallDice, fanLayout, FALL_FLAG, FALL_PER_TURN, BROKEN_LEG_DV, DFA_DV, fallPlan, fallStep, deathFromAbove, besideStep } from "./climb-data.js";
 import { Conditions } from "../conditions/engine.js";
 import { Cards } from "../combat/cards.js";
+import { Dv } from "../arsenal/dv.js";
 import { L, esc, debounce } from "../util.js";
 
 /**
@@ -945,11 +946,12 @@ export const Climb = {
         ev.stopPropagation?.();
         this.press(pad.token, ev);
       });
-      hit.on("pointerover", (ev) => this.hover(pad.token, true, ev));
-      hit.on("pointerout", (ev) => this.hover(pad.token, false, ev));
+      hit.on("pointerover", (ev) => this.hover(pad, true, ev));
+      hit.on("pointerout", (ev) => this.hover(pad, false, ev));
       layer.addChild(hit);
       n += 1;
     }
+    this._pads = this.pads();
     // And whoever has left a ladder: back to their own place and size.
     for (const t of canvas.tokens?.placeables ?? []) if (t._ncmFan && !this.state(t)) t.renderFlags?.set?.({ refreshPosition: true });
     if (!n) {
@@ -958,6 +960,10 @@ export const Climb = {
     }
     (canvas.interface ?? canvas.stage).addChild(layer);
     this.layer = layer;
+    this.tips = new Map();
+    // The DVs to a climber drawn apart, beside where it's drawn: for the ones this player has targeted.
+    const aimed = new Set([...(game.user?.targets ?? [])]);
+    for (const pad of this._pads ?? []) if (aimed.has(pad.token)) this.tip(pad, true);
     return n;
   },
 
@@ -1030,18 +1036,56 @@ export const Climb = {
     return this.pick(token, { target: !!ev?.altKey, add });
   },
 
-  /** The pointer over a climber drawn apart: Foundry's own hover, so its border shows and the Target key finds it. */
-  hover(token, on, ev) {
+  /**
+   * The pointer over a climber drawn apart: Foundry's own hover, so its border shows and the
+   * Target key finds it, and the DVs to it beside where it's drawn (they stay while it's targeted).
+   */
+  hover(pad, on, ev) {
+    const token = pad.token;
     try {
       if (on) token._onHoverIn?.(ev, { hoverOutOthers: true });
       else token._onHoverOut?.(ev);
-      // The DV display rides on Foundry's hover; shown from here too, in case that hover didn't take.
-      if (on) token.showDVDisplay?.();
-      else if (typeof token.hideDVDisplay === "function") token.hideDVDisplay();
-      else if (!token.hover) token.dvDisplay?.removeChildren?.().forEach((c) => c.destroy?.());
     } catch {
       /* no hover */
     }
+    const aimed = [...(game.user?.targets ?? [])].includes(token);
+    this.tip(pad, on || aimed);
+  },
+
+  /**
+   * The DV display for a climber drawn apart: Diwako's words and settings, our distances, drawn
+   * on the map beside the shrunk token, not inside it. on: false takes it away.
+   */
+  async tip(pad, on) {
+    const id = pad.token.id ?? pad.token.document?.id;
+    const layer = this.layer;
+    const drop = () => {
+      const old = this.tips?.get(id);
+      if (old) {
+        this.tips.delete(id);
+        if (!old.destroyed) old.destroy();
+      }
+    };
+    if (!on || !layer || !Dv.diwako || !Settings.get("arsenalDvDisplay")) return drop();
+    let info = null;
+    try {
+      info = await Dv.textFor(pad.token);
+    } catch (err) {
+      console.warn(`${MODULE_ID} | DV display`, err);
+    }
+    // The map may have been drawn again while the tables were read.
+    if (this.layer !== layer) return null;
+    drop();
+    if (!info) return null;
+    const style = CONFIG.canvasTextStyle.clone();
+    style.align = info.right ? "left" : "right";
+    const label = new Compat.PreciseText(info.text, style);
+    label.eventMode = "none";
+    label.anchor.set(info.right ? 0 : 1, 0);
+    label.position.set(info.right ? pad.x + pad.w + 12 : pad.x - 12, pad.y);
+    layer.addChild(label);
+    this.tips.set(id, label);
+    return info;
   },
 
   /** A face on the gauge was clicked: select the token (yours) or target it (anyone's). */

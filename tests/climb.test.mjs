@@ -665,3 +665,54 @@ test("falls at the table: held on the climb, 40 a Turn, Cyberlegs, a Broken Leg,
     await Settings.set("levels", true);
   }
 });
+
+test("the DVs to a climber drawn apart are drawn beside where it's drawn", async () => {
+  const { Dv } = await import("../scripts/arsenal/dv.js");
+  const { Compat } = await import("../scripts/compat.js");
+  await Settings.set("arsenalDvDisplay", true);
+  const prev = { text: Dv.textFor, pt: Object.getOwnPropertyDescriptor(Compat, "PreciseText"), diwako: Object.getOwnPropertyDescriptor(Dv, "diwako"), config: globalThis.CONFIG, layer: Climb.layer, tips: Climb.tips, targets: game.user.targets };
+  class Text {
+    constructor(text, style) { this.text = text; this.style = style; this.anchor = { set: (x, y) => { this.anchored = [x, y]; } }; this.position = { set: (x, y) => { this.at = [x, y]; } }; }
+    destroy() { this.destroyed = true; }
+  }
+  Object.defineProperty(Compat, "PreciseText", { value: Text, configurable: true });
+  Object.defineProperty(Dv, "diwako", { value: true, configurable: true });
+  globalThis.CONFIG = { ...(prev.config ?? {}), canvasTextStyle: { clone: () => ({}) } };
+  const added = [];
+  Climb.layer = { addChild: (c) => added.push(c) };
+  Climb.tips = new Map();
+  let info = { text: "Heavy Pistol: DV 15", right: false };
+  Dv.textFor = async () => info;
+  const token = { id: "t1", document: { id: "t1" } };
+  const pad = { token, x: 413, y: 425, w: 75, h: 75 };
+  game.user.targets = new Set();
+  try {
+    await Climb.tip(pad, true);
+    assert.deepEqual([added[0].text, added[0].at, added[0].anchored], ["Heavy Pistol: DV 15", [401, 425], [1, 0]], "left of the shrunk token");
+    // Shown again (the pointer comes back): the old one goes, one stays.
+    info = { text: "Heavy Pistol: DV 13", right: true };
+    await Climb.tip(pad, true);
+    assert.equal(added[0].destroyed, true);
+    assert.deepEqual([added[1].at, added[1].anchored, Climb.tips.size], [[500, 425], [0, 0], 1], "Diwako's setting: on the right");
+    // The pointer leaves: gone, unless it's targeted.
+    Climb.hover(pad, false, {});
+    await new Promise((r) => setTimeout(r, 0));
+    assert.deepEqual([added[1].destroyed, Climb.tips.size], [true, 0]);
+    game.user.targets = new Set([token]);
+    Climb.hover(pad, false, {});
+    await new Promise((r) => setTimeout(r, 0));
+    assert.equal(Climb.tips.size, 1, "targeted: it stays");
+    // Nothing to say (nobody selected, out of combat): nothing drawn.
+    info = null;
+    await Climb.tip(pad, true);
+    assert.equal(Climb.tips.size, 0);
+  } finally {
+    Dv.textFor = prev.text;
+    if (prev.pt) Object.defineProperty(Compat, "PreciseText", prev.pt);
+    if (prev.diwako) Object.defineProperty(Dv, "diwako", prev.diwako);
+    globalThis.CONFIG = prev.config;
+    Climb.layer = prev.layer;
+    Climb.tips = prev.tips;
+    game.user.targets = prev.targets;
+  }
+});
