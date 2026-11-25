@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.49.1
+
+- **Climbers drawn apart on a ladder can be clicked.** With two or more on one ladder, each
+  climber now has its own clickable area exactly where it's drawn, at the size it's drawn.
+  Click selects your own token or targets someone else's; Alt-click targets your own; Shift
+  adds; a quick second click opens the sheet; right-click opens the Token HUD for your own
+  and targets anyone else's. Hovering shows the token's border, so the Target key finds it.
+  A climber alone on a ladder is clicked as before. While they share a ladder, climbers
+  can't be dragged: they move with the climb prompt or the Action HUD.
+- The gauge stays beside the ladder's square instead of following where the first climber
+  is drawn.
+
 ## 1.49.0
 
 - **Climbers on one ladder are drawn smaller as more join.** One or two stay full size. With

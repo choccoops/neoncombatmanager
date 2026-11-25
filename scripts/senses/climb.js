@@ -581,6 +581,21 @@ export const Climb = {
         for (const t of g.tokens) t.renderFlags?.set?.({ refreshPosition: true });
       }
     }
+    // Climbers drawn apart get a clickable area of their own, where each is drawn.
+    for (const pad of this.pads()) {
+      const hit = new PIXI.Container();
+      hit.eventMode = "static";
+      hit.cursor = "pointer";
+      hit.hitArea = new PIXI.Rectangle(pad.x, pad.y, pad.w, pad.h);
+      hit.on("pointerdown", (ev) => {
+        ev.stopPropagation?.();
+        this.press(pad.token, ev);
+      });
+      hit.on("pointerover", (ev) => this.hover(pad.token, true, ev));
+      hit.on("pointerout", (ev) => this.hover(pad.token, false, ev));
+      layer.addChild(hit);
+      n += 1;
+    }
     // And whoever has left a ladder: back to their own place and size.
     for (const t of canvas.tokens?.placeables ?? []) if (t._ncmFan && !this.state(t)) t.renderFlags?.set?.({ refreshPosition: true });
     if (!n) {
@@ -618,6 +633,59 @@ export const Climb = {
     return box;
   },
 
+  /**
+   * Where each climber drawn apart from the others is drawn, lowest first: [{ token, x, y, w, h }].
+   * Only ladders with two or more on them this player can see; a climber alone is clicked as ever.
+   */
+  pads() {
+    if (!this.on) return [];
+    const out = [];
+    for (const t of canvas?.tokens?.placeables ?? []) {
+      const st = this.state(t);
+      if (!st || st.kind !== "tile" || t.visible === false || (t.document?.hidden && !game.user?.isGM)) continue;
+      const count = this.rivals(t.document).length + 1;
+      if (count < 2) continue;
+      const w = t.w ?? 100;
+      const h = t.h ?? 100;
+      const rank = this.rankOf(t);
+      const lay = fanLayout(rank, count, w, h);
+      out.push({ token: t, rank, x: t.document.x + lay.dx, y: t.document.y + lay.dy, w: w * lay.scale, h: h * lay.scale });
+    }
+    return out.sort((a, b) => a.rank - b.rank);
+  },
+
+  /**
+   * A click on a climber drawn apart. Left: select it (yours) or target it (anyone's), Alt to
+   * target your own, Shift to add; twice quickly opens its sheet. Right: its Token HUD (yours),
+   * or target it.
+   */
+  press(token, ev) {
+    const add = !!ev?.shiftKey;
+    const mine = !!(token.isOwner || game.user?.isGM);
+    if (ev?.button === 2) {
+      if (!mine) return this.pick(token, { target: true, add });
+      const hud = canvas?.hud?.token;
+      if (hud?.object === token && hud.rendered) return hud.clear?.();
+      if (!token.controlled) token.control?.({ releaseOthers: !add });
+      return hud?.bind?.(token);
+    }
+    const now = Date.now();
+    const twice = this._pressed?.token === token && now - this._pressed.at < 400;
+    this._pressed = { token, at: now };
+    if (twice && !ev?.altKey && token.actor?.testUserPermission?.(game.user, "LIMITED")) return token.actor.sheet?.render?.(true);
+    return this.pick(token, { target: !!ev?.altKey, add });
+  },
+
+  /** The pointer over a climber drawn apart: Foundry's own hover, so its border shows and the Target key finds it. */
+  hover(token, on, ev) {
+    try {
+      if (on) token._onHoverIn?.(ev, { hoverOutOthers: true });
+      else token._onHoverOut?.(ev);
+    } catch {
+      /* no hover */
+    }
+  },
+
   /** A face on the gauge was clicked: select the token (yours) or target it (anyone's). */
   pick(token, { target = false, add = false } = {}) {
     const mine = (token.isOwner || game.user?.isGM) && !target;
@@ -634,7 +702,8 @@ export const Climb = {
     const len = Math.max(size * 1.5, Math.min(size * 5, st.total * perMetre));
     const box = new PIXI.Container();
     box.eventMode = "passive";
-    box.position.set(first.x + (first.w ?? size) + 14, first.y + (first.h ?? size));
+    // Beside the square they stand on, not beside where the first of them happens to be drawn.
+    box.position.set((first.document?.x ?? first.x) + (first.w ?? size) + 14, (first.document?.y ?? first.y) + (first.h ?? size));
     const g = new PIXI.Graphics();
     g.beginFill(0x07070b, 0.7).lineStyle(1, 0x36364f, 1).drawRect(-6, -len - 10, 44, len + 20).endFill();
     g.lineStyle(2, 0x05d9e8, 0.9).moveTo(4, 0).lineTo(4, -len).moveTo(28, 0).lineTo(28, -len);

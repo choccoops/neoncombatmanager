@@ -412,3 +412,51 @@ test("a chase up a ladder at the table: thrown off, caught, leapt past, and a le
     await Settings.set("levels", true);
   }
 });
+
+test("climbers drawn apart are clicked where they're drawn: select, target, sheet, HUD", async () => {
+  await Settings.set("stairs", true);
+  await Settings.set("climbing", true);
+  class Docs extends Map { [Symbol.iterator]() { return this.values(); } }
+  const scene = { tokens: new Docs() };
+  const log = [];
+  const mk = (id, at, extra = {}) => {
+    const document = { id, name: id, x: 400, y: 400, parent: scene, flags: { [M]: { [D.CLIMB_FLAG]: { kind: "tile", id: "L", at, height: 12, total: 12 } } } };
+    scene.tokens.set(id, document);
+    return { document, w: 100, h: 100, isOwner: false, controlled: false, control: (o) => log.push(["control", id, o.releaseOthers]), setTarget: (on, o) => log.push(["target", id, on, o.releaseOthers]), actor: { testUserPermission: () => true, sheet: { render: () => log.push(["sheet", id]) } }, ...extra };
+  };
+  const a = mk("a", 0, { isOwner: true });
+  const prev = globalThis.canvas;
+  const hud = { object: null, rendered: false, bind(t) { this.object = t; this.rendered = true; log.push(["hud", t.document.id]); }, clear() { this.rendered = false; log.push(["hud off"]); } };
+  globalThis.canvas = { ...(prev ?? {}), tokens: { placeables: [a] }, hud: { token: hud } };
+  asGM(false);
+  try {
+    assert.deepEqual(Climb.pads(), [], "alone on the ladder: clicked as ever");
+    const b = mk("b", 3);
+    const c = mk("c", 6, { visible: false });
+    canvas.tokens.placeables.push(b, c);
+    const pads = Climb.pads();
+    assert.deepEqual(pads.map((p) => p.token.document.id), ["a", "b"], "not one this player can't see");
+    // Three on the ladder: three quarters the size, where fan() draws them.
+    assert.deepEqual([pads[0].x, pads[0].y, pads[0].w, pads[0].h], [413, 425, 75, 75]);
+    assert.deepEqual([pads[1].x, pads[1].y], [435, 384]);
+    Climb.press(a, { button: 0 });
+    assert.deepEqual(log.pop(), ["control", "a", true], "your own: selected");
+    Climb._pressed = null;
+    Climb.press(a, { button: 0, altKey: true, shiftKey: true });
+    assert.deepEqual(log.pop(), ["target", "a", true, false], "Alt: targeted, Shift: added");
+    Climb._pressed = null;
+    Climb.press(b, { button: 0 });
+    assert.deepEqual(log.pop(), ["target", "b", true, true], "someone else's: targeted");
+    Climb.press(b, { button: 0 });
+    assert.deepEqual(log.pop(), ["sheet", "b"], "twice quickly: its sheet");
+    Climb.press(b, { button: 2 });
+    assert.deepEqual(log.pop(), ["target", "b", true, true], "right-click on someone else's: targeted");
+    Climb.press(a, { button: 2 });
+    assert.deepEqual(log.splice(-2), [["control", "a", true], ["hud", "a"]], "right-click on your own: its HUD");
+    Climb.press(a, { button: 2 });
+    assert.deepEqual(log.pop(), ["hud off"]);
+  } finally {
+    globalThis.canvas = prev;
+    asGM(true);
+  }
+});
