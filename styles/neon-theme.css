@@ -268,3 +268,133 @@ html.ncm-neon-theme ::-webkit-scrollbar-thumb { background: var(--ncm-line-2); b
 html.ncm-neon-theme ::-webkit-scrollbar-thumb:hover { background: var(--ncm-cyan); }
 html.ncm-neon-theme ::-webkit-scrollbar-track { background: transparent; box-shadow: none; }
 html.ncm-neon-theme * { scrollbar-color: var(--ncm-line-2) transparent; }
+
+/*
+ * Foundry's newer windows (Application V2: Region config and the like) take their colours from
+ * their own set of variables, which follow Foundry's light or dark colour scheme. Under this
+ * look they're always on a dark panel, whichever scheme the browser asked for.
+ */
+html.ncm-neon-theme .application:not(.neon-combat) {
+  --background: var(--ncm-bg-2);
+  --color-text-primary: var(--ncm-text);
+  --color-text-secondary: var(--ncm-soft);
+  --color-text-emphatic: #ffffff;
+  --color-text-subtle: var(--ncm-dim);
+  --color-text-selection: #04121a;
+  --color-text-selection-bg: var(--ncm-cyan);
+  --color-header-background: var(--ncm-bg);
+  --color-border: var(--ncm-line-2);
+  --color-fieldset-border: var(--ncm-line-2);
+  --color-form-label: var(--ncm-text);
+  --color-form-label-hover: #ffffff;
+  --color-form-hint: var(--ncm-soft);
+  --color-form-hint-hover: var(--ncm-text);
+  --color-select-option-bg: var(--ncm-bg-2);
+  --input-background-color: var(--ncm-bg-3);
+  --input-border-color: var(--ncm-line-2);
+  --input-text-color: var(--ncm-text);
+  --input-placeholder-color: var(--ncm-dim);
+  --input-focus-outline-color: var(--ncm-cyan);
+  --button-background-color: var(--ncm-bg-3);
+  --button-border-color: var(--ncm-line-2);
+  --button-text-color: var(--ncm-text);
+  --button-focus-outline-color: var(--ncm-cyan);
+  --button-hover-background-color: var(--ncm-bg-3);
+  --button-hover-border-color: var(--ncm-cyan);
+  --button-hover-text-color: var(--ncm-cyan);
+  --checkbox-checked-color: var(--ncm-cyan);
+  --checkbox-background-color: var(--ncm-bg-3);
+  --checkbox-disabled-color: var(--ncm-dim);
+  --range-thumb-background-color: var(--ncm-cyan);
+  --range-thumb-border-color: var(--ncm-line-2);
+  --range-track-color: var(--ncm-line-2);
+  --table-header-bg-color: var(--ncm-bg);
+  --table-header-border-color: var(--ncm-line-2);
+  --table-row-color-even: rgba(255, 255, 255, 0.03);
+  --table-row-color-odd: transparent;
+  --table-row-color-highlight: var(--ncm-bg-3);
+  --toggle-active-bg-color: var(--ncm-cyan);
+  --toggle-active-border-color: var(--ncm-cyan);
+  --toggle-bg-color: var(--ncm-bg-3);
+  --toggle-border-color: var(--ncm-line-2);
+}
+
+/*
+ * The Region window: the system forces its labels and hints black (with !important) when its own
+ * dark mode meets Foundry's light scheme, and Foundry writes that window's tab names, its
+ * "Bottom" and "Top" and its button text as labels too. Every label there takes the colour of
+ * what it sits in (light text, the soft tab, the active tab's cyan), and hints the soft grey.
+ */
+html.ncm-neon-theme.ncm-neon-theme.ncm-neon-theme body :is(form.region-config, .region-config, .region-behavior-config) label { color: inherit !important; }
+html.ncm-neon-theme.ncm-neon-theme.ncm-neon-theme body :is(form.region-config, .region-config, .region-behavior-config) :is(.hint, .notes) { color: var(--ncm-soft) !important; }
+html.ncm-neon-theme.ncm-neon-theme.ncm-neon-theme body :is(form.region-config, .region-config, .region-behavior-config) .window-content { color: var(--ncm-text); }
+
+/* Any window's labels and hints, when nothing more specific has spoken: light, never the parchment's dark. */
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(.form-group, .form-fields, fieldset, .standard-form) label { color: var(--ncm-text); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(a, button, nav) label { color: inherit; }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(nav.tabs, nav.sheet-tabs) > :is(a, .item, [data-tab]):not(.active) { color: var(--ncm-soft); }
+html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(nav.tabs, nav.sheet-tabs):not(.cpr-tabs) > :is(a, .item, [data-tab]).active { color: var(--ncm-cyan); }
+
+/* Tick boxes in Foundry's newer windows: the system paints a ticked one near-black in its dark mode. */
+html.ncm-neon-theme.ncm-neon-theme .application:not(.neon-combat) input[type="checkbox"]::before { color: var(--ncm-soft); }
+html.ncm-neon-theme.ncm-neon-theme .application:not(.neon-combat) input[type="checkbox"]:checked::before { color: var(--ncm-cyan); }
+
+/*
+ * The rest of Foundry's fixed colours, found by going through its stylesheet for text set dark
+ * (or a background set light) outside what the variables above reach.
+ */
+
+/* Chat: anything inside a message that asks for "dark text" (a table draw's description, a roll's flavour) */
+html.ncm-neon-theme :is(#chat-log, .chat-popout, #chat-popout) .chat-message {
+  --color-text-dark-primary: var(--ncm-text);
+  --color-text-dark-secondary: var(--ncm-soft);
+  --color-text-dark-header: var(--ncm-text);
+  --color-text-dark-inactive: var(--ncm-dim);
+  --color-text-dark-1: #f2f3fa;
+  --color-text-dark-2: var(--ncm-text);
+  --color-text-dark-3: #c3c7de;
+  --color-text-dark-4: var(--ncm-soft);
+  --color-text-dark-5: #8a8fae;
+  --color-text-dark-6: var(--ncm-dim);
+}
+html.ncm-neon-theme :is(#chat-log, .chat-popout, #chat-popout) .chat-message.emote { background: var(--ncm-bg-3); font-style: italic; }
+html.ncm-neon-theme :is(#chat-log, .chat-popout, #chat-popout) .chat-message .table-draw .table-description { color: var(--ncm-soft); }
+
+/* Dice: the numbers on the dice of a roll's breakdown were black, and the breakdown of an inline roll sat on parchment */
+html.ncm-neon-theme .dice-tooltip .dice-rolls .roll { color: var(--ncm-text); }
+html.ncm-neon-theme .dice-tooltip .dice-rolls .roll:is(.success, .max) { color: var(--ncm-green); }
+html.ncm-neon-theme .dice-tooltip .dice-rolls .roll:is(.failure, .min) { color: var(--ncm-red); }
+html.ncm-neon-theme .dice-tooltip .dice-rolls .roll:is(.discarded, .rerolled) { color: var(--ncm-dim); }
+html.ncm-neon-theme .dice-tooltip .part-header .part-flavor { color: var(--ncm-soft); }
+html.ncm-neon-theme .dice-roll .dice-tooltip .reroll { color: var(--ncm-dim); }
+html.ncm-neon-theme .inline-roll .dice-tooltip { background: var(--ncm-bg-2); color: var(--ncm-text); border: 1px solid var(--ncm-line-2); }
+html.ncm-neon-theme :is(.window-app, .application, #chat-log) a.inline-roll.gmroll { background: #0b1318; border-color: var(--ncm-cyan); }
+html.ncm-neon-theme :is(.window-app, .application, #chat-log) a.inline-roll.blindroll { background: #100d18; border-color: #9d4dff; }
+
+/* The text editor's menu: its buttons turned black when hovered or switched on, and its dropdowns were pale */
+html.ncm-neon-theme .prosemirror menu button { color: var(--ncm-text); }
+html.ncm-neon-theme .prosemirror menu button:is(:hover, .active) { color: var(--ncm-cyan); background: var(--ncm-line-2); box-shadow: none; }
+html.ncm-neon-theme .prosemirror menu .pm-dropdown { color: var(--ncm-text); background: var(--ncm-bg-3); border-color: var(--ncm-line-2); }
+html.ncm-neon-theme .prosemirror menu .pm-dropdown:hover :is(span, i) { color: var(--ncm-cyan); }
+html.ncm-neon-theme #prosemirror-dropdown { --color-control-bg: var(--ncm-bg-2); --color-hover-bg: var(--ncm-bg-3); color: var(--ncm-text); }
+html.ncm-neon-theme #prosemirror-dropdown ul { border-color: var(--ncm-line-2); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7); }
+html.ncm-neon-theme #prosemirror-dropdown li:hover > :is(span, i) { color: var(--ncm-cyan); }
+html.ncm-neon-theme .prosemirror.collaborating menu .concurrent-users .scene-player { color: #000; }
+
+/* The older text editor writes inside a frame of its own with dark text: it keeps a pale page to write on */
+html.ncm-neon-theme :is(.window-app, .application) .tox .tox-edit-area__iframe { background: #e9e6dc; }
+
+/* Key caps in the controls reference and the keybindings window were pale */
+html.ncm-neon-theme #keybindings .binding .key,
+html.ncm-neon-theme #controls-reference ol.hotkey-list li .key { background: var(--ncm-bg-3); color: var(--ncm-text); border: 1px solid var(--ncm-line-2); }
+html.ncm-neon-theme #keybindings .binding .key.uneditable { background: var(--ncm-bg); color: var(--ncm-dim); }
+html.ncm-neon-theme #controls-reference ol.hotkey-list li.gm .key { border-color: #9d4dff; }
+
+/* Journal pages opened without the system's own journal styling */
+html.ncm-neon-theme .sheet.journal-entry .journal-entry-content { background: var(--ncm-bg-2); color: var(--ncm-text); }
+
+/* Small print that Foundry dims with a "dark" grey, on what's already dark */
+html.ncm-neon-theme .combat-sidebar li.combatant .token-name .combatant-control { color: var(--ncm-soft); }
+html.ncm-neon-theme .combat-sidebar li.combatant .token-name .combatant-control:is(.active, :hover) { color: var(--ncm-cyan); }
+html.ncm-neon-theme .playlists-sidebar .sound-control:is(.inactive, .disabled) { color: var(--ncm-dim); }
+html.ncm-neon-theme #fps label { color: var(--ncm-soft); }
