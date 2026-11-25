@@ -147,3 +147,55 @@ export function fanLayout(rank, count, w, h) {
   const side = rank > 0 ? (rank % 2 ? 0.3 : -0.3) * sw : 0;
   return { scale, dx: Math.round((w - sw) / 2 + side), dy: Math.round(h - sh - rank * 0.55 * sh) };
 }
+
+/* ---------------------------------------- */
+/*  Falling (corebook pg. 181)              */
+/* ---------------------------------------- */
+
+export const FALL_FLAG = "fall";
+/** A falling character falls this far at the end of each of their Turns. */
+export const FALL_PER_TURN = 40;
+/** Two Cyberlegs take a fall's damage and its Broken Leg, up to this far. */
+export const LEGS_MAX = 30;
+export const BROKEN_LEG_DV = 15;
+export const DFA_DV = 15;
+
+/**
+ * What a fall does on landing.
+ * @param {object} o - height fallen; legs: two Cyberlegs; shorter: what gear takes off the fall
+ *   (Skydrivers: 4).
+ * @returns {{ counted: number, dice: string, spared: ""|"short"|"legs" }}
+ */
+export function fallPlan({ height = 0, legs = false, shorter = 0 } = {}) {
+  const counted = Math.max(0, Math.round(((Number(height) || 0) - (Number(shorter) || 0)) * 10) / 10);
+  const dice = fallDice(counted);
+  if (!dice) return { counted, dice: "", spared: "short" };
+  if (legs && counted <= LEGS_MAX) return { counted, dice: "", spared: "legs" };
+  return { counted, dice, spared: "" };
+}
+
+/** The end of a falling character's Turn: how far they fall now, and what's left. */
+export function fallStep(left) {
+  const l = Math.max(0, Number(left) || 0);
+  const fell = Math.min(FALL_PER_TURN, l);
+  return { fell, left: Math.round((l - fell) * 10) / 10 };
+}
+
+/**
+ * Death From Above (PanzerFaust, the 2070 rules): the fall's damage less BODY and body armor;
+ * what that takes off goes straight to whoever is landed on.
+ */
+export function deathFromAbove({ damage = 0, body = 0, sp = 0 } = {}) {
+  const d = Math.max(0, Number(damage) || 0);
+  const dealt = Math.min(d, Math.max(0, (Number(body) || 0) + (Number(sp) || 0)));
+  return { dealt, taken: d - dealt };
+}
+
+/** Which of the 8 squares round a target a faller comes down on: the one on the side they came from. */
+export function besideStep(from, target) {
+  const dx = from.x - target.x;
+  const dy = from.y - target.y;
+  if (!dx && !dy) return { x: 0, y: 1 };
+  const a = Math.atan2(dy, dx);
+  return { x: Math.round(Math.cos(a)), y: Math.round(Math.sin(a)) };
+}

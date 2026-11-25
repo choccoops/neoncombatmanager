@@ -208,8 +208,11 @@ export const Dv = {
     const label = new Compat.PreciseText(text, style);
     label.anchor.set(1, 0);
     box.addChild(label);
-    if (right) box.position.set(token.w + box.width + 15, 0);
-    else box.position.set(-15, 0);
+    // A token drawn smaller (climbers sharing a ladder): the DVs stay their own size.
+    const k = 1 / (Number(token.scale?.x) || 1);
+    box.scale?.set?.(k);
+    if (right) box.position.set(token.w + box.width + 15 * k, 0);
+    else box.position.set(-15 * k, 0);
     return lines;
   }
 };

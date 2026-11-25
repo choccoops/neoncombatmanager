@@ -1457,6 +1457,10 @@
         "name": "Grabs and Human Shields",
         "hint": "After winning a Grab, press Grab on the Action HUD with them targeted: both get their Grapple conditions and the held token is carried along when the holder moves, at no cost to its own movement. While holding, Human Shield holds them up: ranged attacks aimed at the holder are aimed at the shield instead, and it can't dodge them. Let go (or Break free) ends it."
       },
+      "levelsFalls": {
+        "name": "Levels: falling off a floor",
+        "hint": "Moving a token off the edge of a floor with a height (onto the map, or a place 3 m/yds or more lower), or into an opening in it, stops the move and asks: fall, move without falling, or stay. A fall follows the book (corebook pg. 181): 40 m/yds at the end of each Turn in a fight, 2d6 for every 10 on landing, a DV15 Athletics Check or a Broken Leg. The square they come down on is marked and a gauge shows how far up they still are. Moves between the floors of one building, and tokens with an elevation of their own, aren't asked."
+      },
       "levelsView": {
         "name": "Levels: seeing the other floors",
         "hint": "Floors are solid: you see someone on another floor of your building only where it's open between you, when you both stand in the same opening (a stairwell, an atrium, a fire escape: a Region the GM marks in the Levels window). They show on your own floor at the spot straight above or below: a pale figure, blue with ▲ above and amber with ▼ below, with the height between you. Click one to target the real token. An attack through a solid floor is called out as no shot. The other choices make every floor see-through."
@@ -3221,6 +3225,7 @@
       "Fence": "Fence",
       "Offer": "{what} · {height} {unit}",
       "On": "{what} · {at} of {total} {unit}",
+      "Hud": "Climb",
       "Up": "Climb",
       "Down": "Climb down",
       "Over": "Climb over",
@@ -3238,7 +3243,7 @@
         "part": "{name} is {at} of {total} {unit} up ({cost} {unit} of movement).",
         "movement": "{name} is {at} of {total} {unit} up and out of movement ({cost} {unit} spent). A Run, or the next Turn, takes them further.",
         "climber": "{name} is {at} of {total} {unit} up, behind the climber in front ({cost} {unit} of movement).",
-        "letGo": "{name} has let go of the climb, {at} {unit} up. The fall is yours to rule on (corebook pg. 180)."
+        "letGo": "{name} has let go of the climb, {at} {unit} up. The fall is yours to rule on (corebook pg. 181)."
       },
       "Throw": "Throw off {name}",
       "ThrowSub": "Brawling against Brawling",
@@ -3246,9 +3251,46 @@
       "LeapSub": "Athletics against DV{dv}, or fall",
       "Fall": {
         "Title": "Fall",
-        "Hurt": "{name} falls {height} {unit}.",
+        "InAir": "Falling",
+        "Landed": "Landed",
+        "Dfa": "Death From Above",
+        "LetGo": "{name} lets go of the climb.",
+        "Falling": "{name} is falling, {height} {unit} up. Falling characters fall {per} {unit} at the end of their Turn (corebook pg. 181).",
+        "Still": "{name} falls {fell} {unit}. {left} {unit} still to go.",
+        "Hurt": "{name} falls {height} {unit} and hits the ground.",
         "Short": "{name} drops {height} {unit}: under 10, so no damage from the fall.",
-        "Damage": "{dice} = <b>{total}</b> damage, soaked by body armor. Unless they beat a DV15 Athletics Check they also suffer a Broken Leg. Two Cyberlegs take neither (corebook pg. 181)."
+        "Legs": "{name} falls {height} {unit} and lands on two Cyberlegs: no damage and no Broken Leg, as the fall is no more than 30 (corebook pg. 181).",
+        "Shorter": "Their gear takes {shorter} {unit} off the fall: it counts as {counted} {unit}.",
+        "Damage": "{dice} = <b>{total}</b> damage, soaked by body armor (corebook pg. 181).",
+        "Leg": "Landing (DEX + Athletics against DV{dv}): {roll}.",
+        "LegOk": "{name} keeps their legs.",
+        "LegBroken": "{name} suffers a Broken Leg."
+      },
+      "Dfa": {
+        "Action": "Death From Above",
+        "Sub": "{target} · {height} {unit} below",
+        "Dive": "{name} drops on {target} from {height} {unit} up.",
+        "Check": "Death From Above on {target} (DEX + PanzerFaust against DV{dv}): {roll}.",
+        "Hit": "BODY {body} and body armor {sp} take <b>{dealt}</b> off the fall, and it goes straight to {target}'s HP{prone}. {name} takes the <b>{taken}</b> left over, straight to HP.",
+        "Prone": ", who falls Prone",
+        "Clean": "No damage from the fall, so no Check for a Broken Leg.",
+        "Miss": "It fails: an ordinary landing."
+      },
+      "Edge": {
+        "Title": "Off the edge?",
+        "Text": "{name} would go off the edge of this floor: {drop} {unit} down. A fall of 10 {unit} or more rolls 2d6 for every 10 (corebook pg. 181).",
+        "Opening": "{name} would go into an opening in this floor: {drop} {unit} down to the floor below. A fall of 10 {unit} or more rolls 2d6 for every 10 (corebook pg. 181).",
+        "Fall": "Fall",
+        "Move": "Move without falling",
+        "Stay": "Stay",
+        "WentOff": "{name} goes off the edge.",
+        "WentIn": "{name} goes down the opening."
+      },
+      "Warn": {
+        "Title": "Let go of the climb?",
+        "Text": "{name} is {at} {unit} up. Moving them off the climb lets go: they fall that way and come down where you moved them. A fall of 10 {unit} or more rolls 2d6 for every 10 (corebook pg. 181).",
+        "Yes": "Let go and fall",
+        "No": "Stay on the climb"
       },
       "Card": {
         "ThrowTitle": "Thrown off the ladder?",
@@ -3265,6 +3307,7 @@
         "Leap": "{name} leaps for the rungs past {other}: DEX + Athletics against DV{dv}.",
         "Missed": "Misses",
         "MissedText": "{name} misses the rungs.",
+        "GrappleLeap": "{name} misses the rungs, and their grapple catches the ladder: no Check needed, no fall.",
         "Past": "Past them",
         "PastText": "{name} is past {other} and in front."
       }
