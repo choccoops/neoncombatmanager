@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.49.0
+
+- **Climbers on one ladder are drawn smaller as more join.** One or two stay full size. With
+  three or four each is drawn at three quarters, with five or more at 60%, and the steps
+  between them shrink to match, so six climbers reach about a square and a half above the
+  ladder instead of nearly three. The lowest sits on the bottom edge of the ladder's square.
+  Border, bars, name and the clickable area shrink with the picture. Only how they're drawn:
+  each token keeps its own size and stays on the ladder's square, and goes back to its own
+  place and size the moment it leaves the ladder.
+- **A climber's height counts for DVs with floors switched off too.** The distance to or from
+  someone on a ladder or a wall is the squares to where they climb and their height up it,
+  together (6 m away and 8 m up is 10 m). That was already so with **Levels** on; with it off
+  the height was left out.
+
 ## 1.48.0
 
 - **Chases on a ladder.** Climbers still go single file, but they no longer have to accept it.

@@ -131,5 +131,19 @@ export function fallDice(height) {
   return tens > 0 ? `${tens * 2}d6` : "";
 }
 
-/** Where a climber's token is drawn, so several on one ladder don't sit on top of each other: each one up the ladder, a step up the map and to alternate sides. */
-export const fanOffset = (rank, w, h) => (rank > 0 ? { dx: Math.round((rank % 2 ? 0.3 : -0.3) * w), dy: -Math.round(rank * 0.55 * h) } : { dx: 0, dy: 0 });
+/** How big climbers on one ladder are drawn: full size for one or two, smaller as more join, so the line stays short. */
+export const fanScale = (count) => (count >= 5 ? 0.6 : count >= 3 ? 0.75 : 1);
+
+/**
+ * Where and how big a climber's token is drawn, so several on one ladder don't sit on top of each
+ * other: the lowest in the middle of the square's bottom edge, each one above it a step up the map
+ * and to alternate sides. With three or more they're drawn smaller, so the steps are shorter too.
+ * @returns {{ scale: number, dx: number, dy: number }} dx, dy: from the token's own top left corner.
+ */
+export function fanLayout(rank, count, w, h) {
+  const scale = fanScale(count);
+  const sw = w * scale;
+  const sh = h * scale;
+  const side = rank > 0 ? (rank % 2 ? 0.3 : -0.3) * sw : 0;
+  return { scale, dx: Math.round((w - sw) / 2 + side), dy: Math.round(h - sh - rank * 0.55 * sh) };
+}

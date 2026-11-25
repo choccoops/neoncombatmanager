@@ -250,9 +250,72 @@ test("chases (pure): reach, the leap's landing, opposed checks, the d10, falls, 
   assert.equal(D.fallDice(10), "2d6");
   assert.equal(D.fallDice(25), "4d6");
   // Drawn apart.
-  assert.deepEqual(D.fanOffset(0, 100, 100), { dx: 0, dy: 0 });
-  assert.deepEqual(D.fanOffset(1, 100, 100), { dx: 30, dy: -55 });
-  assert.deepEqual(D.fanOffset(2, 100, 100), { dx: -30, dy: -110 });
+  assert.deepEqual(D.fanLayout(0, 1, 100, 100), { scale: 1, dx: 0, dy: 0 });
+  assert.deepEqual(D.fanLayout(1, 2, 100, 100), { scale: 1, dx: 30, dy: -55 });
+  // Three or four: three quarters the size, the lowest in the middle of the square's bottom edge.
+  assert.equal(D.fanScale(2), 1);
+  assert.equal(D.fanScale(3), 0.75);
+  assert.equal(D.fanScale(4), 0.75);
+  assert.equal(D.fanScale(5), 0.6);
+  assert.equal(D.fanScale(9), 0.6);
+  assert.deepEqual(D.fanLayout(0, 3, 100, 100), { scale: 0.75, dx: 13, dy: 25 });
+  assert.deepEqual(D.fanLayout(2, 3, 100, 100), { scale: 0.75, dx: -10, dy: -57 });
+  // Six on one ladder: the top one starts 1.4 squares above the square, not 2.75.
+  assert.deepEqual(D.fanLayout(5, 6, 100, 100), { scale: 0.6, dx: 38, dy: -125 });
+});
+
+test("climbers drawn smaller as more join, and back to size when they leave", async () => {
+  await Settings.set("stairs", true);
+  await Settings.set("climbing", true);
+  const pt = (x = 0, y = 0) => ({ x, y, set(nx, ny = nx) { this.x = nx; this.y = ny; } });
+  const scene = { tokens: null };
+  const docs = [];
+  class Docs extends Map { [Symbol.iterator]() { return this.values(); } }
+  scene.tokens = new Docs();
+  const mk = (id, at) => {
+    const document = { id, name: id, x: 400, y: 400, parent: scene, flags: { [M]: { [D.CLIMB_FLAG]: { kind: "tile", id: "L", at, height: 12, total: 12 } } } };
+    scene.tokens.set(id, document);
+    docs.push(document);
+    // A picture Foundry drew at 0.5: a 200 px image on a 100 px square.
+    return { document, w: 100, h: 100, position: pt(400, 400), scale: pt(1, 1), mesh: { position: pt(450, 450), scale: pt(0.5, 0.5) } };
+  };
+  const a = mk("a", 0);
+  const b = mk("b", 3);
+  Climb.fan(a);
+  Climb.fan(b);
+  assert.equal(a.scale.x, 1, "two: full size");
+  assert.deepEqual([b.position.x, b.position.y], [430, 345]);
+  assert.equal(b.mesh.scale.x, 0.5);
+  const c = mk("c", 6);
+  for (const t of [a, b, c]) Climb.fan(t);
+  assert.equal(a.scale.x, 0.75);
+  assert.deepEqual([a.position.x, a.position.y], [413, 425], "the lowest: smaller, on the bottom of its square");
+  assert.equal(c.mesh.scale.x, 0.375);
+  assert.deepEqual([c.mesh.position.x, c.mesh.position.y], [400 - 10 + 37.5, 400 - 57 + 37.5]);
+  // Drawn again without Foundry resizing the picture: not shrunk twice.
+  Climb.fan(c);
+  assert.equal(c.mesh.scale.x, 0.375);
+  // Foundry resizes the picture (a new image, twice the size): shrunk from that.
+  c.mesh.scale.set(0.25, 0.25);
+  Climb.fan(c);
+  assert.equal(c.mesh.scale.x, 0.1875);
+  c.mesh.scale.set(0.5, 0.5);
+  Climb.fan(c);
+  // Two more: smaller still.
+  const d = mk("d", 8);
+  const e = mk("e", 10);
+  for (const t of [a, b, c, d, e]) Climb.fan(t);
+  assert.equal(e.scale.x, 0.6);
+  assert.equal(c.mesh.scale.x, 0.3);
+  // c is thrown off: back to its own place and size, and the rest grow again.
+  delete c.document.flags[M][D.CLIMB_FLAG];
+  for (const t of [a, b, c, d, e]) Climb.fan(t);
+  assert.equal(c.scale.x, 1);
+  assert.equal(c.mesh.scale.x, 0.5);
+  assert.deepEqual([c.position.x, c.position.y, c.mesh.position.x, c.mesh.position.y], [400, 400, 450, 450]);
+  assert.equal(c._ncmFan, undefined);
+  assert.equal(a.scale.x, 0.75);
+  assert.equal(a.mesh.scale.x, 0.375);
 });
 
 test("a chase up a ladder at the table: thrown off, caught, leapt past, and a leap that misses", async () => {

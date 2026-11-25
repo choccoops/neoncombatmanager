@@ -66,6 +66,15 @@ test("levels at the table: the distance a DV uses", async () => {
     // A Multilevel Tokens clone of b, shown on the ground floor: measured to the real one.
     const clone = tok("k", 150, 450, { flags: { "multilevel-tokens": { stoken: "b" } } });
     assert.equal(Levels.distance(a, clone), 10);
+    // Floors switched off: a climber's height still counts, with the squares to the ladder.
+    await Settings.set("levels", false);
+    const climber = tok("cl", 150, 150, { elevation: 8, flags: { [M]: { climb: { kind: "tile", id: "L", at: 8 } } } });
+    const shooter = tok("sh", 450, 150); // 3 squares from the ladder: 6 m across, 8 m up
+    assert.equal(Dv.distance(shooter, climber), 10);
+    assert.equal(Dv.distance(climber, shooter), 10, "and shooting down from it");
+    assert.equal(Dv.distance(shooter, drone), 0, "nobody climbing: the map's distance, as before");
+    await Settings.set("levels", true);
+    assert.equal(Dv.distance(shooter, climber), 10, "the same with floors on");
     // A point (where a grenade lands) will do.
     assert.equal(Levels.distance(a, { x: 2150, y: 150 }), 8);
     await Settings.set("levels", false);

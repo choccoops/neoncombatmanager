@@ -71,7 +71,7 @@ export const Levels = {
    * own distance is already right (same height, same plan).
    */
   distance(a, b) {
-    if (!this.on) return null;
+    if (!this.on) return this.climbed(a, b);
     const scene = (a?.document ?? a)?.parent ?? (b?.document ?? b)?.parent ?? canvas?.scene;
     const pa = this.place(this.real(a), scene);
     const pb = this.place(this.real(b), scene);
@@ -81,6 +81,23 @@ export const Levels = {
     if (!up && !plans) return null;
     const there = plans ? onto(pb.point, pb.corner, pa.corner) : pb.point;
     return through(Compat.measure(pa.point, there), up);
+  },
+
+  /**
+   * With floors switched off, a climber's height still counts: across the map from where they
+   * climb and up, together. Null when neither is on a climb, or they're level.
+   */
+  climbed(a, b) {
+    const da = this.real(a);
+    const db = this.real(b);
+    const on = (t) => !!(t?.document ?? t)?.flags?.[MODULE_ID]?.climb?.id;
+    if (!on(da) && !on(db)) return null;
+    const scene = (da?.document ?? da)?.parent ?? (db?.document ?? db)?.parent ?? canvas?.scene;
+    const pa = this.centre(da, scene);
+    const pb = this.centre(db, scene);
+    const up = (Number((da?.document ?? da)?.elevation) || 0) - (Number((db?.document ?? db)?.elevation) || 0);
+    if (!pa || !pb || !up) return null;
+    return through(Compat.measure(pa, pb), up);
   },
 
   /** Are two tokens on different floors of one building, or in two linked areas far apart? What's drawn between them on the map isn't between them. */
