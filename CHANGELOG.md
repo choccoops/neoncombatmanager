@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.47.0
+
+- **Badges on linked tiles, for the GM.** Every tile linked as stairs, a ladder or a door now
+  carries a round badge with its sign, and under it what it is, how high a ladder is and which
+  end is which (▲ foot, ▼ head), and the floor it leads to. A faint line joins the two ends.
+  Climbable walls get a yellow one. Only the GM sees them; the setting *Stairs, ladders and
+  doors: the GM's badges* hides them.
+- **Climbing.** Climbing costs 2 m/yds of movement for every one climbed (corebook pg. 169).
+  - *Ladders with a height*: linking two tiles as a ladder now asks how high it is. The first
+    tile selected is the foot. Leave 0 and it's taken in one go, as before.
+  - *Climbing it*: a token on the foot is offered **Climb**. On its own Turn it goes up as far
+    as its movement allows and stays there until it climbs on: next Turn, or after a Run. Out
+    of combat it goes the whole way. At the top it's put on the head tile; from the head it's
+    offered the climb down. The cost comes off the movement shown on the carousel.
+  - *What takes the penalty off*: Grip Feet, always (1 for 1). With a Grapple Hand or a Grapple
+    Gun there's a second button to climb by its line, also 1 for 1.
+  - *How high you are*: a climber's elevation is their height on the ladder, so Foundry shows
+    it on the token and attack distances and DVs count it. A ladder gauge is drawn beside the
+    climb with everyone on it at their height, by name. Click a face on the gauge to select
+    that token, since climbers share a square.
+  - *Several on one ladder*: single file, 2 m/yds apart. Nobody passes the one in front, so a
+    slow climber holds up everyone behind, and the note says so.
+  - *Letting go*: dragging a climber off the ladder ends the climb and tells the GM how high
+    they were. The fall is the GM's to rule on (corebook pg. 180).
+- **Climbable walls.** In the wall controls, select walls and press the ladder button: give a
+  height, and tick whether it's climbed *over* (a fence: up, across and down the far side, so
+  twice the height) or *onto* (a ledge or a roof). A token next to one is offered the climb,
+  and comes out on the wall's far side. From the top of an "onto" wall the offer is the climb
+  down. Walls are wide: climbers go side by side, not single file.
+- Setting *Climbing* (on by default; off makes a ladder a one-go trip again). `api.climb` has
+  `go`, `state` and `setWalls`; `api.stairs.link(a, b, "ladder", { height })`.
+
 ## 1.46.2
 
 - **Neon look: the Region window is readable.** Its field names, hints, tab names, "Bottom" and
