@@ -2156,3 +2156,31 @@ test("cloaks against enhanced sight: unseen in Low Light, Infrared and UV until 
   canvas.tokens.get = saved.get;
   game.combat = saved.combat;
 });
+
+test("with libWrapper installed, the outline click is registered through it and still passes other clicks on", () => {
+  const calls = [];
+  const prevLib = globalThis.libWrapper;
+  const prevClicks = Xray._clicks;
+  globalThis.libWrapper = { register: (...args) => calls.push(args) };
+  Xray._clicks = null;
+  try {
+    Xray.wrapClicks();
+    assert.equal(calls.length, 1);
+    const [id, target, fn, type] = calls[0];
+    assert.deepEqual([id, target, type], ["cpr-neon-combat-manager", "TokenLayer.prototype._onClickLeft", "MIXED"]);
+    assert.equal(Xray._clicks, "libWrapper");
+    // A click on empty canvas, with no outlines drawn, goes down the chain untouched.
+    const drawn = Xray.drawn;
+    Xray.drawn = new Map();
+    let passed = null;
+    fn((event) => { passed = event; return "next"; }, { tag: "click" });
+    assert.deepEqual(passed, { tag: "click" });
+    Xray.drawn = drawn;
+    // Registered once, however often it's asked.
+    Xray.wrapClicks();
+    assert.equal(calls.length, 1);
+  } finally {
+    globalThis.libWrapper = prevLib;
+    Xray._clicks = prevClicks;
+  }
+});
