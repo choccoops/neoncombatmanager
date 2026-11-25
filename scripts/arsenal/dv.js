@@ -178,12 +178,14 @@ export const Dv = {
     return { name: item.name, weaponType: s.weaponType, table: s.dvTable, autofire: af ? autofireTable(item) : "", upgrades };
   },
 
-  async showOn(token, original) {
+  /**
+   * What the DV display says about a token, for whoever this player has selected: { text, right },
+   * or null when it shows nothing (switched off, out of combat with that setting on, nobody
+   * selected, no ranged weapon in reach of its table).
+   */
+  async textFor(token) {
     if (!this.diwakoSetting("showDVDisplay", true)) return null;
     if (this.diwakoSetting("dvDisplayOnlyInCombat", true) && !game.combat?.started) return null;
-    const box = token.dvDisplay;
-    if (!box) return original.call(token);
-    if (!box.parent) token.addChild(box);
     const from = canvas.tokens?.controlled?.[0];
     if (!from || from === token || !from.actor) return null;
     const dist = this.distance(from, token);
@@ -199,20 +201,73 @@ export const Dv = {
       typeLabel: (t) => game.i18n.localize(`CPR.global.weaponType.${TYPE_KEYS[t] ?? t}`),
       autofireLabel: "(Autofire)"
     });
-    box.removeChildren().forEach((c) => c.destroy());
     if (!lines.length) return null;
     const text = lines.map((l) => game.i18n.format(`${DIWAKO_ID}.dv-display.dv-text`, { "weapon-name": l.label, "dv-value": l.dv })).join("");
-    const right = this.diwakoSetting("dvDisplayPosition", "left") === "right";
+    return { text, lines, right: this.diwakoSetting("dvDisplayPosition", "left") === "right" };
+  },
+
+  /**
+   * Why the DV display shows what it does (or nothing) for a token, for the console:
+   * `game.modules.get("cpr-neon-combat-manager").api.arsenal.dvWhy()` with the pointer over a
+   * token and one of yours selected.
+   */
+  async why(token = canvas?.tokens?.hover ?? [...(game.user?.targets ?? [])][0] ?? null) {
+    const proto = CONFIG.Token?.objectClass?.prototype;
+    const from = canvas?.tokens?.controlled?.[0] ?? null;
+    const out = {
+      diwakoActive: this.diwako,
+      ourSetting: !!Settings.get("arsenalDvDisplay"),
+      ours: !!proto?.showDVDisplay?.[`${MODULE_ID}DV`],
+      showDVDisplay: this.diwakoSetting("showDVDisplay", true),
+      onlyInCombat: this.diwakoSetting("dvDisplayOnlyInCombat", true),
+      combatStarted: !!game.combat?.started,
+      selected: from?.name ?? null,
+      token: token?.name ?? null,
+      hasBox: !!token?.dvDisplay,
+      tokenScale: token?.scale?.x ?? null,
+      drawnApart: !!token?._ncmFan
+    };
+    if (!from || !token || from === token) return out;
+    try {
+      out.distance = this.distance(from, token);
+      out.mapDistance = Compat.measure(from.center, token.center);
+      out.elevations = [from.document?.elevation ?? 0, token.document?.elevation ?? 0];
+      const items = [...(from.actor?.items ?? [])].filter((i) => i.system?.isRanged && i.system?.dvTable
+        && (i.system.equipped === "equipped" || (i.type === "cyberware" && i.system.isInstalled)));
+      out.weapons = [];
+      for (const i of items) out.weapons.push({ name: i.name, table: i.system.dvTable, found: !!(await this.results(i.system.dvTable)), dv: await this.at(i.system.dvTable, out.distance) });
+      out.text = (await this.textFor(token))?.text ?? null;
+    } catch (err) {
+      out.error = String(err?.stack ?? err);
+    }
+    return out;
+  },
+
+  async showOn(token, original) {
+    if (!this.diwakoSetting("showDVDisplay", true)) return null;
+    if (this.diwakoSetting("dvDisplayOnlyInCombat", true) && !game.combat?.started) return null;
+    const box = token.dvDisplay;
+    if (!box) return original.call(token);
+    if (!box.parent) token.addChild(box);
+    // A climber drawn apart on a ladder has its DVs drawn beside where it's drawn (scripts/senses/climb.js).
+    if (token._ncmFan) {
+      box.removeChildren().forEach((c) => c.destroy());
+      return null;
+    }
+    const info = await this.textFor(token);
+    if (!info) return null;
+    box.removeChildren().forEach((c) => c.destroy());
     const style = CONFIG.canvasTextStyle.clone();
-    style.align = right ? "left" : "right";
-    const label = new Compat.PreciseText(text, style);
+    style.align = info.right ? "left" : "right";
+    const label = new Compat.PreciseText(info.text, style);
     label.anchor.set(1, 0);
     box.addChild(label);
-    // A token drawn smaller (climbers sharing a ladder): the DVs stay their own size.
-    const k = 1 / (Number(token.scale?.x) || 1);
-    box.scale?.set?.(k);
-    if (right) box.position.set(token.w + box.width + 15 * k, 0);
-    else box.position.set(-15 * k, 0);
-    return lines;
+    // Whatever was done to it before (a climber drawn smaller, since back to size): its own size, and seen.
+    box.scale?.set?.(1);
+    box.visible = true;
+    box.alpha = 1;
+    if (info.right) box.position.set(token.w + box.width + 15, 0);
+    else box.position.set(-15, 0);
+    return info.lines;
   }
 };

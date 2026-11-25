@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.51.0
+
+- **Ladder contests and falls are rolled by the characters, a card at a time.** Nothing is
+  rolled for anyone any more: each Check is a button on a chat card for the character it
+  calls on, pressed by their player (or the GM for an NPC), and it rolls through Cyberpunk
+  RED's own roll, with its dialog, LUCK and modifiers.
+  - **Throw off:** the thrower rolls Brawling when they press Throw off. A card then calls
+    on the other climber to roll Brawling to hold on. If they lose, the next card calls on
+    them for the one Athletics grab at the ladder (none with a Grapple Hand or Gun); miss
+    it and they fall.
+  - **Leap past:** the leaper rolls Athletics when they press it, and the result is settled
+    at once.
+  - **Landing:** the fall's damage is rolled and applied to the character straight away,
+    through Cyberpunk RED's own damage so body armor soaks it (a fall doesn't ablate armor).
+    The card then calls on them for the DV15 Athletics Check; failed, the Broken Leg
+    Critical Injury is added to them.
+  - **Death From Above:** the card calls on the borg for the PanzerFaust Check first, and
+    the damage waits on it. Made, the target's share and the borg's leftover go straight to
+    their HP and the target falls Prone; failed, it's applied as an ordinary landing.
+  - Each card can be answered once.
+
+## 1.50.1
+
+- **DVs show for climbers drawn apart on a ladder.** The DV display for a shrunk, fanned-out
+  climber is now drawn by this module on the map beside where the token is drawn, at normal
+  size, instead of inside the shrunk token. It shows while the pointer is over the climber
+  and stays for as long as you have it targeted. Diwako's settings still decide it (on or
+  off, only in combat, weapon names, left or right), and a token of yours must be selected.
+  Every other token's DV display is unchanged.
+- A climber's hover no longer outlasts its click area when the map is drawn again.
+- For when the DV display shows nothing: with one of your tokens selected and the pointer
+  over another, `game.modules.get("cpr-neon-combat-manager").api.arsenal.dvWhy()` in the
+  console says what it found (settings, distance, each weapon's table and DV).
+
 ## 1.50.0
 
 - **Falls follow the book (corebook pg. 181).** Anyone who comes off a climb now falls by the

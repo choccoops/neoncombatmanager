@@ -146,6 +146,8 @@ const api = {
     menu: (actor) => Arsenal.menu(actor),
     /** The DV a weapon faces at a distance in m/yds (the 2070 range tables). */
     dv: (item, distance, options) => Dv.forWeapon(item, distance, options),
+    /** Why the DV display shows what it does for the token under the pointer (one of yours selected). */
+    dvWhy: (token) => Dv.why(token),
     /** GM: apply an area (a template Neon Arsenal placed) to everyone in it. */
     applyArea: (templateUuid) => Blast.askAndApply(templateUuid)
   },

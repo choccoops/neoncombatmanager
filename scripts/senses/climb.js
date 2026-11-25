@@ -13,6 +13,7 @@ import { inShapes, boundsOf } from "./far-data.js";
 import { CLIMB_FLAG, WALL_FLAG, GAP, LEAP_DV, CATCH_DV, factorOf, stretch, aheadOf, heightAt, across, toSegment, elevationAfter, d10Total, within, inFront, beats, leapTo, fallDice, fanLayout, FALL_FLAG, FALL_PER_TURN, BROKEN_LEG_DV, DFA_DV, fallPlan, fallStep, deathFromAbove, besideStep } from "./climb-data.js";
 import { Conditions } from "../conditions/engine.js";
 import { Cards } from "../combat/cards.js";
+import { Dv } from "../arsenal/dv.js";
 import { L, esc, debounce } from "../util.js";
 
 /**
@@ -43,6 +44,7 @@ export const Climb = {
     const soon = debounce(() => this.draw(), 120);
     Socket.on("climbGo", (data, userId) => this._go(data, userId));
     Socket.on("climbContest", (data, userId) => this._contest(data, userId));
+    Socket.on("climbStep", (data, userId) => this._step(data, userId));
     Socket.on("climbDrop", (data, userId) => this._drop(data, userId));
     Socket.on("climbDive", (data, userId) => this._dive(data, userId));
     // A climber dragged off the climb is held where it is, and whoever moved it is asked first.
@@ -215,12 +217,145 @@ export const Climb = {
     return out;
   },
 
-  async contest(token, kind, target = null) {
+  /**
+   * A throw or a leap. Whoever tries it rolls their own Check here (Cyberpunk RED's roll: its
+   * dialog, LUCK, its card); the GM's client takes it from there, a card at a time.
+   */
+  async contest(token, kind, target = null, event = null) {
     const doc = this.doc(token);
-    if (!doc?.parent) return null;
-    const r = await Socket.request("climbContest", { scene: doc.parent.id, token: doc.id, kind, target });
+    if (!doc?.parent || !doc.actor) return null;
+    const move = this.moves(doc).find((m) => m.kind === kind && (!target || m.target === target));
+    if (!move) return null;
+    const mine = await this.rollFor(doc.actor, kind === "throw" ? "Brawling" : "Athletics", event);
+    if (!mine) return null;
+    const r = await Socket.request("climbContest", { scene: doc.parent.id, token: doc.id, kind, target: move.target, total: mine.total });
     Hooks.callAll(`${MODULE_ID}.fxChanged`);
     return r;
+  },
+
+  /**
+   * A character's own Check: Cyberpunk RED's roll for the skill where the sheet can make one,
+   * else DEX + the skill + 1d10 rolled here. { total }, or null when they cancel.
+   */
+  async rollFor(actor, skillName, event = null) {
+    const skill = CPR.skill(actor, skillName);
+    if (typeof skill?.createRoll === "function" || typeof actor?.createRoll === "function") return CPR.skillCheck(actor, skillName, { event, stat: "dex" });
+    return this.check(actor, "dex", skill ?? skillName);
+  },
+
+  /** A button on one of the climb's cards: the character it calls on rolls, and the GM's client carries on. */
+  async click(message, btn, event, actor) {
+    if (!actor?.isOwner) return ui.notifications?.warn(L(`${LANG}.Error.NotOwner`));
+    const d = { ...btn.dataset };
+    const skill = { "climb-hold": "Brawling", "climb-catch": "Athletics", "climb-leg": "Athletics", "climb-dfa": this.panzer(actor)?.name }[d.ncmAction];
+    if (!skill) return null;
+    btn.disabled = true;
+    const mine = await this.rollFor(actor, skill, event);
+    if (!mine) {
+      btn.disabled = false;
+      return null;
+    }
+    const r = await Socket.request("climbStep", { ...d, action: d.ncmAction, total: mine.total, message: message?.id ?? null });
+    Hooks.callAll(`${MODULE_ID}.fxChanged`);
+    return r;
+  },
+
+  /** One card's button, for whoever is to roll: [{ action, label, icon, owner, data }]. */
+  ask(action, label, data) {
+    return [{ action, label: L(`${LANG}.Climb.Roll.${label}`), icon: "fa-solid fa-dice-d10", owner: true, data }];
+  },
+
+  /**
+   * GM's client: a Check called for by a card has been rolled. Each card is answered once.
+   * hold: the one being thrown off (Brawling against the throw). catch: their grab at the ladder.
+   * leg: the landing. dfa: Death From Above.
+   */
+  async _step(data, userId) {
+    const sc = game.scenes?.get?.(data.scene) ?? canvas?.scene;
+    const doc = sc?.tokens?.get(data.token);
+    const user = game.users?.get?.(userId) ?? game.user;
+    if (!doc?.actor || !(user?.isGM || doc.testUserPermission?.(user, "OWNER") || doc.isOwner)) return null;
+    const msg = data.message ? game.messages?.get?.(data.message) : null;
+    if (msg?.getFlag?.(MODULE_ID, "done")) return null;
+    if (msg?.setFlag) await msg.setFlag(MODULE_ID, "done", true);
+    const total = Number(data.total) || 0;
+    const name = esc(doc.name ?? "");
+    const actor = doc.actor;
+    switch (data.action) {
+      case "climb-hold": {
+        const st = this.state(doc);
+        const by = esc(sc.tokens.get(data.by)?.name ?? "");
+        if (!st) return null;
+        const body = `<p>${L(`${LANG}.Climb.Card.Scores`, { name: by, attack: data.attack, other: name, total })}</p>`;
+        if (!beats(data.attack, total)) {
+          await Cards.post({ actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Card.Held`), body: `${body}<p>${L(`${LANG}.Climb.Card.HeldText`, { other: name })}</p>`, tone: "cyan" });
+          return { won: false };
+        }
+        if (this.hasLine(actor)) {
+          await Cards.post({ actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Card.Caught`), body: `${body}<p>${L(`${LANG}.Climb.Card.Grapple`, { other: name })}</p>`, tone: "cyan" });
+          return { won: true, fell: false };
+        }
+        await Cards.post({ actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Card.Off`), body: `${body}<p>${L(`${LANG}.Climb.Card.CatchAsk`, { other: name, dv: CATCH_DV })}</p>`, tone: "pink", buttons: this.ask("climb-catch", "Catch", { scene: sc.id, token: doc.id, by: data.by }) });
+        return { won: true, pending: "catch" };
+      }
+      case "climb-catch": {
+        const st = this.state(doc);
+        if (!st) return null;
+        const by = esc(sc.tokens.get(data.by)?.name ?? "");
+        const body = `<p>${L(`${LANG}.Climb.Card.Catch`, { other: name, dv: CATCH_DV, roll: total })}</p>`;
+        if (beats(total, CATCH_DV)) {
+          await Cards.post({ actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Card.Caught`), body: `${body}<p>${L(`${LANG}.Climb.Card.CaughtText`, { other: name })}</p>`, tone: "cyan" });
+          return { fell: false };
+        }
+        await this.fall(doc, st, { why: `${body}${L(`${LANG}.Climb.Card.ThrownText`, { name: by, other: name })}` });
+        return { fell: true };
+      }
+      case "climb-leg": {
+        const ok = beats(total, BROKEN_LEG_DV);
+        if (!ok) await Conditions.add("brokenLeg", actor);
+        await Cards.post({ actor, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Fall.${ok ? "OnFeet" : "Broken"}`), body: `<p>${L(`${LANG}.Climb.Fall.Leg`, { dv: BROKEN_LEG_DV, roll: total })} ${L(`${LANG}.Climb.Fall.${ok ? "LegOk" : "LegBroken"}`, { name })}</p>`, tone: ok ? "cyan" : "red" });
+        return { broken: !ok };
+      }
+      case "climb-dfa": {
+        const damage = Number(data.damage) || 0;
+        const under = sc.tokens.get(data.target);
+        const tname = esc(under?.name ?? "");
+        let body = `<p>${L(`${LANG}.Climb.Dfa.Check`, { target: tname, dv: DFA_DV, roll: total })}</p>`;
+        if (!under?.actor || !beats(total, DFA_DV)) {
+          // An ordinary landing after all.
+          const took = await this.hurt(actor, damage, { armor: true });
+          await Cards.post({ actor, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Fall.Landed`), body: `${body}<p>${L(`${LANG}.Climb.Dfa.Miss`)} ${L(`${LANG}.Climb.Fall.Took`, { name, total: damage, took })}</p><p>${L(`${LANG}.Climb.Fall.LegAsk`, { name, dv: BROKEN_LEG_DV })}</p>`, tone: "pink", buttons: this.ask("climb-leg", "Leg", { scene: sc.id, token: doc.id }) });
+          return { hit: false, damage };
+        }
+        const bodyStat = CPR.stat(actor, "body");
+        const sp = CPR.armor(actor).body;
+        const { dealt, taken } = deathFromAbove({ damage, body: bodyStat, sp });
+        const person = !/vehicle/i.test(under.actor.type ?? "");
+        if (dealt) await this.hurt(under.actor, dealt);
+        if (person) await Conditions.add("prone", under.actor);
+        if (taken) await this.hurt(actor, taken);
+        body += `<p>${L(`${LANG}.Climb.Dfa.Hit`, { name, target: tname, body: bodyStat, sp, dealt, taken, prone: person ? L(`${LANG}.Climb.Dfa.Prone`) : "" })}</p>`;
+        body += `<p>${taken ? L(`${LANG}.Climb.Fall.LegAsk`, { name, dv: BROKEN_LEG_DV }) : L(`${LANG}.Climb.Dfa.Clean`)}</p>`;
+        await Cards.post({ actor, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Fall.Dfa`), body, tone: "pink", buttons: taken ? this.ask("climb-leg", "Leg", { scene: sc.id, token: doc.id }) : [] });
+        return { hit: true, dealt, taken };
+      }
+      default:
+        return null;
+    }
+  },
+
+  /**
+   * Damage, applied now. With armor: through Cyberpunk RED's own damage (body armor soaks it; a
+   * fall wears no armor away). Without: straight to HP. What got through, where that's known.
+   */
+  async hurt(actor, amount, { armor = false } = {}) {
+    const n = Math.max(0, Math.round(Number(amount) || 0));
+    if (!n || !actor) return 0;
+    const before = CPR.hp(actor).value;
+    if (armor && typeof actor._applyDamage === "function") {
+      await actor._applyDamage(n, 0, "body", 0, "", 0, 0, true, { damageReductionRole: false, damageReductionAE: false, useShield: false, brainDamageReduction: false });
+    } else await CPR.damageHP(actor, armor ? Math.max(0, n - CPR.armor(actor).body) : n, { reason: L(`${LANG}.Climb.Fall.Title`) });
+    return Math.max(0, before - CPR.hp(actor).value);
   },
 
   /** STAT + Skill + 1d10 (a 10 or a 1 rolls on), rolled here: { total, base, die, text }. */
@@ -313,7 +448,7 @@ export const Climb = {
     const unit = this.unit(doc);
     const name = esc(doc.name ?? "");
     const plan = fallPlan({ height: total, legs: this.legs(actor), shorter: this.shorter(actor) });
-    const post = (body, kicker = "Landed") => Cards.post({ actor, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Fall.${kicker}`), body, tone: "pink" });
+    const post = (body, buttons = null) => Cards.post({ actor, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Fall.Landed`), body, tone: "pink", buttons: buttons ?? (plan.dice && actor ? this.ask("climb-leg", "Leg", { scene: doc.parent?.id, token: doc.id }) : []) });
     let body = why ? `<p>${why}</p>` : "";
     if (plan.counted !== total) body += `<p>${L(`${LANG}.Climb.Fall.Shorter`, { shorter: Math.round((total - plan.counted) * 10) / 10, counted: plan.counted, unit })}</p>`;
     if (!plan.dice || !actor) {
@@ -322,41 +457,19 @@ export const Climb = {
     }
     const roll = await Conditions.roll(plan.dice, actor);
     body += `<p>${L(`${LANG}.Climb.Fall.Hurt`, { name, height: total, unit })}</p><p>${L(`${LANG}.Climb.Fall.Damage`, { dice: plan.dice, total: roll.total })}</p>`;
-    // Death From Above: BODY and body armor come off the fall, and go into whoever is underneath.
+    const ids = { scene: doc.parent?.id, token: doc.id };
+    // Death From Above: theirs to roll first; the damage waits on it.
     const under = target ? doc.parent?.tokens?.get(target) : null;
-    const skill = under?.actor ? this.panzer(actor) : null;
-    if (skill) {
-      const tname = esc(under.name ?? "");
-      const c = await this.check(actor, "dex", skill);
-      body += `<p>${L(`${LANG}.Climb.Dfa.Check`, { target: tname, dv: DFA_DV, roll: c.text })}</p>`;
-      if (beats(c.total, DFA_DV)) {
-        const bodyStat = CPR.stat(actor, "body");
-        const sp = CPR.armor(actor).body;
-        const { dealt, taken } = deathFromAbove({ damage: roll.total, body: bodyStat, sp });
-        const person = !/vehicle/i.test(under.actor.type ?? "");
-        body += `<p>${L(`${LANG}.Climb.Dfa.Hit`, { name, target: tname, body: bodyStat, sp, dealt, taken, prone: person ? L(`${LANG}.Climb.Dfa.Prone`) : "" })}</p>`;
-        if (!taken) body += `<p>${L(`${LANG}.Climb.Dfa.Clean`)}</p>`;
-        else body += await this.leg(actor, name);
-        await post(body, "Dfa");
-        if (dealt) await Cards.damage(under.actor, { amount: dealt, reason: L(`${LANG}.Climb.Dfa.Action`) });
-        if (person) await Conditions.add("prone", under.actor);
-        if (taken) await Cards.damage(actor, { amount: taken, reason: L(`${LANG}.Climb.Fall.Title`) });
-        return { damage: taken, dealt };
-      }
-      body += `<p>${L(`${LANG}.Climb.Dfa.Miss`)}</p>`;
+    if (under?.actor && this.panzer(actor)) {
+      body += `<p>${L(`${LANG}.Climb.Dfa.Ask`, { name, target: esc(under.name ?? ""), dv: DFA_DV })}</p>`;
+      await Cards.post({ actor, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Fall.Dfa`), body, tone: "pink", buttons: this.ask("climb-dfa", "Dfa", { ...ids, target: under.id, damage: roll.total }) });
+      return { damage: roll.total, pending: "dfa" };
     }
-    body += await this.leg(actor, name);
+    // Applied now, body armor soaking it; the landing's Check is theirs to roll.
+    const took = await this.hurt(actor, roll.total, { armor: true });
+    body += `<p>${L(`${LANG}.Climb.Fall.Took`, { name, total: roll.total, took })}</p><p>${L(`${LANG}.Climb.Fall.LegAsk`, { name, dv: BROKEN_LEG_DV })}</p>`;
     await post(body);
-    await Cards.damage(actor, { amount: roll.total, roll: roll.roll ? { formula: plan.dice, total: roll.total } : null, armor: true, reason: L(`${LANG}.Climb.Fall.Title`) });
-    return { damage: roll.total };
-  },
-
-  /** The landing's DV15 Athletics Check: failed, a Broken Leg. The line for the card. */
-  async leg(actor, name) {
-    const c = await this.check(actor, "dex", "Athletics");
-    const ok = beats(c.total, BROKEN_LEG_DV);
-    if (!ok) await Conditions.add("brokenLeg", actor);
-    return `<p>${L(`${LANG}.Climb.Fall.Leg`, { dv: BROKEN_LEG_DV, roll: c.text })} ${L(`${LANG}.Climb.Fall.${ok ? "LegOk" : "LegBroken"}`, { name })}</p>`;
+    return { damage: roll.total, pending: "leg" };
   },
 
   /* ---------------------------------------- */
@@ -564,8 +677,11 @@ export const Climb = {
     return { height };
   },
 
-  /** GM's client: a throw (Brawling against Brawling) or a leap (Athletics against the DV), rolled and carried out. */
-  async _contest({ scene, token, kind, target = null }, userId) {
+  /**
+   * GM's client: a throw or a leap, with the Check its maker rolled. A throw calls on the one
+   * being thrown off to roll (a card with their button); a leap is settled here.
+   */
+  async _contest({ scene, token, kind, target = null, total = 0 }, userId) {
     const sc = game.scenes?.get?.(scene) ?? canvas?.scene;
     const doc = sc?.tokens?.get(token);
     const user = game.users?.get?.(userId) ?? game.user;
@@ -578,34 +694,20 @@ export const Climb = {
     const ost = this.state(other);
     const name = esc(doc.name ?? "");
     const oname = esc(other?.name ?? "");
+    const a = { total: Number(total) || 0, text: String(Number(total) || 0) };
     if (kind === "throw") {
       if (!other?.actor || !ost) return null;
-      const a = await this.check(doc.actor, "dex", "Brawling");
-      const d = await this.check(other.actor, "dex", "Brawling");
-      const won = beats(a.total, d.total);
-      let body = `<p>${L(`${LANG}.Climb.Card.Throw`, { name, other: oname })}</p><p><b>${name}</b>: ${a.text}<br><b>${oname}</b>: ${d.text}</p>`;
-      if (!won) {
-        await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Card.Held`), body: `${body}<p>${L(`${LANG}.Climb.Card.HeldText`, { other: oname })}</p>`, tone: "cyan" });
-        return { kind, won: false };
-      }
-      // Off the ladder: one grab at it on the way (DV15 Athletics; none needed with a grapple).
-      const grapple = this.hasLine(other.actor);
-      const save = grapple ? null : await this.check(other.actor, "dex", "Athletics");
-      const caught = grapple || beats(save.total, CATCH_DV);
-      body += `<p>${grapple ? L(`${LANG}.Climb.Card.Grapple`, { other: oname }) : L(`${LANG}.Climb.Card.Catch`, { other: oname, dv: CATCH_DV, roll: save.text })}</p>`;
-      if (caught) {
-        await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Card.Caught`), body: `${body}<p>${L(`${LANG}.Climb.Card.CaughtText`, { other: oname })}</p>`, tone: "cyan" });
-        return { kind, won: true, fell: false };
-      }
-      await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Card.Thrown`), body, tone: "pink" });
-      await this.fall(other, ost, { why: L(`${LANG}.Climb.Card.ThrownText`, { name, other: oname }) });
-      return { kind, won: true, fell: true };
+      await Cards.post({
+        actor: other.actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Ladder`), tone: "pink",
+        body: `<p>${L(`${LANG}.Climb.Card.Throw`, { name, other: oname })}</p><p>${L(`${LANG}.Climb.Card.HoldAsk`, { name, attack: a.total, other: oname })}</p>`,
+        buttons: this.ask("climb-hold", "Hold", { scene: sc.id, token: other.id, by: doc.id, attack: a.total })
+      });
+      return { kind, pending: "hold" };
     }
     if (kind === "leap") {
       if (!ost) return null;
       const land = leapTo({ front: ost.at, total: st.total, others: this.rivals(doc).map((r) => r.at) });
       if (!land) return null;
-      const a = await this.check(doc.actor, "dex", "Athletics");
       const made = beats(a.total, LEAP_DV);
       const body = `<p>${L(`${LANG}.Climb.Card.Leap`, { name, other: oname, dv: LEAP_DV })}</p><p><b>${name}</b>: ${a.text}</p>`;
       if (!made && this.hasLine(doc.actor)) {
@@ -883,6 +985,15 @@ export const Climb = {
    * for the GM, a badge on every linked tile and climbable wall saying what it is.
    */
   draw() {
+    // A climber's click area goes with the old drawing: so does a hover it was holding.
+    for (const pad of this._pads ?? []) {
+      try {
+        if (pad.token?.hover && !pad.token.destroyed) pad.token._onHoverOut?.({ buttons: 0 });
+      } catch {
+        /* no hover to drop */
+      }
+    }
+    this._pads = [];
     this.clear();
     if (!canvas?.ready || typeof PIXI === "undefined" || !Stairs.on) return 0;
     const scene = canvas.scene;
@@ -945,11 +1056,12 @@ export const Climb = {
         ev.stopPropagation?.();
         this.press(pad.token, ev);
       });
-      hit.on("pointerover", (ev) => this.hover(pad.token, true, ev));
-      hit.on("pointerout", (ev) => this.hover(pad.token, false, ev));
+      hit.on("pointerover", (ev) => this.hover(pad, true, ev));
+      hit.on("pointerout", (ev) => this.hover(pad, false, ev));
       layer.addChild(hit);
       n += 1;
     }
+    this._pads = this.pads();
     // And whoever has left a ladder: back to their own place and size.
     for (const t of canvas.tokens?.placeables ?? []) if (t._ncmFan && !this.state(t)) t.renderFlags?.set?.({ refreshPosition: true });
     if (!n) {
@@ -958,6 +1070,10 @@ export const Climb = {
     }
     (canvas.interface ?? canvas.stage).addChild(layer);
     this.layer = layer;
+    this.tips = new Map();
+    // The DVs to a climber drawn apart, beside where it's drawn: for the ones this player has targeted.
+    const aimed = new Set([...(game.user?.targets ?? [])]);
+    for (const pad of this._pads ?? []) if (aimed.has(pad.token)) this.tip(pad, true);
     return n;
   },
 
@@ -1030,18 +1146,56 @@ export const Climb = {
     return this.pick(token, { target: !!ev?.altKey, add });
   },
 
-  /** The pointer over a climber drawn apart: Foundry's own hover, so its border shows and the Target key finds it. */
-  hover(token, on, ev) {
+  /**
+   * The pointer over a climber drawn apart: Foundry's own hover, so its border shows and the
+   * Target key finds it, and the DVs to it beside where it's drawn (they stay while it's targeted).
+   */
+  hover(pad, on, ev) {
+    const token = pad.token;
     try {
       if (on) token._onHoverIn?.(ev, { hoverOutOthers: true });
       else token._onHoverOut?.(ev);
-      // The DV display rides on Foundry's hover; shown from here too, in case that hover didn't take.
-      if (on) token.showDVDisplay?.();
-      else if (typeof token.hideDVDisplay === "function") token.hideDVDisplay();
-      else if (!token.hover) token.dvDisplay?.removeChildren?.().forEach((c) => c.destroy?.());
     } catch {
       /* no hover */
     }
+    const aimed = [...(game.user?.targets ?? [])].includes(token);
+    this.tip(pad, on || aimed);
+  },
+
+  /**
+   * The DV display for a climber drawn apart: Diwako's words and settings, our distances, drawn
+   * on the map beside the shrunk token, not inside it. on: false takes it away.
+   */
+  async tip(pad, on) {
+    const id = pad.token.id ?? pad.token.document?.id;
+    const layer = this.layer;
+    const drop = () => {
+      const old = this.tips?.get(id);
+      if (old) {
+        this.tips.delete(id);
+        if (!old.destroyed) old.destroy();
+      }
+    };
+    if (!on || !layer || !Dv.diwako || !Settings.get("arsenalDvDisplay")) return drop();
+    let info = null;
+    try {
+      info = await Dv.textFor(pad.token);
+    } catch (err) {
+      console.warn(`${MODULE_ID} | DV display`, err);
+    }
+    // The map may have been drawn again while the tables were read.
+    if (this.layer !== layer) return null;
+    drop();
+    if (!info) return null;
+    const style = CONFIG.canvasTextStyle.clone();
+    style.align = info.right ? "left" : "right";
+    const label = new Compat.PreciseText(info.text, style);
+    label.eventMode = "none";
+    label.anchor.set(info.right ? 0 : 1, 0);
+    label.position.set(info.right ? pad.x + pad.w + 12 : pad.x - 12, pad.y);
+    layer.addChild(label);
+    this.tips.set(id, label);
+    return info;
   },
 
   /** A face on the gauge was clicked: select the token (yours) or target it (anyone's). */
