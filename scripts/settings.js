@@ -9,7 +9,7 @@ export const MENUS = {
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["neonTheme", "fxEnabled", "fxConditions", "fxChrome", "fxPause", "bloodFx", "bloodTrails", "bloodMax", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
-  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "sightRange", "sightBase", "farLinks", "levels", "levelsView", "stairs", "stairsAsk", "stairsMarks", "climbing", "climbContests", "holds", "scopeVision", "scopeSniper", "scopeAngle", "visionModes", "visionOutlines", "visionHeat", "cloakCheck", "torchAction", "torchAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
+  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "sightRange", "sightBase", "farLinks", "levels", "levelsView", "levelsFalls", "stairs", "stairsAsk", "stairsMarks", "climbing", "climbContests", "holds", "scopeVision", "scopeSniper", "scopeAngle", "visionModes", "visionOutlines", "visionHeat", "cloakCheck", "torchAction", "torchAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -150,6 +150,8 @@ const DEFS = [
   ["levels", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Who on the other floors of a building shows on the viewer's own
   ["levelsView", "world", String, "open", { choices: { open: K("LevelsView.open"), all: K("LevelsView.all"), near: K("LevelsView.near"), off: K("LevelsView.off") }, onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  // Moving a token off a floor with a height (into an opening, onto lower ground) asks first, and falls
+  ["levelsFalls", "world", Boolean, true, {}],
   // Stairs and ladders: two linked Tiles
   ["stairs", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Ask before a token takes stairs, a ladder or a door (off: it's taken on stepping on)

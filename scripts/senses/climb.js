@@ -1,4 +1,4 @@
-import { MODULE_ID, LANG } from "../constants.js";
+import { MODULE_ID, LANG, HOOKS } from "../constants.js";
 import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { Socket } from "../socket.js";
@@ -8,7 +8,9 @@ import { Levels } from "./levels.js";
 import { NeonRuler } from "../ruler/ruler.js";
 import { Turns } from "../combat/turns.js";
 import { STAIRS_FLAG, KIND_ICON, landing } from "./stairs-data.js";
-import { CLIMB_FLAG, WALL_FLAG, GAP, LEAP_DV, CATCH_DV, factorOf, stretch, aheadOf, heightAt, across, toSegment, elevationAfter, d10Total, within, inFront, beats, leapTo, fallDice, fanLayout } from "./climb-data.js";
+import { stacked, onto } from "./levels-data.js";
+import { inShapes, boundsOf } from "./far-data.js";
+import { CLIMB_FLAG, WALL_FLAG, GAP, LEAP_DV, CATCH_DV, factorOf, stretch, aheadOf, heightAt, across, toSegment, elevationAfter, d10Total, within, inFront, beats, leapTo, fallDice, fanLayout, FALL_FLAG, FALL_PER_TURN, BROKEN_LEG_DV, DFA_DV, fallPlan, fallStep, deathFromAbove, besideStep } from "./climb-data.js";
 import { Conditions } from "../conditions/engine.js";
 import { Cards } from "../combat/cards.js";
 import { L, esc, debounce } from "../util.js";
@@ -41,6 +43,18 @@ export const Climb = {
     const soon = debounce(() => this.draw(), 120);
     Socket.on("climbGo", (data, userId) => this._go(data, userId));
     Socket.on("climbContest", (data, userId) => this._contest(data, userId));
+    Socket.on("climbDrop", (data, userId) => this._drop(data, userId));
+    Socket.on("climbDive", (data, userId) => this._dive(data, userId));
+    // A climber dragged off the climb is held where it is, and whoever moved it is asked first.
+    Hooks.on("preUpdateToken", (doc, changes, options, userId) => this.hold(doc, changes, options, userId));
+    // Falling characters fall at the end of their own Turn; a fight that ends lands them.
+    Hooks.on(HOOKS.turnEnd, (combat, combatant) => {
+      if (Compat.isActiveGM) this.fallOn(combatant?.token ?? null).catch((err) => console.error(`${MODULE_ID} | fall`, err));
+    });
+    Hooks.on("deleteCombat", (combat) => {
+      if (!Compat.isActiveGM) return;
+      for (const c of combat?.combatants ?? []) if (this.falling(c.token)) this.fallOn(c.token, { all: true }).catch((err) => console.error(`${MODULE_ID} | fall`, err));
+    });
     Hooks.on("refreshToken", (token) => this.fan(token));
     Hooks.on("targetToken", () => soon());
     Stairs.providers.push((token) => this.promptFor(token));
@@ -148,20 +162,33 @@ export const Climb = {
     return { key: `climb:${doc.id}:${st?.id ?? ""}:${st?.at ?? ""}:${doc.x}:${doc.y}`, icon: c.icon, name: token.name ?? doc.name ?? "", text: c.text, buttons };
   },
 
+  /** The Action HUD's Turn section: one Climb entry with a button for each thing to do, and Death From Above when it's on. */
   entries(actor, token) {
     const tok = token?.object ?? token ?? actor?.getActiveTokens?.()[0] ?? null;
-    const c = tok ? this.choices(tok) : null;
-    if (!c) return [];
-    return [
-      ...c.options.map((o) => ({ key: `climb:${o.dir}`, label: o.label, sub: c.text, icon: c.icon, alert: true })),
-      ...this.moves(tok).map((m) => ({ key: `climb:${m.kind}:${m.target ?? ""}`, label: m.label, sub: m.sub, icon: m.kind === "leap" ? "fa-solid fa-person-running" : "fa-solid fa-hand-fist" }))
-    ];
+    if (!tok) return [];
+    const out = [];
+    const c = this.choices(tok);
+    if (c) {
+      const icons = { up: "fa-solid fa-arrow-up", down: "fa-solid fa-arrow-down", throw: "fa-solid fa-hand-fist", leap: "fa-solid fa-person-running" };
+      out.push({
+        key: "climb:menu", label: L(`${LANG}.Climb.Hud`), sub: c.text, icon: c.icon, alert: true,
+        buttons: [
+          ...c.options.map((o) => ({ key: `climb:${o.dir}`, label: o.label, icon: icons[o.dir] })),
+          ...this.moves(tok).map((m) => ({ key: `climb:${m.kind}:${m.target ?? ""}`, label: `${m.label} (${m.sub})`, icon: icons[m.kind] }))
+        ]
+      });
+    }
+    const dive = this.diveFor(tok);
+    if (dive) out.push({ key: "climb:dive", run: `climb:dive:${dive.target.id}`, label: L(`${LANG}.Climb.Dfa.Action`), sub: L(`${LANG}.Climb.Dfa.Sub`, { target: dive.target.name ?? "", height: dive.up, unit: this.unit(this.doc(tok)) }), icon: "fa-solid fa-meteor", alert: true });
+    return out;
   },
 
-  /** An Action HUD key: "up", "down", "throw:<token id>", "leap". */
+  /** An Action HUD key: "up", "down", "throw:<token id>", "leap", "dive:<token id>". */
   act(token, key) {
     const [, what, target] = String(key).split(":");
     if (what === "throw" || what === "leap") return this.contest(token, what, target || null);
+    if (what === "dive") return this.dive(token, target || null);
+    if (what === "menu") return null;
     return this.go(token, { dir: what });
   },
 
@@ -198,7 +225,7 @@ export const Climb = {
 
   /** STAT + Skill + 1d10 (a 10 or a 1 rolls on), rolled here: { total, base, die, text }. */
   async check(actor, stat, skillName) {
-    const level = Number(CPR.skill(actor, skillName)?.system?.level) || 0;
+    const level = Number((typeof skillName === "string" ? CPR.skill(actor, skillName) : skillName)?.system?.level) || 0;
     const base = (Number(CPR.stat(actor, stat)) || 0) + level;
     const first = (await Conditions.roll("1d10", actor)).total;
     const second = first === 10 || first === 1 ? (await Conditions.roll("1d10", actor)).total : 0;
@@ -206,21 +233,335 @@ export const Climb = {
     return { total: base + die, base, die, text: `${base} + ${second ? `${first}${first === 10 ? "+" : "−"}${second}` : first} = ${base + die}` };
   },
 
-  /** GM's client: a climber comes off a ladder. The height fallen, the damage, and what else the book asks for go on a card. */
-  async fall(doc, st, { why = "" } = {}) {
-    const height = Math.round(heightAt(st) * 10) / 10;
-    await doc.unsetFlag(MODULE_ID, CLIMB_FLAG);
-    await doc.update({ elevation: st.base }, this.opts());
+  /* ---------------------------------------- */
+  /*  Falling (corebook pg. 181)              */
+  /* ---------------------------------------- */
+
+  /** Two Cyberlegs (two of them, or a pair sold as one): a fall's damage and its Broken Leg don't land, up to 30 m/yds. */
+  legs(actor) {
+    let n = 0;
+    for (const i of actor?.items ?? []) {
+      if (i.type !== "cyberware" || !CPR.inUse(i)) continue;
+      const name = String(i.name ?? "");
+      if (/cyberlegs\b|skydrivers?\b/i.test(name)) n += 2;
+      else if (/cyberleg\b/i.test(name)) n += 1;
+    }
+    return n >= 2;
+  },
+
+  /** What gear takes off a fall, in m/yds: Skydrivers, 4 (the 2070 rules). */
+  shorter: (actor) => (actor && CPR.hasGear(actor, ["Skydrivers", "Skydriver"]) ? 4 : 0),
+
+  /** The PanzerFaust skill of a character in a Full Body Conversion (Death From Above is theirs), or null. */
+  panzer(actor) {
+    if (!actor || !CPR.isBorg(actor)) return null;
+    return [...(actor.items ?? [])].find((i) => i.type === "skill" && /panzer\s*faust/i.test(i.name ?? "")) ?? null;
+  },
+
+  falling(token) {
+    const f = this.doc(token)?.flags?.[MODULE_ID]?.[FALL_FLAG];
+    return f && Number(f.total) > 0 ? f : null;
+  },
+
+  /**
+   * GM's client: someone is off what they stood on or held. In a fight they fall 40 m/yds at the
+   * end of each of their Turns and stay up there till then; out of one they land at once.
+   * @param {object} st - a climb's state, or { drop: height, base: elevation on the ground }
+   * @param {object} [o] - why: a line for the card; target: the id of the token they come down on
+   */
+  async fall(doc, st, { why = "", target = null } = {}) {
+    const height = Math.round((Number(st.drop) || heightAt(st)) * 10) / 10;
+    const base = Number(st.base) || 0;
+    if (this.state(doc)) await doc.unsetFlag(MODULE_ID, CLIMB_FLAG);
+    const cb = doc.actor && height > 0 ? NeonRuler.combatantOf(doc) : null;
+    if (!cb) {
+      await this.land(doc, { total: height, base, target, why });
+      return height;
+    }
+    await doc.setFlag(MODULE_ID, FALL_FLAG, { total: height, left: height, base, target });
+    await doc.update({ elevation: Math.round((base + height) * 10) / 10 }, this.opts());
     const unit = this.unit(doc);
-    const dice = fallDice(height);
-    let body = `<p>${why}</p><p>${L(`${LANG}.Climb.Fall.${dice ? "Hurt" : "Short"}`, { name: esc(doc.name ?? ""), height, unit })}</p>`;
-    if (dice && doc.actor) {
-      const roll = await Conditions.roll(dice, doc.actor);
-      body += `<p>${L(`${LANG}.Climb.Fall.Damage`, { dice, total: roll.total })}</p>`;
-      await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Ladder`), body, tone: "pink" });
-      await Cards.damage(doc.actor, { amount: roll.total, roll: roll.roll ? { formula: dice, total: roll.total } : null, armor: true, reason: L(`${LANG}.Climb.Fall.Title`) });
-    } else await Cards.post({ actor: doc.actor ?? null, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Ladder`), body, tone: "pink" });
+    await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Fall.InAir`), body: `${why ? `<p>${why}</p>` : ""}<p>${L(`${LANG}.Climb.Fall.Falling`, { name: esc(doc.name ?? ""), height, per: FALL_PER_TURN, unit })}</p>`, tone: "pink" });
     return height;
+  },
+
+  /** GM's client: the end of a falling character's Turn (or, with all, of the fight): down 40 m/yds, and onto the ground if that's all of it. */
+  async fallOn(token, { all = false } = {}) {
+    const doc = this.doc(token);
+    const f = this.falling(doc);
+    if (!doc || !f) return null;
+    const step = all ? { fell: f.left, left: 0 } : fallStep(f.left);
+    if (step.left > 0) {
+      await doc.setFlag(MODULE_ID, FALL_FLAG, { ...f, left: step.left });
+      await doc.update({ elevation: Math.round((f.base + step.left) * 10) / 10 }, this.opts());
+      await Cards.post({ actor: doc.actor ?? null, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Fall.InAir`), body: `<p>${L(`${LANG}.Climb.Fall.Still`, { name: esc(doc.name ?? ""), fell: step.fell, left: step.left, unit: this.unit(doc) })}</p>`, tone: "pink" });
+      return { landed: false, left: step.left };
+    }
+    await this.land(doc, { total: f.total, base: f.base, target: f.target });
+    return { landed: true, left: 0 };
+  },
+
+  /**
+   * GM's client: the ground. Under 10 m/yds nothing; else 2d6 for every 10, soaked by body armor,
+   * and a DV15 Athletics Check or a Broken Leg. Two Cyberlegs take neither, up to 30. A borg with
+   * PanzerFaust coming down on someone tries Death From Above first.
+   */
+  async land(doc, { total = 0, base = 0, target = null, why = "" } = {}) {
+    if (this.falling(doc)) await doc.unsetFlag(MODULE_ID, FALL_FLAG);
+    await doc.update({ elevation: base }, this.opts());
+    const actor = doc.actor ?? null;
+    const unit = this.unit(doc);
+    const name = esc(doc.name ?? "");
+    const plan = fallPlan({ height: total, legs: this.legs(actor), shorter: this.shorter(actor) });
+    const post = (body, kicker = "Landed") => Cards.post({ actor, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Fall.${kicker}`), body, tone: "pink" });
+    let body = why ? `<p>${why}</p>` : "";
+    if (plan.counted !== total) body += `<p>${L(`${LANG}.Climb.Fall.Shorter`, { shorter: Math.round((total - plan.counted) * 10) / 10, counted: plan.counted, unit })}</p>`;
+    if (!plan.dice || !actor) {
+      await post(`${body}<p>${L(`${LANG}.Climb.Fall.${plan.spared === "legs" ? "Legs" : "Short"}`, { name, height: total, unit })}</p>`);
+      return { damage: 0 };
+    }
+    const roll = await Conditions.roll(plan.dice, actor);
+    body += `<p>${L(`${LANG}.Climb.Fall.Hurt`, { name, height: total, unit })}</p><p>${L(`${LANG}.Climb.Fall.Damage`, { dice: plan.dice, total: roll.total })}</p>`;
+    // Death From Above: BODY and body armor come off the fall, and go into whoever is underneath.
+    const under = target ? doc.parent?.tokens?.get(target) : null;
+    const skill = under?.actor ? this.panzer(actor) : null;
+    if (skill) {
+      const tname = esc(under.name ?? "");
+      const c = await this.check(actor, "dex", skill);
+      body += `<p>${L(`${LANG}.Climb.Dfa.Check`, { target: tname, dv: DFA_DV, roll: c.text })}</p>`;
+      if (beats(c.total, DFA_DV)) {
+        const bodyStat = CPR.stat(actor, "body");
+        const sp = CPR.armor(actor).body;
+        const { dealt, taken } = deathFromAbove({ damage: roll.total, body: bodyStat, sp });
+        const person = !/vehicle/i.test(under.actor.type ?? "");
+        body += `<p>${L(`${LANG}.Climb.Dfa.Hit`, { name, target: tname, body: bodyStat, sp, dealt, taken, prone: person ? L(`${LANG}.Climb.Dfa.Prone`) : "" })}</p>`;
+        if (!taken) body += `<p>${L(`${LANG}.Climb.Dfa.Clean`)}</p>`;
+        else body += await this.leg(actor, name);
+        await post(body, "Dfa");
+        if (dealt) await Cards.damage(under.actor, { amount: dealt, reason: L(`${LANG}.Climb.Dfa.Action`) });
+        if (person) await Conditions.add("prone", under.actor);
+        if (taken) await Cards.damage(actor, { amount: taken, reason: L(`${LANG}.Climb.Fall.Title`) });
+        return { damage: taken, dealt };
+      }
+      body += `<p>${L(`${LANG}.Climb.Dfa.Miss`)}</p>`;
+    }
+    body += await this.leg(actor, name);
+    await post(body);
+    await Cards.damage(actor, { amount: roll.total, roll: roll.roll ? { formula: plan.dice, total: roll.total } : null, armor: true, reason: L(`${LANG}.Climb.Fall.Title`) });
+    return { damage: roll.total };
+  },
+
+  /** The landing's DV15 Athletics Check: failed, a Broken Leg. The line for the card. */
+  async leg(actor, name) {
+    const c = await this.check(actor, "dex", "Athletics");
+    const ok = beats(c.total, BROKEN_LEG_DV);
+    if (!ok) await Conditions.add("brokenLeg", actor);
+    return `<p>${L(`${LANG}.Climb.Fall.Leg`, { dv: BROKEN_LEG_DV, roll: c.text })} ${L(`${LANG}.Climb.Fall.${ok ? "LegOk" : "LegBroken"}`, { name })}</p>`;
+  },
+
+  /* ---------------------------------------- */
+  /*  Letting go, and dropping on someone     */
+  /* ---------------------------------------- */
+
+  /**
+   * A climber above the ground is moved off the climb by hand: the move is stopped, and whoever
+   * made it is told they'd fall that way and asked. (Climbing itself, and being carried, go on.)
+   */
+  hold(doc, changes, options = {}, userId = null) {
+    if (!("x" in (changes ?? {}) || "y" in (changes ?? {}))) return true;
+    const o = options?.[MODULE_ID];
+    if (o?.climb || o?.carried || options?.isUndo) return true;
+    if (userId && game.user?.id && userId !== game.user.id) return true;
+    const st = this.on ? this.state(doc) : null;
+    const to = { x: changes.x ?? doc.x, y: changes.y ?? doc.y };
+    if (!st) {
+      // Off the edge of a floor with a height, or into an opening in it: asked first, too.
+      if (o?.free || o?.stairs || o?.ledge || this.falling(doc)) return true;
+      const edge = this.ledge(doc, to);
+      if (!edge) return true;
+      this.askLedge(doc, to, edge).catch((err) => console.error(`${MODULE_ID} | fall`, err));
+      return false;
+    }
+    const height = heightAt(st);
+    if (!(height > 0)) return true;
+    this.askDrop(doc, to, height).catch((err) => console.error(`${MODULE_ID} | climb`, err));
+    return false;
+  },
+
+  /**
+   * Would a move take a token off its floor and down? Into an opening of its building: onto the
+   * floor below, at the same spot of that floor's plan. Off the floor's edge onto the map or a
+   * lower place: there. (Another floor of the same building drawn beside it is a reposition, and
+   * a step down of under 3 m/yds is just a step.)
+   * @returns {{ drop: number, land: {x, y}, opening: boolean }|null}
+   */
+  ledge(doc, to) {
+    if (!Levels.on || Settings.get("levelsFalls") === false || !doc?.parent || Number(doc.elevation)) return null;
+    const sc = doc.parent;
+    const size = Stairs.sizeOf(doc);
+    const here = Levels.place(doc, sc);
+    const mid = { x: to.x + size.w / 2, y: to.y + size.h / 2 };
+    const there = Levels.place(mid, sc);
+    const top = here?.floor?.height ?? 0;
+    if (!(top > 0) || !there) return null;
+    if (there.floor?.region === here.floor.region && here.floor.stack && here.corner) {
+      const hole = Levels.openings(sc).find((o) => o.stack === here.floor.stack && inShapes(o.shapes, onto(mid, here.corner, o.corner)));
+      if (!hole || inShapes(hole.shapes, onto(here.point, here.corner, hole.corner))) return null;
+      const lower = Levels.floors(sc).filter((f) => f.stack === here.floor.stack && f.height < top).sort((a, b) => b.height - a.height)[0];
+      const box = lower ? boundsOf([...(sc.regions ?? [])].find((r) => r.id === lower.region)?.shapes ?? []) : null;
+      if (!box) return null;
+      const down = onto(mid, here.corner, { x: box.x, y: box.y });
+      return { drop: Math.round((top - lower.height) * 10) / 10, land: { x: down.x - size.w / 2, y: down.y - size.h / 2 }, opening: true };
+    }
+    if (there.floor?.region === here.floor.region || stacked(here.floor, there.floor)) return null;
+    const drop = Math.round((top - (there.floor?.height ?? 0)) * 10) / 10;
+    return drop >= 3 ? { drop, land: { x: to.x, y: to.y }, opening: false } : null;
+  },
+
+  /** Fall, move without falling (a bridge, a ramp, the GM setting the table), or stay. */
+  async askLedge(doc, to, edge) {
+    if (this._asking) return null;
+    this._asking = true;
+    try {
+      const unit = this.unit(doc);
+      const pick = await Compat.DialogV2.wait({
+        window: { title: L(`${LANG}.Climb.Edge.Title`) },
+        content: `<p>${L(`${LANG}.Climb.Edge.${edge.opening ? "Opening" : "Text"}`, { name: esc(doc.name ?? ""), drop: edge.drop, unit })}</p>`,
+        buttons: [
+          { action: "fall", label: L(`${LANG}.Climb.Edge.Fall`), icon: "fa-solid fa-person-falling" },
+          { action: "move", label: L(`${LANG}.Climb.Edge.Move`), icon: "fa-solid fa-shoe-prints" },
+          { action: "stay", label: L(`${LANG}.Climb.Edge.Stay`), default: true }
+        ],
+        rejectClose: false
+      });
+      if (pick === "move") return await doc.update(to, { [MODULE_ID]: { ledge: true } });
+      if (pick !== "fall") return null;
+      const r = await Socket.request("climbDrop", { scene: doc.parent.id, token: doc.id, x: to.x, y: to.y });
+      Hooks.callAll(`${MODULE_ID}.fxChanged`);
+      return r;
+    } finally {
+      this._asking = false;
+    }
+  },
+
+  async askDrop(doc, to, height) {
+    if (this._asking) return null;
+    this._asking = true;
+    try {
+      const unit = this.unit(doc);
+      const yes = await Compat.DialogV2.confirm({
+        window: { title: L(`${LANG}.Climb.Warn.Title`) },
+        content: `<p>${L(`${LANG}.Climb.Warn.Text`, { name: esc(doc.name ?? ""), at: Math.round(height * 10) / 10, unit })}</p>`,
+        yes: { label: L(`${LANG}.Climb.Warn.Yes`), icon: "fa-solid fa-person-falling" },
+        no: { label: L(`${LANG}.Climb.Warn.No`), default: true },
+        rejectClose: false
+      });
+      if (!yes) return null;
+      return await this.drop(doc, to);
+    } finally {
+      this._asking = false;
+    }
+  },
+
+  /** Let go and fall toward a spot (through the GM's client). */
+  async drop(token, to) {
+    const doc = this.doc(token);
+    if (!doc?.parent) return null;
+    const r = await Socket.request("climbDrop", { scene: doc.parent.id, token: doc.id, x: to.x, y: to.y });
+    Hooks.callAll(`${MODULE_ID}.fxChanged`);
+    return r;
+  },
+
+  /** Who a faller comes down on at a spot: whoever its mover targeted there, else whoever stands on it. */
+  under(doc, at, user) {
+    const size = Stairs.sizeOf(doc);
+    const mid = { x: at.x + size.w / 2, y: at.y + size.h / 2 };
+    const grid = Stairs.grid(doc);
+    const near = [...(doc.parent?.tokens ?? [])].filter((t) => t.id !== doc.id && t.actor && !t.hidden).map((t) => ({ t, c: Stairs.centre(t), s: Stairs.sizeOf(t) }));
+    const aimed = new Set([...(user?.targets ?? [])].map((t) => t.id ?? t.document?.id));
+    const close = near.filter((n) => Math.hypot(n.c.x - mid.x, n.c.y - mid.y) <= grid * 1.5 + Math.max(n.s.w, n.s.h) / 2 - grid / 2);
+    return (close.find((n) => aimed.has(n.t.id)) ?? near.find((n) => Math.abs(n.c.x - mid.x) < n.s.w / 2 && Math.abs(n.c.y - mid.y) < n.s.h / 2))?.t ?? null;
+  },
+
+  /** GM's client: a climber lets go, falling toward where it was moved. */
+  async _drop({ scene, token, x, y }, userId) {
+    const sc = game.scenes?.get?.(scene) ?? canvas?.scene;
+    const doc = sc?.tokens?.get(token);
+    const user = game.users?.get?.(userId) ?? game.user;
+    if (!this.on || !doc || !(user?.isGM || doc.testUserPermission?.(user, "OWNER") || doc.isOwner)) return null;
+    const st = this.state(doc);
+    const to = { x: Number.isFinite(Number(x)) ? Number(x) : doc.x, y: Number.isFinite(Number(y)) ? Number(y) : doc.y };
+    if (!st) {
+      // Off a floor's edge, or into an opening in it.
+      const edge = this.falling(doc) ? null : this.ledge(doc, to);
+      if (!edge) return null;
+      const under = this.under(doc, edge.land, user)?.id ?? null;
+      await doc.update({ ...edge.land, elevation: edge.drop }, this.opts());
+      const fell = await this.fall(doc, { drop: edge.drop, base: 0 }, { why: L(`${LANG}.Climb.Edge.${edge.opening ? "WentIn" : "WentOff"}`, { name: esc(doc.name ?? "") }), target: under });
+      return { height: fell };
+    }
+    const target = this.under(doc, to, user)?.id ?? null;
+    await doc.unsetFlag(MODULE_ID, CLIMB_FLAG);
+    await doc.update(to, this.opts());
+    const height = await this.fall(doc, { drop: heightAt(st), base: st.base }, { why: L(`${LANG}.Climb.Fall.LetGo`, { name: esc(doc.name ?? "") }), target });
+    return { height };
+  },
+
+  /**
+   * How far below a token another is, and how far off across the plan: { up, across, reach, from, to }.
+   * Floors of one building drawn side by side are measured on the one plan.
+   */
+  below(token, target) {
+    const doc = this.doc(token);
+    const tdoc = this.doc(target);
+    if (!doc?.parent || !tdoc || doc.parent !== tdoc.parent) return null;
+    const pa = Levels.place(doc, doc.parent);
+    const pb = Levels.place(tdoc, doc.parent);
+    if (!pa || !pb) return null;
+    const from = stacked(pa.floor, pb.floor) && pa.corner && pb.corner ? onto(pa.point, pa.corner, pb.corner) : pa.point;
+    const per = doc.parent.grid?.distance ?? canvas?.dimensions?.distance ?? 2;
+    return { up: Math.round((pa.height - pb.height) * 10) / 10, across: Compat.measure(from, pb.point), reach: (CPR.stat(doc.actor, "move") || 0) * per, from, to: pb.point };
+  },
+
+  /** Death From Above on offer: a borg with PanzerFaust, one target 10 m/yds or more below, no further off than their MOVE. */
+  diveFor(token) {
+    const doc = this.doc(token);
+    if (!this.on || !doc?.actor || this.falling(doc) || !this.panzer(doc.actor)) return null;
+    const targets = [...(game.user?.targets ?? [])].filter((t) => (t.document ?? t).id !== doc.id);
+    if (targets.length !== 1) return null;
+    const target = targets[0].document ?? targets[0];
+    const b = this.below(doc, target);
+    if (!b || b.up < 10 || b.across > b.reach) return null;
+    return { target, ...b };
+  },
+
+  async dive(token, target) {
+    const doc = this.doc(token);
+    if (!doc?.parent || !target) return null;
+    const r = await Socket.request("climbDive", { scene: doc.parent.id, token: doc.id, target });
+    Hooks.callAll(`${MODULE_ID}.fxChanged`);
+    return r;
+  },
+
+  /** GM's client: off the height and down beside the target, on the side they came from. */
+  async _dive({ scene, token, target }, userId) {
+    const sc = game.scenes?.get?.(scene) ?? canvas?.scene;
+    const doc = sc?.tokens?.get(token);
+    const tdoc = sc?.tokens?.get(target);
+    const user = game.users?.get?.(userId) ?? game.user;
+    if (!this.on || !doc?.actor || !tdoc || !(user?.isGM || doc.testUserPermission?.(user, "OWNER") || doc.isOwner)) return null;
+    const b = this.below(doc, tdoc);
+    if (!b || b.up < 10 || b.across > b.reach || !this.panzer(doc.actor) || this.falling(doc)) return null;
+    const step = besideStep(b.from, b.to);
+    const mine = Stairs.sizeOf(doc);
+    const theirs = Stairs.sizeOf(tdoc);
+    const x = step.x > 0 ? tdoc.x + theirs.w : step.x < 0 ? tdoc.x - mine.w : tdoc.x;
+    const y = step.y > 0 ? tdoc.y + theirs.h : step.y < 0 ? tdoc.y - mine.h : tdoc.y;
+    const base = Number(tdoc.elevation) || 0;
+    if (this.state(doc)) await doc.unsetFlag(MODULE_ID, CLIMB_FLAG);
+    await doc.update({ x, y, elevation: Math.round((base + b.up) * 10) / 10 }, this.opts());
+    const height = await this.fall(doc, { drop: b.up, base }, { why: L(`${LANG}.Climb.Dfa.Dive`, { name: esc(doc.name ?? ""), target: esc(tdoc.name ?? ""), height: b.up, unit: this.unit(doc) }), target: tdoc.id });
+    return { height };
   },
 
   /** GM's client: a throw (Brawling against Brawling) or a leap (Athletics against the DV), rolled and carried out. */
@@ -267,6 +608,11 @@ export const Climb = {
       const a = await this.check(doc.actor, "dex", "Athletics");
       const made = beats(a.total, LEAP_DV);
       const body = `<p>${L(`${LANG}.Climb.Card.Leap`, { name, other: oname, dv: LEAP_DV })}</p><p><b>${name}</b>: ${a.text}</p>`;
+      if (!made && this.hasLine(doc.actor)) {
+        // Off the rungs with a Grapple Hand or Gun: no Check needed to stay on (corebook pg. 181).
+        await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Card.LeapTitle`), kicker: L(`${LANG}.Climb.Card.Caught`), body: `${body}<p>${L(`${LANG}.Climb.Card.GrappleLeap`, { name })}</p>`, tone: "cyan" });
+        return { kind, won: false, fell: false };
+      }
       if (!made) {
         await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Card.LeapTitle`), kicker: L(`${LANG}.Climb.Card.Missed`), body, tone: "pink" });
         await this.fall(doc, st, { why: L(`${LANG}.Climb.Card.MissedText`, { name }) });
@@ -581,6 +927,14 @@ export const Climb = {
         for (const t of g.tokens) t.renderFlags?.set?.({ refreshPosition: true });
       }
     }
+    // Someone falling: a warning on the square they come down on, and how far up they still are beside it.
+    for (const t of canvas.tokens?.placeables ?? []) {
+      const f = this.falling(t);
+      if (!f || !Stairs.on || t.visible === false || (t.document?.hidden && !game.user?.isGM)) continue;
+      layer.addChild(this.warning(t));
+      layer.addChild(this.gauge({ st: { total: f.total }, tokens: [t] }, unit, { color: 0xff4d4d }));
+      n += 1;
+    }
     // Climbers drawn apart get a clickable area of their own, where each is drawn.
     for (const pad of this.pads()) {
       const hit = new PIXI.Container();
@@ -681,6 +1035,10 @@ export const Climb = {
     try {
       if (on) token._onHoverIn?.(ev, { hoverOutOthers: true });
       else token._onHoverOut?.(ev);
+      // The DV display rides on Foundry's hover; shown from here too, in case that hover didn't take.
+      if (on) token.showDVDisplay?.();
+      else if (typeof token.hideDVDisplay === "function") token.hideDVDisplay();
+      else if (!token.hover) token.dvDisplay?.removeChildren?.().forEach((c) => c.destroy?.());
     } catch {
       /* no hover */
     }
@@ -694,8 +1052,48 @@ export const Climb = {
     return token.setTarget?.(on, { releaseOthers: !add });
   },
 
-  /** A ladder drawn beside the climb, as long as the climb is high, with everyone on it where they are. */
-  gauge({ st, tokens }, unit) {
+  /** Where a falling token comes down: hazard stripes round its square and a warning sign in the corner. Never in the way of a click. */
+  warning(token) {
+    const doc = token.document;
+    const w = token.w ?? 100;
+    const h = token.h ?? 100;
+    const box = new PIXI.Container();
+    box.eventMode = "none";
+    box.position.set(doc.x, doc.y);
+    const g = new PIXI.Graphics();
+    g.beginFill(0xff4d4d, 0.12).drawRect(0, 0, w, h).endFill();
+    // Stripes along the edges, yellow on black.
+    g.lineStyle(6, 0x07070b, 0.9).drawRect(3, 3, w - 6, h - 6);
+    const dash = 14;
+    g.lineStyle(6, 0xf3e600, 0.95);
+    for (let x = 3; x < w - 3; x += dash * 2) {
+      g.moveTo(x, 3).lineTo(Math.min(x + dash, w - 3), 3);
+      g.moveTo(x, h - 3).lineTo(Math.min(x + dash, w - 3), h - 3);
+    }
+    for (let y = 3; y < h - 3; y += dash * 2) {
+      g.moveTo(3, y).lineTo(3, Math.min(y + dash, h - 3));
+      g.moveTo(w - 3, y).lineTo(w - 3, Math.min(y + dash, h - 3));
+    }
+    // The sign: a triangle with a mark in it, top left.
+    g.lineStyle(2, 0x07070b, 1).beginFill(0xf3e600, 1).drawPolygon([14, 4, 26, 24, 2, 24]).endFill();
+    g.lineStyle(2.5, 0x07070b, 1).moveTo(14, 11).lineTo(14, 17).moveTo(14, 20).lineTo(14, 21);
+    box.addChild(g);
+    return box;
+  },
+
+  /** What a pip on a gauge shows for a token: its place on the climb, or how far up it still is as it falls. */
+  gaugeState(token) {
+    const st = this.state(token);
+    if (st) return st;
+    const f = this.falling(token);
+    return f ? { at: f.left, total: f.total } : { at: 0, total: 1 };
+  },
+
+  /**
+   * A ladder drawn beside the climb, as long as the climb is high, with everyone on it where they
+   * are. For someone falling, the same in red: how far up they still are.
+   */
+  gauge({ st, tokens }, unit, { color = 0x05d9e8 } = {}) {
     const first = tokens[0];
     const size = canvas.dimensions?.size ?? 100;
     const perMetre = size / (canvas.dimensions?.distance || 2);
@@ -706,23 +1104,23 @@ export const Climb = {
     box.position.set((first.document?.x ?? first.x) + (first.w ?? size) + 14, (first.document?.y ?? first.y) + (first.h ?? size));
     const g = new PIXI.Graphics();
     g.beginFill(0x07070b, 0.7).lineStyle(1, 0x36364f, 1).drawRect(-6, -len - 10, 44, len + 20).endFill();
-    g.lineStyle(2, 0x05d9e8, 0.9).moveTo(4, 0).lineTo(4, -len).moveTo(28, 0).lineTo(28, -len);
+    g.lineStyle(2, color, 0.9).moveTo(4, 0).lineTo(4, -len).moveTo(28, 0).lineTo(28, -len);
     const rungs = Math.max(2, Math.min(24, Math.round(st.total)));
-    for (let i = 0; i <= rungs; i += 1) g.lineStyle(1.5, 0x05d9e8, 0.55).moveTo(4, -(len * i) / rungs).lineTo(28, -(len * i) / rungs);
+    for (let i = 0; i <= rungs; i += 1) g.lineStyle(1.5, color, 0.55).moveTo(4, -(len * i) / rungs).lineTo(28, -(len * i) / rungs);
     box.addChild(g);
     const style = { fontFamily: globalThis.CONFIG?.canvasTextStyle?.fontFamily ?? "Signika", fontSize: 12, fontWeight: "bold", fill: 0xd8dbec, stroke: 0x000000, strokeThickness: 3 };
     const top = new PIXI.Text(`${st.total} ${unit}`, style);
     top.anchor.set(0.5, 1);
     top.position.set(16, -len - 12);
     box.addChild(top);
-    for (const t of [...tokens].sort((a, b) => this.state(a).at - this.state(b).at)) {
-      const s = this.state(t);
+    for (const t of [...tokens].sort((a, b) => this.gaugeState(a).at - this.gaugeState(b).at)) {
+      const s = this.gaugeState(t);
       const y = -(len * s.at) / (s.total || 1);
       const pip = new PIXI.Container();
       pip.position.set(16, y);
       const ring = new PIXI.Graphics();
       const aimed = [...(game.user?.targets ?? [])].includes(t);
-      ring.beginFill(0x07070b, 1).lineStyle(aimed ? 4 : 2, aimed ? 0xff4d4d : t.controlled ? 0xf3e600 : 0x05d9e8, 1).drawCircle(0, 0, 13).endFill();
+      ring.beginFill(0x07070b, 1).lineStyle(aimed ? 4 : 2, aimed ? 0xff4d4d : t.controlled ? 0xf3e600 : color, 1).drawCircle(0, 0, 13).endFill();
       if (aimed) for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) ring.lineStyle(3, 0xff4d4d, 1).moveTo(ax * 9, ay * 9).lineTo(ax * 19, ay * 19);
       pip.addChild(ring);
       const texture = t.mesh?.texture ?? t.texture ?? null;

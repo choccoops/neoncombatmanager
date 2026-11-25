@@ -460,3 +460,208 @@ test("climbers drawn apart are clicked where they're drawn: select, target, shee
     asGM(true);
   }
 });
+
+test("falling (pure): what the ground does, 40 a Turn, Death From Above", () => {
+  assert.deepEqual(D.fallPlan({ height: 9 }), { counted: 9, dice: "", spared: "short" });
+  assert.deepEqual(D.fallPlan({ height: 25 }), { counted: 25, dice: "4d6", spared: "" });
+  // Two Cyberlegs: nothing up to 30, everything past it.
+  assert.deepEqual(D.fallPlan({ height: 30, legs: true }), { counted: 30, dice: "", spared: "legs" });
+  assert.deepEqual(D.fallPlan({ height: 31, legs: true }), { counted: 31, dice: "6d6", spared: "" });
+  // Skydrivers take 4 off: 12 counts as 8, 33 as 29 (and that's inside what the legs take).
+  assert.deepEqual(D.fallPlan({ height: 12, shorter: 4 }), { counted: 8, dice: "", spared: "short" });
+  assert.deepEqual(D.fallPlan({ height: 33, legs: true, shorter: 4 }), { counted: 29, dice: "", spared: "legs" });
+  assert.deepEqual(D.fallStep(25), { fell: 25, left: 0 });
+  assert.deepEqual(D.fallStep(100), { fell: 40, left: 60 });
+  assert.deepEqual(D.deathFromAbove({ damage: 14, body: 10, sp: 11 }), { dealt: 14, taken: 0 });
+  assert.deepEqual(D.deathFromAbove({ damage: 30, body: 10, sp: 11 }), { dealt: 21, taken: 9 });
+  assert.deepEqual(D.besideStep({ x: 0, y: 500 }, { x: 500, y: 500 }), { x: -1, y: 0 });
+  assert.deepEqual(D.besideStep({ x: 900, y: 100 }, { x: 500, y: 500 }), { x: 1, y: -1 });
+});
+
+test("falls at the table: held on the climb, 40 a Turn, Cyberlegs, a Broken Leg, Death From Above, the HUD", async () => {
+  asGM(true);
+  await Settings.set("stairs", true);
+  await Settings.set("climbing", true);
+  await Settings.set("levels", false);
+  Socket.on("climbDrop", (data, userId) => Climb._drop(data, userId));
+  Socket.on("climbDive", (data, userId) => Climb._dive(data, userId));
+  class Docs extends Map { [Symbol.iterator]() { return this.values(); } }
+  const scene = { id: "sc", grid: { size: 100, units: "m", distance: 2 }, tiles: new Docs(), tokens: new Docs(), walls: new Docs(), regions: [], flags: {} };
+  const tok = (id, { x = 0, y = 0, at = null, items = [], elevation = 0 } = {}) => {
+    const d = {
+      id, name: id, x, y, width: 1, height: 1, elevation: at ?? elevation, parent: scene, isOwner: true, actor: makeActor({ name: id }, items),
+      flags: { [M]: at === null ? {} : { climb: { kind: "tile", id: "foot", at, height: 60, total: 60, base: 0, to: "head" } } },
+      async setFlag(m, k, v) { (this.flags[m] ??= {})[k] = v; },
+      async unsetFlag(m, k) { delete this.flags[m]?.[k]; },
+      async update(data) { Object.assign(this, data); }
+    };
+    scene.tokens.set(id, d);
+    return d;
+  };
+  const prevScenes = game.scenes;
+  const prevCanvas = globalThis.canvas;
+  const prevTargets = game.user.targets;
+  game.scenes = { get: () => scene };
+  globalThis.canvas = { ...(prevCanvas ?? {}), scene, dimensions: { size: 100, distance: 2 }, grid: null };
+  const { Cards } = await import("../scripts/combat/cards.js");
+  const { Conditions } = await import("../scripts/conditions/engine.js");
+  const { NeonRuler } = await import("../scripts/ruler/ruler.js");
+  const { Registry } = await import("../scripts/conditions/registry.js");
+  Registry.refresh();
+  const cards = [];
+  const hurt = [];
+  const added = [];
+  const prev = { check: Climb.check, post: Cards.post, damage: Cards.damage, add: Conditions.add, cb: NeonRuler.combatantOf, ask: Climb.askDrop, roll: Conditions.roll };
+  Cards.post = async (c) => { cards.push(c.kicker); };
+  Cards.damage = async (actor, d) => { hurt.push([actor.name, d.amount, !!d.armor]); };
+  Conditions.add = async (id, actor) => { added.push([id, actor.name]); return []; };
+  Conditions.roll = async (formula) => ({ total: Number(formula.split("d")[0]) * 3, roll: {} });
+  let fighting = new Set();
+  NeonRuler.combatantOf = (doc) => (fighting.has(doc.id) ? { id: `c-${doc.id}`, tokenId: doc.id, token: doc } : null);
+  let totals = [];
+  Climb.check = async () => {
+    const total = totals.shift() ?? 0;
+    return { total, base: 0, die: total, text: String(total) };
+  };
+  try {
+    // Dragged off the climb, 14 m up: the move is stopped and the mover asked. Climbing itself goes on.
+    const ana = tok("Ana", { at: 14 });
+    const asked = [];
+    Climb.askDrop = async (doc, to, height) => { asked.push([doc.id, to.x, to.y, height]); };
+    assert.equal(Climb.hold(ana, { x: 100 }, {}, game.user.id), false);
+    assert.deepEqual(asked, [["Ana", 100, 0, 14]]);
+    assert.equal(Climb.hold(ana, { x: 100 }, { [M]: { climb: true } }, game.user.id), true, "the climb's own moves");
+    assert.equal(Climb.hold(ana, { x: 100 }, { [M]: { carried: true } }, game.user.id), true, "carried by whoever holds them");
+    assert.equal(Climb.hold(ana, { elevation: 3 }, {}, game.user.id), true, "not a move");
+    assert.equal(Climb.hold(tok("Foot", { at: 0 }), { x: 100 }, {}, game.user.id), true, "at the foot: just steps off");
+    // They say yes, out of a fight: down at once where they were moved. 14 m: 2d6, armor soaks, DV15 for the leg.
+    totals = [16];
+    await Climb.drop(ana, { x: 100, y: 0 });
+    assert.deepEqual([ana.x, ana.elevation, Climb.state(ana), Climb.falling(ana)], [100, 0, null, null]);
+    assert.deepEqual(hurt.pop(), ["Ana", 6, true]);
+    assert.deepEqual(added, [], "beat DV15: no Broken Leg");
+    assert.equal(cards.at(-1), "Landed");
+    // In a fight, from 55 m: in the air till the end of their Turn, 40 down, then the ground at the end of the next.
+    const ben = tok("Ben", { at: 55 });
+    fighting = new Set(["Ben"]);
+    totals = [15];
+    await Climb.drop(ben, { x: 200, y: 0 });
+    assert.deepEqual([ben.x, ben.elevation, Climb.falling(ben).left, cards.at(-1)], [200, 55, 55, "Falling"]);
+    assert.deepEqual(await Climb.fallOn(ben), { landed: false, left: 15 });
+    assert.equal(ben.elevation, 15);
+    assert.deepEqual(await Climb.fallOn(ben), { landed: true, left: 0 });
+    assert.deepEqual([ben.elevation, Climb.falling(ben)], [0, null]);
+    assert.deepEqual(hurt.pop(), ["Ben", 30, true], "55 m: 10d6");
+    assert.deepEqual(added.pop(), ["brokenLeg", "Ben"], "15 doesn't beat DV15");
+    fighting = new Set();
+    // Two Cyberlegs: 28 m is nothing, 31 m is everything.
+    const legs = [{ name: "Cyberleg", type: "cyberware", system: { isInstalled: true } }, { name: "Cyberleg", type: "cyberware", system: { isInstalled: true } }];
+    const cy = tok("Cy", { at: 28, items: legs });
+    await Climb.drop(cy, { x: 300, y: 0 });
+    assert.deepEqual([hurt.length, added.length], [0, 0]);
+    cy.flags[M].climb = { kind: "tile", id: "foot", at: 31, height: 60, total: 60, base: 0, to: "head" };
+    totals = [16];
+    await Climb.drop(cy, { x: 300, y: 0 });
+    assert.deepEqual(hurt.pop(), ["Cy", 18, true]);
+    // Death From Above: a borg with PanzerFaust lets go onto the square Eve stands on, from 20 m.
+    const borg = [{ name: "FBC Alpha", type: "cyberware", system: { isInstalled: true } }, { name: "Martial Arts (PanzerFaust)", type: "skill", system: { level: 6, stat: "dex" } }];
+    const dan = tok("Dan", { at: 20, items: borg });
+    const eve = tok("Eve", { x: 400, y: 0 });
+    assert.ok(Climb.panzer(dan.actor));
+    assert.equal(Climb.panzer(ana.actor), null);
+    totals = [16];
+    await Climb.drop(dan, { x: 400, y: 0 });
+    // 4d6 = 12; BODY 6 + SP 11 take all of it: Eve takes 12 to HP and is Prone, Dan nothing and no leg Check.
+    assert.deepEqual(hurt.splice(0), [["Eve", 12, false]]);
+    assert.deepEqual(added.splice(0), [["prone", "Eve"]]);
+    assert.equal(cards.at(-1), "Death From Above");
+    // From 50 m: 10d6 = 30; 17 into Eve, 13 left for Dan, and the leg Check.
+    dan.flags[M].climb = { kind: "tile", id: "foot", at: 50, height: 60, total: 60, base: 0, to: "head" };
+    dan.x = 0;
+    totals = [16, 10];
+    await Climb.drop(dan, { x: 400, y: 0 });
+    assert.deepEqual(hurt.splice(0), [["Eve", 17, false], ["Dan", 13, false]]);
+    assert.deepEqual(added.splice(0), [["brokenLeg", "Dan"], ["prone", "Eve"]]);
+    // The Check fails: an ordinary landing, and Eve is fine.
+    dan.flags[M].climb = { kind: "tile", id: "foot", at: 20, height: 60, total: 60, base: 0, to: "head" };
+    dan.x = 0;
+    totals = [15, 16];
+    await Climb.drop(dan, { x: 400, y: 0 });
+    assert.deepEqual(hurt.splice(0), [["Dan", 12, true]]);
+    assert.deepEqual(added.splice(0), []);
+    // From a height, on a target: offered on the HUD while Eve is targeted, 12 m below and 6 m off.
+    dan.x = 700;
+    dan.elevation = 12;
+    game.user.targets = new Set([{ id: "Eve", document: eve }]);
+    const dive = Climb.diveFor(dan);
+    assert.deepEqual([dive.target.id, dive.up, dive.across], ["Eve", 12, 6]);
+    assert.deepEqual(Climb.entries(dan.actor, dan).map((e) => e.run), ["climb:dive:Eve"]);
+    dan.elevation = 8;
+    assert.equal(Climb.diveFor(dan), null, "under 10: not a fall that hurts");
+    dan.elevation = 12;
+    dan.x = 2000;
+    assert.equal(Climb.diveFor(dan), null, "further off than their MOVE");
+    dan.x = 700;
+    totals = [16];
+    await Climb.act(dan, "climb:dive:Eve");
+    assert.deepEqual([dan.x, dan.y, dan.elevation], [500, 0, 0], "down beside her, on the side he came from");
+    assert.deepEqual(hurt.splice(0), [["Eve", 6, false]]);
+    // Off a floor with a height. A 20 m roof (its own plan), and a tower: ground and 12 m floor side by side, with an opening.
+    await Settings.set("levels", true);
+    const rect = (x, y, width, height) => ({ type: "rectangle", x, y, width, height });
+    scene.regions = [
+      { id: "roof", shapes: [rect(3000, 0, 500, 500)] },
+      { id: "g", shapes: [rect(5000, 0, 1000, 1000)] }, { id: "f2", shapes: [rect(7000, 0, 1000, 1000)] },
+      { id: "hole", shapes: [rect(7400, 400, 200, 200)] }
+    ];
+    scene.flags[M] = { floors: [{ region: "roof", stack: "", height: 20 }, { region: "g", stack: "Tower", height: 0 }, { region: "f2", stack: "Tower", height: 12 }], openings: ["hole"] };
+    const gus = tok("Gus", { x: 3400, y: 200 });
+    assert.equal(Climb.ledge(gus, { x: 3300, y: 200 }), null, "still on the roof");
+    assert.deepEqual(Climb.ledge(gus, { x: 3500, y: 200 }), { drop: 20, land: { x: 3500, y: 200 }, opening: false });
+    gus.elevation = 5;
+    assert.equal(Climb.ledge(gus, { x: 3500, y: 200 }), null, "a token with its own elevation: flying, not asked");
+    gus.elevation = 0;
+    const edges = [];
+    const prevLedge = Climb.askLedge;
+    Climb.askLedge = async (doc, to, edge) => { edges.push([doc.id, edge.drop]); };
+    assert.equal(Climb.hold(gus, { x: 3500 }, {}, game.user.id), false);
+    assert.deepEqual(edges, [["Gus", 20]]);
+    assert.equal(Climb.hold(gus, { x: 3500 }, { [M]: { ledge: true } }, game.user.id), true, "move without falling");
+    assert.equal(Climb.hold(gus, { x: 3300 }, {}, game.user.id), true);
+    Climb.askLedge = prevLedge;
+    // They fall: 20 m, 4d6.
+    totals = [16];
+    await Socket.request("climbDrop", { scene: "sc", token: "Gus", x: 3500, y: 200 });
+    assert.deepEqual([gus.x, gus.elevation], [3500, 0]);
+    assert.deepEqual(hurt.splice(0), [["Gus", 12, true]]);
+    // The tower's upper floor: across to the ground floor's plan is a reposition; into the opening is 12 m down onto it.
+    const hal = tok("Hal", { x: 7200, y: 400 });
+    assert.equal(Climb.ledge(hal, { x: 5200, y: 400 }), null);
+    assert.deepEqual(Climb.ledge(hal, { x: 7400, y: 400 }), { drop: 12, land: { x: 5400, y: 400 }, opening: true });
+    totals = [16];
+    await Socket.request("climbDrop", { scene: "sc", token: "Hal", x: 7400, y: 400 });
+    assert.deepEqual([hal.x, hal.y, hal.elevation], [5400, 400, 0], "on the floor below, at the same spot of its plan");
+    assert.deepEqual(hurt.splice(0), [["Hal", 6, true]]);
+    await Settings.set("levelsFalls", false);
+    assert.equal(Climb.ledge(gus, { x: 3300, y: 200 }), null);
+    await Settings.set("levelsFalls", true);
+    await Settings.set("levels", false);
+    scene.regions = [];
+    // The Action HUD: one Climb entry with a button for each thing to do.
+    const fay = tok("Fay", { at: 5 });
+    const rows = Climb.entries(fay.actor, fay);
+    assert.deepEqual(rows.map((e) => [e.key, e.buttons.map((b) => b.key)]), [["climb:menu", ["climb:up", "climb:down"]]]);
+  } finally {
+    game.scenes = prevScenes;
+    globalThis.canvas = prevCanvas;
+    game.user.targets = prevTargets;
+    Climb.check = prev.check;
+    Climb.askDrop = prev.ask;
+    Cards.post = prev.post;
+    Cards.damage = prev.damage;
+    Conditions.add = prev.add;
+    Conditions.roll = prev.roll;
+    NeonRuler.combatantOf = prev.cb;
+    await Settings.set("levels", true);
+  }
+});

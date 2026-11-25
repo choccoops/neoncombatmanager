@@ -908,6 +908,7 @@
   padding: 3px 4px; background: rgba(13, 13, 21, 0.9); border: 1px solid var(--ncm-line);
 }
 #ncm-action-hud .ncm-ah-weapon img { width: 30px; height: 30px; object-fit: contain; border: 0; }
+#ncm-action-hud .ncm-ah-weapon .ncm-ah-wicon { width: 30px; text-align: center; font-size: 18px; color: var(--ncm-cyan, #05d9e8); }
 #ncm-action-hud .ncm-ah-wname { display: grid; min-width: 0; }
 #ncm-action-hud .ncm-ah-wname b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; color: #fff; }
 #ncm-action-hud .ncm-ah-wname small { font-family: var(--ncm-display); font-size: 10px; letter-spacing: 0.08em; color: var(--ncm-cyan); }

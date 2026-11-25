@@ -95,6 +95,10 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
     out.turn.splice(3, 0, { key: "turn:stealth", run: `sk:${stealth.id}`, label: stealth.name, sub: `+${base}`, icon: "fa-solid fa-user-ninja", alert: myTurn });
   }
 
+  // Standing on stairs, a ladder or a door: take it. Climbing, and Death From Above from a height.
+  out.turn.push(...Stairs.entries(actor, token));
+  out.turn.push(...Climb.entries(actor, token));
+
   // Weapons.
   for (const w of weaponsOf(actor)) {
     const s = w.system ?? {};
@@ -149,9 +153,6 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   out.weapons.push(...Senses.entries(actor, token));
   // Linked areas: look across to the far one (a scope that reaches the linked distance).
   out.weapons.push(...Far.entries(actor, token));
-  // Standing on stairs, a ladder or a door: take it.
-  out.weapons.push(...Stairs.entries(actor, token));
-  out.weapons.push(...Climb.entries(actor, token));
   // Grab, Human Shield, let go.
   out.weapons.push(...Hold.entries(actor, token));
   // The GM, with a cloaked token in hand: a secret Perception for everyone looking its way.

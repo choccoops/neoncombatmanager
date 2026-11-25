@@ -18,7 +18,7 @@
           {{#each this.entries}}
           {{#if this.buttons}}
           <div class="ncm-ah-weapon{{#if this.alert}} is-alert{{/if}}">
-            <img src="{{this.img}}" alt="">
+            {{#if this.img}}<img src="{{this.img}}" alt="">{{else}}<i class="ncm-ah-wicon {{this.icon}}"></i>{{/if}}
             <div class="ncm-ah-wname"><b>{{this.label}}</b>{{#if this.sub}}<small>{{this.sub}}</small>{{/if}}</div>
             <div class="ncm-ah-modes">
               {{#each this.buttons}}<button type="button" class="{{#if this.on}}is-on{{/if}}" data-run="{{this.key}}" data-tooltip="{{this.label}}" aria-label="{{this.label}}"><i class="{{this.icon}}"></i></button>{{/each}}

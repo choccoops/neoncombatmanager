@@ -1,5 +1,51 @@
 # Changelog
 
+## 1.50.0
+
+- **Falls follow the book (corebook pg. 181).** Anyone who comes off a climb now falls by the
+  rules, and the module rolls it:
+  - **In a fight** a falling character stays in the air and falls 40 m/yds at the end of each
+    of their own Turns, so a fall of 40 or less lands at the end of their Turn. Out of a
+    fight, or when the fight ends, they land at once.
+  - **Landing:** under 10 m/yds, nothing. Otherwise 2d6 for every 10, soaked by body armor,
+    and a DEX + Athletics Check against DV15 rolled for them; failed, they get the Broken
+    Leg Critical Injury.
+  - **Two Cyberlegs** (two of them, or a pair sold as one item) take no damage and no Broken
+    Leg from a fall of 30 m/yds or less. **Skydrivers** take 4 m/yds off any fall.
+  - **A Grapple Hand or Grapple Gun** keeps a climber on the ladder with no Check, now also
+    when a leap past someone misses.
+- **A falling token shows where it comes down.** The square it lands on gets hazard stripes
+  and a warning sign, and a red gauge beside it shows how far up it still is, the same way
+  the ladder gauge does. Both go when it lands.
+- **Moving a token off a floor asks first, and falls.** With Levels on, a token moved off the
+  edge of a floor that has a height (onto the map, or somewhere 3 m/yds or more lower) or
+  into an opening in it stays put, and whoever moved it chooses: **Fall**, **Move without
+  falling** (a bridge, a ramp, the GM setting the table) or **Stay**. Into an opening it
+  comes down on the floor below, at the same spot of that floor's plan. The fall shows the
+  same landing warning and gauge. Moves between the floors of one building and tokens with
+  an elevation of their own aren't asked. New setting **Levels: falling off a floor**, on
+  by default.
+- **Moving a climber off the climb asks first.** A token above the ground on a ladder or wall
+  that is dragged or keyed off it stays put, and whoever moved it gets a warning: letting go
+  means falling that way and landing where it was moved. Confirm and it falls; cancel and it
+  stays on the climb. At the foot it steps off as before.
+- **Death From Above (PanzerFaust, the 2070 rules).** For a character in a Full Body
+  Conversion with a PanzerFaust skill:
+  - Letting go of a climb onto someone's square, or with them targeted beside it, tries it
+    on landing.
+  - From any height (a climb, a higher floor, the token's own elevation): with one target
+    10 m/yds or more below and no further off across the plan than their MOVE, the Action
+    HUD's Turn section offers **Death From Above**. They come down beside the target.
+  - On landing: DEX + PanzerFaust against DV15. Made, the fall's damage is cut by BODY plus
+    body armor SP; what that takes off goes straight to the target's HP (a person also falls
+    Prone); what's left goes straight to the faller's HP, and with nothing left there's no
+    Broken Leg Check. Failed, it's an ordinary landing.
+- **Climb sits in the Action HUD's Turn section**, as one entry with a button for each thing
+  to do (up, down, throw off, leap past), instead of separate entries among the weapons.
+  Taking stairs, a ladder or a door moved there too.
+- **The DV display shows on climbers drawn apart on a ladder**, at its normal size beside the
+  shrunk token.
+
 ## 1.49.1
 
 - **Climbers drawn apart on a ladder can be clicked.** With two or more on one ladder, each
