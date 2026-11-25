@@ -8,7 +8,7 @@ import { Levels } from "./levels.js";
 import { NeonRuler } from "../ruler/ruler.js";
 import { Turns } from "../combat/turns.js";
 import { STAIRS_FLAG, KIND_ICON, landing } from "./stairs-data.js";
-import { CLIMB_FLAG, WALL_FLAG, GAP, LEAP_DV, CATCH_DV, factorOf, stretch, aheadOf, heightAt, across, toSegment, elevationAfter, d10Total, within, inFront, beats, leapTo, fallDice, fanOffset } from "./climb-data.js";
+import { CLIMB_FLAG, WALL_FLAG, GAP, LEAP_DV, CATCH_DV, factorOf, stretch, aheadOf, heightAt, across, toSegment, elevationAfter, d10Total, within, inFront, beats, leapTo, fallDice, fanLayout } from "./climb-data.js";
 import { Conditions } from "../conditions/engine.js";
 import { Cards } from "../combat/cards.js";
 import { L, esc, debounce } from "../util.js";
@@ -302,22 +302,55 @@ export const Climb = {
 
   /**
    * Several climbers on a ladder stand on the same square. Each one above the lowest is drawn a
-   * step further up the map, to alternate sides, so every token can be seen, clicked and targeted.
-   * Only where it's drawn: the token is still on the ladder's square.
+   * step further up the map, to alternate sides, so every token can be seen, clicked and targeted;
+   * from three climbers on they're drawn smaller too. Only where and how big it's drawn: the token
+   * is still on the ladder's square, at its own size.
    */
   fan(token) {
     try {
-      if (!this.on || token?.isPreview || !this.state(token)) return;
+      if (!token || token.isPreview) return;
       const doc = token.document;
       const w = token.w ?? 100;
       const h = token.h ?? 100;
-      const { dx, dy } = fanOffset(this.rankOf(token), w, h);
-      if (!dx && !dy) return;
-      token.position.set(doc.x + dx, doc.y + dy);
-      token.mesh?.position?.set(doc.x + dx + w / 2, doc.y + dy + h / 2);
+      const st = this.on ? this.state(token) : null;
+      const count = st?.kind === "tile" ? this.rivals(doc).length + 1 : 1;
+      const lay = st ? fanLayout(this.rankOf(token), count, w, h) : { scale: 1, dx: 0, dy: 0 };
+      const was = token._ncmFan;
+      if (lay.scale === 1 && !lay.dx && !lay.dy) {
+        if (!was) return;
+        // Off the ladder, or alone on it again: back to its own place and size.
+        delete token._ncmFan;
+        token.scale?.set?.(1);
+        this.meshScale(token, was, 1);
+        token.position.set(doc.x, doc.y);
+        token.mesh?.position?.set(doc.x + w / 2, doc.y + h / 2);
+        return;
+      }
+      const x = doc.x + lay.dx;
+      const y = doc.y + lay.dy;
+      token.scale?.set?.(lay.scale);
+      token.position.set(x, y);
+      token._ncmFan = this.meshScale(token, was, lay.scale);
+      token.mesh?.position?.set(x + (w * lay.scale) / 2, y + (h * lay.scale) / 2);
     } catch {
       /* drawn where it stands */
     }
+  },
+
+  /**
+   * The token's picture, at a share of the size Foundry gave it. Foundry only sets that size now
+   * and then, so what we last set is remembered: a picture still at our size is scaled from the
+   * size it had before, not shrunk again.
+   * @returns {{ bx, by, ax, ay }} the size it had (b) and the size it's drawn at (a).
+   */
+  meshScale(token, was, scale) {
+    const m = token.mesh?.scale;
+    if (!m) return { bx: 1, by: 1, ax: scale, ay: scale };
+    const ours = was && Math.abs(m.x - was.ax) < 1e-6 && Math.abs(m.y - was.ay) < 1e-6;
+    const bx = ours ? was.bx : m.x;
+    const by = ours ? was.by : m.y;
+    m.set(bx * scale, by * scale);
+    return { bx, by, ax: bx * scale, ay: by * scale };
   },
 
   /* ---------------------------------------- */
@@ -548,6 +581,8 @@ export const Climb = {
         for (const t of g.tokens) t.renderFlags?.set?.({ refreshPosition: true });
       }
     }
+    // And whoever has left a ladder: back to their own place and size.
+    for (const t of canvas.tokens?.placeables ?? []) if (t._ncmFan && !this.state(t)) t.renderFlags?.set?.({ refreshPosition: true });
     if (!n) {
       layer.destroy();
       return 0;
