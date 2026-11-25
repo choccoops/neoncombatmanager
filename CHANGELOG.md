@@ -8,6 +8,7 @@
   Foundry writes all of those as labels. They're light now, with hints in the soft grey and the
   active tab in cyan. Foundry's newer windows in general also take the look's colours whichever
   colour scheme the browser asks for.
+  Ticked boxes in those windows, which the system's dark mode drew near-black, are cyan.
 
 ## 1.46.1
 

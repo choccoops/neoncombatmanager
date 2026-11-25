@@ -334,3 +334,7 @@ html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-con
 html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(a, button, nav) label { color: inherit; }
 html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(nav.tabs, nav.sheet-tabs) > :is(a, .item, [data-tab]):not(.active) { color: var(--ncm-soft); }
 html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-content :is(nav.tabs, nav.sheet-tabs):not(.cpr-tabs) > :is(a, .item, [data-tab]).active { color: var(--ncm-cyan); }
+
+/* Tick boxes in Foundry's newer windows: the system paints a ticked one near-black in its dark mode. */
+html.ncm-neon-theme.ncm-neon-theme .application:not(.neon-combat) input[type="checkbox"]::before { color: var(--ncm-soft); }
+html.ncm-neon-theme.ncm-neon-theme .application:not(.neon-combat) input[type="checkbox"]:checked::before { color: var(--ncm-cyan); }
