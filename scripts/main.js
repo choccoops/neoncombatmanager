@@ -355,6 +355,8 @@ const api = {
     /** Climb a stretch: { dir: "up"|"down", line: by a grapple line }. */
     go: (token, options) => Climb.go(token, options),
     state: (token) => Climb.state(token),
+    /** A chase on a ladder: kind "throw" (with the target token's id) or "leap". */
+    contest: (token, kind, target) => Climb.contest(token, kind, target),
     /** GM: make walls climbable ({ height, over }), or plain again with height 0. */
     setWalls: (walls, options) => Climb.setWalls(walls, options)
   },

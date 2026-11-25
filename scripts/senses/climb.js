@@ -8,7 +8,9 @@ import { Levels } from "./levels.js";
 import { NeonRuler } from "../ruler/ruler.js";
 import { Turns } from "../combat/turns.js";
 import { STAIRS_FLAG, KIND_ICON, landing } from "./stairs-data.js";
-import { CLIMB_FLAG, WALL_FLAG, GAP, factorOf, stretch, aheadOf, heightAt, across, toSegment, elevationAfter } from "./climb-data.js";
+import { CLIMB_FLAG, WALL_FLAG, GAP, LEAP_DV, CATCH_DV, factorOf, stretch, aheadOf, heightAt, across, toSegment, elevationAfter, d10Total, within, inFront, beats, leapTo, fallDice, fanOffset } from "./climb-data.js";
+import { Conditions } from "../conditions/engine.js";
+import { Cards } from "../combat/cards.js";
 import { L, esc, debounce } from "../util.js";
 
 /**
@@ -36,12 +38,15 @@ export const Climb = {
   },
 
   init() {
+    const soon = debounce(() => this.draw(), 120);
     Socket.on("climbGo", (data, userId) => this._go(data, userId));
+    Socket.on("climbContest", (data, userId) => this._contest(data, userId));
+    Hooks.on("refreshToken", (token) => this.fan(token));
+    Hooks.on("targetToken", () => soon());
     Stairs.providers.push((token) => this.promptFor(token));
     Hooks.on("getSceneControlButtons", (controls) => Compat.addSceneTools(controls, [
       { name: "ncm-climb-wall", title: `${LANG}.Climb.WallTool`, icon: "fa-solid fa-water-ladder", order: 120, visible: !!game.user?.isGM, onClick: () => this.markWalls() }
     ], "walls"));
-    const soon = debounce(() => this.draw(), 120);
     for (const h of ["canvasReady", "updateToken", "deleteToken", "createTile", "updateTile", "deleteTile", "updateWall", "deleteWall", "updateScene", `${MODULE_ID}.fxChanged`]) Hooks.on(h, () => soon());
     Hooks.on("canvasTearDown", () => this.clear());
     Hooks.on("updateToken", (doc, changed, options) => {
@@ -138,6 +143,8 @@ export const Climb = {
     const line = !this.sure(token.actor) && this.hasLine(token.actor);
     const buttons = c.options.map((o) => ({ label: o.label, run: () => this.go(token, { dir: o.dir }) }));
     if (line) buttons.push(...c.options.map((o) => ({ label: L(`${LANG}.Climb.ByLine`, { dir: o.label }), quiet: true, run: () => this.go(token, { dir: o.dir, line: true }) })));
+    // On a ladder with someone within reach: throw them off, or leap past the one in front.
+    for (const m of this.moves(token)) buttons.push({ label: m.label, quiet: true, run: () => this.contest(token, m.kind, m.target) });
     return { key: `climb:${doc.id}:${st?.id ?? ""}:${st?.at ?? ""}:${doc.x}:${doc.y}`, icon: c.icon, name: token.name ?? doc.name ?? "", text: c.text, buttons };
   },
 
@@ -145,7 +152,172 @@ export const Climb = {
     const tok = token?.object ?? token ?? actor?.getActiveTokens?.()[0] ?? null;
     const c = tok ? this.choices(tok) : null;
     if (!c) return [];
-    return c.options.map((o) => ({ key: `climb:${o.dir}`, label: o.label, sub: c.text, icon: c.icon, alert: true }));
+    return [
+      ...c.options.map((o) => ({ key: `climb:${o.dir}`, label: o.label, sub: c.text, icon: c.icon, alert: true })),
+      ...this.moves(tok).map((m) => ({ key: `climb:${m.kind}:${m.target ?? ""}`, label: m.label, sub: m.sub, icon: m.kind === "leap" ? "fa-solid fa-person-running" : "fa-solid fa-hand-fist" }))
+    ];
+  },
+
+  /** An Action HUD key: "up", "down", "throw:<token id>", "leap". */
+  act(token, key) {
+    const [, what, target] = String(key).split(":");
+    if (what === "throw" || what === "leap") return this.contest(token, what, target || null);
+    return this.go(token, { dir: what });
+  },
+
+  /* ---------------------------------------- */
+  /*  Chases: throwing off, leaping past      */
+  /* ---------------------------------------- */
+
+  /** Everyone else on the same ladder: [{ id, at, name }]. */
+  rivals(token) {
+    const doc = this.doc(token);
+    const st = this.state(doc);
+    if (!st || st.kind !== "tile") return [];
+    return [...(doc.parent?.tokens ?? [])].filter((t) => t.id !== doc.id && this.state(t)?.id === st.id).map((t) => ({ id: t.id, at: this.state(t).at, name: t.name ?? "" }));
+  },
+
+  /** What a climber can try on the others: [{ kind: "throw"|"leap", target, label, sub }]. */
+  moves(token) {
+    const st = this.state(token);
+    if (!this.on || !st || st.kind !== "tile" || Settings.get("climbContests") === false) return [];
+    const rivals = this.rivals(token);
+    const out = within(st.at, rivals).map((r) => ({ kind: "throw", target: r.id, label: L(`${LANG}.Climb.Throw`, { name: r.name }), sub: L(`${LANG}.Climb.ThrowSub`) }));
+    const front = inFront(st.at, rivals);
+    if (front && leapTo({ front: front.at, total: st.total, others: rivals.map((r) => r.at) })) out.push({ kind: "leap", target: front.id, label: L(`${LANG}.Climb.Leap`, { name: front.name }), sub: L(`${LANG}.Climb.LeapSub`, { dv: LEAP_DV }) });
+    return out;
+  },
+
+  async contest(token, kind, target = null) {
+    const doc = this.doc(token);
+    if (!doc?.parent) return null;
+    const r = await Socket.request("climbContest", { scene: doc.parent.id, token: doc.id, kind, target });
+    Hooks.callAll(`${MODULE_ID}.fxChanged`);
+    return r;
+  },
+
+  /** STAT + Skill + 1d10 (a 10 or a 1 rolls on), rolled here: { total, base, die, text }. */
+  async check(actor, stat, skillName) {
+    const level = Number(CPR.skill(actor, skillName)?.system?.level) || 0;
+    const base = (Number(CPR.stat(actor, stat)) || 0) + level;
+    const first = (await Conditions.roll("1d10", actor)).total;
+    const second = first === 10 || first === 1 ? (await Conditions.roll("1d10", actor)).total : 0;
+    const die = d10Total(first, second);
+    return { total: base + die, base, die, text: `${base} + ${second ? `${first}${first === 10 ? "+" : "−"}${second}` : first} = ${base + die}` };
+  },
+
+  /** GM's client: a climber comes off a ladder. The height fallen, the damage, and what else the book asks for go on a card. */
+  async fall(doc, st, { why = "" } = {}) {
+    const height = Math.round(heightAt(st) * 10) / 10;
+    await doc.unsetFlag(MODULE_ID, CLIMB_FLAG);
+    await doc.update({ elevation: st.base }, this.opts());
+    const unit = this.unit(doc);
+    const dice = fallDice(height);
+    let body = `<p>${why}</p><p>${L(`${LANG}.Climb.Fall.${dice ? "Hurt" : "Short"}`, { name: esc(doc.name ?? ""), height, unit })}</p>`;
+    if (dice && doc.actor) {
+      const roll = await Conditions.roll(dice, doc.actor);
+      body += `<p>${L(`${LANG}.Climb.Fall.Damage`, { dice, total: roll.total })}</p>`;
+      await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Ladder`), body, tone: "pink" });
+      await Cards.damage(doc.actor, { amount: roll.total, roll: roll.roll ? { formula: dice, total: roll.total } : null, armor: true, reason: L(`${LANG}.Climb.Fall.Title`) });
+    } else await Cards.post({ actor: doc.actor ?? null, title: L(`${LANG}.Climb.Fall.Title`), kicker: L(`${LANG}.Climb.Ladder`), body, tone: "pink" });
+    return height;
+  },
+
+  /** GM's client: a throw (Brawling against Brawling) or a leap (Athletics against the DV), rolled and carried out. */
+  async _contest({ scene, token, kind, target = null }, userId) {
+    const sc = game.scenes?.get?.(scene) ?? canvas?.scene;
+    const doc = sc?.tokens?.get(token);
+    const user = game.users?.get?.(userId) ?? game.user;
+    if (!this.on || !doc?.actor || !(user?.isGM || doc.testUserPermission?.(user, "OWNER") || doc.isOwner)) return null;
+    const st = this.state(doc);
+    const moves = this.moves(doc);
+    const move = moves.find((m) => m.kind === kind && (!target || m.target === target));
+    if (!st || !move) return null;
+    const other = sc.tokens.get(move.target);
+    const ost = this.state(other);
+    const name = esc(doc.name ?? "");
+    const oname = esc(other?.name ?? "");
+    if (kind === "throw") {
+      if (!other?.actor || !ost) return null;
+      const a = await this.check(doc.actor, "dex", "Brawling");
+      const d = await this.check(other.actor, "dex", "Brawling");
+      const won = beats(a.total, d.total);
+      let body = `<p>${L(`${LANG}.Climb.Card.Throw`, { name, other: oname })}</p><p><b>${name}</b>: ${a.text}<br><b>${oname}</b>: ${d.text}</p>`;
+      if (!won) {
+        await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Card.Held`), body: `${body}<p>${L(`${LANG}.Climb.Card.HeldText`, { other: oname })}</p>`, tone: "cyan" });
+        return { kind, won: false };
+      }
+      // Off the ladder: one grab at it on the way (DV15 Athletics; none needed with a grapple).
+      const grapple = this.hasLine(other.actor);
+      const save = grapple ? null : await this.check(other.actor, "dex", "Athletics");
+      const caught = grapple || beats(save.total, CATCH_DV);
+      body += `<p>${grapple ? L(`${LANG}.Climb.Card.Grapple`, { other: oname }) : L(`${LANG}.Climb.Card.Catch`, { other: oname, dv: CATCH_DV, roll: save.text })}</p>`;
+      if (caught) {
+        await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Card.Caught`), body: `${body}<p>${L(`${LANG}.Climb.Card.CaughtText`, { other: oname })}</p>`, tone: "cyan" });
+        return { kind, won: true, fell: false };
+      }
+      await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Card.ThrowTitle`), kicker: L(`${LANG}.Climb.Card.Thrown`), body, tone: "pink" });
+      await this.fall(other, ost, { why: L(`${LANG}.Climb.Card.ThrownText`, { name, other: oname }) });
+      return { kind, won: true, fell: true };
+    }
+    if (kind === "leap") {
+      if (!ost) return null;
+      const land = leapTo({ front: ost.at, total: st.total, others: this.rivals(doc).map((r) => r.at) });
+      if (!land) return null;
+      const a = await this.check(doc.actor, "dex", "Athletics");
+      const made = beats(a.total, LEAP_DV);
+      const body = `<p>${L(`${LANG}.Climb.Card.Leap`, { name, other: oname, dv: LEAP_DV })}</p><p><b>${name}</b>: ${a.text}</p>`;
+      if (!made) {
+        await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Card.LeapTitle`), kicker: L(`${LANG}.Climb.Card.Missed`), body, tone: "pink" });
+        await this.fall(doc, st, { why: L(`${LANG}.Climb.Card.MissedText`, { name }) });
+        return { kind, won: false, fell: true };
+      }
+      await Cards.post({ actor: doc.actor, title: L(`${LANG}.Climb.Card.LeapTitle`), kicker: L(`${LANG}.Climb.Card.Past`), body: `${body}<p>${L(`${LANG}.Climb.Card.PastText`, { name, other: oname })}</p>`, tone: "cyan" });
+      if (land.done) {
+        const size = Stairs.sizeOf(doc);
+        const head = sc.tiles?.get(st.to);
+        const foot = sc.tiles?.get(st.id);
+        await doc.unsetFlag(MODULE_ID, CLIMB_FLAG);
+        await doc.update({ ...(head ? landing(head, size.w, size.h) : {}), elevation: elevationAfter({ base: st.base, height: st.height, floorFrom: foot ? this.floorAt(this.mid(foot), sc) : 0, floorTo: head ? this.floorAt(this.mid(head), sc) : 0 }) }, this.opts());
+      } else {
+        await doc.setFlag(MODULE_ID, CLIMB_FLAG, { ...st, at: land.at });
+        await doc.update({ elevation: Math.round((st.base + land.at) * 10) / 10 }, this.opts());
+      }
+      return { kind, won: true, at: land.at, done: land.done };
+    }
+    return null;
+  },
+
+  /* ---------------------------------------- */
+  /*  Climbers that share a square            */
+  /* ---------------------------------------- */
+
+  /** A climber's place in the line on its ladder, from the lowest (0) up. */
+  rankOf(token) {
+    const doc = this.doc(token);
+    const st = this.state(doc);
+    if (!st || st.kind !== "tile") return 0;
+    return this.rivals(doc).filter((r) => r.at < st.at || (r.at === st.at && r.id < doc.id)).length;
+  },
+
+  /**
+   * Several climbers on a ladder stand on the same square. Each one above the lowest is drawn a
+   * step further up the map, to alternate sides, so every token can be seen, clicked and targeted.
+   * Only where it's drawn: the token is still on the ladder's square.
+   */
+  fan(token) {
+    try {
+      if (!this.on || token?.isPreview || !this.state(token)) return;
+      const doc = token.document;
+      const w = token.w ?? 100;
+      const h = token.h ?? 100;
+      const { dx, dy } = fanOffset(this.rankOf(token), w, h);
+      if (!dx && !dy) return;
+      token.position.set(doc.x + dx, doc.y + dy);
+      token.mesh?.position?.set(doc.x + dx + w / 2, doc.y + dy + h / 2);
+    } catch {
+      /* drawn where it stands */
+    }
   },
 
   /* ---------------------------------------- */
@@ -372,6 +544,8 @@ export const Climb = {
       for (const g of groups.values()) {
         layer.addChild(this.gauge(g, unit));
         n += 1;
+        // The line may have changed: draw each climber in its place again.
+        for (const t of g.tokens) t.renderFlags?.set?.({ refreshPosition: true });
       }
     }
     if (!n) {
@@ -409,6 +583,14 @@ export const Climb = {
     return box;
   },
 
+  /** A face on the gauge was clicked: select the token (yours) or target it (anyone's). */
+  pick(token, { target = false, add = false } = {}) {
+    const mine = (token.isOwner || game.user?.isGM) && !target;
+    if (mine) return token.control?.({ releaseOthers: !add });
+    const on = ![...(game.user?.targets ?? [])].includes(token);
+    return token.setTarget?.(on, { releaseOthers: !add });
+  },
+
   /** A ladder drawn beside the climb, as long as the climb is high, with everyone on it where they are. */
   gauge({ st, tokens }, unit) {
     const first = tokens[0];
@@ -435,7 +617,9 @@ export const Climb = {
       const pip = new PIXI.Container();
       pip.position.set(16, y);
       const ring = new PIXI.Graphics();
-      ring.beginFill(0x07070b, 1).lineStyle(2, t.controlled ? 0xf3e600 : 0xff2a6d, 1).drawCircle(0, 0, 13).endFill();
+      const aimed = [...(game.user?.targets ?? [])].includes(t);
+      ring.beginFill(0x07070b, 1).lineStyle(aimed ? 4 : 2, aimed ? 0xff4d4d : t.controlled ? 0xf3e600 : 0x05d9e8, 1).drawCircle(0, 0, 13).endFill();
+      if (aimed) for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) ring.lineStyle(3, 0xff4d4d, 1).moveTo(ax * 9, ay * 9).lineTo(ax * 19, ay * 19);
       pip.addChild(ring);
       const texture = t.mesh?.texture ?? t.texture ?? null;
       if (texture) {
@@ -453,13 +637,14 @@ export const Climb = {
       label.anchor.set(0, 0.5);
       label.position.set(18, 0);
       pip.addChild(label);
-      // Climbers share a square: click one here to pick it out.
+      // Climbers share a square. A face here stands for its token: click to target it (your own: to select it;
+      // Alt-click or right-click targets those too). Shift adds to what's selected or targeted.
       pip.eventMode = "static";
       pip.cursor = "pointer";
-      pip.hitArea = new PIXI.Circle(0, 0, 14);
+      pip.hitArea = new PIXI.Rectangle(-15, -15, 150, 30);
       pip.on("pointerdown", (ev) => {
         ev.stopPropagation?.();
-        if (t.isOwner || game.user?.isGM) t.control?.({ releaseOthers: !ev.shiftKey });
+        this.pick(t, { target: !!ev.altKey || ev.button === 2, add: !!ev.shiftKey });
       });
       box.addChild(pip);
     }
