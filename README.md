@@ -1251,6 +1251,28 @@ it's holding in a Grab, and your view follows. Nobody is moved without choosing 
 Settings: *Stairs, ladders and doors*, and *ask first* (switch that off to have a token taken as
 soon as it steps on).
 
+### Climbing
+
+Climbing costs 2 m/yds of movement for each one climbed (corebook pg. 169). Grip Feet take that
+off; so does climbing by the line of a Grapple Hand or Grapple Gun (a second button).
+
+- **A ladder with a height.** Link two tiles as a ladder (select the foot first, then the head)
+  and give its height. A token on the foot gets **Climb**. On its Turn it climbs as far as its
+  movement allows and waits there until the next Turn or a Run; out of combat it goes straight
+  up. From the head it gets **Climb down**.
+- **A climbable wall.** In the wall controls, select walls and press the ladder button. Give the
+  height and say whether it's climbed over (a fence, up and down) or onto (a roof, a ledge). A
+  token standing against it gets the climb, and comes out on the far side.
+- **Height.** While climbing, the token's elevation is how high it is, so its token shows it and
+  attacks are measured with it. A gauge beside the climb shows who is where; click a face on it
+  to select that token.
+- **More than one climber.** On a ladder they go single file, 2 m/yds apart, and nobody passes
+  the one in front. On a wall they climb side by side.
+- **Letting go.** Dragging a climber away ends the climb; the GM is told how high they were.
+
+The GM sees a badge on every linked tile and climbable wall saying what it is, how high, and
+where it leads. Settings: *Climbing*, and *Stairs, ladders and doors: the GM's badges*.
+
 ## Grabs and Human Shields
 
 The Brawling checks are rolled as always; this is what happens on the map afterwards.

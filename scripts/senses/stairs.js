@@ -27,6 +27,8 @@ const PROMPT_ID = "ncm-way";
 export const Stairs = {
   /** Where each token's middle was, for the automatic mode (GM's client). */
   was: new Map(),
+  /** Others with something to offer a token where it stands (climbing): (token) => { key, icon, name, text, buttons } | null. */
+  providers: [],
   /** The prompt this client waved away, until its token moves: "token:tile:x:y". */
   dismissed: null,
 
@@ -86,11 +88,11 @@ export const Stairs = {
     for (const t of scene?.tokens ?? []) this.see(t);
   },
 
-  /** The scene's linked tiles, plain: [{ id, x, y, width, height, to, kind }]. */
+  /** The scene's linked tiles, plain: [{ id, x, y, width, height (px), to, kind, rise (a ladder's height in m/yds), end }]. */
   tiles(scene = canvas?.scene) {
     return [...(scene?.tiles ?? [])]
       .filter((t) => t.flags?.[MODULE_ID]?.[STAIRS_FLAG]?.to)
-      .map((t) => ({ id: t.id, x: t.x, y: t.y, width: t.width, height: t.height, to: t.flags[MODULE_ID][STAIRS_FLAG].to, kind: kindOf(t.flags[MODULE_ID][STAIRS_FLAG].kind) }));
+      .map((t) => ({ id: t.id, x: t.x, y: t.y, width: t.width, height: t.height, to: t.flags[MODULE_ID][STAIRS_FLAG].to, kind: kindOf(t.flags[MODULE_ID][STAIRS_FLAG].kind), rise: Number(t.flags[MODULE_ID][STAIRS_FLAG].height) || 0, end: t.flags[MODULE_ID][STAIRS_FLAG].end ?? null }));
   },
 
   linkOf: (tile) => (tile?.document ?? tile)?.flags?.[MODULE_ID]?.[STAIRS_FLAG]?.to ?? null,
@@ -121,14 +123,16 @@ export const Stairs = {
   /* ---------------------------------------- */
 
   /** GM: link two tiles as the two ends of a way (both directions). kind: stairs, ladder or door. */
-  async link(a, b, kind = "stairs") {
+  async link(a, b, kind = "stairs", { height = 0 } = {}) {
     const da = a?.document ?? a;
     const db = b?.document ?? b;
     if (!game.user?.isGM || !da?.id || !db?.id || da.id === db.id) return false;
     // Each end belongs to one way: what either was linked to is let go first.
     for (const d of [da, db]) await this.unlink(d);
-    await da.setFlag(MODULE_ID, STAIRS_FLAG, { to: db.id, kind: kindOf(kind) });
-    await db.setFlag(MODULE_ID, STAIRS_FLAG, { to: da.id, kind: kindOf(kind) });
+    // A ladder with a height is climbed, not just taken: the first tile is its foot, the second its head.
+    const high = kindOf(kind) === "ladder" && Number(height) > 0 ? { height: Math.round(Number(height) * 10) / 10 } : {};
+    await da.setFlag(MODULE_ID, STAIRS_FLAG, { to: db.id, kind: kindOf(kind), ...high, ...(high.height ? { end: "foot" } : {}) });
+    await db.setFlag(MODULE_ID, STAIRS_FLAG, { to: da.id, kind: kindOf(kind), ...high, ...(high.height ? { end: "head" } : {}) });
     Hooks.callAll(`${MODULE_ID}.fxChanged`);
     return true;
   },
@@ -165,10 +169,28 @@ export const Stairs = {
       ui.notifications?.info(L(`${LANG}.Stairs.Unlinked`));
       return false;
     }
-    await this.link(a, b, kind);
+    const height = kind === "ladder" ? await this.askHeight() : 0;
+    if (height === null) return null;
+    await this.link(a, b, kind, { height });
     ui.notifications?.info(L(`${LANG}.Stairs.Linked`, { kind: L(`${LANG}.Stairs.Kind.${kind}`) }));
     return true;
   },
+
+  /** How high a ladder is (0: it's taken in one go, like stairs). Null when the window is closed. */
+  async askHeight() {
+    const unit = esc(canvas?.scene?.grid?.units || "m");
+    const content = `<div class="ncm-levels"><p class="ncm-hint">${L(`${LANG}.Stairs.LadderHint`)}</p><div class="ncm-grid">`
+      + `<label>${L(`${LANG}.Stairs.LadderHeight`, { unit })}<input type="number" name="height" min="0" step="0.5" placeholder="0"></label></div></div>`;
+    const got = await Compat.DialogV2.prompt({
+      window: { title: L(`${LANG}.Stairs.Tool.ladder`) }, classes: ["neon-combat", "ncm-dialog"], content,
+      ok: { label: L(`${LANG}.Levels.Save`), callback: (event, button) => Number(button.form.elements.height.value) || 0 },
+      rejectClose: false
+    }).catch(() => null);
+    return got === null || got === undefined ? null : got;
+  },
+
+  /** Is a way climbed a stretch at a time (a ladder with a height) and so not simply taken? */
+  climbed: (way) => way?.from?.kind === "ladder" && way.from.rise > 0 && Settings.get("climbing") !== false,
 
   async onTileGone(doc) {
     if (!Compat.isActiveGM) return;
@@ -186,49 +208,68 @@ export const Stairs = {
     return (canvas?.tokens?.controlled ?? []).filter((t) => t.isOwner || game.user?.isGM);
   },
 
-  /** What this client could be asked: { token, way } for the first of its tokens standing on a way. */
+  /** What this client could be asked: { token, way } for the first of its tokens standing on a way that's simply taken. */
   asking() {
     if (!this.on || !canvas?.ready) return null;
     for (const token of this.mine()) {
       const way = this.wayFor(token);
-      if (way) return { token, way };
+      if (way && !this.climbed(way)) return { token, way };
     }
     return null;
+  },
+
+  /** The prompt to show: { key, icon, name, text, buttons: [{ label, run, quiet }] } or null. Climbing first, then a way to take. */
+  prompt() {
+    if (!this.on || !canvas?.ready) return null;
+    for (const token of this.mine()) {
+      for (const provide of this.providers) {
+        const p = provide(token);
+        if (p) return p;
+      }
+    }
+    const ask = this.asks ? this.asking() : null;
+    if (!ask) return null;
+    const kind = ask.way.from.kind;
+    return {
+      key: `${ask.token.id}:${ask.way.from.id}:${ask.token.document.x}:${ask.token.document.y}`,
+      icon: KIND_ICON[kind], name: ask.token.name ?? "", text: this.label(ask.way, ask.token.document.parent),
+      buttons: [{ label: L(`${LANG}.Stairs.Take.${kind}`), run: () => this.takeAll(ask.way.from.id) }]
+    };
   },
 
   hide() {
     document.getElementById(PROMPT_ID)?.remove();
   },
 
-  /** Put up (or take down) the prompt for the token this client has on a way. */
+  /** Put up (or take down) the prompt for the token this client has on a way or a climb. */
   offer() {
-    const ask = this.asks ? this.asking() : null;
-    const key = ask ? `${ask.token.id}:${ask.way.from.id}:${ask.token.document.x}:${ask.token.document.y}` : null;
-    if (!ask || key === this.dismissed) {
-      if (!ask) this.dismissed = null;
+    const p = this.prompt();
+    if (!p || p.key === this.dismissed) {
+      if (!p) this.dismissed = null;
       this.hide();
       return null;
     }
     this.dismissed = null;
     this.hide();
-    const kind = ask.way.from.kind;
     const el = document.createElement("div");
     el.id = PROMPT_ID;
     el.className = "neon-combat ncm-way";
-    el.innerHTML = `<i class="${KIND_ICON[kind]}"></i>`
-      + `<span class="ncm-way-text"><b>${esc(ask.token.name ?? "")}</b> · ${esc(this.label(ask.way, ask.token.document.parent))}</span>`
-      + `<button type="button" data-way="take">${L(`${LANG}.Stairs.Take.${kind}`)}</button>`
+    el.innerHTML = `<i class="${p.icon}"></i>`
+      + `<span class="ncm-way-text"><b>${esc(p.name)}</b> · ${esc(p.text)}</span>`
+      + p.buttons.map((b, n) => `<button type="button" data-way="go" data-n="${n}"${b.quiet ? ' class="is-quiet"' : ""}>${esc(b.label)}</button>`).join("")
       + `<button type="button" data-way="stay" aria-label="${L(`${LANG}.Stairs.Stay`)}" data-tooltip="${L(`${LANG}.Stairs.Stay`)}"><i class="fa-solid fa-xmark"></i></button>`;
-    el.querySelector("[data-way=take]").addEventListener("click", () => {
-      this.hide();
-      this.takeAll(ask.way.from.id).catch((err) => ui.notifications?.error(err.message));
-    });
+    for (const btn of el.querySelectorAll("[data-way=go]")) {
+      btn.addEventListener("click", () => {
+        this.hide();
+        Promise.resolve(p.buttons[Number(btn.dataset.n)].run()).then(() => this.offer()).catch((err) => ui.notifications?.error(err.message));
+      });
+    }
     el.querySelector("[data-way=stay]").addEventListener("click", () => {
-      this.dismissed = key;
+      this.dismissed = p.key;
       this.hide();
     });
     document.body.appendChild(el);
-    return ask;
+    return p;
   },
 
   /** Everyone this client has selected who stands on that tile takes the way. */
@@ -256,7 +297,8 @@ export const Stairs = {
     const user = game.users?.get?.(userId) ?? game.user;
     if (!this.on || !doc || !(user?.isGM || doc.testUserPermission?.(user, "OWNER") || doc.isOwner)) return false;
     const way = wayAt(this.tiles(sc), this.centre(doc), this.sizeOf(doc));
-    if (!way || (tile && way.from.id !== tile)) return false;
+    // A ladder with a height is climbed (scripts/senses/climb.js), not taken in one go.
+    if (!way || (tile && way.from.id !== tile) || this.climbed(way)) return false;
     return this._move(doc, way);
   },
 
@@ -295,7 +337,7 @@ export const Stairs = {
     // Asked for, not automatic; or put there by a way, carried by whoever holds it, or taken back with Ctrl+Z.
     if (!this.on || this.asks || mine.stairs || mine.carried || options?.isUndo) return;
     const way = wayTaken(this.tiles(doc.parent), from, to, this.sizeOf(doc));
-    if (!way) return;
+    if (!way || this.climbed(way)) return;
     await this.walked(doc);
     await this._move(doc, way);
   },
@@ -307,7 +349,7 @@ export const Stairs = {
   entries(actor, token) {
     const tok = token?.object ?? token ?? actor?.getActiveTokens?.()[0] ?? null;
     const way = tok ? this.wayFor(tok) : null;
-    if (!way) return [];
+    if (!way || this.climbed(way)) return [];
     return [{ key: `way:${way.from.id}`, label: L(`${LANG}.Stairs.Take.${way.from.kind}`), sub: this.toward(way, tok.document?.parent), icon: KIND_ICON[way.from.kind], alert: true }];
   },
 

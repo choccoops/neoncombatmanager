@@ -72,6 +72,8 @@ export const Run = {
         if (id === "cloak") return (await import("../senses/cloak.js")).Cloak.ask(token ?? actor.getActiveTokens?.()[0] ?? null);
         return id === "torch" ? Senses.toggleTorch(actor, { token }) : Senses.toggleVision(actor, id, { token });
       }
+      case "climb":
+        return (await import("../senses/climb.js")).Climb.go(token ?? actor.getActiveTokens?.()[0] ?? null, { dir: id });
       case "way":
         return (await import("../senses/stairs.js")).Stairs.take(token ?? actor.getActiveTokens?.()[0] ?? null);
       case "hold":

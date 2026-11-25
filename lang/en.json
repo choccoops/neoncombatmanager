@@ -1478,6 +1478,14 @@
       "stairsAsk": {
         "name": "Stairs, ladders and doors: ask first",
         "hint": "On: whoever controls a token standing on stairs, a ladder or a door gets a prompt at the foot of the screen (and an Action HUD entry) and chooses whether to take it. Off: a token is taken as soon as it steps on."
+      },
+      "stairsMarks": {
+        "name": "Stairs, ladders and doors: the GM's badges",
+        "hint": "The GM sees a badge on every linked tile (stairs, a ladder or a door, how high a ladder is and which end is which, and the floor it leads to), a faint line joining the two ends, and a badge on each climbable wall. Players never see them."
+      },
+      "climbing": {
+        "name": "Climbing",
+        "hint": "A ladder given a height, and walls the GM marks climbable (the ladder button in the wall controls), are climbed a stretch at a time: 2 m/yds of movement for each one climbed, or 1 for 1 with Grip Feet or by a Grapple Hand's or Grapple Gun's line (corebook pg. 169). On its own Turn a token climbs as far as its movement allows and stays there, its elevation raised, until it climbs on; a Run lets it go further. Several on one ladder climb single file. Off: a ladder is taken in one go, like stairs."
       }
     },
     "SceneWeather": {
@@ -3199,7 +3207,35 @@
       "Stay": "Stay here",
       "Pick": "Select the two Tiles at either end, then press this. With one linked Tile selected, it unlinks it.",
       "Linked": "Linked ({kind}): a token standing on one end can be put on the other.",
-      "Unlinked": "Unlinked."
+      "Unlinked": "Unlinked.",
+      "LadderHint": "The first tile you selected is the ladder's foot, the second its head. Give its height to have it climbed a stretch at a time, costing movement. Leave 0 to have it taken in one go, like stairs.",
+      "LadderHeight": "Height of the ladder ({unit})"
+    },
+    "Climb": {
+      "Ladder": "Ladder",
+      "Wall": "Wall",
+      "Fence": "Fence",
+      "Offer": "{what} · {height} {unit}",
+      "On": "{what} · {at} of {total} {unit}",
+      "Up": "Climb",
+      "Down": "Climb down",
+      "Over": "Climb over",
+      "Onward": "Climb on",
+      "Back": "Go back",
+      "ByLine": "{dir} by grapple line",
+      "WallTool": "Climbable walls",
+      "PickWalls": "Select the walls that can be climbed, then press this.",
+      "WallHint": "For the {count} selected: how high the climb is. 0 makes them plain walls again.",
+      "Height": "Height of the climb ({unit})",
+      "OverTick": "Climbed over: up, and down the far side (a fence). Unticked: onto what's above (a ledge, a roof)",
+      "Note": {
+        "top": "{name} is over the top ({cost} {unit} of movement).",
+        "foot": "{name} is back down ({cost} {unit} of movement).",
+        "part": "{name} is {at} of {total} {unit} up ({cost} {unit} of movement).",
+        "movement": "{name} is {at} of {total} {unit} up and out of movement ({cost} {unit} spent). A Run, or the next Turn, takes them further.",
+        "climber": "{name} is {at} of {total} {unit} up, behind the climber in front ({cost} {unit} of movement).",
+        "letGo": "{name} has let go of the climb, {at} {unit} up. The fall is yours to rule on (corebook pg. 180)."
+      }
     }
   }
 }

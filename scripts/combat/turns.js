@@ -202,6 +202,21 @@ export const Turns = {
     }
   },
 
+  /**
+   * Movement spent without the token going anywhere on the map (climbing a ladder): it comes off
+   * what the combatant has left this Turn like any walk.
+   */
+  async spend(combatant, metres) {
+    const cost = Number(metres) || 0;
+    if (!combatant?.id || !(cost > 0)) return 0;
+    const path = combatant.flags?.[MODULE_ID]?.path ?? {};
+    const entry = this.moved.get(combatant.id) ?? { metres: Number(path.metres) || 0, points: Array.isArray(path.points) ? path.points : [] };
+    const total = entry.metres + cost;
+    this.moved.set(combatant.id, { ...entry, metres: total });
+    if (Settings.get("trackMovement")) await this._keepPath(combatant, (now) => ({ ...now, metres: total }));
+    return total;
+  },
+
   /** Metres the current combatant has moved this Turn. */
   metres(combatantId) {
     return this.moved.get(combatantId)?.metres ?? 0;

@@ -38,6 +38,7 @@ import { Far } from "./senses/far.js";
 import { Levels } from "./senses/levels.js";
 import { FloorView } from "./senses/floor-view.js";
 import { Stairs } from "./senses/stairs.js";
+import { Climb } from "./senses/climb.js";
 import { Hold } from "./combat/hold.js";
 import { Blood } from "./blood/blood.js";
 import { Awareness } from "./awareness/awareness.js";
@@ -341,13 +342,21 @@ const api = {
   /** Stairs and ladders: two linked Tiles; a token stepping onto one is put on the other. */
   stairs: {
     /** GM: link two tiles; kind is "stairs", "ladder" or "door". */
-    link: (a, b, kind) => Stairs.link(a, b, kind),
+    link: (a, b, kind, options) => Stairs.link(a, b, kind, options),
     /** Take the way a token stands on. */
     take: (token) => Stairs.take(token),
     unlink: (tile) => Stairs.unlink(tile),
     list: () => Stairs.tiles(),
     /** Why the stairs would or wouldn't take a token (the selected one when none is given). */
     why: (token) => Stairs.why(token)
+  },
+  /** Climbing: ladders with a height and walls marked climbable. */
+  climb: {
+    /** Climb a stretch: { dir: "up"|"down", line: by a grapple line }. */
+    go: (token, options) => Climb.go(token, options),
+    state: (token) => Climb.state(token),
+    /** GM: make walls climbable ({ height, over }), or plain again with height 0. */
+    setWalls: (walls, options) => Climb.setWalls(walls, options)
   },
   /** Holds: a Grapple the map knows about. Tokens or token documents. */
   hold: {
@@ -508,6 +517,7 @@ Hooks.once("init", () => {
   Levels.init();
   FloorView.init();
   Stairs.init();
+  Climb.init();
   Hold.init();
   Blood.init();
   Roller.isArea = (r) => Arsenal.isArea(r);
