@@ -338,3 +338,63 @@ html.ncm-neon-theme :is(.window-app, .application):not(.neon-combat) .window-con
 /* Tick boxes in Foundry's newer windows: the system paints a ticked one near-black in its dark mode. */
 html.ncm-neon-theme.ncm-neon-theme .application:not(.neon-combat) input[type="checkbox"]::before { color: var(--ncm-soft); }
 html.ncm-neon-theme.ncm-neon-theme .application:not(.neon-combat) input[type="checkbox"]:checked::before { color: var(--ncm-cyan); }
+
+/*
+ * The rest of Foundry's fixed colours, found by going through its stylesheet for text set dark
+ * (or a background set light) outside what the variables above reach.
+ */
+
+/* Chat: anything inside a message that asks for "dark text" (a table draw's description, a roll's flavour) */
+html.ncm-neon-theme :is(#chat-log, .chat-popout, #chat-popout) .chat-message {
+  --color-text-dark-primary: var(--ncm-text);
+  --color-text-dark-secondary: var(--ncm-soft);
+  --color-text-dark-header: var(--ncm-text);
+  --color-text-dark-inactive: var(--ncm-dim);
+  --color-text-dark-1: #f2f3fa;
+  --color-text-dark-2: var(--ncm-text);
+  --color-text-dark-3: #c3c7de;
+  --color-text-dark-4: var(--ncm-soft);
+  --color-text-dark-5: #8a8fae;
+  --color-text-dark-6: var(--ncm-dim);
+}
+html.ncm-neon-theme :is(#chat-log, .chat-popout, #chat-popout) .chat-message.emote { background: var(--ncm-bg-3); font-style: italic; }
+html.ncm-neon-theme :is(#chat-log, .chat-popout, #chat-popout) .chat-message .table-draw .table-description { color: var(--ncm-soft); }
+
+/* Dice: the numbers on the dice of a roll's breakdown were black, and the breakdown of an inline roll sat on parchment */
+html.ncm-neon-theme .dice-tooltip .dice-rolls .roll { color: var(--ncm-text); }
+html.ncm-neon-theme .dice-tooltip .dice-rolls .roll:is(.success, .max) { color: var(--ncm-green); }
+html.ncm-neon-theme .dice-tooltip .dice-rolls .roll:is(.failure, .min) { color: var(--ncm-red); }
+html.ncm-neon-theme .dice-tooltip .dice-rolls .roll:is(.discarded, .rerolled) { color: var(--ncm-dim); }
+html.ncm-neon-theme .dice-tooltip .part-header .part-flavor { color: var(--ncm-soft); }
+html.ncm-neon-theme .dice-roll .dice-tooltip .reroll { color: var(--ncm-dim); }
+html.ncm-neon-theme .inline-roll .dice-tooltip { background: var(--ncm-bg-2); color: var(--ncm-text); border: 1px solid var(--ncm-line-2); }
+html.ncm-neon-theme :is(.window-app, .application, #chat-log) a.inline-roll.gmroll { background: #0b1318; border-color: var(--ncm-cyan); }
+html.ncm-neon-theme :is(.window-app, .application, #chat-log) a.inline-roll.blindroll { background: #100d18; border-color: #9d4dff; }
+
+/* The text editor's menu: its buttons turned black when hovered or switched on, and its dropdowns were pale */
+html.ncm-neon-theme .prosemirror menu button { color: var(--ncm-text); }
+html.ncm-neon-theme .prosemirror menu button:is(:hover, .active) { color: var(--ncm-cyan); background: var(--ncm-line-2); box-shadow: none; }
+html.ncm-neon-theme .prosemirror menu .pm-dropdown { color: var(--ncm-text); background: var(--ncm-bg-3); border-color: var(--ncm-line-2); }
+html.ncm-neon-theme .prosemirror menu .pm-dropdown:hover :is(span, i) { color: var(--ncm-cyan); }
+html.ncm-neon-theme #prosemirror-dropdown { --color-control-bg: var(--ncm-bg-2); --color-hover-bg: var(--ncm-bg-3); color: var(--ncm-text); }
+html.ncm-neon-theme #prosemirror-dropdown ul { border-color: var(--ncm-line-2); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7); }
+html.ncm-neon-theme #prosemirror-dropdown li:hover > :is(span, i) { color: var(--ncm-cyan); }
+html.ncm-neon-theme .prosemirror.collaborating menu .concurrent-users .scene-player { color: #000; }
+
+/* The older text editor writes inside a frame of its own with dark text: it keeps a pale page to write on */
+html.ncm-neon-theme :is(.window-app, .application) .tox .tox-edit-area__iframe { background: #e9e6dc; }
+
+/* Key caps in the controls reference and the keybindings window were pale */
+html.ncm-neon-theme #keybindings .binding .key,
+html.ncm-neon-theme #controls-reference ol.hotkey-list li .key { background: var(--ncm-bg-3); color: var(--ncm-text); border: 1px solid var(--ncm-line-2); }
+html.ncm-neon-theme #keybindings .binding .key.uneditable { background: var(--ncm-bg); color: var(--ncm-dim); }
+html.ncm-neon-theme #controls-reference ol.hotkey-list li.gm .key { border-color: #9d4dff; }
+
+/* Journal pages opened without the system's own journal styling */
+html.ncm-neon-theme .sheet.journal-entry .journal-entry-content { background: var(--ncm-bg-2); color: var(--ncm-text); }
+
+/* Small print that Foundry dims with a "dark" grey, on what's already dark */
+html.ncm-neon-theme .combat-sidebar li.combatant .token-name .combatant-control { color: var(--ncm-soft); }
+html.ncm-neon-theme .combat-sidebar li.combatant .token-name .combatant-control:is(.active, :hover) { color: var(--ncm-cyan); }
+html.ncm-neon-theme .playlists-sidebar .sound-control:is(.inactive, .disabled) { color: var(--ncm-dim); }
+html.ncm-neon-theme #fps label { color: var(--ncm-soft); }

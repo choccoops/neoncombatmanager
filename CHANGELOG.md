@@ -9,6 +9,18 @@
   active tab in cyan. Foundry's newer windows in general also take the look's colours whichever
   colour scheme the browser asks for.
   Ticked boxes in those windows, which the system's dark mode drew near-black, are cyan.
+- **Neon look: the rest of the dark-on-dark text.** Going through Foundry's stylesheet and the
+  system's for text fixed dark (or backgrounds fixed pale) turned up these, all fixed:
+  - the numbers on the dice in a roll's breakdown (black; now light, green for a success or
+    maximum, red for a failure or minimum), and the breakdown of an inline roll (parchment);
+  - a table draw's description and a roll's flavour line inside chat messages, and emotes
+    (pale background under light text);
+  - the text editor's menu buttons when hovered or switched on (black), and its dropdown lists
+    (pale);
+  - GM and blind inline rolls (pale backgrounds under light text);
+  - key caps in the keybindings window and the controls reference (pale);
+  - the older text editor, which writes dark text in a frame of its own, gets a pale page back;
+  - dimmed small print in the combat tracker, playlists and the FPS meter.
 
 ## 1.46.1
 
