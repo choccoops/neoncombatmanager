@@ -8,6 +8,10 @@
   and stays for as long as you have it targeted. Diwako's settings still decide it (on or
   off, only in combat, weapon names, left or right), and a token of yours must be selected.
   Every other token's DV display is unchanged.
+- A climber's hover no longer outlasts its click area when the map is drawn again.
+- For when the DV display shows nothing: with one of your tokens selected and the pointer
+  over another, `game.modules.get("cpr-neon-combat-manager").api.arsenal.dvWhy()` in the
+  console says what it found (settings, distance, each weapon's table and DV).
 
 ## 1.50.0
 

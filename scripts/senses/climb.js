@@ -884,6 +884,15 @@ export const Climb = {
    * for the GM, a badge on every linked tile and climbable wall saying what it is.
    */
   draw() {
+    // A climber's click area goes with the old drawing: so does a hover it was holding.
+    for (const pad of this._pads ?? []) {
+      try {
+        if (pad.token?.hover && !pad.token.destroyed) pad.token._onHoverOut?.({ buttons: 0 });
+      } catch {
+        /* no hover to drop */
+      }
+    }
+    this._pads = [];
     this.clear();
     if (!canvas?.ready || typeof PIXI === "undefined" || !Stairs.on) return 0;
     const scene = canvas.scene;

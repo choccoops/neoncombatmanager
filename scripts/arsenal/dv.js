@@ -206,6 +206,43 @@ export const Dv = {
     return { text, lines, right: this.diwakoSetting("dvDisplayPosition", "left") === "right" };
   },
 
+  /**
+   * Why the DV display shows what it does (or nothing) for a token, for the console:
+   * `game.modules.get("cpr-neon-combat-manager").api.arsenal.dvWhy()` with the pointer over a
+   * token and one of yours selected.
+   */
+  async why(token = canvas?.tokens?.hover ?? [...(game.user?.targets ?? [])][0] ?? null) {
+    const proto = CONFIG.Token?.objectClass?.prototype;
+    const from = canvas?.tokens?.controlled?.[0] ?? null;
+    const out = {
+      diwakoActive: this.diwako,
+      ourSetting: !!Settings.get("arsenalDvDisplay"),
+      ours: !!proto?.showDVDisplay?.[`${MODULE_ID}DV`],
+      showDVDisplay: this.diwakoSetting("showDVDisplay", true),
+      onlyInCombat: this.diwakoSetting("dvDisplayOnlyInCombat", true),
+      combatStarted: !!game.combat?.started,
+      selected: from?.name ?? null,
+      token: token?.name ?? null,
+      hasBox: !!token?.dvDisplay,
+      tokenScale: token?.scale?.x ?? null,
+      drawnApart: !!token?._ncmFan
+    };
+    if (!from || !token || from === token) return out;
+    try {
+      out.distance = this.distance(from, token);
+      out.mapDistance = Compat.measure(from.center, token.center);
+      out.elevations = [from.document?.elevation ?? 0, token.document?.elevation ?? 0];
+      const items = [...(from.actor?.items ?? [])].filter((i) => i.system?.isRanged && i.system?.dvTable
+        && (i.system.equipped === "equipped" || (i.type === "cyberware" && i.system.isInstalled)));
+      out.weapons = [];
+      for (const i of items) out.weapons.push({ name: i.name, table: i.system.dvTable, found: !!(await this.results(i.system.dvTable)), dv: await this.at(i.system.dvTable, out.distance) });
+      out.text = (await this.textFor(token))?.text ?? null;
+    } catch (err) {
+      out.error = String(err?.stack ?? err);
+    }
+    return out;
+  },
+
   async showOn(token, original) {
     if (!this.diwakoSetting("showDVDisplay", true)) return null;
     if (this.diwakoSetting("dvDisplayOnlyInCombat", true) && !game.combat?.started) return null;
@@ -225,7 +262,10 @@ export const Dv = {
     const label = new Compat.PreciseText(info.text, style);
     label.anchor.set(1, 0);
     box.addChild(label);
+    // Whatever was done to it before (a climber drawn smaller, since back to size): its own size, and seen.
     box.scale?.set?.(1);
+    box.visible = true;
+    box.alpha = 1;
     if (info.right) box.position.set(token.w + box.width + 15, 0);
     else box.position.set(-15, 0);
     return info.lines;
