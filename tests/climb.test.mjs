@@ -12,6 +12,7 @@ const { Turns } = await import("../scripts/combat/turns.js");
 const { Socket } = await import("../scripts/socket.js");
 Socket.on("climbGo", (data, userId) => Climb._go(data, userId));
 Socket.on("wayTake", (data, userId) => Stairs._take(data, userId));
+Socket.on("climbContest", (data, userId) => Climb._contest(data, userId));
 
 test("a stretch of climbing (pure): 2 for 1, what takes the penalty off, where it stops", () => {
   assert.equal(D.factorOf(), 2);
@@ -225,6 +226,126 @@ test("a wall at the table: onto a roof, and over a fence", async () => {
   } finally {
     game.scenes = prevScenes;
     Climb.budget = prevBudget;
+    await Settings.set("levels", true);
+  }
+});
+
+test("chases (pure): reach, the leap's landing, opposed checks, the d10, falls, and tokens fanned out", () => {
+  assert.equal(D.d10Total(7), 7);
+  assert.equal(D.d10Total(10, 4), 14, "a 10 rolls on");
+  assert.equal(D.d10Total(1, 6), -5, "a 1 rolls back");
+  assert.equal(D.beats(15, 14), true);
+  assert.equal(D.beats(14, 14), false, "a tie holds on");
+  const rivals = [{ id: "a", at: 5 }, { id: "b", at: 8 }, { id: "c", at: 1 }];
+  assert.deepEqual(D.within(3, rivals).map((r) => r.id), ["a", "c"], "2 m either way");
+  assert.equal(D.inFront(3, rivals).id, "a");
+  assert.equal(D.inFront(6, rivals).id, "b");
+  assert.equal(D.inFront(1, rivals), null, "nobody within reach above");
+  // Past the one at 5 m: to 7 m. With someone at 8 m there's no room there.
+  assert.deepEqual(D.leapTo({ front: 5, total: 12, others: [5] }), { at: 7, done: false });
+  assert.equal(D.leapTo({ front: 5, total: 12, others: [5, 8] }), null);
+  assert.deepEqual(D.leapTo({ front: 7, total: 8, others: [7] }), { at: 8, done: true }, "past them and off the top");
+  // Falling.
+  assert.equal(D.fallDice(9), "");
+  assert.equal(D.fallDice(10), "2d6");
+  assert.equal(D.fallDice(25), "4d6");
+  // Drawn apart.
+  assert.deepEqual(D.fanOffset(0, 100, 100), { dx: 0, dy: 0 });
+  assert.deepEqual(D.fanOffset(1, 100, 100), { dx: 30, dy: -55 });
+  assert.deepEqual(D.fanOffset(2, 100, 100), { dx: -30, dy: -110 });
+});
+
+test("a chase up a ladder at the table: thrown off, caught, leapt past, and a leap that misses", async () => {
+  asGM(true);
+  await Settings.set("stairs", true);
+  await Settings.set("climbing", true);
+  await Settings.set("climbContests", true);
+  await Settings.set("levels", false);
+  class Docs extends Map {
+    [Symbol.iterator]() {
+      return this.values();
+    }
+  }
+  const scene = { id: "sc", grid: { size: 100, units: "m" }, tiles: new Docs(), tokens: new Docs(), walls: new Docs(), regions: [], flags: {} };
+  const tile = (id, x, y, flag) => scene.tiles.set(id, { id, x, y, width: 100, height: 100, parent: scene, flags: { [M]: { stairs: flag } } });
+  tile("foot", 0, 0, { to: "head", kind: "ladder", height: 30, end: "foot" });
+  tile("head", 2000, 0, { to: "foot", kind: "ladder", height: 30, end: "head" });
+  const climber = (id, at) => {
+    const d = {
+      id, name: id, x: 0, y: 0, width: 1, height: 1, elevation: at, parent: scene, isOwner: true, actor: makeActor({ name: id }),
+      flags: { [M]: { climb: { kind: "tile", id: "foot", at, height: 30, total: 30, base: 0, to: "head" } } },
+      async setFlag(m, k, v) { (this.flags[m] ??= {})[k] = v; },
+      async unsetFlag(m, k) { delete this.flags[m]?.[k]; },
+      async update(data) { Object.assign(this, data); }
+    };
+    scene.tokens.set(id, d);
+    return d;
+  };
+  const prevScenes = game.scenes;
+  game.scenes = { get: () => scene };
+  const { Cards } = await import("../scripts/combat/cards.js");
+  const cards = [];
+  const hurt = [];
+  const prev = { check: Climb.check, post: Cards.post, damage: Cards.damage };
+  Cards.post = async (c) => { cards.push(c.kicker); };
+  Cards.damage = async (actor, d) => { hurt.push([actor.name, d.armor, d.amount > 0]); };
+  // The dice are the test's to call: each check takes the next total.
+  let totals = [];
+  Climb.check = async () => {
+    const total = totals.shift();
+    return { total, base: 0, die: total, text: String(total) };
+  };
+  try {
+    const ana = climber("Ana", 14);
+    const ben = climber("Ben", 12);
+    const cy = climber("Cy", 3);
+    // Who can try what: Ben is within reach of Ana (throw, and a leap past her); Cy isn't near anyone.
+    assert.deepEqual(Climb.moves(ben).map((m) => [m.kind, m.target]), [["throw", "Ana"], ["leap", "Ana"]]);
+    assert.deepEqual(Climb.moves(ana).map((m) => [m.kind, m.target]), [["throw", "Ben"]]);
+    assert.deepEqual(Climb.moves(cy), []);
+    assert.deepEqual([Climb.rankOf(cy), Climb.rankOf(ben), Climb.rankOf(ana)], [0, 1, 2]);
+    // Ben tries to throw Ana off and doesn't beat her.
+    totals = [12, 12];
+    let r = await Climb.contest(ben, "throw", "Ana");
+    assert.deepEqual([r.won, cards.at(-1)], [false, "Holds on"]);
+    assert.equal(Climb.state(ana).at, 14);
+    // He wins the next one, but she catches the ladder (beats DV15).
+    totals = [15, 9, 16];
+    r = await Climb.contest(ben, "throw", "Ana");
+    assert.deepEqual([r.won, r.fell, cards.at(-1)], [true, false, "Caught it"]);
+    assert.equal(Climb.state(ana).at, 14);
+    // And the one after that she doesn't: 14 m down, so 2d6, soaked by armor.
+    totals = [15, 9, 15];
+    r = await Climb.contest(ben, "throw", "Ana");
+    assert.deepEqual([r.won, r.fell], [true, true]);
+    assert.equal(Climb.state(ana), null);
+    assert.equal(ana.elevation, 0);
+    assert.deepEqual(hurt, [["Ana", true, true]]);
+    // Cy climbs to just under Ben and leaps past him: lands a body's length above.
+    cy.flags[M].climb.at = 10;
+    assert.deepEqual(Climb.moves(cy).map((m) => m.kind), ["throw", "leap"]);
+    totals = [16];
+    r = await Climb.contest(cy, "leap", "Ben");
+    assert.deepEqual([r.won, r.at, cards.at(-1)], [true, 14, "Past them"]);
+    assert.deepEqual([Climb.state(cy).at, cy.elevation], [14, 14]);
+    // Ben tries the same back and misses: off the ladder from 12 m.
+    totals = [15];
+    r = await Climb.contest(ben, "leap", "Cy");
+    assert.deepEqual([r.won, r.fell], [false, true]);
+    assert.equal(Climb.state(ben), null);
+    assert.equal(hurt.length, 2);
+    // Nobody near: nothing to try, and asking anyway does nothing.
+    assert.equal(await Climb.contest(cy, "throw", "Ben"), null);
+    // Switched off: climbers just climb.
+    await Settings.set("climbContests", false);
+    ben.flags[M].climb = { kind: "tile", id: "foot", at: 12, height: 30, total: 30, base: 0, to: "head" };
+    assert.deepEqual(Climb.moves(cy), []);
+  } finally {
+    game.scenes = prevScenes;
+    Climb.check = prev.check;
+    Cards.post = prev.post;
+    Cards.damage = prev.damage;
+    await Settings.set("climbContests", true);
     await Settings.set("levels", true);
   }
 });

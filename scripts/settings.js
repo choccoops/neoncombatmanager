@@ -9,7 +9,7 @@ export const MENUS = {
   comms: ["holocallSheetButton", "linkNeedsImplant", "linkImplants", "ncmSpam"],
   chat: ["chatFormatting", "chatMerge", "chatEditing", "adventureLog", "adventureLogName", "stageEnabled"],
   fx: ["neonTheme", "fxEnabled", "fxConditions", "fxChrome", "fxPause", "bloodFx", "bloodTrails", "bloodMax", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
-  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "sightRange", "sightBase", "farLinks", "levels", "levelsView", "stairs", "stairsAsk", "stairsMarks", "climbing", "holds", "scopeVision", "scopeSniper", "scopeAngle", "visionModes", "visionOutlines", "visionHeat", "cloakCheck", "torchAction", "torchAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
+  arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "sightRange", "sightBase", "farLinks", "levels", "levelsView", "stairs", "stairsAsk", "stairsMarks", "climbing", "climbContests", "holds", "scopeVision", "scopeSniper", "scopeAngle", "visionModes", "visionOutlines", "visionHeat", "cloakCheck", "torchAction", "torchAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
   hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
   environment: [
@@ -158,6 +158,8 @@ const DEFS = [
   ["stairsMarks", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // Climbing: ladders with a height and climbable walls cost movement and are climbed a stretch at a time
   ["climbing", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
+  // Chases on a ladder: throw the next climber off (Brawling), leap past the one in front (Athletics)
+  ["climbContests", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.fxChanged`) }],
   // The Neon look on Foundry's own windows and the Cyberpunk RED sheets (styles/neon-theme.css); off puts everything back at once
   ["neonTheme", "world", Boolean, true, { onChange: (on) => document.documentElement.classList.toggle("ncm-neon-theme", !!on) }],
   // Holds: Grab carries the held token along, a Human Shield takes the ranged attacks aimed at its holder

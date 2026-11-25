@@ -1486,6 +1486,10 @@
       "climbing": {
         "name": "Climbing",
         "hint": "A ladder given a height, and walls the GM marks climbable (the ladder button in the wall controls), are climbed a stretch at a time: 2 m/yds of movement for each one climbed, or 1 for 1 with Grip Feet or by a Grapple Hand's or Grapple Gun's line (corebook pg. 169). On its own Turn a token climbs as far as its movement allows and stays there, its elevation raised, until it climbs on; a Run lets it go further. Several on one ladder climb single file. Off: a ladder is taken in one go, like stairs."
+      },
+      "climbContests": {
+        "name": "Climbing: chases on a ladder",
+        "hint": "Climbers on one ladder go single file. With this on, a climber within 2 m/yds of another gets Throw off (DEX + Brawling against DEX + Brawling; the loser of a won throw gets one DV15 Athletics grab at the ladder, or none needed with a grapple, then falls), and one stuck behind another gets Leap past (DEX + Athletics against DV15: past them on a success, off the ladder on a failure). The module rolls both sides and posts a card; falls of 10 m/yds or more roll their damage (corebook pg. 181)."
       }
     },
     "SceneWeather": {
@@ -3235,6 +3239,34 @@
         "movement": "{name} is {at} of {total} {unit} up and out of movement ({cost} {unit} spent). A Run, or the next Turn, takes them further.",
         "climber": "{name} is {at} of {total} {unit} up, behind the climber in front ({cost} {unit} of movement).",
         "letGo": "{name} has let go of the climb, {at} {unit} up. The fall is yours to rule on (corebook pg. 180)."
+      },
+      "Throw": "Throw off {name}",
+      "ThrowSub": "Brawling against Brawling",
+      "Leap": "Leap past {name}",
+      "LeapSub": "Athletics against DV{dv}, or fall",
+      "Fall": {
+        "Title": "Fall",
+        "Hurt": "{name} falls {height} {unit}.",
+        "Short": "{name} drops {height} {unit}: under 10, so no damage from the fall.",
+        "Damage": "{dice} = <b>{total}</b> damage, soaked by body armor. Unless they beat a DV15 Athletics Check they also suffer a Broken Leg. Two Cyberlegs take neither (corebook pg. 181)."
+      },
+      "Card": {
+        "ThrowTitle": "Thrown off the ladder?",
+        "Throw": "{name} tries to throw {other} off the ladder: DEX + Brawling each.",
+        "Held": "Holds on",
+        "HeldText": "{other} holds on.",
+        "Catch": "{other} is off the ladder and grabs for it (DEX + Athletics against DV{dv}): {roll}.",
+        "Grapple": "{other} is off the ladder, and their grapple catches it: no Check needed.",
+        "Caught": "Caught it",
+        "CaughtText": "{other} catches the ladder and stays where they were.",
+        "Thrown": "Thrown off",
+        "ThrownText": "{name} throws {other} off the ladder.",
+        "LeapTitle": "Leap past",
+        "Leap": "{name} leaps for the rungs past {other}: DEX + Athletics against DV{dv}.",
+        "Missed": "Misses",
+        "MissedText": "{name} misses the rungs.",
+        "Past": "Past them",
+        "PastText": "{name} is past {other} and in front."
       }
     }
   }

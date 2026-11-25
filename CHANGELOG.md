@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.48.0
+
+- **Chases on a ladder.** Climbers still go single file, but they no longer have to accept it.
+  A climber within 2 m/yds of another on the same ladder gets, on the prompt and the Action HUD:
+  - **Throw off** (above or below them): DEX + Brawling against DEX + Brawling; a tie holds
+    on. Thrown off, the loser gets the book's one grab at the ladder (DEX + Athletics against
+    DV15; none needed with a Grapple Hand or Grapple Gun). Catch it and they stay where they
+    were; miss and they fall.
+  - **Leap past** the one in front: DEX + Athletics against DV15. Make it and they're a body's
+    length above them (or off the top, if that's past it). Miss and they fall. It isn't offered
+    when someone else is already where they'd land.
+  - The module rolls both sides (a 10 or a 1 rolls on) and posts a card with every roll.
+  - **Falls** (corebook pg. 181): the card gives the height. From 10 m/yds or more it rolls 2d6
+    per full 10 and sends it to the damage card, soaked by body armor, with the reminder about
+    the Broken Leg and Cyberlegs. Under 10 there's no damage.
+  - Setting *Climbing: chases on a ladder* (on by default). `api.climb.contest(token, kind, target)`.
+- **Targeting climbers who share a square.**
+  - *The gauge is the way in*: every face on the ladder gauge stands for its token, and
+    everyone at the table sees the gauge. Click a face to target that climber (Shift adds).
+    On your own tokens a click selects, and Alt-click or right-click targets. A targeted face
+    gets a red ring and crosshair. Attacks use the climber's height as usual.
+  - *Drawn apart*: each climber above the lowest is drawn a step further up the map, to
+    alternate sides, so the tokens themselves can be seen and clicked. It's only where they're
+    drawn: every climber is still on the ladder's square.
+
 ## 1.47.0
 
 - **Badges on linked tiles, for the GM.** Every tile linked as stairs, a ladder or a door now

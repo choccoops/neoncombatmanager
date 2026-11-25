@@ -88,3 +88,48 @@ export function toSegment(p, a, b) {
  *   floors (Levels) at the foot and at the far end (0 where there's none)
  */
 export const elevationAfter = ({ base = 0, height = 0, floorFrom = 0, floorTo = 0 } = {}) => Math.round((base + height - (floorTo - floorFrom)) * 10) / 10;
+
+/* ---------------------------------------- */
+/*  Chases on a ladder                      */
+/* ---------------------------------------- */
+
+/** The DV to leap past the climber in front (Athletics), and to catch the ladder when thrown off it (corebook pg. 181). */
+export const LEAP_DV = 15;
+export const CATCH_DV = 15;
+
+/** A d10 as Cyberpunk RED reads it: a 10 adds another d10, a 1 takes another d10 off. */
+export const d10Total = (first, second = 0) => (first === 10 ? 10 + second : first === 1 ? 1 - second : first);
+
+/** Who's within arm's reach on a one-lane climb: [{ id, at }] a body's length or less above or below. */
+export const within = (at, others = []) => others.filter((o) => Math.abs(o.at - at) <= GAP + 0.01);
+
+/** The climber right in front (above), if they're within reach: the one a leap goes past. */
+export function inFront(at, others = []) {
+  const above = within(at, others).filter((o) => o.at > at).sort((x, y) => x.at - y.at);
+  return above[0] ?? null;
+}
+
+/** An opposed check: the one acting has to beat the other; a tie goes to the one defending. */
+export const beats = (attack, defence) => Number(attack) > Number(defence);
+
+/**
+ * Where a leap past the climber in front lands: a body's length above them, or off the top.
+ * Null when someone else is already there.
+ * @param {object} o - front: where the one being passed is; total; others: where everyone else on the ladder is
+ * @returns {{ at: number, done: boolean }|null}
+ */
+export function leapTo({ front, total, others = [] } = {}) {
+  const at = front + GAP;
+  if (at >= total) return { at: total, done: true };
+  if (others.some((o) => o !== front && Math.abs(o - at) < GAP)) return null;
+  return { at, done: false };
+}
+
+/** Falling (corebook pg. 181): 2d6 for every full 10 m/yds fallen; under 10, nothing. The formula, or "" for none. */
+export function fallDice(height) {
+  const tens = Math.floor((Number(height) || 0) / 10);
+  return tens > 0 ? `${tens * 2}d6` : "";
+}
+
+/** Where a climber's token is drawn, so several on one ladder don't sit on top of each other: each one up the ladder, a step up the map and to alternate sides. */
+export const fanOffset = (rank, w, h) => (rank > 0 ? { dx: Math.round((rank % 2 ? 0.3 : -0.3) * w), dy: -Math.round(rank * 0.55 * h) } : { dx: 0, dy: 0 });

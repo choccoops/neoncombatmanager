@@ -1434,3 +1434,5 @@ li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; li
 
 #ncm-way.ncm-way button.is-quiet { background: transparent; color: var(--ncm-cyan); border: 1px solid var(--ncm-cyan); }
 #ncm-way.ncm-way button.is-quiet:hover { background: rgba(5, 217, 232, 0.15); }
+
+#ncm-way.ncm-way { flex-wrap: wrap; justify-content: center; max-width: min(92vw, 900px); }

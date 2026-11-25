@@ -73,7 +73,7 @@ export const Run = {
         return id === "torch" ? Senses.toggleTorch(actor, { token }) : Senses.toggleVision(actor, id, { token });
       }
       case "climb":
-        return (await import("../senses/climb.js")).Climb.go(token ?? actor.getActiveTokens?.()[0] ?? null, { dir: id });
+        return (await import("../senses/climb.js")).Climb.act(token ?? actor.getActiveTokens?.()[0] ?? null, key);
       case "way":
         return (await import("../senses/stairs.js")).Stairs.take(token ?? actor.getActiveTokens?.()[0] ?? null);
       case "hold":

@@ -1269,6 +1269,13 @@ off; so does climbing by the line of a Grapple Hand or Grapple Gun (a second but
 - **More than one climber.** On a ladder they go single file, 2 m/yds apart, and nobody passes
   the one in front. On a wall they climb side by side.
 - **Letting go.** Dragging a climber away ends the climb; the GM is told how high they were.
+- **Chases.** Within 2 m/yds of another climber on the same ladder you can **Throw off** (DEX +
+  Brawling against theirs; thrown off, they get a DV15 Athletics grab at the ladder, or none
+  needed with a grapple) or, behind them, **Leap past** (DEX + Athletics against DV15, or you
+  fall). The rolls and the outcome go on a card. A fall of 10 m/yds or more rolls its damage.
+- **Targeting climbers.** They share a square, so target them from the gauge: click a face to
+  target it (on your own token a click selects; Alt-click or right-click targets). The tokens
+  are also drawn fanned out up the map so each can be clicked.
 
 The GM sees a badge on every linked tile and climbable wall saying what it is, how high, and
 where it leads. Settings: *Climbing*, and *Stairs, ladders and doors: the GM's badges*.
