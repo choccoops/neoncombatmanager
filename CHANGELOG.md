@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.46.1
+
+- **Plays by libWrapper's rules.** The click on a sensed outline (Tech scope, Low Light,
+  Infrared, the far side of a linked area) was caught by replacing the token layer's click
+  handler directly, which libWrapper flagged as likely to conflict with Monk's Active Tile
+  Triggers and Smart Target. With libWrapper installed it's now registered through libWrapper,
+  so the three chain properly and the warning is gone. Without libWrapper it works as before.
+
 ## 1.46.0
 
 - **Stairs ask first.** Nobody is taken anywhere by walking over a tile any more. Whoever

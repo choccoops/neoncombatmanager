@@ -285,17 +285,34 @@ export const Xray = {
    * The Target key works the same way, from where the pointer is.
    */
   wrapClicks() {
-    const proto = CONFIG.Canvas?.layers?.tokens?.layerClass?.prototype;
-    if (proto && typeof proto._onClickLeft === "function" && !proto._onClickLeft._ncmScope) {
-      const original = proto._onClickLeft;
+    if (!this._clicks) {
       const self = this;
-      proto._onClickLeft = function (event, ...rest) {
+      // A click on an outline targets it and goes no further; any other click goes on as it was.
+      const handle = function (wrapped, event, ...rest) {
         const hit = self.drawn.size ? self.at(self.pointOf(event)) : null;
-        if (!hit) return original.call(this, event, ...rest);
+        if (!hit) return wrapped(event, ...rest);
         self.target(hit, { add: !!(event?.shiftKey ?? event?.data?.originalEvent?.shiftKey) });
         return undefined;
       };
-      proto._onClickLeft._ncmScope = true;
+      const lib = globalThis.libWrapper;
+      if (lib && typeof lib.register === "function") {
+        // Through libWrapper where it's installed, so other modules wrapping the same click chain with this one.
+        try {
+          lib.register(MODULE_ID, "TokenLayer.prototype._onClickLeft", handle, "MIXED");
+          this._clicks = "libWrapper";
+        } catch (err) {
+          console.warn(`${MODULE_ID} | libWrapper wouldn't take the token layer's click; wrapping it directly`, err);
+        }
+      }
+      const proto = CONFIG.Canvas?.layers?.tokens?.layerClass?.prototype;
+      if (!this._clicks && proto && typeof proto._onClickLeft === "function" && !proto._onClickLeft._ncmScope) {
+        const original = proto._onClickLeft;
+        proto._onClickLeft = function (event, ...rest) {
+          return handle.call(this, (...args) => original.call(this, ...args), event, ...rest);
+        };
+        proto._onClickLeft._ncmScope = true;
+        this._clicks = "direct";
+      }
     }
     if (typeof document !== "undefined" && !this._keys) {
       this._keys = true;
