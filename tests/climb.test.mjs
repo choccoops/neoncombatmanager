@@ -349,14 +349,17 @@ test("a chase up a ladder at the table: thrown off, caught, leapt past, and a le
   const { Cards } = await import("../scripts/combat/cards.js");
   const cards = [];
   const hurt = [];
-  const prev = { check: Climb.check, post: Cards.post, damage: Cards.damage };
-  Cards.post = async (c) => { cards.push(c.kicker); };
-  Cards.damage = async (actor, d) => { hurt.push([actor.name, d.armor, d.amount > 0]); };
-  // The dice are the test's to call: each check takes the next total.
+  const prev = { roll: Climb.rollFor, post: Cards.post, hurt: Climb.hurt };
+  const posted = [];
+  Cards.post = async (c) => { cards.push(c.kicker); posted.push(c); };
+  Climb.hurt = async (actor, amount, { armor = false } = {}) => { hurt.push([actor.name, armor, amount > 0]); return amount; };
+  // The dice are the test's to call: each Check takes the next total.
   let totals = [];
-  Climb.check = async () => {
-    const total = totals.shift();
-    return { total, base: 0, die: total, text: String(total) };
+  Climb.rollFor = async () => ({ total: totals.shift() });
+  // The button on the last card, pressed by whoever it calls on.
+  const press = async () => {
+    const b = posted.at(-1).buttons[0];
+    return Climb._step({ ...b.data, action: b.action, total: totals.shift() }, game.user.id);
   };
   try {
     const ana = climber("Ana", 14);
@@ -368,22 +371,40 @@ test("a chase up a ladder at the table: thrown off, caught, leapt past, and a le
     assert.deepEqual(Climb.moves(cy), []);
     assert.deepEqual([Climb.rankOf(cy), Climb.rankOf(ben), Climb.rankOf(ana)], [0, 1, 2]);
     // Ben tries to throw Ana off and doesn't beat her.
+    // Ben rolls his own Brawling; a card calls on Ana for hers.
     totals = [12, 12];
     let r = await Climb.contest(ben, "throw", "Ana");
+    assert.deepEqual([r.pending, posted.at(-1).buttons[0].action, posted.at(-1).actor.name], ["hold", "climb-hold", "Ana"]);
+    r = await press();
     assert.deepEqual([r.won, cards.at(-1)], [false, "Holds on"]);
     assert.equal(Climb.state(ana).at, 14);
-    // He wins the next one, but she catches the ladder (beats DV15).
+    // He wins the next one: a card for her grab at the ladder, and she catches it (beats DV15).
     totals = [15, 9, 16];
-    r = await Climb.contest(ben, "throw", "Ana");
-    assert.deepEqual([r.won, r.fell, cards.at(-1)], [true, false, "Caught it"]);
+    await Climb.contest(ben, "throw", "Ana");
+    r = await press();
+    assert.deepEqual([r.pending, cards.at(-1), posted.at(-1).buttons[0].action], ["catch", "Off the ladder", "climb-catch"]);
+    r = await press();
+    assert.deepEqual([r.fell, cards.at(-1)], [false, "Caught it"]);
     assert.equal(Climb.state(ana).at, 14);
-    // And the one after that she doesn't: 14 m down, so 2d6, soaked by armor.
+    // And the one after that she doesn't: 14 m down, 2d6 applied with armor soaking, and a card for the landing.
     totals = [15, 9, 15];
-    r = await Climb.contest(ben, "throw", "Ana");
-    assert.deepEqual([r.won, r.fell], [true, true]);
+    await Climb.contest(ben, "throw", "Ana");
+    await press();
+    r = await press();
+    assert.equal(r.fell, true);
     assert.equal(Climb.state(ana), null);
     assert.equal(ana.elevation, 0);
     assert.deepEqual(hurt, [["Ana", true, true]]);
+    assert.deepEqual([cards.at(-1), posted.at(-1).buttons[0].action], ["Landed", "climb-leg"]);
+    // Each card is answered once.
+    const msgs = game.messages;
+    const flagged = { getFlag: () => true };
+    game.messages = { get: () => flagged };
+    assert.equal(await Climb._step({ scene: "sc", token: "Ana", action: "climb-leg", total: 3, message: "m1" }, game.user.id), null);
+    game.messages = msgs;
+    totals = [16];
+    r = await press();
+    assert.deepEqual([r.broken, cards.at(-1)], [false, "On their feet"]);
     // Cy climbs to just under Ben and leaps past him: lands a body's length above.
     cy.flags[M].climb.at = 10;
     assert.deepEqual(Climb.moves(cy).map((m) => m.kind), ["throw", "leap"]);
@@ -405,9 +426,9 @@ test("a chase up a ladder at the table: thrown off, caught, leapt past, and a le
     assert.deepEqual(Climb.moves(cy), []);
   } finally {
     game.scenes = prevScenes;
-    Climb.check = prev.check;
+    Climb.rollFor = prev.roll;
     Cards.post = prev.post;
-    Cards.damage = prev.damage;
+    Climb.hurt = prev.hurt;
     await Settings.set("climbContests", true);
     await Settings.set("levels", true);
   }
@@ -511,18 +532,21 @@ test("falls at the table: held on the climb, 40 a Turn, Cyberlegs, a Broken Leg,
   const cards = [];
   const hurt = [];
   const added = [];
-  const prev = { check: Climb.check, post: Cards.post, damage: Cards.damage, add: Conditions.add, cb: NeonRuler.combatantOf, ask: Climb.askDrop, roll: Conditions.roll };
-  Cards.post = async (c) => { cards.push(c.kicker); };
-  Cards.damage = async (actor, d) => { hurt.push([actor.name, d.amount, !!d.armor]); };
+  const prev = { rollFor: Climb.rollFor, post: Cards.post, hurt: Climb.hurt, add: Conditions.add, cb: NeonRuler.combatantOf, ask: Climb.askDrop, roll: Conditions.roll };
+  const posted = [];
+  Cards.post = async (c) => { cards.push(c.kicker); posted.push(c); };
+  Climb.hurt = async (actor, amount, { armor = false } = {}) => { hurt.push([actor.name, amount, !!armor]); return amount; };
+  // The button on the last card, if it has one, pressed by whoever it calls on.
+  const press = async () => {
+    const b = posted.at(-1).buttons?.[0];
+    return b ? Climb._step({ ...b.data, action: b.action, total: totals.shift() ?? 0 }, game.user.id) : null;
+  };
   Conditions.add = async (id, actor) => { added.push([id, actor.name]); return []; };
   Conditions.roll = async (formula) => ({ total: Number(formula.split("d")[0]) * 3, roll: {} });
   let fighting = new Set();
   NeonRuler.combatantOf = (doc) => (fighting.has(doc.id) ? { id: `c-${doc.id}`, tokenId: doc.id, token: doc } : null);
   let totals = [];
-  Climb.check = async () => {
-    const total = totals.shift() ?? 0;
-    return { total, base: 0, die: total, text: String(total) };
-  };
+  Climb.rollFor = async () => ({ total: totals.shift() ?? 0 });
   try {
     // Dragged off the climb, 14 m up: the move is stopped and the mover asked. Climbing itself goes on.
     const ana = tok("Ana", { at: 14 });
@@ -538,9 +562,10 @@ test("falls at the table: held on the climb, 40 a Turn, Cyberlegs, a Broken Leg,
     totals = [16];
     await Climb.drop(ana, { x: 100, y: 0 });
     assert.deepEqual([ana.x, ana.elevation, Climb.state(ana), Climb.falling(ana)], [100, 0, null, null]);
-    assert.deepEqual(hurt.pop(), ["Ana", 6, true]);
-    assert.deepEqual(added, [], "beat DV15: no Broken Leg");
+    assert.deepEqual(hurt.pop(), ["Ana", 6, true], "applied on landing");
     assert.equal(cards.at(-1), "Landed");
+    await press();
+    assert.deepEqual([added, cards.at(-1)], [[], "On their feet"], "beat DV15: no Broken Leg");
     // In a fight, from 55 m: in the air till the end of their Turn, 40 down, then the ground at the end of the next.
     const ben = tok("Ben", { at: 55 });
     fighting = new Set(["Ben"]);
@@ -552,13 +577,14 @@ test("falls at the table: held on the climb, 40 a Turn, Cyberlegs, a Broken Leg,
     assert.deepEqual(await Climb.fallOn(ben), { landed: true, left: 0 });
     assert.deepEqual([ben.elevation, Climb.falling(ben)], [0, null]);
     assert.deepEqual(hurt.pop(), ["Ben", 30, true], "55 m: 10d6");
-    assert.deepEqual(added.pop(), ["brokenLeg", "Ben"], "15 doesn't beat DV15");
+    await press();
+    assert.deepEqual([added.pop(), cards.at(-1)], [["brokenLeg", "Ben"], "Broken Leg"], "15 doesn't beat DV15");
     fighting = new Set();
     // Two Cyberlegs: 28 m is nothing, 31 m is everything.
     const legs = [{ name: "Cyberleg", type: "cyberware", system: { isInstalled: true } }, { name: "Cyberleg", type: "cyberware", system: { isInstalled: true } }];
     const cy = tok("Cy", { at: 28, items: legs });
     await Climb.drop(cy, { x: 300, y: 0 });
-    assert.deepEqual([hurt.length, added.length], [0, 0]);
+    assert.deepEqual([hurt.length, added.length, posted.at(-1).buttons.length], [0, 0, 0]);
     cy.flags[M].climb = { kind: "tile", id: "foot", at: 31, height: 60, total: 60, base: 0, to: "head" };
     totals = [16];
     await Climb.drop(cy, { x: 300, y: 0 });
@@ -571,23 +597,30 @@ test("falls at the table: held on the climb, 40 a Turn, Cyberlegs, a Broken Leg,
     assert.equal(Climb.panzer(ana.actor), null);
     totals = [16];
     await Climb.drop(dan, { x: 400, y: 0 });
+    // The damage waits on Dan's own roll.
+    assert.deepEqual([hurt.length, posted.at(-1).buttons[0].action], [0, "climb-dfa"]);
+    await press();
     // 4d6 = 12; BODY 6 + SP 11 take all of it: Eve takes 12 to HP and is Prone, Dan nothing and no leg Check.
     assert.deepEqual(hurt.splice(0), [["Eve", 12, false]]);
     assert.deepEqual(added.splice(0), [["prone", "Eve"]]);
-    assert.equal(cards.at(-1), "Death From Above");
+    assert.deepEqual([cards.at(-1), posted.at(-1).buttons.length], ["Death From Above", 0]);
     // From 50 m: 10d6 = 30; 17 into Eve, 13 left for Dan, and the leg Check.
     dan.flags[M].climb = { kind: "tile", id: "foot", at: 50, height: 60, total: 60, base: 0, to: "head" };
     dan.x = 0;
     totals = [16, 10];
     await Climb.drop(dan, { x: 400, y: 0 });
+    await press();
     assert.deepEqual(hurt.splice(0), [["Eve", 17, false], ["Dan", 13, false]]);
-    assert.deepEqual(added.splice(0), [["brokenLeg", "Dan"], ["prone", "Eve"]]);
+    await press();
+    assert.deepEqual(added.splice(0), [["prone", "Eve"], ["brokenLeg", "Dan"]]);
     // The Check fails: an ordinary landing, and Eve is fine.
     dan.flags[M].climb = { kind: "tile", id: "foot", at: 20, height: 60, total: 60, base: 0, to: "head" };
     dan.x = 0;
     totals = [15, 16];
     await Climb.drop(dan, { x: 400, y: 0 });
+    await press();
     assert.deepEqual(hurt.splice(0), [["Dan", 12, true]]);
+    await press();
     assert.deepEqual(added.splice(0), []);
     // From a height, on a target: offered on the HUD while Eve is targeted, 12 m below and 6 m off.
     dan.x = 700;
@@ -605,6 +638,7 @@ test("falls at the table: held on the climb, 40 a Turn, Cyberlegs, a Broken Leg,
     totals = [16];
     await Climb.act(dan, "climb:dive:Eve");
     assert.deepEqual([dan.x, dan.y, dan.elevation], [500, 0, 0], "down beside her, on the side he came from");
+    await press();
     assert.deepEqual(hurt.splice(0), [["Eve", 6, false]]);
     // Off a floor with a height. A 20 m roof (its own plan), and a tower: ground and 12 m floor side by side, with an opening.
     await Settings.set("levels", true);
@@ -634,6 +668,7 @@ test("falls at the table: held on the climb, 40 a Turn, Cyberlegs, a Broken Leg,
     await Socket.request("climbDrop", { scene: "sc", token: "Gus", x: 3500, y: 200 });
     assert.deepEqual([gus.x, gus.elevation], [3500, 0]);
     assert.deepEqual(hurt.splice(0), [["Gus", 12, true]]);
+    await press();
     // The tower's upper floor: across to the ground floor's plan is a reposition; into the opening is 12 m down onto it.
     const hal = tok("Hal", { x: 7200, y: 400 });
     assert.equal(Climb.ledge(hal, { x: 5200, y: 400 }), null);
@@ -655,10 +690,10 @@ test("falls at the table: held on the climb, 40 a Turn, Cyberlegs, a Broken Leg,
     game.scenes = prevScenes;
     globalThis.canvas = prevCanvas;
     game.user.targets = prevTargets;
-    Climb.check = prev.check;
+    Climb.rollFor = prev.rollFor;
     Climb.askDrop = prev.ask;
     Cards.post = prev.post;
-    Cards.damage = prev.damage;
+    Climb.hurt = prev.hurt;
     Conditions.add = prev.add;
     Conditions.roll = prev.roll;
     NeonRuler.combatantOf = prev.cb;
