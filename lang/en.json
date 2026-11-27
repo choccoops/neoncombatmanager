@@ -3271,7 +3271,7 @@
         "Short": "{name} drops {height} {unit}: under 10, so no damage from the fall.",
         "Legs": "{name} falls {height} {unit} and lands on two Cyberlegs: no damage and no Broken Leg, as the fall is no more than 30 (corebook pg. 181).",
         "Shorter": "Their gear takes {shorter} {unit} off the fall: it counts as {counted} {unit}.",
-        "Damage": "{dice} = <b>{total}</b> damage, soaked by body armor (corebook pg. 181).",
+        "Damage": "{dice} = <b>{total}</b> damage, soaked by body armor, which is ablated if any gets through (corebook pg. 181, 186).",
         "Leg": "Landing (DEX + Athletics against DV{dv}): {roll}.",
         "LegOk": "{name} keeps their legs.",
         "LegBroken": "{name} suffers a Broken Leg."

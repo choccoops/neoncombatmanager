@@ -345,16 +345,21 @@ export const Climb = {
   },
 
   /**
-   * Damage, applied now. With armor: through Cyberpunk RED's own damage (body armor soaks it; a
-   * fall wears no armor away). Without: straight to HP. What got through, where that's known.
+   * Damage, applied now. With armor: through Cyberpunk RED's own damage, so body armor soaks it
+   * and, when any gets through, is ablated by 1 (corebook pg. 186: a fall has no exemption, as
+   * fire and poison do). Without: straight to HP. What got through, where that's known.
    */
   async hurt(actor, amount, { armor = false } = {}) {
     const n = Math.max(0, Math.round(Number(amount) || 0));
     if (!n || !actor) return 0;
     const before = CPR.hp(actor).value;
     if (armor && typeof actor._applyDamage === "function") {
-      await actor._applyDamage(n, 0, "body", 0, "", 0, 0, true, { damageReductionRole: false, damageReductionAE: false, useShield: false, brainDamageReduction: false });
-    } else await CPR.damageHP(actor, armor ? Math.max(0, n - CPR.armor(actor).body) : n, { reason: L(`${LANG}.Climb.Fall.Title`) });
+      await actor._applyDamage(n, 0, "body", 1, "", 0, 0, true, { damageReductionRole: false, damageReductionAE: false, useShield: false, brainDamageReduction: false });
+    } else if (armor) {
+      const through = Math.max(0, n - CPR.armor(actor).body);
+      await CPR.damageHP(actor, through, { reason: L(`${LANG}.Climb.Fall.Title`) });
+      if (through > 0) await CPR.ablate(actor, "body", 1);
+    } else await CPR.damageHP(actor, n, { reason: L(`${LANG}.Climb.Fall.Title`) });
     return Math.max(0, before - CPR.hp(actor).value);
   },
 

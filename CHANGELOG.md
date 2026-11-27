@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.51.1
+
+- **A fall ablates body armor, as the corebook has it.** Fall damage is soaked by body armor
+  and, when any of it gets through, the armor loses 1 SP (corebook pg. 186; a fall has no
+  exemption the way fire and poison do). A fall the armor soaks completely leaves it alone.
+  Death From Above's shares still go straight to HP and don't touch armor.
+
 ## 1.51.0
 
 - **Ladder contests and falls are rolled by the characters, a card at a time.** Nothing is
