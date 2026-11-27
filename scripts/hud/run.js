@@ -74,6 +74,8 @@ export const Run = {
       }
       case "climb":
         return (await import("../senses/climb.js")).Climb.act(token ?? actor.getActiveTokens?.()[0] ?? null, key);
+      case "sec":
+        return (await import("../security/security.js")).Security.act(token ?? actor.getActiveTokens?.()[0] ?? null, key, event ?? null);
       case "way":
         return (await import("../senses/stairs.js")).Stairs.take(token ?? actor.getActiveTokens?.()[0] ?? null);
       case "hold":

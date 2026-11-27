@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<rect x="6" y="6" width="188" height="188" rx="6" fill="#07070b" fill-opacity="0.55" stroke="#ff4d4d" stroke-width="3" stroke-dasharray="14 8"/>
+<circle cx="60" cy="70" r="22" fill="#ff4d4d" fill-opacity="0.35"/>
+<circle cx="120" cy="60" r="28" fill="#ff4d4d" fill-opacity="0.3"/>
+<circle cx="100" cy="120" r="34" fill="#ff4d4d" fill-opacity="0.28"/>
+<circle cx="150" cy="130" r="20" fill="#ff4d4d" fill-opacity="0.35"/>
+<circle cx="55" cy="140" r="18" fill="#ff4d4d" fill-opacity="0.3"/>
+<circle cx="48" cy="60" r="3" fill="#ff4d4d"/>
+<circle cx="72" cy="84" r="3" fill="#ff4d4d"/>
+<circle cx="110" cy="48" r="3" fill="#ff4d4d"/>
+<circle cx="132" cy="70" r="3" fill="#ff4d4d"/>
+<circle cx="96" cy="108" r="3" fill="#ff4d4d"/>
+<circle cx="118" cy="134" r="3" fill="#ff4d4d"/>
+<circle cx="150" cy="118" r="3" fill="#ff4d4d"/>
+<circle cx="160" cy="146" r="3" fill="#ff4d4d"/>
+<circle cx="60" cy="150" r="3" fill="#ff4d4d"/>
+<circle cx="84" cy="128" r="3" fill="#ff4d4d"/>
+<circle cx="140" cy="96" r="3" fill="#ff4d4d"/>
+<circle cx="76" cy="56" r="3" fill="#ff4d4d"/>
+
+</svg>

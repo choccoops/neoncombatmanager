@@ -39,6 +39,7 @@ import { Levels } from "./senses/levels.js";
 import { FloorView } from "./senses/floor-view.js";
 import { Stairs } from "./senses/stairs.js";
 import { Climb } from "./senses/climb.js";
+import { Security } from "./security/security.js";
 import { Hold } from "./combat/hold.js";
 import { Blood } from "./blood/blood.js";
 import { Awareness } from "./awareness/awareness.js";
@@ -352,6 +353,17 @@ const api = {
     /** Why the stairs would or wouldn't take a token (the selected one when none is given). */
     why: (token) => Stairs.why(token)
   },
+  /** Security systems: cameras, turrets and the floor, wall and room defenses on Tiles. */
+  security: {
+    /** GM: put a device on the map ("camera", "turret", "tipFloor"...), at { x, y } or the middle of the view. */
+    place: (kind, options) => Security.place(kind, options),
+    /** GM: the Security window, for the selected Tile or a new device. */
+    open: () => Security.open(),
+    devices: (scene) => Security.devices(scene),
+    /** Look through a camera this player has a pass to or runs (the first one, with no id). */
+    view: (id) => Security.view(id),
+    stopView: () => Security.stopView()
+  },
   /** Climbing: ladders with a height and walls marked climbable. */
   climb: {
     /** Climb a stretch: { dir: "up"|"down", line: by a grapple line }. */
@@ -522,6 +534,7 @@ Hooks.once("init", () => {
   FloorView.init();
   Stairs.init();
   Climb.init();
+  Security.init();
   Hold.init();
   Blood.init();
   Roller.isArea = (r) => Arsenal.isArea(r);

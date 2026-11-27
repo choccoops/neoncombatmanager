@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<rect x="6" y="6" width="188" height="188" rx="6" fill="#07070b" fill-opacity="0.55" stroke="#ff4d4d" stroke-width="3" stroke-dasharray="14 8"/>
+<path d="M12 40 H188" stroke="#ff4d4d" stroke-width="3"/>
+<path d="M12 40 H188" stroke="#ff4d4d" stroke-width="9" stroke-opacity="0.18"/>
+<path d="M12 80 H188" stroke="#ff4d4d" stroke-width="3"/>
+<path d="M12 80 H188" stroke="#ff4d4d" stroke-width="9" stroke-opacity="0.18"/>
+<path d="M12 120 H188" stroke="#ff4d4d" stroke-width="3"/>
+<path d="M12 120 H188" stroke="#ff4d4d" stroke-width="9" stroke-opacity="0.18"/>
+<path d="M12 160 H188" stroke="#ff4d4d" stroke-width="3"/>
+<path d="M12 160 H188" stroke="#ff4d4d" stroke-width="9" stroke-opacity="0.18"/>
+<path d="M60 12 V188" stroke="#ff4d4d" stroke-width="2" stroke-opacity="0.7"/>
+<path d="M100 12 V188" stroke="#ff4d4d" stroke-width="2" stroke-opacity="0.7"/>
+<path d="M140 12 V188" stroke="#ff4d4d" stroke-width="2" stroke-opacity="0.7"/>
+<circle cx="12" cy="40" r="5" fill="#ff4d4d"/><circle cx="188" cy="40" r="5" fill="#ff4d4d"/>
+<circle cx="12" cy="80" r="5" fill="#ff4d4d"/><circle cx="188" cy="80" r="5" fill="#ff4d4d"/>
+<circle cx="12" cy="120" r="5" fill="#ff4d4d"/><circle cx="188" cy="120" r="5" fill="#ff4d4d"/>
+<circle cx="12" cy="160" r="5" fill="#ff4d4d"/><circle cx="188" cy="160" r="5" fill="#ff4d4d"/>
+
+</svg>

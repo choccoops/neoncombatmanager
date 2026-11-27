@@ -15,6 +15,7 @@ import { Far } from "../senses/far.js";
 import { Hold } from "../combat/hold.js";
 import { Stairs } from "../senses/stairs.js";
 import { Climb } from "../senses/climb.js";
+import { Security } from "../security/security.js";
 import { specialsOf, singleShots } from "../arsenal/specials.js";
 import { Iconics } from "../arsenal/iconics.js";
 import { Switches } from "../neonfx/switches.js";
@@ -203,6 +204,8 @@ export function catalog(actor, { token = null, combat = game.combat } = {}) {
   }
 
   // Utility: this module's windows for this character.
+  // Security systems: search for the hidden ones; work on, take or look through the ones in reach.
+  out.utility.push(...Security.entries(actor, token));
   out.utility.push({ key: "util:stakes", label: L(`${LANG}.Stakes.Title`), icon: "fa-solid fa-dice-six" });
   if (Phone.on) out.utility.push({ key: "util:phone", label: L(`${LANG}.Holocall.Title`), icon: "fa-solid fa-phone-volume" });
   out.utility.push({ key: "util:biomon", label: L(`${LANG}.Biomon.Title`), icon: "fa-solid fa-heart-pulse" });

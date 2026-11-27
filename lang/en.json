@@ -1491,6 +1491,18 @@
         "name": "Climbing",
         "hint": "A ladder given a height, and walls the GM marks climbable (the ladder button in the wall controls), are climbed a stretch at a time: 2 m/yds of movement for each one climbed, or 1 for 1 with Grip Feet or by a Grapple Hand's or Grapple Gun's line (corebook pg. 169). On its own Turn a token climbs as far as its movement allows and stays there, its elevation raised, until it climbs on; a Run lets it go further. Several on one ladder climb single file. Off: a ladder is taken in one go, like stairs."
       },
+      "security": {
+        "name": "Security systems",
+        "hint": "Cameras, turrets and the floor, wall and room defenses of the corebook (pg. 213-215) as Tiles: the Security tool on the Tiles controls puts one on the map or sets up the selected Tile. Cameras, turrets and blades watch a field of view that turns with the Tile and stops at walls; the rest go off when someone without a pass steps on them. A device hidden from players is a hidden Tile until a Perception search finds it. From the Action HUD: search, disable one by hand (Electronics/Security Tech), take its Control Node with a deck (Interface), switch it, or look through a camera you hold."
+      },
+      "securityLadder": {
+        "name": "Security: cameras raise the Awareness Ladder",
+        "hint": "In an encounter, a camera that sees someone without a pass moves the Awareness Ladder up a step, unless a Netrunner holds its Control Node. Off: it only tells the GM and whoever watches it."
+      },
+      "securityVoices": {
+        "name": "Security: turret voices",
+        "hint": "A turret says it has a target before it fires. Off: only the gun is heard."
+      },
       "climbContests": {
         "name": "Climbing: chases on a ladder",
         "hint": "Climbers on one ladder go single file. With this on, a climber within 2 m/yds of another gets Throw off (DEX + Brawling against DEX + Brawling; the loser of a won throw gets one DV15 Athletics grab at the ladder, or none needed with a grapple, then falls), and one stuck behind another gets Leap past (DEX + Athletics against DV15: past them on a success, off the ladder on a failure). The module rolls both sides and posts a card; falls of 10 m/yds or more roll their damage (corebook pg. 181)."
@@ -3325,6 +3337,160 @@
         "GrappleLeap": "{name} misses the rungs, and their grapple catches the ladder: no Check needed, no fall.",
         "Past": "Past them",
         "PastText": "{name} is past {other} and in front."
+      }
+    },
+    "Security": {
+      "Title": "Security",
+      "Tool": "Security systems",
+      "Off": "OFF",
+      "Destroyed": "DESTROYED",
+      "Spent": "SPENT",
+      "Hidden": "hidden",
+      "SwitchOff": "Switch off",
+      "SwitchOn": "Switch on",
+      "Slowed": "Held by {device}",
+      "Group": {
+        "emplaced": "Emplaced",
+        "environmental": "Environmental"
+      },
+      "Kind": {
+        "camera": "Observation Camera",
+        "turret": "Automated Turret",
+        "melee": "Automated Melee Weapon",
+        "bloodSwarm": "Automated Blood Swarm",
+        "tanglefoot": "Tanglefoot Flooring",
+        "electric": "Electrical Flooring",
+        "laser": "Laser Grid",
+        "tipFloor": "Tip-floor",
+        "goop": "Goop",
+        "punchers": "Ceiling/Wall Punchers",
+        "slipFloor": "Slip-floor",
+        "stunPanel": "Stun Panels",
+        "sleepGas": "Sleep Gas Elevator"
+      },
+      "Weapon": {
+        "assaultRifle": "Assault Rifle",
+        "heavySmg": "Heavy SMG",
+        "vhPistol": "Very Heavy Pistol (Armor-Piercing)",
+        "flamethrower": "Flamethrower",
+        "dartgun": "Dartgun (Poison)",
+        "blade": "Very Heavy Melee Weapon"
+      },
+      "What": {
+        "bloodSwarm": "A red fog of nanites fills the room round {name}.",
+        "tanglefoot": "The carpet's wires wrap {name}'s legs.",
+        "electric": "The floor under {name} is live.",
+        "laser": "{name} is in the laser grid.",
+        "tipFloor": "The floor tips under {name}.",
+        "goop": "{name} is sprayed with goo.",
+        "punchers": "Steel rods punch out at {name}.",
+        "slipFloor": "The floor under {name} is slick.",
+        "stunPanel": "Light and sound burst from the panels round {name}.",
+        "sleepGas": "The room seals and gas pours in round {name}."
+      },
+      "Roll": {
+        "Evade": "Roll Evasion",
+        "Tank": "Take the range DV ({dv})",
+        "Resist": "Roll Resist Torture/Drugs (DV{dv})",
+        "Check": "Roll {skill} (DV{dv})"
+      },
+      "Card": {
+        "Spotted": "{device} sees {name}",
+        "SpottedText": "Someone without a pass is in its view. Whoever watches the feed knows.",
+        "Ladder": "Awareness climbs to <b>{level}</b>.",
+        "AttackTitle": "{device} attacks",
+        "Shot": "{device} fires its {weapon} at {name}: Combat Number {number} + {die} = <b>{total}</b>. The range DV is {dv}.",
+        "Slash": "{device} swings at {name}: Combat Number {number} + {die} = <b>{total}</b>.",
+        "EvadeOrTank": "{name} can dodge bullets: roll Evasion, or take the range DV.",
+        "EvadeMelee": "{name}: roll Evasion against it.",
+        "VsDv": "<b>{attack}</b> against DV {against}.",
+        "VsEvasion": "<b>{attack}</b> against Evasion <b>{against}</b>.",
+        "Hit": "{device} hits {name}",
+        "Miss": "{device} misses {name}",
+        "Damage": "{dice} = <b>{total}</b>. Body armor soaks it and is ablated if any gets through: {name} takes <b>{took}</b>.",
+        "DamageKept": "{dice} = <b>{total}</b>. Body armor soaks it and isn't ablated: {name} takes <b>{took}</b>.",
+        "Direct": "{dice} = <b>{total}</b> straight to HP: {name} takes <b>{took}</b>.",
+        "Fire": "{name} is set On Fire (Mild).",
+        "Poison": "The dart is poisoned. {name}: Resist Torture/Drugs against DV13, or 2d6 straight to HP.",
+        "Poisoned": "{name} is poisoned",
+        "Resisted": "{name} shrugs off the poison",
+        "Tripped": "{device}: {name}",
+        "CheckAsk": "{name}: {skill} against DV{dv}.",
+        "Rolled": "{name}, {skill} against DV{dv}: <b>{total}</b>.",
+        "Slow": "{dice} = <b>{total}</b>: {name}'s MOVE is down by {total} until they're off it or it's destroyed.",
+        "Saved": {
+          "grapple": "{name}'s grapple catches the edge: no Check needed.",
+          "chrome": "Nothing in {name} for the nanites to eat."
+        },
+        "Conditions": {
+          "tipFloor": "{name} lands Prone in the pit.",
+          "slipFloor": "{name} falls Prone.",
+          "stunPanel": "{name} has a Damaged Eye and a Damaged Ear for the next minute (no Bonus Damage).",
+          "sleepGas": "{name} falls Unconscious until woken."
+        },
+        "Passed": {
+          "laser": "{name} slips through the beams",
+          "tipFloor": "{name} catches the edge",
+          "slipFloor": "{name} keeps their feet",
+          "stunPanel": "{name} rides out the blast",
+          "bloodSwarm": "{name} holds off the swarm",
+          "sleepGas": "{name} holds their breath"
+        },
+        "Failed": {
+          "laser": "{name} touches a beam",
+          "tipFloor": "{name} goes into the pit",
+          "slipFloor": "{name} goes down",
+          "stunPanel": "{name} is stunned",
+          "bloodSwarm": "The swarm gets into {name}",
+          "sleepGas": "{name} goes under"
+        },
+        "Found": "{name} spots security",
+        "FoundNone": "{name} finds no hidden security near",
+        "Countered": "{name} puts {device} out of action",
+        "CounterFail": "{name} can't get {device} open",
+        "CounterText": "Electronics/Security Tech <b>{total}</b> against DV{dv}. The work takes {min} min.",
+        "Controlled": "{name} takes {device}",
+        "ControlFail": "{name} is shut out of {device}",
+        "ControlText": "Interface <b>{total}</b> against the Control Node's DV{dv}."
+      },
+      "Hud": {
+        "Search": "Search for security",
+        "SearchSub": "Perception",
+        "view": "Look through it",
+        "toggle": "{state}",
+        "counter": "Disable by hand: Electronics/Security Tech DV{dv}, {min} min",
+        "control": "Take its Control Node: Interface DV{dv}",
+        "ControlTitle": "Control: {device}"
+      },
+      "Cam": {
+        "Exit": "Leave the feed"
+      },
+      "Form": {
+        "IntroNew": "Pick a device and save: it's put on a new Tile in the middle of your view, with its own art. Turn the Tile to turn what it watches. Devices the book hides start as hidden Tiles.",
+        "IntroTile": "The selected Tile becomes this device and keeps its own art.",
+        "IntroEdit": "The selected device. Empty boxes keep what its kind gives it.",
+        "Kind": "Device",
+        "Name": "Name",
+        "On": "Switched on",
+        "Hp": "HP",
+        "ByKind": "by its kind",
+        "HpHint": "What it has left. 0 destroys it. Devices with no HP can't be broken, only countered.",
+        "Range": "Reach ({unit})",
+        "RangeHint": "How far a camera, turret or blade watches; how near a stun panel goes off.",
+        "Angle": "Field of view (°)",
+        "AngleHint": "For cameras, turrets and blades. 360 is all round.",
+        "Node": "Control Node DV",
+        "NodeHint": "What a Netrunner's Interface has to beat to take it.",
+        "Weapon": "Turret's gun",
+        "WeaponHint": "Automated Turrets only.",
+        "Depth": "Pit depth ({unit})",
+        "Spikes": "spikes or nanowire (6d6)",
+        "DepthHint": "Tip-floors only. 10 or more is also a fall.",
+        "Passes": "Passes",
+        "PassesHint": "These characters don't set it off, can switch it, and can look through it if it's a camera.",
+        "NoActors": "No player characters yet.",
+        "Rearm": "Rearm: full HP, ready again, nobody on its node",
+        "Remove": "Make this a plain Tile again"
       }
     }
   }

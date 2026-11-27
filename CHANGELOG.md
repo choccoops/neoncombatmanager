@@ -1,5 +1,55 @@
 # Changelog
 
+## 1.52.0
+
+- **Security systems on the map.** The thirteen Emplaced and Environmental defenses of the
+  corebook (pg. 213-215; the 2070 Compendium's Security Systems) as Tiles, each with its own
+  art, sounds and effects. On the Tiles controls, the new **Security systems** tool puts a
+  device in the middle of your view, or sets up the Tile you have selected: its kind, name,
+  HP, reach, field of view, Control Node DV, a turret's gun, a pit's depth, and who holds a
+  pass. Devices the book hides start as hidden Tiles.
+- **Observation Cameras** watch a field of view from their Tile. It turns with the Tile and
+  stops at walls. The GM always sees it; players see it once they can see the camera. It
+  turns yellow while someone without a pass is in it. A camera that sees someone tells the
+  GM and whoever watches it, and in an encounter moves the Awareness Ladder up a step
+  (a setting; not while a Netrunner holds its node).
+- **Looking through a camera.** Whoever holds a pass to a camera, or has taken its Control
+  Node, can look through it from the Action HUD: the view moves to the camera, its field of
+  view is lit as your own sight, and a feed frame with a REC light sits over the screen,
+  with buttons for the next camera and to leave.
+- **Automated Turrets and Automated Melee Weapons** watch the same way and attack whoever
+  enters without a pass, and again at the start of each Turn they're still in view: Combat
+  Number 14 + 1d10 against the gun's range DV. A target who can dodge bullets (REF 8+), or
+  anyone against a blade, gets a card to roll Evasion (or take the DV). A hit rolls the
+  gun's damage and applies it, armor soaking and ablating; the Very Heavy Pistol's
+  armor-piercing rounds ablate 2, the Flamethrower sets its target On Fire, and the
+  Dartgun's poison is a DV13 Resist Torture/Drugs card.
+- **Floor, wall and room defenses** go off when someone without a pass steps on their Tile
+  (Stun Panels: within 2 m/yds):
+  - Tanglefoot Flooring and Goop cut MOVE by 1d6 or 2d6 while the character is on them.
+  - Electrical Flooring deals 6d6 on stepping on and at each Turn's start (armor soaks,
+    isn't ablated); Ceiling/Wall Punchers deal 6d6.
+  - Laser Grid: a card for DV17 Contortionist on entering and on each move inside it, or a
+    Very Heavy Melee hit.
+  - Tip-floor: a card for DV15 Athletics (none with a grapple), or into the pit: Prone,
+    6d6 if it has spikes, and a fall if it's 10 m/yds or deeper.
+  - Slip-floor: DV15 Athletics on each move or Prone. Stun Panels: DV15 Resist
+    Torture/Drugs or a Damaged Eye and Ear. Automated Blood Swarm: once, DV15 Resist
+    Torture/Drugs or 3d6 straight to HP for anyone meat. Sleep Gas Elevator: DV13 Resist
+    Torture/Drugs on entering and at the top of each Round, or Unconscious.
+  - Every Check is a button on a chat card for the character it calls on.
+- **Finding, disabling and taking devices**, from the Action HUD's utility section:
+  - **Search for security** rolls Perception and reveals hidden devices within 12 m/yds,
+    with nothing in the way, whose DV it beats.
+  - Next to a device: **disable it by hand** with Electronics/Security Tech against its
+    counter DV.
+  - With a cyberdeck, within 20 m/yds: **take its Control Node** with Interface against the
+    node's DV. Its holder isn't attacked by it, can switch it on and off, and can look
+    through it if it's a camera.
+- New settings: **Security systems**, **Security: cameras raise the Awareness Ladder**,
+  **Security: turret voices**. Sounds were generated for this release and levelled quiet
+  like the rest; effects use JB2A through Sequencer where it's installed.
+
 ## 1.51.1
 
 - **A fall ablates body armor, as the corebook has it.** Fall damage is soaked by body armor
