@@ -751,3 +751,24 @@ test("the DVs to a climber drawn apart are drawn beside where it's drawn", async
     game.user.targets = prev.targets;
   }
 });
+
+test("fall damage goes through Cyberpunk RED's damage: armor soaks it and is ablated", async () => {
+  const calls = [];
+  const sys = makeActor({ name: "Sys" });
+  sys._applyDamage = async (...args) => { calls.push(args.slice(0, 4)); };
+  await Climb.hurt(sys, 14, { armor: true });
+  assert.deepEqual(calls, [[14, 0, "body", 1]], "body, ablation 1: the system ablates when damage gets through");
+  // Without the system's damage: SP 11 soaks 14 down to 3, and the armor loses a point.
+  const plain = makeActor({ name: "Plain" });
+  const ablated = [];
+  plain._ablateArmor = async (loc, n) => { ablated.push([loc, n]); };
+  plain.update = async (data) => { plain.system.derivedStats.hp.value = data["system.derivedStats.hp.value"] ?? plain.system.derivedStats.hp.value; };
+  assert.equal(await Climb.hurt(plain, 14, { armor: true }), 3);
+  assert.deepEqual(ablated, [["body", 1]]);
+  // All of it soaked: no HP lost, no ablation.
+  assert.equal(await Climb.hurt(plain, 9, { armor: true }), 0);
+  assert.equal(ablated.length, 1);
+  // Straight to HP (Death From Above's shares): armor untouched.
+  assert.equal(await Climb.hurt(plain, 5), 5);
+  assert.equal(ablated.length, 1);
+});
