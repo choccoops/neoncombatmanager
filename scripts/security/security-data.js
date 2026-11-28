@@ -25,13 +25,14 @@ export const COMBAT_NUMBER = 14;
 /**
  * Every device. watch: how it notices someone ("cone": a field of view from the tile; "step": on
  * the tile; "near": within `range` of the tile). act: what happens then. counter: the
- * Electronics/Security Tech DV and the minutes to put it out of action by hand. spot: the
+ * traverse: the arc (°, centred on where it rests) a swivel mount turns through to follow whoever
+ * it has in view (0: fixed). counter: the Electronics/Security Tech DV and the minutes to put it out of action by hand. spot: the
  * Perception DV to find it when it's hidden (0: in plain sight). node: the Control Node DV a
  * Netrunner beats to take it.
  */
 export const KINDS = {
   camera: { group: "environmental", watch: "cone", act: "report", hp: 5, range: 20, angle: 90, spot: 17, counter: { dv: 9, min: 1 }, node: 8 },
-  turret: { group: "emplaced", watch: "cone", act: "shoot", hp: 25, range: 30, angle: 90, spot: 0, counter: { dv: 17, min: 5 }, node: 10, weapon: "assaultRifle" },
+  turret: { group: "emplaced", watch: "cone", act: "shoot", hp: 25, range: 30, angle: 90, traverse: 180, spot: 0, counter: { dv: 17, min: 5 }, node: 10, weapon: "assaultRifle" },
   melee: { group: "emplaced", watch: "cone", act: "slash", hp: 25, range: 4, angle: 180, spot: 0, counter: { dv: 17, min: 5 }, node: 10 },
   bloodSwarm: { group: "emplaced", watch: "step", act: "swarm", hp: 0, spot: 0, counter: { dv: 21, min: 5 }, node: 10, once: true },
   tanglefoot: { group: "environmental", watch: "step", act: "tangle", hp: 20, spot: 17, counter: { dv: 13, min: 1 }, node: 8, slow: "1d6" },
@@ -67,6 +68,10 @@ export function cleanDevice(raw) {
     hp: num(raw.hp, hpMax, { max: hpMax || Infinity }),
     range: num(raw.range, k.range ?? 0),
     angle: num(raw.angle, k.angle ?? 360, { min: 5, max: 360 }),
+    traverse: k.watch === "cone" ? num(raw.traverse, k.traverse ?? 0, { max: 360 }) : 0,
+    // While it follows someone: where it rests (the Tile's rotation is where it points now) and who.
+    home: raw.home === null || raw.home === undefined || !Number.isFinite(Number(raw.home)) ? null : Number(raw.home),
+    lock: String(raw.lock ?? ""),
     node: num(raw.node, k.node),
     weapon: WEAPONS[raw.weapon] ? raw.weapon : k.weapon ?? "",
     depth: num(raw.depth, k.depth ?? 0),
@@ -118,6 +123,22 @@ export function conePoints(origin, rotation, angle, radius, steps = 24) {
     pts.push(origin.x + Math.cos(a) * radius, origin.y + Math.sin(a) * radius);
   }
   return pts;
+}
+
+/** An angle as -180..180, and as 0..360. */
+export const signed = (deg) => ((((Number(deg) || 0) + 180) % 360) + 360) % 360 - 180;
+export const wrap = (deg) => (((Number(deg) || 0) % 360) + 360) % 360;
+
+/** The rotation that looks from an origin straight at a point. */
+export function bearing(origin, p) {
+  return wrap(Math.atan2(p.y - origin.y, p.x - origin.x) * (180 / Math.PI) - 90);
+}
+
+/** As near a wanted rotation as a mount gets: within half its traverse either side of where it rests. */
+export function swing(home, want, traverse) {
+  if (traverse >= 360) return wrap(want);
+  const half = Math.max(0, Number(traverse) || 0) / 2;
+  return wrap(home + Math.min(half, Math.max(-half, signed(want - home))));
 }
 
 /** A tile's middle. */

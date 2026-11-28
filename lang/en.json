@@ -3479,6 +3479,8 @@
         "RangeHint": "How far a camera, turret or blade watches; how near a stun panel goes off.",
         "Angle": "Field of view (°)",
         "AngleHint": "For cameras, turrets and blades. 360 is all round.",
+        "Traverse": "Traverse (°)",
+        "TraverseHint": "How far a swivel mount turns to follow whoever it sees, centred on where the Tile points at rest. Turrets: 180. 0 keeps it fixed; 360 turns all the way round.",
         "Node": "Control Node DV",
         "NodeHint": "What a Netrunner's Interface has to beat to take it.",
         "Weapon": "Turret's gun",

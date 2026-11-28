@@ -55,6 +55,26 @@ test("fields of view (pure): a rotation of 0 looks down the map", () => {
   assert.equal(D.notices(tile, D.cleanDevice({ kind: "stunPanel" }), { x: 1350, y: 1150 }, grid), false);
 });
 
+test("swivel mounts (pure): the way to a point, and how far a mount turns towards it", () => {
+  const o = { x: 0, y: 0 };
+  assert.equal(D.bearing(o, { x: 0, y: 100 }), 0, "down the map");
+  assert.equal(D.bearing(o, { x: -100, y: 0 }), 90, "clockwise: left");
+  assert.equal(D.bearing(o, { x: 0, y: -100 }), 180);
+  assert.equal(D.bearing(o, { x: 100, y: 0 }), 270);
+  for (const p of [{ x: 30, y: 80 }, { x: -70, y: -20 }]) assert.equal(D.inCone(o, D.bearing(o, p), 5, 500, p), true, "it looks straight at them");
+  assert.equal(D.swing(0, 40, 180), 40);
+  assert.equal(D.swing(0, 270, 180), 270, "a quarter turn the other way");
+  assert.equal(D.swing(0, 130, 180), 90, "as far as it goes");
+  assert.equal(D.swing(0, 200, 180), 270, "the short way round");
+  assert.equal(D.swing(350, 20, 60), 20, "across the top of the dial");
+  assert.equal(D.swing(350, 60, 60), 20);
+  assert.equal(D.swing(90, 300, 0), 90, "fixed");
+  assert.equal(D.swing(90, 300, 360), 300, "all round");
+  assert.deepEqual([D.cleanDevice({ kind: "turret" }).traverse, D.cleanDevice({ kind: "camera" }).traverse, D.cleanDevice({ kind: "melee" }).traverse], [180, 0, 0]);
+  assert.equal(D.cleanDevice({ kind: "electric", traverse: 90 }).traverse, 0, "a floor has nothing to turn");
+  assert.deepEqual([D.cleanDevice({ kind: "turret" }).home, D.cleanDevice({ kind: "turret", home: 45, lock: "t" }).home], [null, 45]);
+});
+
 test("what each defense does (pure)", () => {
   const e = (kind, o, extra = {}) => D.effectOf(D.cleanDevice({ kind, ...extra }), o);
   assert.deepEqual(e("tanglefoot"), { slow: "1d6" });
@@ -78,7 +98,7 @@ test("security at the table: a camera, a turret, a live floor, a tip-floor, a se
   class Docs extends Map { [Symbol.iterator]() { return this.values(); } }
   const scene = { id: "sc", grid: { size: 100, units: "m", distance: 2 }, tiles: new Docs(), tokens: new Docs(), walls: new Docs(), regions: [], flags: {} };
   const tile = (id, kind, x, y, extra = {}, size = 100) => {
-    const doc = { id, x, y, width: size, height: size, rotation: 0, hidden: false, parent: scene, flags: { [M]: { security: { kind, ...extra } } }, async setFlag(m, k, v) { (this.flags[m] ??= {})[k] = v; }, async update(d) { Object.assign(this, d); } };
+    const doc = { id, x, y, width: size, height: size, rotation: 0, hidden: false, parent: scene, flags: { [M]: { security: { kind, ...extra } } }, async setFlag(m, k, v) { (this.flags[m] ??= {})[k] = v; }, async update(d) { for (const [k, v] of Object.entries(d)) { if (k === `flags.${M}.security`) this.flags[M].security = v; else this[k] = v; } } };
     scene.tiles.set(id, doc);
     return doc;
   };
@@ -207,6 +227,47 @@ test("security at the table: a camera, a turret, a live floor, a tip-floor, a se
     const rows = Security.entries(eli.actor, eli);
     assert.equal(rows[0].key, "sec:search");
     assert.ok(rows.some((r) => r.key === "sec:device:cam2" && r.buttons.map((b) => b.key).join() === "sec:toggle:cam2"), "switched off: no feed to look through, still theirs to switch");
+    // A turret on its swivel: it follows whoever it has, as far as its traverse goes, and swings back.
+    const gun = tile("gun", "turret", 5000, 5000);
+    const flag = () => gun.flags[M].security;
+    const fay = tok("Fay", 5000, 5600);
+    assert.deepEqual(await Security.sweep(fay, { moved: true }), ["gun"]);
+    assert.deepEqual([gun.rotation, flag().lock, flag().home], [0, "Fay", 0], "dead ahead: held without turning");
+    Object.assign(fay, { x: 5600, y: 5000 });
+    assert.deepEqual(await Security.sweep(fay, { moved: true }), [], "still in its sights: no second attack for moving");
+    assert.deepEqual([gun.rotation, flag().lock, flag().home], [270, "Fay", 0], "out of where it looked, so it turned");
+    // Someone nearer walks in: it keeps the one it has.
+    const gus = tok("Gus", 5300, 5000);
+    await Security.sweep(gus, { moved: true });
+    assert.deepEqual([gun.rotation, flag().lock], [270, "Fay"]);
+    // Behind it, past its traverse: lost. Gus is still in view, so it takes him.
+    Object.assign(fay, { x: 5000, y: 4400 });
+    await Security.sweep(fay, { moved: true });
+    assert.deepEqual([gun.rotation, flag().lock, flag().home], [270, "Gus", 0]);
+    // Gus is gone from the map: nobody left, back to rest.
+    scene.tokens.delete("Gus");
+    await Security.gone(gus);
+    assert.deepEqual([gun.rotation, flag().lock, flag().home], [0, "", null]);
+    // A pass holder isn't followed; a fixed mount doesn't turn; a switched-off one lets go.
+    Object.assign(fay, { x: 5000, y: 5600 });
+    flag().passes = [fay.actor.id];
+    await Security.sweep(fay, { moved: true });
+    assert.equal(flag().lock, "");
+    flag().passes = [];
+    flag().traverse = 0;
+    await Security.sweep(fay, { moved: true });
+    Object.assign(fay, { x: 5600, y: 5000 });
+    await Security.sweep(fay, { moved: true });
+    assert.deepEqual([gun.rotation, flag().lock], [0, ""], "fixed");
+    flag().traverse = 180;
+    Object.assign(fay, { x: 5000, y: 5600 });
+    await Security.sweep(fay, { moved: true });
+    Object.assign(fay, { x: 5600, y: 5000 });
+    await Security.sweep(fay, { moved: true });
+    assert.equal(gun.rotation, 270);
+    flag().on = false;
+    await Security.sweep(fay, { moved: true });
+    assert.deepEqual([gun.rotation, flag().lock], [0, ""], "switched off: it swings back");
   } finally {
     game.scenes = prevScenes;
     globalThis.canvas = prevCanvas;

@@ -12,7 +12,7 @@ import { Ladder } from "../roller/ladder.js";
 import { Stairs } from "../senses/stairs.js";
 import { Climb } from "../senses/climb.js";
 import { L, esc, debounce } from "../util.js";
-import { SECURITY_FLAG, KINDS, KIND_IDS, WEAPONS, COMBAT_NUMBER, cleanDevice, working, friendly, hasAccess, inCone, conePoints, centreOf, notices, beats, effectOf, weaponOf, label } from "./security-data.js";
+import { SECURITY_FLAG, KINDS, KIND_IDS, WEAPONS, COMBAT_NUMBER, cleanDevice, working, friendly, hasAccess, inCone, conePoints, centreOf, notices, beats, effectOf, weaponOf, label, bearing, swing, signed } from "./security-data.js";
 
 const ART = `modules/${MODULE_ID}/assets/security`;
 const SOURCE_ID = `${MODULE_ID}.camera`;
@@ -72,6 +72,12 @@ export const Security = {
       if (!Compat.isActiveGM || !("x" in (changed ?? {}) || "y" in (changed ?? {}))) return;
       Stairs.walked(doc).then(() => this.sweep(doc, { moved: true })).catch((err) => console.error(`${MODULE_ID} | security`, err));
     });
+    // The GM turns a turret that's following someone: that's where it rests now, and it looks again.
+    Hooks.on("updateTile", (doc, changed, options) => {
+      if (!Compat.isActiveGM || !("rotation" in (changed ?? {})) || options?.[MODULE_ID]?.track) return;
+      const d = cleanDevice(doc.flags?.[MODULE_ID]?.[SECURITY_FLAG]);
+      if (d && (d.home !== null || d.lock)) doc.setFlag(MODULE_ID, SECURITY_FLAG, { ...d, home: null, lock: "" }).catch(() => null);
+    });
     Hooks.on("deleteToken", (doc) => {
       if (Compat.isActiveGM) this.gone(doc).catch(() => null);
     });
@@ -127,6 +133,7 @@ export const Security = {
     const radius = (dev.d.range / g.distance) * g.size;
     const key = `${dev.id}:${origin.x}:${origin.y}:${dev.tile.rotation}:${dev.d.angle}:${radius}`;
     if (this.polys.has(key)) return this.polys.get(key);
+    if (this.polys.size > 300) this.polys.clear();
     let poly = null;
     try {
       const backend = CONFIG?.Canvas?.polygonBackends?.sight;
@@ -153,6 +160,51 @@ export const Security = {
     return notices(dev.tile, dev.d, this.mid(doc), this.grid(doc.parent), () => this.sees(dev, this.mid(doc)));
   },
 
+  /** Would a device have this token in view if it pointed along a rotation? */
+  noticedAt(dev, doc, rotation) {
+    return this.noticed({ ...dev, tile: { ...dev.tile, rotation } }, doc);
+  },
+
+  /**
+   * GM's client: a device on a swivel mount turns. It picks up the nearest stranger in its view
+   * and follows them as far as its traverse lets it, for as long as it can still see them; with
+   * nobody left to follow it swings back to where it rests. The device given is brought up to date.
+   * @returns {Promise<boolean>} whether it turned or changed who it follows
+   */
+  async track(dev) {
+    const d = dev.d;
+    if (!d.traverse || KINDS[d.kind].watch !== "cone") return false;
+    const scene = dev.doc?.parent;
+    const home = d.home ?? dev.tile.rotation;
+    const origin = centreOf(dev.tile);
+    const aim = (doc) => swing(home, bearing(origin, this.mid(doc)), d.traverse);
+    const fair = (doc) => !!doc?.actor && !doc.actor.flags?.[MODULE_ID]?.cover && !friendly(d, doc.actor.id) && CPR.hp(doc.actor).value > 0;
+    let target = null;
+    if (working(d)) {
+      const held = d.lock ? scene?.tokens?.get?.(d.lock) : null;
+      if (fair(held) && this.noticedAt(dev, held, aim(held))) target = held;
+      // Nobody held: whoever is nearest in what it sees now, else in what it sees at rest.
+      for (const rotation of target ? [] : [...new Set([dev.tile.rotation, home])]) {
+        const seen = [...(scene?.tokens ?? [])].filter((t) => fair(t) && this.noticedAt(dev, t, rotation) && this.noticedAt(dev, t, aim(t)));
+        seen.sort((a, b) => this.distance(dev, a) - this.distance(dev, b));
+        if (seen[0]) {
+          target = seen[0];
+          break;
+        }
+      }
+    }
+    const rotation = target ? aim(target) : home;
+    const turned = Math.abs(signed(rotation - dev.tile.rotation)) > 0.5;
+    const next = { ...d, home: target ? home : null, lock: target?.id ?? "" };
+    if (!turned && next.home === d.home && next.lock === d.lock) return false;
+    await dev.doc.update({ ...(turned ? { rotation } : {}), [`flags.${MODULE_ID}.${SECURITY_FLAG}`]: next }, { [MODULE_ID]: { track: true } });
+    if (turned) dev.tile.rotation = rotation;
+    dev.d = next;
+    // Its servo is heard when it follows or swings back; a new target hears it from the attack.
+    if (turned && next.lock === d.lock || turned && !next.lock) this.fx({ kind: "turn", tile: dev.id, sound: "secTurretLock" });
+    return true;
+  },
+
   /* ---------------------------------------- */
   /*  Setting off                             */
   /* ---------------------------------------- */
@@ -166,7 +218,9 @@ export const Security = {
     const doc = token?.document ?? token;
     if (!this.on || !doc?.parent || !doc.actor || doc.actor.flags?.[MODULE_ID]?.cover) return [];
     const went = [];
+    let turned = false;
     for (const dev of this.devices(doc.parent)) {
+      turned = (await this.track(dev).catch((err) => (console.warn(`${MODULE_ID} | security: tracking`, err), false))) || turned;
       const key = `${dev.id}:${doc.id}`;
       const was = this.inside.has(key);
       const now = working(dev.d) && !friendly(dev.d, doc.actor.id) && this.noticed(dev, doc);
@@ -184,13 +238,14 @@ export const Security = {
       went.push(dev.id);
       await this.trigger(dev, doc);
     }
-    if (went.length) Hooks.callAll(`${MODULE_ID}.fxChanged`);
+    if (went.length || turned) Hooks.callAll(`${MODULE_ID}.fxChanged`);
     return went;
   },
 
   /** A token is gone from the scene: forgotten by every device, and free of what held it. */
   async gone(doc) {
     for (const key of [...this.inside]) if (key.endsWith(`:${doc.id}`)) this.inside.delete(key);
+    for (const dev of this.devices(doc.parent)) if (dev.d.lock === doc.id) await this.track(dev);
   },
 
   /** Off the carpet: whatever it slowed them by comes off. */
@@ -763,6 +818,12 @@ export const Security = {
         const watching = this.feed?.id === dev.id;
         cone.beginFill(color, watching ? 0.05 : seen ? 0.2 : 0.11).lineStyle(2, color, 0.55).drawPolygon(pts).endFill();
         layer.addChild(cone);
+        // The GM also sees everything a swivel mount can reach.
+        if (gm && dev.d.traverse > 0) {
+          const reach = new PIXI.Graphics();
+          reach.lineStyle(1, color, 0.3).drawPolygon(conePoints(at, dev.d.home ?? dev.tile.rotation, Math.min(360, dev.d.traverse + dev.d.angle), (dev.d.range / g.distance) * g.size, 48));
+          layer.addChild(reach);
+        }
         n += 1;
       }
       if (gm || own) {
@@ -827,6 +888,7 @@ export const Security = {
       ${row("Hp", `<input type="number" name="hp" value="${now ? d.hp : ""}" min="0" step="1" placeholder="${L(`${LANG}.Security.Form.ByKind`)}">`, L(`${LANG}.Security.Form.HpHint`))}
       ${row("Range", `<input type="number" name="range" value="${now ? d.range : ""}" min="0" step="1" placeholder="${L(`${LANG}.Security.Form.ByKind`)}">`, L(`${LANG}.Security.Form.RangeHint`))}
       ${row("Angle", `<input type="number" name="angle" value="${now ? d.angle : ""}" min="5" max="360" step="5" placeholder="${L(`${LANG}.Security.Form.ByKind`)}">`, L(`${LANG}.Security.Form.AngleHint`))}
+      ${row("Traverse", `<input type="number" name="traverse" value="${now ? d.traverse : ""}" min="0" max="360" step="5" placeholder="${L(`${LANG}.Security.Form.ByKind`)}">`, L(`${LANG}.Security.Form.TraverseHint`))}
       ${row("Node", `<input type="number" name="node" value="${now ? d.node : ""}" min="1" step="1" placeholder="${L(`${LANG}.Security.Form.ByKind`)}">`, L(`${LANG}.Security.Form.NodeHint`))}
       ${row("Weapon", sel("weapon", Object.keys(WEAPONS).map((w) => [w, L(`${LANG}.Security.Weapon.${w}`)]), d.weapon || "assaultRifle"), L(`${LANG}.Security.Form.WeaponHint`))}
       ${row("Depth", `<input type="number" name="depth" value="${now ? d.depth : ""}" min="0" step="1" placeholder="6"> <label class="checkbox"><input type="checkbox" name="spikes"${d.spikes ? " checked" : ""}> ${L(`${LANG}.Security.Form.Spikes`)}</label>`, L(`${LANG}.Security.Form.DepthHint`))}
@@ -845,7 +907,7 @@ export const Security = {
           const f = button.form.elements;
           const opt = (name) => (f[name].value === "" ? undefined : Number(f[name].value));
           const passes = [...button.form.querySelectorAll("input[name=pass]:checked")].map((i) => i.value);
-          return { kind: f.kind.value, name: f.name.value, on: f.on.checked, hp: opt("hp"), range: opt("range"), angle: opt("angle"), node: opt("node"), weapon: f.weapon.value, depth: opt("depth"), spikes: f.spikes.checked, passes, rearm: !!f.rearm?.checked, remove: !!f.remove?.checked };
+          return { kind: f.kind.value, name: f.name.value, on: f.on.checked, hp: opt("hp"), range: opt("range"), angle: opt("angle"), traverse: opt("traverse"), node: opt("node"), weapon: f.weapon.value, depth: opt("depth"), spikes: f.spikes.checked, passes, rearm: !!f.rearm?.checked, remove: !!f.remove?.checked };
         }
       },
       rejectClose: false
@@ -860,7 +922,7 @@ export const Security = {
     const given = Object.fromEntries(Object.entries(got).filter(([k, v]) => v !== undefined && k !== "rearm" && k !== "remove"));
     // HP typed above what it had: that's its new full HP. Rearmed: full again, nobody on its node, ready to fire.
     const full = Math.max(sameKind ? now.hpMax : KINDS[got.kind].hp, got.hp ?? 0);
-    const next = cleanDevice({ ...(sameKind ? now : {}), ...given, hpMax: full, ...(got.rearm ? { hp: got.hp ?? full, controllers: [], spent: false } : {}) });
+    const next = cleanDevice({ ...(sameKind ? now : {}), ...given, hpMax: full, lock: "", ...(got.rearm ? { hp: got.hp ?? full, controllers: [], spent: false } : {}) });
     if (picked) {
       await this.save(picked, next);
       return picked;
