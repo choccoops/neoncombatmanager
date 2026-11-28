@@ -166,3 +166,56 @@ test("gigs and the Journal: an entry is made, follows the map, and the map follo
     await Settings.set("hubGigJournal", true);
   }
 });
+
+test("camera feeds from anywhere: which a character may watch, and who the GM brings to a scene", async () => {
+  asGM(true);
+  await Settings.set("security", true);
+  class Docs extends Map { [Symbol.iterator]() { return this.values(); } }
+  const mk = (id, name, active = false) => ({ id, name, active, grid: { size: 100, units: "m", distance: 2 }, tiles: new Docs(), tokens: new Docs(), walls: new Docs(), flags: {} });
+  const lab = mk("lab", "Biotechnica Lab");
+  const street = mk("street", "Street", true);
+  const tile = (scene, id, data) => scene.tiles.set(id, { id, x: 0, y: 0, width: 100, height: 100, rotation: 0, hidden: false, parent: scene, texture: { src: "" }, flags: { [M]: { security: data } }, async setFlag(m, k, v) { (this.flags[m] ??= {})[k] = v; } });
+  for (const a of [...game.actors]) game.actors.delete(a.id);
+  const runner = makeActor({ name: "Sable", owners: ["pl1"] });
+  tile(lab, "cam1", { kind: "camera", controllers: [runner.id] });
+  tile(lab, "cam2", { kind: "camera", controllers: [runner.id], on: false });
+  tile(lab, "cam3", { kind: "camera" });
+  tile(lab, "tur", { kind: "turret", controllers: [runner.id] });
+  const prev = { scenes: game.scenes, socket: game.socket, canvas: globalThis.canvas };
+  const pulls = [];
+  game.scenes = Object.assign([lab, street], { get: (id) => [lab, street].find((s) => s.id === id) ?? null });
+  game.socket = { ...(prev.socket ?? {}), emit: (...args) => pulls.push(args), on() {} };
+  try {
+    assert.deepEqual(Security.feeds(runner), [{ scene: "lab", sceneName: "Biotechnica Lab", tile: "cam1", name: "CAM 01" }], "theirs, working, and a camera");
+    assert.deepEqual(await Security._feed({ scene: "lab", tile: "cam1" }, "pl1"), { ok: true });
+    assert.deepEqual(pulls.at(-1), ["pullToScene", "lab", "pl1"]);
+    assert.deepEqual(await Security._feed({ scene: "lab", tile: "cam3" }, "pl1"), { ok: false }, "not theirs to watch");
+    assert.deepEqual(await Security._feed({ scene: "lab", tile: "tur" }, "pl1"), { ok: false }, "not a camera");
+    assert.deepEqual(await Security._feed({ scene: "lab" }, "pl1"), { ok: false }, "no camera named: only home");
+    assert.deepEqual(await Security._feed({ scene: "street" }, "pl1"), { ok: true }, "back to the active scene");
+    assert.deepEqual(await Security._feed({ scene: "lab", tile: "cam1" }, "zz"), { ok: false }, "nobody we know");
+    assert.equal(pulls.length, 2);
+
+    // On this client: a feed on another scene waits for the scene, opens, and remembers the way back.
+    const seen = [];
+    const view = Security.view;
+    Security.view = (id) => (seen.push(id), true);
+    globalThis.canvas = { scene: street };
+    lab.view = async () => ((globalThis.canvas = { scene: lab }), true);
+    try {
+      assert.equal(await Security.watch("lab", "cam1"), true);
+      assert.deepEqual(seen, [], "not until the scene is up");
+      assert.equal(Security.arrived(), true);
+      assert.deepEqual([seen, Security.home, Security.pending], [["cam1"], "street", null]);
+      assert.equal(await Security.watch("lab", "cam1"), true, "already there: straight to the feed");
+      assert.equal(seen.length, 2);
+    } finally {
+      Security.view = view;
+      Security.home = null;
+    }
+  } finally {
+    game.scenes = prev.scenes;
+    game.socket = prev.socket;
+    globalThis.canvas = prev.canvas;
+  }
+});

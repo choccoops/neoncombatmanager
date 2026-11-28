@@ -364,7 +364,11 @@ const api = {
     devices: (scene) => Security.devices(scene),
     /** Look through a camera this player has a pass to or runs (the first one, with no id). */
     view: (id) => Security.view(id),
-    stopView: () => Security.stopView()
+    stopView: () => Security.stopView(),
+    /** The cameras a character can look through, on every scene: [{ scene, sceneName, tile, name }]. */
+    feeds: (actor) => Security.feeds(actor),
+    /** Look through a camera on any scene: this client goes there, and comes back on leaving the feed. */
+    watch: (sceneId, tileId) => Security.watch(sceneId, tileId)
   },
   /** Climbing: ladders with a height and walls marked climbable. */
   climb: {

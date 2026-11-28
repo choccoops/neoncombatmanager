@@ -72,13 +72,19 @@ export const Security = {
     Hooks.on("getSceneControlButtons", (controls) => Compat.addSceneTools(controls, [
       { name: "ncm-security", title: `${LANG}.Security.Tool`, icon: "fa-solid fa-video", order: 125, visible: !!game.user?.isGM, onClick: () => this.open() }
     ], "tiles"));
-    for (const [action, fn] of Object.entries({ secStep: "_step", secSearch: "_search", secCounter: "_counter", secControl: "_control", secToggle: "_toggle", secPass: "_pass", secClaim: "_claim" })) Socket.on(action, (data, userId) => this[fn](data, userId));
+    for (const [action, fn] of Object.entries({ secStep: "_step", secSearch: "_search", secCounter: "_counter", secControl: "_control", secToggle: "_toggle", secPass: "_pass", secClaim: "_claim", secFeed: "_feed" })) Socket.on(action, (data, userId) => this[fn](data, userId));
     Socket.on("event:secFx", (data) => this.fxLocal(data));
     Mail.register("pass", (entry, message, context) => this.passButtons(entry, message, context));
     for (const h of ["canvasReady", "createTile", "updateTile", "deleteTile", "updateToken", "deleteToken", "controlToken", "sightRefresh", `${MODULE_ID}.fxChanged`]) Hooks.on(h, () => soon());
     for (const h of ["createWall", "updateWall", "deleteWall", "canvasReady"]) Hooks.on(h, () => this.polys.clear());
+    // Brought to a camera's scene to look through it: open the feed once the scene has settled.
+    Hooks.on("canvasReady", () => {
+      if (this.pending) setTimeout(() => this.arrived(), 250);
+    });
     Hooks.on("canvasTearDown", () => {
       this.clear();
+      // The scene is going anyway (the GM moved them, or they left): no trip back for a feed watched from afar.
+      this.home = null;
       this.stopView();
       this.inside.clear();
     });
@@ -664,6 +670,7 @@ export const Security = {
     const d = { ...btn.dataset };
     const dev = this.device(game.scenes?.get?.(d.scene) ?? canvas?.scene, d.tile);
     if (d.ncmAction === "sec-pass") return dev ? this.cutPass(actor, d.tile, dev.doc.parent) : null;
+    if (d.ncmAction === "sec-view") return dev ? this.watch(dev.doc.parent.id, d.tile) : null;
     let skill = null;
     if (d.ncmAction === "sec-evade") skill = "Evasion";
     else if (d.ncmAction === "sec-poison") skill = "Resist Torture/Drugs";
@@ -916,7 +923,10 @@ export const Security = {
     await Cards.post({
       actor, title: L(`${LANG}.Security.Card.Dived`, { name: esc(actor.name), arch: esc(dive.name || "") }), kicker: L(`${LANG}.Security.Title`), img: `${ART}/pass.svg`, tone: "cyan",
       body: `<p>${L(`${LANG}.Security.Card.DivedText`)}</p><p>${taken.map((dev) => `<b>${esc(dev.name)}</b> (${L(`${LANG}.Security.Kind.${dev.d.kind}`)}${dev.doc.parent?.name ? `, ${esc(dev.doc.parent.name)}` : ""})`).join(", ")}</p>`,
-      buttons: [{ action: "sec-pass", label: L(`${LANG}.Security.Hud.pass`), icon: "fa-solid fa-id-card-clip", data: { scene: first.doc.parent?.id ?? "", tile: first.id, owner: true } }],
+      buttons: [
+        { action: "sec-pass", label: L(`${LANG}.Security.Hud.pass`), icon: "fa-solid fa-id-card-clip", data: { scene: first.doc.parent?.id ?? "", tile: first.id, owner: true } },
+        ...taken.filter((dev) => dev.d.kind === "camera" && working(dev.d)).slice(0, 4).map((dev) => ({ action: "sec-view", label: L(`${LANG}.Security.Hud.viewNamed`, { device: dev.name }), icon: "fa-solid fa-eye", data: { scene: dev.doc.parent?.id ?? "", tile: dev.id, owner: true } }))
+      ],
       whisper: Cards.owners(actor)
     });
     return taken;
@@ -1080,7 +1090,8 @@ export const Security = {
     const g = this.grid();
     const origin = centreOf(dev.tile);
     const back = this.feed?.back ?? { ...(canvas.scene?._viewPosition ?? {}) };
-    const viewer = canvas.tokens?.controlled?.[0] ?? canvas.tokens?.placeables?.find((t) => t.isOwner) ?? null;
+    // Whose eyes: a token of theirs here, or (watching from somewhere else) the camera's own token or Tile.
+    const viewer = canvas.tokens?.controlled?.[0] ?? canvas.tokens?.placeables?.find((t) => t.isOwner) ?? this.body(canvas.scene, dev.id)?.object ?? canvas.tiles?.get?.(dev.id) ?? null;
     const Cls = foundry?.canvas?.sources?.PointVisionSource ?? CONFIG?.Canvas?.visionSourceClass;
     if (viewer && Cls) {
       try {
@@ -1118,10 +1129,78 @@ export const Security = {
   stopView() {
     const feed = this.feed;
     this.feed = null;
+    // Watched from another scene: go back to it.
+    const home = this.home;
+    this.home = null;
+    if (feed && home && home !== canvas?.scene?.id) this.goTo(home).catch(() => null);
     this.dropSource();
     globalThis.document?.getElementById?.("ncm-cam")?.remove();
     if (feed?.back && Number.isFinite(feed.back.x)) canvas?.animatePan?.({ x: feed.back.x, y: feed.back.y, scale: feed.back.scale, duration: 350 });
     if (feed) this.draw();
+  },
+
+  /* ---------------------------------------- */
+  /*  Feeds from anywhere                     */
+  /* ---------------------------------------- */
+
+  /** The cameras a character can look through, on every scene: [{ scene, sceneName, tile, name }]. */
+  feeds(actor) {
+    if (!this.on || !actor) return [];
+    return this.everywhere()
+      .filter((dev) => dev.d.kind === "camera" && working(dev.d) && this.cleared(dev.d, actor))
+      .map((dev) => ({ scene: dev.doc.parent?.id ?? "", sceneName: dev.doc.parent?.name ?? "", tile: dev.id, name: dev.name }));
+  },
+
+  /** Put this client on a scene: the GM by viewing it, a player by asking the GM to bring them. */
+  async goTo(sceneId, tileId = null) {
+    const scene = game.scenes?.get?.(sceneId);
+    if (!scene) return false;
+    if (game.user?.isGM) return !!(await scene.view());
+    const res = await Socket.request("secFeed", { scene: sceneId, tile: tileId });
+    return !!res?.ok;
+  },
+
+  /**
+   * Look through a camera on any scene (a netrunner in a Deep Dive, a guard at a desk): this
+   * client is taken to the camera's scene, the feed opens there, and leaving it brings them back.
+   */
+  async watch(sceneId, tileId) {
+    if (canvas?.scene?.id === sceneId) return this.view(tileId);
+    this.pending = { scene: sceneId, tile: tileId, home: canvas?.scene?.id ?? null };
+    const ok = await this.goTo(sceneId, tileId);
+    if (!ok) {
+      this.pending = null;
+      ui.notifications?.warn(L(`${LANG}.Security.Cam.NoFeed`));
+    }
+    return ok;
+  },
+
+  /** The scene is up: open the feed that brought this client here. */
+  arrived() {
+    const p = this.pending;
+    if (!p || p.scene !== canvas?.scene?.id) return false;
+    this.pending = null;
+    if (!this.view(p.tile)) return false;
+    this.home = p.home;
+    return true;
+  },
+
+  /**
+   * GM's client: bring a player to a scene. To a camera's: one a character of theirs can look
+   * through. With no camera: back to the active scene, or one a token of theirs stands on.
+   */
+  async _feed(data, userId) {
+    const user = game.users?.get?.(userId) ?? null;
+    const scene = game.scenes?.get?.(data?.scene);
+    if (!user || !scene) return { ok: false };
+    const mine = (game.actors ?? []).filter((a) => a.testUserPermission?.(user, "OWNER"));
+    const dev = data.tile ? this.device(scene, data.tile) : null;
+    const may = dev
+      ? dev.d.kind === "camera" && working(dev.d) && mine.some((a) => this.cleared(dev.d, a))
+      : !!scene.active || [...(scene.tokens ?? [])].some((t) => mine.some((a) => a.id === (t.actorId ?? t.actor?.id)));
+    if (!user.isGM && !may) return { ok: false };
+    game.socket?.emit?.("pullToScene", scene.id, user.id);
+    return { ok: true };
   },
 
   /** The frame over the screen while looking through a camera: its name, a REC light, and the way to the next one or out. */

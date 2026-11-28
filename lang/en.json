@@ -3477,10 +3477,12 @@
         "counter": "Disable by hand: Electronics/Security Tech DV{dv}, {min} min",
         "control": "Take its Control Node: Interface DV{dv}",
         "ControlTitle": "Control: {device}",
-        "pass": "Cut a pass shard"
+        "pass": "Cut a pass shard",
+        "viewNamed": "Look through {device}"
       },
       "Cam": {
-        "Exit": "Leave the feed"
+        "Exit": "Leave the feed",
+        "NoFeed": "The feed couldn't be opened (is a GM online?)."
       },
       "Seat": "Security systems",
       "Body": {
