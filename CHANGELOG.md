@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.53.0
+
+- **Turrets turn to follow their target.** An Automated Turret sits on a swivel mount: it picks
+  up the nearest character without a pass in its field of view and turns to keep them in its
+  sights, up to 90° either side of where its Tile points at rest. It holds the one it has even
+  when someone nearer walks in. Once they get behind a wall, out of reach or past what the
+  mount can turn to, it takes whoever else it can see, or swings back to rest.
+- **Traverse** is a new box in the Security systems window: the arc a mount turns through.
+  Turrets start at 180°; 0 keeps a device fixed, 360 turns all the way round. Cameras and
+  blades start fixed and can be given one. The GM sees a thin outline of everything a
+  swivelling device can reach. Turning the Tile by hand sets where it rests.
+
 ## 1.52.0
 
 - **Security systems on the map.** The thirteen Emplaced and Environmental defenses of the
