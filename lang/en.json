@@ -3465,6 +3465,7 @@
       "Cam": {
         "Exit": "Leave the feed"
       },
+      "Seat": "Security systems",
       "Form": {
         "IntroNew": "Pick a device and save: it's put on a new Tile in the middle of your view, with its own art. Turn the Tile to turn what it watches. Devices the book hides start as hidden Tiles.",
         "IntroTile": "The selected Tile becomes this device and keeps its own art.",

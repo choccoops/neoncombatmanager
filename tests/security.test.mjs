@@ -1,7 +1,7 @@
 /** Security systems: the devices, what each watches, and what happens at the table. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeActor, registerSettings, asGM } from "./helpers/foundry.mjs";
+import { makeActor, makeCombat, registerSettings, asGM } from "./helpers/foundry.mjs";
 
 const M = "cpr-neon-combat-manager";
 const Settings = await registerSettings();
@@ -158,8 +158,8 @@ test("security at the table: a camera, a turret, a live floor, a tip-floor, a se
     // 18 beats DV15: 5d6 = 15, armor soaking, ablation 1.
     assert.equal(posted.at(-1).title, "TUR 01 hits Ben");
     assert.deepEqual(hurt.splice(0), [["Ben", 15, true, 1]]);
-    assert.deepEqual(await Security.sweep(ben, { turn: true }), ["tur"], "the next Turn in its view: again");
-    assert.equal(hurt.length, 0, "but once a Turn each");
+    assert.deepEqual(await Security.sweep(ben, { turn: true }), [], "it has fired at him: no more for staying put");
+    assert.equal(hurt.length, 0);
     scene.tokens.delete("Ben");
     const cy = tok("Cy", 500, 800, { stats: { ref: { value: 8 } } });
     Security.fired.clear();
@@ -268,7 +268,49 @@ test("security at the table: a camera, a turret, a live floor, a tip-floor, a se
     flag().on = false;
     await Security.sweep(fay, { moved: true });
     assert.deepEqual([gun.rotation, flag().lock], [0, ""], "switched off: it swings back");
+    // In an encounter the site takes one Turn, first: nothing fires as people move, each turret once on that Turn.
+    tile("sen", "turret", 8000, 8000);
+    const hal = tok("Hal", 8000, 8600);
+    const ivy = tok("Ivy", 8200, 8700);
+    const combat = makeCombat([hal.actor, ivy.actor]);
+    combat.scene = scene;
+    let passed = 0;
+    combat.createEmbeddedDocuments = async (type, list) => {
+      for (const c of list) {
+        const cb = { id: `seat${combat.turns.length}`, actor: null, token: null, ...c, async update(u) { Object.assign(cb, u); } };
+        combat.combatants.set(cb.id, cb);
+        combat.turns.unshift(cb);
+      }
+    };
+    game.combat = combat;
+    Security.fired.clear();
+    hurt.length = 0;
+    assert.deepEqual(await Security.sweep(hal, { moved: true }), []);
+    assert.deepEqual(await Security.sweep(ivy, { moved: true }), []);
+    assert.equal(hurt.length, 0, "walking into its view draws no shot");
+    const seats = [...combat.combatants].filter((c) => Security.isSeat(c));
+    assert.deepEqual([seats.length, seats[0].initiative, combat.combatant === seats[0]], [1, 21, true], "one place for the whole site, above everyone");
+    assert.deepEqual(await Security.volley(combat), ["sen"]);
+    assert.deepEqual(hurt.splice(0), [["Hal", 15, true, 1]], "the nearest, once");
+    assert.equal(scene.tiles.get("sen").flags[M].security.lock, "Hal");
+    assert.deepEqual(await Security.volley(combat), [], "once a Round");
+    combat.round = 2;
+    assert.deepEqual(await Security.volley(combat), ["sen"]);
+    assert.deepEqual(hurt.splice(0).map((h) => h[0]), ["Hal"], "it keeps the one it follows");
+    // Someone rolls above it: it still goes first.
+    [...combat.combatants].find((c) => c.actor === ivy.actor).initiative = 30;
+    await Security.top(combat);
+    assert.equal(seats[0].initiative, 31);
+    // Nobody left in view: its Turn is passed.
+    Object.assign(hal, { x: 8000, y: 4000 });
+    Object.assign(ivy, { x: 8000, y: 4000 });
+    combat.round = 3;
+    combat.nextTurn = async () => { passed += 1; };
+    assert.deepEqual(await Security.volley(combat), []);
+    assert.equal(passed, 1);
+    game.combat = null;
   } finally {
+    game.combat = null;
     game.scenes = prevScenes;
     globalThis.canvas = prevCanvas;
     Cards.post = prev.post;

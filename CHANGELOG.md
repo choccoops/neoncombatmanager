@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.54.0
+
+- **Turrets and blades take one Turn, first.** In an encounter, the first time a turret or an
+  automated blade has someone without a pass in view, **Security systems** joins the
+  Initiative order at the top, above everyone, and stays there if someone later rolls higher.
+  On that Turn every working turret and blade turns to its target and attacks once: the one it
+  is following, else the nearest in its view. Walking into a turret's view no longer draws a
+  shot on the spot, and nobody is attacked at the start of their own Turn.
+- **One attack a Round each.** A turret or a blade attacks one target a Round, however many
+  are in its view. With nobody in any device's view, the site's Turn is passed on its own.
+- Outside an encounter a turret still fires when someone walks into its view, once.
+
 ## 1.53.0
 
 - **Turrets turn to follow their target.** An Automated Turret sits on a swivel mount: it picks
