@@ -33,7 +33,8 @@ const COLORS = { camera: 0x05d9e8, turret: 0xff4d4d, melee: 0xff4d4d, seen: 0xf3
  *   the Tile and stopped by walls. It's drawn for the GM, and for players once they can see the
  *   device. A camera that sees someone without a pass reports it; a turret or a blade attacks
  *   with its Combat Number. In an encounter the turrets and blades that have someone in view
- *   share one Turn at the top of the Initiative order, and each attacks once in it.
+ *   share one Turn at the top of the Initiative order, and each attacks once in it. One with
+ *   nobody to attack then holds its Action for the first to come into its view that Round.
  * - **The rest** go off when someone without a pass steps on (or near) their Tile. A Check the
  *   book gives them is a button on a chat card for their player; what follows is applied to the
  *   character.
@@ -246,9 +247,11 @@ export const Security = {
       }
       this.inside.add(key);
       const k = KINDS[dev.d.kind];
-      // In an encounter a turret or a blade waits for the site's Turn, at the top of the order.
+      // In an encounter a turret or a blade attacks on the site's Turn, at the top of the order.
+      // One that had nobody to attack then holds its Action: whoever comes into its view gets it, now.
       if ((k.act === "shoot" || k.act === "slash") && this.combat) {
         await this.join(this.combat);
+        if (this.fired.get(dev.id) !== this.stamp() && this.fair(dev.d, doc) && (await this.attack(dev, doc)) !== null) went.push(dev.id);
         continue;
       }
       const again = (turn && k.repeats && k.act !== "gas") || (moved && was && (k.act === "laser" || k.act === "slip"));
