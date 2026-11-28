@@ -1503,6 +1503,10 @@
         "name": "Security: turret voices",
         "hint": "A turret says it has a target before it fires. Off: only the gun is heard."
       },
+      "securityTokens": {
+        "name": "Security: tokens to attack",
+        "hint": "Every device with HP gets a token on its Tile that characters can target and attack like anyone else. Its HP is the device's, and at 0 the device stops working. Hidden devices have hidden tokens. Off: the tokens are taken away and only the GM changes a device's HP."
+      },
       "climbContests": {
         "name": "Climbing: chases on a ladder",
         "hint": "Climbers on one ladder go single file. With this on, a climber within 2 m/yds of another gets Throw off (DEX + Brawling against DEX + Brawling; the loser of a won throw gets one DV15 Athletics grab at the ladder, or none needed with a grapple, then falls), and one stuck behind another gets Leap past (DEX + Athletics against DV15: past them on a success, off the ladder on a failure). The module rolls both sides and posts a card; falls of 10 m/yds or more roll their damage (corebook pg. 181)."
@@ -3396,6 +3400,8 @@
       },
       "Card": {
         "Spotted": "{device} sees {name}",
+        "Wrecked": "{device} is destroyed",
+        "WreckedText": "It has no HP left and stops working. The GM can set its HP in the Security systems window to bring it back.",
         "SpottedText": "Someone without a pass is in its view. Whoever watches the feed knows.",
         "Ladder": "Awareness climbs to <b>{level}</b>.",
         "AttackTitle": "{device} attacks",
@@ -3466,6 +3472,10 @@
         "Exit": "Leave the feed"
       },
       "Seat": "Security systems",
+      "Body": {
+        "Actor": "Security Device",
+        "About": "Neon Combat Manager makes every security device's token from this actor. Each token keeps its own name, art and HP; don't delete it while devices are on a map."
+      },
       "Form": {
         "IntroNew": "Pick a device and save: it's put on a new Tile in the middle of your view, with its own art. Turn the Tile to turn what it watches. Devices the book hides start as hidden Tiles.",
         "IntroTile": "The selected Tile becomes this device and keeps its own art.",
@@ -3475,7 +3485,7 @@
         "On": "Switched on",
         "Hp": "HP",
         "ByKind": "by its kind",
-        "HpHint": "What it has left. 0 destroys it. Devices with no HP can't be broken, only countered.",
+        "HpHint": "What it has left, shared with its token: damage to the token comes off here. 0 destroys it. Devices with no HP have no token and can't be broken, only countered.",
         "Range": "Reach ({unit})",
         "RangeHint": "How far a camera, turret or blade watches; how near a stun panel goes off.",
         "Angle": "Field of view (°)",

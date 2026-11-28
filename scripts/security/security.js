@@ -19,6 +19,8 @@ const SOURCE_ID = `${MODULE_ID}.camera`;
 const SLOW_FLAG = "securitySlow";
 /** The combatant the site's turrets and blades take their Turn as. */
 const SEAT_FLAG = "securitySeat";
+/** On a device's token: its Tile's id. On the actor every such token is made from: true. */
+const DEVICE_FLAG = "securityDevice";
 /** How near a character has to be to work on a device by hand, and to reach its node with a deck, in m/yds. */
 const REACH = 3;
 const NET_REACH = 20;
@@ -42,6 +44,9 @@ const COLORS = { camera: 0x05d9e8, turret: 0xff4d4d, melee: 0xff4d4d, seen: 0xf3
  * - **By hand**, next to one: Electronics/Security Tech against its DV puts it out of action.
  *   **With a deck**, within reach of its Control Node: Interface against the node's DV takes it.
  *   Whoever holds a pass or the node can switch it and, for a camera, look through it.
+ *
+ * - **A device with HP has a token** standing on its Tile: something to target and attack like
+ *   anyone else. The token's HP is the device's; at 0 it stops working.
  *
  * The GM's client does everything that changes a Tile or a character.
  */
@@ -81,6 +86,21 @@ export const Security = {
       if (!Compat.isActiveGM || !("rotation" in (changed ?? {})) || options?.[MODULE_ID]?.track) return;
       const d = cleanDevice(doc.flags?.[MODULE_ID]?.[SECURITY_FLAG]);
       if (d && (d.home !== null || d.lock)) doc.setFlag(MODULE_ID, SECURITY_FLAG, { ...d, home: null, lock: "" }).catch(() => null);
+    });
+    // A device's token is kept in step with its Tile; damage to the token is damage to the device.
+    for (const h of ["canvasReady", `${MODULE_ID}.securityTokens`]) Hooks.on(h, () => {
+      if (Compat.isActiveGM && canvas?.scene) this.queue(() => this.embodyAll());
+    });
+    for (const h of ["createTile", "updateTile"]) Hooks.on(h, (doc, changed, options) => {
+      if (Compat.isActiveGM && !options?.[MODULE_ID]?.body) this.queue(() => this.embodyTile(doc));
+    });
+    Hooks.on("deleteTile", (doc) => {
+      if (Compat.isActiveGM) this.queue(() => this.disembody(doc.parent, doc.id));
+    });
+    Hooks.on("updateActor", (actor, changed, options) => {
+      if (!Compat.isActiveGM || options?.[MODULE_ID]?.body || changed?.system?.derivedStats?.hp?.value === undefined) return;
+      const tok = actor.token;
+      if (tok?.flags?.[MODULE_ID]?.[DEVICE_FLAG]) this.queue(() => this.struck(tok));
     });
     Hooks.on("deleteToken", (doc) => {
       if (Compat.isActiveGM) this.gone(doc).catch(() => null);
@@ -171,7 +191,7 @@ export const Security = {
 
   /** Is this someone a device goes for: a living character with no pass and no hold on its node? */
   fair(d, doc) {
-    return !!doc?.actor && !doc.actor.flags?.[MODULE_ID]?.cover && !friendly(d, doc.actor.id) && CPR.hp(doc.actor).value > 0;
+    return !!doc?.actor && !doc.actor.flags?.[MODULE_ID]?.cover && !this.isDevice(doc) && !friendly(d, doc.actor.id) && CPR.hp(doc.actor).value > 0;
   },
 
   /** Would a device have this token in view if it pointed along a rotation? */
@@ -220,6 +240,128 @@ export const Security = {
   },
 
   /* ---------------------------------------- */
+  /*  A device's token                        */
+  /* ---------------------------------------- */
+
+  /** One thing at a time: tokens made and HP carried across in the order they were asked for. */
+  chain: Promise.resolve(),
+  queue(fn) {
+    this.chain = this.chain.then(fn).catch((err) => console.warn(`${MODULE_ID} | security: a device's token`, err));
+    return this.chain;
+  },
+
+  get bodies() {
+    return this.on && Settings.get("securityTokens") !== false;
+  },
+
+  /** Is this token a device's (not a person)? */
+  isDevice(tok) {
+    const doc = tok?.document ?? tok;
+    return !!(doc?.flags?.[MODULE_ID]?.[DEVICE_FLAG] || doc?.actor?.flags?.[MODULE_ID]?.[DEVICE_FLAG]);
+  },
+
+  /** The token standing for a device, if it has one. */
+  body(scene, tileId) {
+    return [...(scene?.tokens ?? [])].find((t) => t.flags?.[MODULE_ID]?.[DEVICE_FLAG] === tileId) ?? null;
+  },
+
+  /** GM: the one actor every device's token is made from (each token keeps its own name, art and HP). */
+  async base() {
+    const have = [...(game.actors ?? [])].find((a) => a.flags?.[MODULE_ID]?.[DEVICE_FLAG]);
+    if (have) return have;
+    const cls = globalThis.Actor?.implementation ?? globalThis.Actor;
+    if (typeof cls?.create !== "function") return null;
+    const img = `${ART}/turret.svg`;
+    return cls.create({
+      name: L(`${LANG}.Security.Body.Actor`), type: "mook", img,
+      system: { derivedStats: { hp: { value: 25, max: 25 } }, information: { description: `<p>${L(`${LANG}.Security.Body.About`)}</p>`, notes: "", alias: "", history: "" } },
+      prototypeToken: { name: L(`${LANG}.Security.Body.Actor`), texture: { src: img }, actorLink: false, disposition: -1, displayName: 30, displayBars: 20, bar1: { attribute: "derivedStats.hp" }, bar2: { attribute: null }, sight: { enabled: false }, lockRotation: true },
+      flags: { [MODULE_ID]: { [DEVICE_FLAG]: true } },
+      ownership: { default: 0 }
+    });
+  },
+
+  /** What a device's token should be: where it stands (the middle of the Tile, one square), how it looks, its HP. */
+  bodyData(dev) {
+    const g = this.grid(dev.doc?.parent);
+    const at = centreOf(dev.tile);
+    return {
+      name: dev.name, x: Math.round(at.x - g.size / 2), y: Math.round(at.y - g.size / 2), rotation: dev.tile.rotation, hidden: dev.tile.hidden,
+      img: dev.doc?.texture?.src || `${ART}/${dev.d.kind}.svg`, hp: dev.d.hp, max: dev.d.hpMax
+    };
+  },
+
+  /**
+   * GM's client: a device's token made, moved, renamed, turned, hidden and healed to match its
+   * Tile; taken away when the device has no HP to lose, is no device any more, or tokens are off.
+   */
+  async embody(dev) {
+    const scene = dev?.doc?.parent;
+    if (!scene) return null;
+    const tok = this.body(scene, dev.id);
+    if (!this.bodies || !(dev.d.hpMax > 0)) {
+      if (tok) await scene.deleteEmbeddedDocuments("Token", [tok.id]);
+      return null;
+    }
+    const w = this.bodyData(dev);
+    const mark = { [MODULE_ID]: { body: true } };
+    if (!tok) {
+      const actor = await this.base();
+      if (!actor) return null;
+      const [made] = await scene.createEmbeddedDocuments("Token", [{
+        name: w.name, actorId: actor.id, actorLink: false, x: w.x, y: w.y, width: 1, height: 1, rotation: w.rotation, lockRotation: true, hidden: w.hidden,
+        disposition: -1, displayName: 30, displayBars: 20, bar1: { attribute: "derivedStats.hp" }, bar2: { attribute: null }, sight: { enabled: false },
+        texture: { src: w.img }, flags: { [MODULE_ID]: { [DEVICE_FLAG]: dev.id } },
+        delta: { name: w.name, img: w.img, system: { derivedStats: { hp: { value: w.hp, max: w.max } } } }
+      }], mark);
+      return made ?? null;
+    }
+    const u = {};
+    for (const k of ["name", "x", "y", "rotation", "hidden"]) if (tok[k] !== w[k]) u[k] = w[k];
+    if (tok.texture?.src !== w.img) u["texture.src"] = w.img;
+    if (Object.keys(u).length) await tok.update(u, { ...mark, animate: false });
+    const hp = tok.actor?.system?.derivedStats?.hp;
+    if (hp && (Number(hp.value) !== w.hp || Number(hp.max) !== w.max)) await tok.actor.update({ "system.derivedStats.hp.value": w.hp, "system.derivedStats.hp.max": w.max }, mark);
+    return tok;
+  },
+
+  async embodyTile(doc) {
+    const dev = this.device(doc?.parent, doc?.id);
+    return dev ? this.embody(dev) : this.disembody(doc?.parent, doc?.id);
+  },
+
+  async embodyAll(scene = canvas?.scene) {
+    for (const dev of this.devices(scene)) await this.embody(dev);
+    // A token left behind by a Tile that's gone.
+    for (const tok of [...(scene?.tokens ?? [])]) {
+      const id = tok.flags?.[MODULE_ID]?.[DEVICE_FLAG];
+      if (id && !scene.tiles?.get?.(id)) await scene.deleteEmbeddedDocuments("Token", [tok.id]);
+    }
+  },
+
+  async disembody(scene, tileId) {
+    const tok = this.body(scene, tileId);
+    if (tok) await scene.deleteEmbeddedDocuments("Token", [tok.id]);
+    return null;
+  },
+
+  /** GM's client: a device's token has lost or gained HP. The device has what the token has; at 0 it's done. */
+  async struck(tok) {
+    const scene = tok?.parent;
+    const dev = this.device(scene, tok?.flags?.[MODULE_ID]?.[DEVICE_FLAG]);
+    if (!dev) return null;
+    const hp = Math.min(dev.d.hpMax, Math.max(0, Math.round(Number(tok.actor?.system?.derivedStats?.hp?.value) || 0)));
+    if (hp === dev.d.hp) return null;
+    const dead = hp <= 0 && dev.d.hp > 0;
+    await this.save(dev.doc, { ...dev.d, hp });
+    if (dead) {
+      this.fx({ kind: "off", tile: dev.id, sound: "secOff" });
+      await Cards.post({ actor: null, title: L(`${LANG}.Security.Card.Wrecked`, { device: esc(dev.name) }), kicker: L(`${LANG}.Security.Kind.${dev.d.kind}`), img: `${ART}/${dev.d.kind}.svg`, tone: "cyan", body: `<p>${L(`${LANG}.Security.Card.WreckedText`)}</p>` });
+    }
+    return { hp, dead };
+  },
+
+  /* ---------------------------------------- */
   /*  Setting off                             */
   /* ---------------------------------------- */
 
@@ -230,7 +372,7 @@ export const Security = {
    */
   async sweep(token, { moved = false, turn = false } = {}) {
     const doc = token?.document ?? token;
-    if (!this.on || !doc?.parent || !doc.actor || doc.actor.flags?.[MODULE_ID]?.cover) return [];
+    if (!this.on || !doc?.parent || !doc.actor || doc.actor.flags?.[MODULE_ID]?.cover || this.isDevice(doc)) return [];
     const went = [];
     let turned = false;
     for (const dev of this.devices(doc.parent)) {
@@ -896,7 +1038,7 @@ export const Security = {
       const live = working(dev.d);
       const own = mine.some((id) => hasAccess(dev.d, id));
       if (k.watch === "cone" && live) {
-        const seen = (canvas.tokens?.placeables ?? []).some((t) => t.actor && t.visible !== false && !friendly(dev.d, t.actor.id) && this.noticed(dev, t.document));
+        const seen = (canvas.tokens?.placeables ?? []).some((t) => t.actor && t.visible !== false && !this.isDevice(t) && !friendly(dev.d, t.actor.id) && this.noticed(dev, t.document));
         const color = seen ? COLORS.seen : own ? COLORS.mine : COLORS[dev.d.kind] ?? COLORS.camera;
         const poly = this.poly(dev);
         const pts = poly?.points?.length ? poly.points : conePoints(at, dev.tile.rotation, dev.d.angle, (dev.d.range / g.distance) * g.size);

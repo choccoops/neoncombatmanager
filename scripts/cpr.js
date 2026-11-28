@@ -11,9 +11,9 @@ const { getProperty } = foundry.utils;
  */
 export const CPR = {
   /** Actor types that take part in combat as meat (Black ICE and Demons have no body). */
-  /** A person: a character or a mook, but not a Neon Cover piece (a mook that's a table or a wall). */
+  /** A person: a character or a mook, but not a Neon Cover piece (a mook that's a table or a wall) or a security device's token. */
   isMeat(actor) {
-    return (actor?.type === "character" || actor?.type === "mook") && !actor.flags?.[MODULE_ID]?.cover;
+    return (actor?.type === "character" || actor?.type === "mook") && !actor.flags?.[MODULE_ID]?.cover && !actor.flags?.[MODULE_ID]?.securityDevice;
   },
 
   /**
