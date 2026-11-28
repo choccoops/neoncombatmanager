@@ -333,3 +333,85 @@ test("security at the table: a camera, a turret, a live floor, a tip-floor, a se
     Security.fired.clear();
   }
 });
+
+test("a device's token: made with its HP, kept in step with the Tile, and damage to it is the device's", async () => {
+  asGM(true);
+  await Settings.set("security", true);
+  await Settings.set("securityTokens", true);
+  class Docs extends Map { [Symbol.iterator]() { return this.values(); } }
+  const scene = { id: "sc2", grid: { size: 100, units: "m", distance: 2 }, tiles: new Docs(), tokens: new Docs(), walls: new Docs(), flags: {} };
+  const base = makeActor({ name: "Security Device" });
+  base.flags = { [M]: { securityDevice: true } };
+  let made = 0;
+  scene.createEmbeddedDocuments = async (type, list) => list.map((data) => {
+    const hp = { ...data.delta.system.derivedStats.hp };
+    const tok = { ...data, id: `t${(made += 1)}`, parent: scene, actor: { flags: base.flags, system: { derivedStats: { hp } }, async update(u) { hp.value = u["system.derivedStats.hp.value"] ?? hp.value; hp.max = u["system.derivedStats.hp.max"] ?? hp.max; } },
+      async update(u) { for (const [k, v] of Object.entries(u)) { if (k === "texture.src") tok.texture.src = v; else tok[k] = v; } } };
+    scene.tokens.set(tok.id, tok);
+    return tok;
+  });
+  scene.deleteEmbeddedDocuments = async (type, ids) => ids.forEach((id) => scene.tokens.delete(id));
+  const tile = (id, kind, x, y, size = 100) => {
+    const doc = { id, x, y, width: size, height: size, rotation: 0, hidden: false, parent: scene, texture: { src: "" }, flags: { [M]: { security: { kind } } }, async setFlag(m, k, v) { (this.flags[m] ??= {})[k] = v; } };
+    scene.tiles.set(id, doc);
+    return doc;
+  };
+  const posted = [];
+  const prev = { post: Cards.post, fx: Security.fx, scenes: game.scenes };
+  Cards.post = async (c) => { posted.push(c); };
+  Security.fx = () => {};
+  game.scenes = { get: () => scene };
+  try {
+    const tur = tile("tur", "turret", 1000, 1000);
+    const floor = tile("floor", "electric", 2000, 2000, 200);
+    tile("grid", "laser", 3000, 3000, 200);
+    await Security.embodyAll(scene);
+    assert.equal(scene.tokens.size, 2, "a laser grid has no HP: nothing to attack");
+    const body = Security.body(scene, "tur");
+    assert.deepEqual([body.name, body.x, body.y, body.actorLink, body.hidden, body.actor.system.derivedStats.hp], ["TUR 01", 1000, 1000, false, false, { value: 25, max: 25 }]);
+    assert.deepEqual([Security.body(scene, "floor").x, Security.body(scene, "floor").y, Security.body(scene, "floor").width], [2050, 2050, 1], "one square, in the middle of the floor");
+    assert.equal(Security.isDevice(body), true);
+    assert.equal(Security.fair(Security.device(scene, "tur").d, body), false, "no device goes for a device");
+    assert.deepEqual(await Security.sweep(Security.body(scene, "floor"), { moved: true }), [], "nor does a floor go off under its own token");
+    await Security.embodyAll(scene);
+    assert.equal(made, 2, "made once");
+    // The Tile turns, hides, moves and is renamed: so does the token.
+    Object.assign(tur, { rotation: 90, hidden: true, x: 1200 });
+    tur.flags[M].security.name = "Lobby gun";
+    await Security.embodyTile(tur);
+    assert.deepEqual([body.rotation, body.hidden, body.x, body.name], [90, true, 1200, "Lobby gun"]);
+    // Shot: the device has what the token has left. At 0 it's done.
+    body.actor.system.derivedStats.hp.value = 9;
+    assert.deepEqual(await Security.struck(body), { hp: 9, dead: false });
+    assert.equal(tur.flags[M].security.hp, 9);
+    assert.equal(D.working(Security.device(scene, "tur").d), true);
+    body.actor.system.derivedStats.hp.value = -4;
+    assert.deepEqual(await Security.struck(body), { hp: 0, dead: true });
+    assert.equal(D.working(Security.device(scene, "tur").d), false);
+    assert.equal(posted.at(-1).title, "Lobby gun is destroyed");
+    assert.equal(await Security.struck(body), null, "nothing new");
+    // The GM sets its HP in the window: the token has it too.
+    tur.flags[M].security.hp = 25;
+    await Security.embodyTile(tur);
+    assert.equal(body.actor.system.derivedStats.hp.value, 25);
+    // No longer a device, or its Tile deleted, or tokens switched off: the token goes.
+    delete tur.flags[M].security;
+    await Security.embodyTile(tur);
+    assert.equal(Security.body(scene, "tur"), null);
+    scene.tiles.delete("floor");
+    await Security.embodyAll(scene);
+    assert.equal(scene.tokens.size, 0);
+    tur.flags[M].security = { kind: "camera" };
+    await Security.embodyAll(scene);
+    assert.equal(Security.body(scene, "tur").actor.system.derivedStats.hp.max, 5);
+    await Settings.set("securityTokens", false);
+    await Security.embodyAll(scene);
+    assert.equal(scene.tokens.size, 0);
+  } finally {
+    await Settings.set("securityTokens", true);
+    Cards.post = prev.post;
+    Security.fx = prev.fx;
+    game.scenes = prev.scenes;
+    game.actors.delete(base.id);
+  }
+});

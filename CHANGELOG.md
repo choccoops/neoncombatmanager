@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.55.0
+
+- **Security devices can be targeted and attacked.** Every device with HP now has a token
+  standing on its Tile: a camera 5 HP, a turret or a blade 25, the floors and panels their own,
+  a gas room 60. Target it and attack it like anyone else; it has no armor. The token's HP is
+  the device's: damage to the token comes off the device, and at 0 the device stops working
+  and a card says so.
+- The token follows its Tile: it is made when the device is, moves, turns and is renamed with
+  it, is hidden while the device is hidden and shown when a search finds it, and goes when the
+  Tile or the device does. HP set in the Security systems window is the token's too.
+- Devices with no HP to lose (laser grids, tip-floors, blood swarms) have no token.
+- Devices ignore each other's tokens, and one "Security Device" actor is added to the world
+  for all of them.
+- New setting, **Security: tokens to attack**. Off takes the tokens away.
+
 ## 1.54.1
 
 - **A turret with nobody to attack holds its Action.** In an encounter, a turret or an
