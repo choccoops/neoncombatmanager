@@ -321,6 +321,24 @@ Up to 1.6 this module had its own holocalls (group calls, a dialer, `/holo` in c
 to the messenger). Night City Messenger 2.3 does all of that one-to-one and more, so they were
 retired in 1.7. Old call logs stay in the messenger.
 
+### Letters with buttons (Night City Messenger 2.5+)
+
+Two features write to the crew through Night City Messenger and put buttons under the letter:
+
+- **Security passes.** A device's **Pass tag** (Security systems window) is what a pass shard
+  carries. The GM makes a shard from the window; a netrunner on a device's Control Node cuts one
+  from the Action HUD and sends copies to the crew by letter, each with **Load onto a shard**.
+  The shard is one of Night City Messenger's key items too, so one tag can open its terminals
+  and the module's turrets alike.
+- **Gigs on the city map.** The GM adds gigs to a place and picks a fixer from Night City
+  Messenger's directory. The fixer writes to the crew when the gig goes on the board, when a
+  character takes it, and when it ends. Under the letters: **Take the gig**, **Show on the
+  map**, **Collect** (the pay, into the character's wealth). The GM can also send any place by
+  letter from its panel.
+
+On an older Night City Messenger the letters go out without buttons (a pass lands in the
+reader's gear, pay goes straight in). Without it, gigs use chat cards.
+
 ## Night City Map
 
 The City & NCART hub: Night City in 2070, full screen. Open it with **Shift+M**, the map button

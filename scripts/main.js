@@ -18,6 +18,8 @@ import { Comms } from "./comms/comms.js";
 import { Links } from "./comms/links.js";
 import { Phone } from "./comms/phone.js";
 import { NcmSpam, SceneSignal } from "./comms/ncm-world.js";
+import { Mail } from "./comms/mail.js";
+import { Gigs } from "./hub/gigs.js";
 import { NoSignal } from "./comms/no-signal.js";
 import { Hud } from "./hud/hud.js";
 import { Chat } from "./chat/chat.js";
@@ -510,6 +512,8 @@ Hooks.once("init", () => {
   Comms.init();
   SheetNotes.init();
   SceneSignal.init();
+  Mail.init();
+  Gigs.init();
   NoSignal.init();
   Hooks.on(`${MODULE_ID}.spamChanged`, () => NcmSpam.apply());
   Stakes.init();
@@ -588,6 +592,7 @@ Hooks.once("ready", async () => {
   Comms.ready();
   // Night City Messenger in the 2070s: its spam, and the map's dead ground as its dead zones.
   NcmSpam.apply().catch((err) => console.error(`${MODULE_ID} | spam`, err));
+  Mail.ready().catch((err) => console.error(`${MODULE_ID} | mail`, err));
   SceneSignal.sync().catch((err) => console.error(`${MODULE_ID} | dead zones`, err));
   await Roller.ready().catch((err) => console.error(`${MODULE_ID} | roller`, err));
   Alert.ready();

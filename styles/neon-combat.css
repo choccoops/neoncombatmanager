@@ -1452,3 +1452,18 @@ li.effect .effect-item .ncm-effect-note { margin-top: 2px; font-size: 0.85em; li
 @media (prefers-reduced-motion: reduce) { #ncm-cam .ncm-cam-rec { animation: none; } }
 .ncm-security-form .form-group { margin: 0; }
 .ncm-security-form label.checkbox { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; white-space: nowrap; }
+
+/* City hub: gigs */
+.ncm-hub-place.has-gig circle { stroke: var(--ncm-cyan); stroke-width: 2.6; stroke-dasharray: 3 2; }
+.ncm-hub-gig { margin: 6px 0; padding: 8px 10px; border: 1px solid var(--ncm-line-2); border-left: 3px solid var(--ncm-cyan); background: rgba(255, 255, 255, 0.03); }
+.ncm-hub-gig.is-draft { border-left-color: var(--ncm-line-2); opacity: 0.85; }
+.ncm-hub-gig.is-taken { border-left-color: var(--ncm-yellow); }
+.ncm-hub-gig.is-done { border-left-color: #39d98a; }
+.ncm-hub-gig.is-failed { border-left-color: var(--ncm-pink); }
+.ncm-hub-gig h5 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 4px; font-size: 13px; color: #fff; }
+.ncm-hub-gig p { margin: 2px 0; font-size: 12px; line-height: 1.4; color: var(--ncm-text); }
+.ncm-hub-gig .ncm-hub-gig-facts { opacity: 0.85; }
+.ncm-hub-gig .ncm-hub-btns { margin: 6px 0 0; }
+/* Security: the device form can be taller than the screen */
+.ncm-security-form { max-height: 70vh; overflow-y: auto; padding-right: 6px; }
+.ncm-security-form fieldset label.checkbox { margin-bottom: 4px; }

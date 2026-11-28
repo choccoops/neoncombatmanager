@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.56.0
+
+Night City Messenger 2.5.0 (its API 2.3.0) lets other modules put buttons under a letter. This
+release uses that, and its key items and shards, for security passes and for gigs on the city map.
+Everything still works on an older Messenger or without it, with less to press.
+
+- **Pass shards for security.** A device has a **Pass tag**. Whoever carries an item with that
+  tag is let be by the device, can switch it, and can look through it if it's a camera. Give a
+  site's devices one tag ("every device on this scene") and one shard covers them all.
+  - The GM ticks "make a pass shard" in the Security systems window: the shard lands in the
+    Items sidebar, to drag onto a character.
+  - A netrunner who has taken a device's Control Node gets **Cut a pass shard** on the Action
+    HUD: a shard for themself, and letters to the crew through Night City Messenger. Each letter
+    has a **Load onto a shard** button, good once. A letter doesn't reach a dead zone; then the
+    shard has to change hands.
+  - With Night City Messenger on, the shard is one of its key items (the same tag opens its
+    locked shards, terminals and networks) and a data shard with the pass written on it. One of
+    its key items with a device's tag works as a pass too.
+- **The Pass list in the Security systems window** now lists every character, not only the ones
+  a player owns, and the window scrolls when it is taller than the screen (the list sat below
+  the bottom edge on smaller screens).
+- **Gigs on the city map.** The GM adds gigs to a place: client, fixer, pay (split between the
+  crew, or each), a briefing for the players and a note that is never sent. Put one on the board
+  or hand it out; mark it completed or failed. Players see the work on the place and on the
+  map's front page, and take it there. A place with work is ringed on the map, and work at a
+  place the players haven't found puts it on their map.
+  - With Night City Messenger, the gig's fixer (one of its directory contacts, put in the
+    character's contacts first) writes to the crew: the offer, the confirmation, and how it
+    ended. Under the letters: **Take the gig**, **Show on the map**, and **Collect** for the
+    pay, which goes into the character's wealth with a ledger line, once.
+  - Without it, or when a letter doesn't get through, the same words go out as a chat card to
+    the character's players and the pay goes straight in.
+  - **Send this place by letter**: a contact sends the crew a place, with a button that opens
+    the map on it. A hidden place is revealed.
+  - New setting: Gigs on the city map (on).
+- Checked against Night City Messenger 2.5.0: holocalls, numbers, dead zones and the 2070 spam
+  all use calls it still has. Nothing else needed changing.
+
 ## 1.55.0
 
 - **Security devices can be targeted and attacked.** Every device with HP now has a token

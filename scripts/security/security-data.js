@@ -3,7 +3,7 @@
  * what each one watches, and what it does to whoever sets it off. No Foundry in here.
  *
  * A device is a Tile carrying the SECURITY_FLAG:
- *   { kind, name, on, hp, range, angle, node, weapon, depth, spikes, passes: [actor ids],
+ *   { kind, name, on, hp, range, angle, node, weapon, depth, spikes, passes: [actor ids], key,
  *     controllers: [actor ids], spent }
  * Its facing is the Tile's rotation (0 looks down the map, as a token's does).
  */
@@ -77,6 +77,8 @@ export function cleanDevice(raw) {
     depth: num(raw.depth, k.depth ?? 0),
     spikes: !!raw.spikes,
     passes: ids(raw.passes),
+    // The pass tag: whoever carries an item with this tag (a pass shard, an NCM key item) is let be.
+    key: String(raw.key ?? "").trim().slice(0, 80),
     controllers: ids(raw.controllers),
     spent: !!raw.spent
   };
@@ -86,7 +88,7 @@ export function cleanDevice(raw) {
 export const working = (d) => !!d && d.on && !(d.hpMax > 0 && d.hp <= 0) && !d.spent;
 
 /** Does it leave this character alone: they carry a pass, or have taken its Control Node? */
-export const friendly = (d, actorId) => !!actorId && (d.passes.includes(String(actorId)) || d.controllers.includes(String(actorId)));
+export const friendly = (d, actorId, keys = []) => !!actorId && (d.passes.includes(String(actorId)) || d.controllers.includes(String(actorId)) || (!!d.key && keys.includes(d.key)));
 
 /** May this character look through it or switch it: they carry a pass or run its node. */
 export const hasAccess = friendly;

@@ -219,14 +219,14 @@ test("security at the table: a camera, a turret, a live floor, a tip-floor, a se
     assert.deepEqual(await Security._counter({ scene: "sc", token: "Eli", tile: "cam2", total: 9 }, game.user.id), { ok: false });
     assert.deepEqual(await Security._control({ scene: "sc", token: "Eli", tile: "cam2", total: 9 }, game.user.id), { ok: true });
     assert.deepEqual(hiddenCam.flags[M].security.controllers, [eli.actor.id]);
-    assert.deepEqual(Security.options(eli).find((o) => o.dev.id === "cam2").can, ["view", "toggle"]);
+    assert.deepEqual(Security.options(eli).find((o) => o.dev.id === "cam2").can, ["view", "toggle", "pass"], "on its node: they can cut passes to it");
     assert.deepEqual(await Security._toggle({ scene: "sc", token: "Eli", tile: "cam2" }, game.user.id), { on: false });
     assert.equal(hiddenCam.flags[M].security.on, false);
     assert.equal(await Security._toggle({ scene: "sc", token: "Dee", tile: "cam2" }, game.user.id), null, "no pass, no node: not theirs to switch");
     // The Action HUD: the search, then what's in reach.
     const rows = Security.entries(eli.actor, eli);
     assert.equal(rows[0].key, "sec:search");
-    assert.ok(rows.some((r) => r.key === "sec:device:cam2" && r.buttons.map((b) => b.key).join() === "sec:toggle:cam2"), "switched off: no feed to look through, still theirs to switch");
+    assert.ok(rows.some((r) => r.key === "sec:device:cam2" && r.buttons.map((b) => b.key).join() === "sec:toggle:cam2,sec:pass:cam2"), "switched off: no feed to look through, still theirs to switch");
     // A turret on its swivel: it follows whoever it has, as far as its traverse goes, and swings back.
     const gun = tile("gun", "turret", 5000, 5000);
     const flag = () => gun.flags[M].security;
