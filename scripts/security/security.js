@@ -17,6 +17,8 @@ import { SECURITY_FLAG, KINDS, KIND_IDS, WEAPONS, COMBAT_NUMBER, cleanDevice, wo
 const ART = `modules/${MODULE_ID}/assets/security`;
 const SOURCE_ID = `${MODULE_ID}.camera`;
 const SLOW_FLAG = "securitySlow";
+/** The combatant the site's turrets and blades take their Turn as. */
+const SEAT_FLAG = "securitySeat";
 /** How near a character has to be to work on a device by hand, and to reach its node with a deck, in m/yds. */
 const REACH = 3;
 const NET_REACH = 20;
@@ -30,7 +32,8 @@ const COLORS = { camera: 0x05d9e8, turret: 0xff4d4d, melee: 0xff4d4d, seen: 0xf3
  * - **Cameras, turrets and automated blades** watch a field of view from their Tile, turned with
  *   the Tile and stopped by walls. It's drawn for the GM, and for players once they can see the
  *   device. A camera that sees someone without a pass reports it; a turret or a blade attacks
- *   with its Combat Number.
+ *   with its Combat Number. In an encounter the turrets and blades that have someone in view
+ *   share one Turn at the top of the Initiative order, and each attacks once in it.
  * - **The rest** go off when someone without a pass steps on (or near) their Tile. A Check the
  *   book gives them is a button on a chat card for their player; what follows is applied to the
  *   character.
@@ -45,7 +48,7 @@ export const Security = {
   layer: null,
   /** "<tile id>:<token id>" for everyone a device has in view or on it now (GM's client). */
   inside: new Set(),
-  /** "<tile id>:<token id>" -> the round (or second) a turret last attacked them. */
+  /** "<tile id>" -> the Round (or, outside an encounter, the moment) a turret or blade last attacked. */
   fired: new Map(),
   polys: new Map(),
   feed: null,
@@ -81,9 +84,14 @@ export const Security = {
     Hooks.on("deleteToken", (doc) => {
       if (Compat.isActiveGM) this.gone(doc).catch(() => null);
     });
-    // Every Turn someone starts in a turret's view or on a live floor, it goes again.
+    // Every Turn someone starts on a live floor, it goes again. The site's own Turn: its turrets and blades attack.
     Hooks.on(HOOKS.turnStart, (combat, combatant) => {
-      if (Compat.isActiveGM && combatant?.token) this.sweep(combatant.token, { turn: true }).catch((err) => console.error(`${MODULE_ID} | security`, err));
+      if (Compat.isActiveGM && this.isSeat(combatant)) this.volley(combat).catch((err) => console.error(`${MODULE_ID} | security`, err));
+      else if (Compat.isActiveGM && combatant?.token) this.sweep(combatant.token, { turn: true }).catch((err) => console.error(`${MODULE_ID} | security`, err));
+    });
+    // Someone rolls higher than the site: it still goes first.
+    for (const h of ["createCombatant", "updateCombatant"]) Hooks.on(h, (cb) => {
+      if (Compat.isActiveGM && !this.isSeat(cb) && cb?.parent?.started) this.top(cb.parent).catch(() => null);
     });
     // A sealed room's gas acts at the top of the Round.
     Hooks.on("updateCombat", (combat, changed) => {
@@ -160,6 +168,11 @@ export const Security = {
     return notices(dev.tile, dev.d, this.mid(doc), this.grid(doc.parent), () => this.sees(dev, this.mid(doc)));
   },
 
+  /** Is this someone a device goes for: a living character with no pass and no hold on its node? */
+  fair(d, doc) {
+    return !!doc?.actor && !doc.actor.flags?.[MODULE_ID]?.cover && !friendly(d, doc.actor.id) && CPR.hp(doc.actor).value > 0;
+  },
+
   /** Would a device have this token in view if it pointed along a rotation? */
   noticedAt(dev, doc, rotation) {
     return this.noticed({ ...dev, tile: { ...dev.tile, rotation } }, doc);
@@ -178,7 +191,7 @@ export const Security = {
     const home = d.home ?? dev.tile.rotation;
     const origin = centreOf(dev.tile);
     const aim = (doc) => swing(home, bearing(origin, this.mid(doc)), d.traverse);
-    const fair = (doc) => !!doc?.actor && !doc.actor.flags?.[MODULE_ID]?.cover && !friendly(d, doc.actor.id) && CPR.hp(doc.actor).value > 0;
+    const fair = (doc) => this.fair(d, doc);
     let target = null;
     if (working(d)) {
       const held = d.lock ? scene?.tokens?.get?.(d.lock) : null;
@@ -233,7 +246,12 @@ export const Security = {
       }
       this.inside.add(key);
       const k = KINDS[dev.d.kind];
-      const again = (turn && (k.repeats || k.act === "shoot" || k.act === "slash") && k.act !== "gas") || (moved && was && (k.act === "laser" || k.act === "slip"));
+      // In an encounter a turret or a blade waits for the site's Turn, at the top of the order.
+      if ((k.act === "shoot" || k.act === "slash") && this.combat) {
+        await this.join(this.combat);
+        continue;
+      }
+      const again = (turn && k.repeats && k.act !== "gas") || (moved && was && (k.act === "laser" || k.act === "slip"));
       if (was && !again) continue;
       went.push(dev.id);
       await this.trigger(dev, doc);
@@ -293,14 +311,76 @@ export const Security = {
     return Cards.post({ actor: null, title: L(`${LANG}.Security.Card.Spotted`, { device: esc(dev.name), name: esc(doc.name ?? "") }), kicker: L(`${LANG}.Security.Kind.camera`), img: `${ART}/camera.svg`, tone: "yellow", body: `<p>${L(`${LANG}.Security.Card.SpottedText`)}</p>${climbed}`, whisper: this.watchers(dev) });
   },
 
-  stamp() {
-    const c = game.combat?.started ? game.combat : null;
-    return c ? `r${c.round}:${c.turn}` : `t${Math.floor(Date.now() / 3000)}`;
+  /** The encounter under way, if there is one. */
+  get combat() {
+    return game.combat?.started ? game.combat : null;
   },
 
-  /** A turret or a blade attacks: its Combat Number + 1d10 against the range's DV, or the target's Evasion if they can and will. Once a Turn each. */
+  stamp() {
+    const c = this.combat;
+    return c ? `${c.id}:r${c.round}` : `t${Math.floor(Date.now() / 3000)}`;
+  },
+
+  isSeat: (combatant) => !!combatant?.flags?.[MODULE_ID]?.[SEAT_FLAG],
+  seat(combat) {
+    return [...(combat?.combatants ?? [])].find((c) => this.isSeat(c)) ?? null;
+  },
+
+  /** One more than the best Initiative anyone else has. */
+  above(combat) {
+    const all = [...(combat?.combatants ?? [])].filter((c) => !this.isSeat(c)).map((c) => Number(c.initiative)).filter(Number.isFinite);
+    return (all.length ? Math.max(...all) : 0) + 1;
+  },
+
+  /** GM's client: the site takes its place in an encounter, at the top of the Initiative order. Once. */
+  async join(combat) {
+    if (!combat || this.seat(combat) || this.joining) return this.seat(combat);
+    this.joining = true;
+    try {
+      await combat.createEmbeddedDocuments("Combatant", [{ name: L(`${LANG}.Security.Seat`), img: `${ART}/turret.svg`, initiative: this.above(combat), flags: { [MODULE_ID]: { [SEAT_FLAG]: true } } }]);
+    } finally {
+      this.joining = false;
+    }
+    return this.seat(combat);
+  },
+
+  /** GM's client: keep the site first when someone's Initiative passes it. */
+  async top(combat) {
+    const seat = this.seat(combat);
+    const want = this.above(combat);
+    if (seat && !(Number(seat.initiative) >= want)) await seat.update({ initiative: want });
+  },
+
+  /** Who a turret or a blade goes for now: the one it follows, else the nearest stranger in its view. */
+  target(dev) {
+    const tokens = [...(dev.doc?.parent?.tokens ?? [])].filter((t) => this.fair(dev.d, t) && this.noticed(dev, t));
+    tokens.sort((a, b) => this.distance(dev, a) - this.distance(dev, b));
+    return tokens.find((t) => t.id === dev.d.lock) ?? tokens[0] ?? null;
+  },
+
+  /**
+   * GM's client: the site's Turn. Every working turret and blade turns to whoever it has and
+   * attacks once. With nobody in anyone's view, the Turn is passed.
+   * @returns {Promise<string[]>} the devices that attacked
+   */
+  async volley(combat) {
+    if (!this.on) return [];
+    const went = [];
+    for (const dev of this.devices(combat?.scene ?? canvas?.scene)) {
+      const act = KINDS[dev.d.kind].act;
+      if ((act !== "shoot" && act !== "slash") || !working(dev.d)) continue;
+      await this.track(dev).catch(() => false);
+      const doc = this.target(dev);
+      if (doc && (await this.attack(dev, doc)) !== null) went.push(dev.id);
+    }
+    Hooks.callAll(`${MODULE_ID}.fxChanged`);
+    if (!went.length && this.isSeat(combat?.combatant) && typeof combat.nextTurn === "function") await combat.nextTurn();
+    return went;
+  },
+
+  /** A turret or a blade attacks: its Combat Number + 1d10 against the range's DV, or the target's Evasion if they can and will. Once a Round each. */
   async attack(dev, doc) {
-    const key = `${dev.id}:${doc.id}`;
+    const key = dev.id;
     const stamp = this.stamp();
     if (this.fired.get(key) === stamp) return null;
     this.fired.set(key, stamp);
@@ -308,7 +388,10 @@ export const Security = {
     const dist = Compat.measure(centreOf(dev.tile), this.mid(doc));
     const gun = weaponOf(dev.d);
     const dv = melee ? null : await Dv.at(gun.table, dist);
-    if (!melee && (dv === null || dv < 0)) return null;
+    if (!melee && (dv === null || dv < 0)) {
+      this.fired.delete(key);
+      return null;
+    }
     const die = (await Conditions.roll("1d10", doc.actor)).total;
     const total = COMBAT_NUMBER + die;
     this.fx({ kind: melee ? "slash" : dev.d.weapon === "flamethrower" ? "flame" : "shot", tile: dev.id, token: doc.id, sound: melee ? "secBlade" : gun.sound, voice: "secTurretLock" });
