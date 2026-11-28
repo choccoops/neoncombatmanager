@@ -1510,6 +1510,10 @@
       "climbContests": {
         "name": "Climbing: chases on a ladder",
         "hint": "Climbers on one ladder go single file. With this on, a climber within 2 m/yds of another gets Throw off (DEX + Brawling against DEX + Brawling; the loser of a won throw gets one DV15 Athletics grab at the ladder, or none needed with a grapple, then falls), and one stuck behind another gets Leap past (DEX + Athletics against DV15: past them on a success, off the ladder on a failure). The module rolls both sides and posts a card; falls of 10 m/yds or more roll their damage (corebook pg. 181)."
+      },
+      "hubGigs": {
+        "name": "Gigs on the city map",
+        "hint": "The GM puts gigs on places; players take them from the map or from the letter. With Night City Messenger on, the gig's fixer (a directory contact) writes to the crew: the offer, the confirmation, and how it ended, with the pay to collect. Without it, the same goes out as chat cards."
       }
     },
     "SceneWeather": {
@@ -3466,7 +3470,8 @@
         "toggle": "{state}",
         "counter": "Disable by hand: Electronics/Security Tech DV{dv}, {min} min",
         "control": "Take its Control Node: Interface DV{dv}",
-        "ControlTitle": "Control: {device}"
+        "ControlTitle": "Control: {device}",
+        "pass": "Cut a pass shard"
       },
       "Cam": {
         "Exit": "Leave the feed"
@@ -3500,10 +3505,116 @@
         "Spikes": "spikes or nanowire (6d6)",
         "DepthHint": "Tip-floors only. 10 or more is also a fall.",
         "Passes": "Passes",
-        "PassesHint": "These characters don't set it off, can switch it, and can look through it if it's a camera.",
-        "NoActors": "No player characters yet.",
+        "PassesHint": "These characters don't set it off, can switch it, and can look through it if it's a camera, with nothing to carry. For a pass that changes hands, use the Pass tag.",
+        "NoActors": "No characters yet.",
         "Rearm": "Rearm: full HP, ready again, nobody on its node",
-        "Remove": "Make this a plain Tile again"
+        "Remove": "Make this a plain Tile again",
+        "Key": "Pass tag",
+        "KeyHint": "Whoever carries an item with this tag is let be, can switch the device, and can look through it if it's a camera: a pass shard, or one of Night City Messenger's key items with the same tag. Give a site's devices one tag and a single shard covers them all.",
+        "KeyAll": "every device on this scene",
+        "KeyShard": "make a pass shard"
+      },
+      "Pass": {
+        "Name": "Security pass: {site}",
+        "About": "A pass to the security at {site}. Whoever carries it is let be by the devices it's keyed to, can switch them, and can look through their cameras.",
+        "Made": "{name} is in the Items sidebar: drag it onto a character.",
+        "CutTitle": "Cut a pass shard",
+        "CutHint": "You run the Control Node of {device}. Write its pass onto a shard, and send copies to the crew.",
+        "Self": "A shard for me",
+        "Send": "Send by Night City Messenger",
+        "SendHint": "Each gets a letter with the pass in it, to load onto a shard of their own. A letter doesn't reach a dead zone.",
+        "NoMail": "Night City Messenger is off (or there's no one to send to): hand the shard over yourself.",
+        "Cut": "Cut it",
+        "MailSubject": "Security pass: {site}",
+        "MailBody": "{name} is on the Control Node of {device} at {site}, and cut you a pass. Load it onto a shard and carry it: the security it's keyed to will let you be.",
+        "MailNoButtons": "The pass is on a shard in your gear.",
+        "Load": "Load onto a shard",
+        "Loaded": "Loaded onto a shard in your gear.",
+        "LoadFailed": "The pass couldn't be loaded (is a GM online?).",
+        "CardTitle": "{name} cuts a pass to {device}",
+        "CardSelf": "A pass shard is in their gear.",
+        "CardSent": "Sent by Night City Messenger to: {names}.",
+        "CardFailed": "Didn't get through to: {names}. Hand a shard over instead."
+      }
+    },
+    "Gigs": {
+      "Title": "Gigs",
+      "New": "New gig",
+      "Edit": "Edit gig",
+      "Untitled": "Unnamed gig",
+      "PerHead": "each",
+      "AFixer": "A fixer",
+      "NoContacts": "Night City Messenger's directory has no contacts (or it's off): word of this gig goes out as chat cards.",
+      "NoPlace": "That place isn't on your map.",
+      "TakeFailed": "The gig couldn't be taken (is a GM online, and is it still on the board?).",
+      "CollectFailed": "The pay couldn't be collected (is a GM online?).",
+      "Collected": "{amount} eb collected.",
+      "Ledger": "Gig: {title}",
+      "RemoveSure": "Delete \"{title}\"? No letter goes out.",
+      "SendPlace": "Send this place by letter",
+      "SendPlaceHint": "A contact sends the place to the crew through Night City Messenger, with a button that opens the map on it. A hidden place is revealed to the players.",
+      "Send": "Send",
+      "SentPlace": "Sent to {count} character(s).",
+      "State": {
+        "draft": "Draft",
+        "offered": "On the board",
+        "taken": "Taken",
+        "done": "Done",
+        "failed": "Failed"
+      },
+      "Move": {
+        "offer": "Put on the board",
+        "assign": "Hand out",
+        "withdraw": "Take off the board",
+        "done": "Completed",
+        "failed": "Failed",
+        "edit": "Edit",
+        "remove": "Delete"
+      },
+      "Field": {
+        "Title": "Gig",
+        "Client": "Client",
+        "Fixer": "Fixer",
+        "Place": "Where",
+        "Reward": "Pay (eb)",
+        "PerHead": "each (not split between the crew)",
+        "Text": "Briefing (the players read this)",
+        "Note": "GM's note (never sent)",
+        "From": "From",
+        "Words": "A few words"
+      },
+      "Button": {
+        "Take": "Take the gig",
+        "Join": "Join the crew on it",
+        "Map": "Show on the map",
+        "Collect": "Collect {amount} eb"
+      },
+      "Mail": {
+        "Offer": {
+          "Subject": "Work: {title}",
+          "Body": "Got work, if you want it. First to say yes has it."
+        },
+        "Assigned": {
+          "Subject": "Yours: {title}",
+          "Body": "{name}, this one is yours. Details below."
+        },
+        "Taken": {
+          "Subject": "Confirmed: {title}",
+          "Body": "{name}, you're on it. Don't make me regret it."
+        },
+        "Done": {
+          "Subject": "Paid out: {title}",
+          "Body": "Client's happy. Good work, {name}.",
+          "Pay": "Your cut: {amount} eb."
+        },
+        "Failed": {
+          "Subject": "Blown: {title}",
+          "Body": "{name}, the job's blown and the client knows it. No pay on this one."
+        },
+        "Place": {
+          "Subject": "Location: {place}",
+          "Body": "Sending you a place: {place}. It's on your map now."
+        }
       }
     }
   }

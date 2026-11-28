@@ -4,6 +4,9 @@ import { CombatTime } from "../combat/time.js";
 import { Hub } from "./hub.js";
 import { Doorway } from "./doorway.js";
 import { Phone } from "../comms/phone.js";
+import { Mail } from "../comms/mail.js";
+import { Gigs } from "./gigs.js";
+import { movesFor, open, canTake } from "./gigs-data.js";
 import { NC2070 } from "./data.js";
 import { districtAt, districtByCode, deadAt, nearestStations, plan, rushHour, formatMinutes, km, DANGER } from "./geo.js";
 import { Settings } from "../settings.js";
@@ -375,7 +378,7 @@ export class HubApp {
         const isNew = opened && !opened.has(p.key);
         // A place players can walk into gets a little door light.
         const door = notes[p.key]?.scene && (notes[p.key]?.open || game.user.isGM) ? `<circle class="ncm-hub-doorlight${notes[p.key]?.open ? " is-open" : ""}" cx="6.5" cy="-6.5" r="2.8"/>` : "";
-        const cls = `${sel === key ? " is-sel" : ""}${notes[p.key] && game.user.isGM ? " has-note" : ""}${p.hidden ? " is-hidden" : ""}${isNew ? " is-new" : ""}`;
+        const cls = `${sel === key ? " is-sel" : ""}${notes[p.key] && game.user.isGM ? " has-note" : ""}${Gigs.openAt(p.key) ? " has-gig" : ""}${p.hidden ? " is-hidden" : ""}${isNew ? " is-new" : ""}`;
         return `<g class="ncm-m ncm-hub-place${cls}" transform="translate(${p.x} ${p.y})" style="--c:${c}" data-sel="${key}" data-tip="${esc(p.name)}${p.hidden ? ` (${esc(L(`${LANG}.Hub.HiddenTag`))})` : ""}"><g class="ncm-mi">${isNew ? `<circle class="ncm-hub-ping" r="10"/>` : ""}<g class="ncm-hub-bob">${mark}${door}</g><text class="ncm-hub-label" x="11" y="3.5">${esc(p.name)}</text></g></g>`;
       }).join("")}</g>`);
     }
@@ -532,7 +535,7 @@ export class HubApp {
       key, n: p.n, name: p.name, badge: !!p.badge, cat: Hub.cats[p.cat]?.label, color: Hub.cats[p.cat]?.color,
       custom: p.custom, edited: p.edited, hidden: p.hidden, img: p.img, moving: this.moving === key,
       text: p.text, sc: p.sc, guard: p.guard, district: d?.name, districtKey: d?.code ? `d:${d.code}` : null, chips: d ? this._chips(d) : [],
-      stations: this._stationsNear(p),
+      stations: this._stationsNear(p), gigs: this._gigsHtml(key),
       note: note.note ?? "", scene: note.scene ?? "", sceneName: game.scenes?.get(note.scene)?.name ?? "",
       scenes: gm() ? [{ id: "", name: "—" }, ...(game.scenes?.contents ?? []).map((s) => ({ id: s.id, name: s.name, selected: s.id === note.scene }))] : [],
       ...this._doorContext(key, p),
@@ -607,7 +610,7 @@ export class HubApp {
     const crew = Hub.state.crew;
     const all = Hub.places();
     return {
-      groups,
+      groups, gigList: this._gigList(),
       discovery: game.user.isGM ? { shown: all.filter((p) => !p.hidden).length, total: all.length, on: Settings.get("hubDiscovery") !== false } : null,
       crew: crew ? { label: crew.label, district: districtAt(crew.x, crew.y).name } : null,
       mine: this._myActors().map((a) => ({ id: a.id, name: a.name, img: a.img, where: Hub.whereIs(a) || L(`${LANG}.Hub.Unpinned`), pinned: !!Hub.pinOf(a) })),
@@ -806,12 +809,14 @@ export class HubApp {
         // The scene takes over: the map steps aside.
         return this.close();
       }
+      case "mailPlace":
+        return this._gigAction(action, d);
       case "viewScene":
         return game.scenes.get(d.scene)?.view();
       case "activateScene":
         return game.scenes.get(d.scene)?.activate();
       default:
-        return null;
+        return action.startsWith("gig") ? this._gigAction(action, d) : null;
     }
   }
 
@@ -870,6 +875,159 @@ export class HubApp {
    * and (new places) whether the players see it right away.
    * @returns {Promise<object|null>} the fields, or null when cancelled
    */
+  /* ---------------------------------------- */
+  /*  Gigs                                    */
+  /* ---------------------------------------- */
+
+  /** The gigs at a place, as the panel shows them (the GM with what to do next). */
+  _gigsHtml(placeKey) {
+    if (!Gigs.on) return "";
+    const isGM = game.user.isGM;
+    const gigs = Gigs.at(placeKey);
+    if (!gigs.length && !isGM) return "";
+    const mine = Gigs.mine();
+    const b = (hub, icon, label, id, cls = "") => `<button type="button" class="${cls}" data-hub="${hub}" data-gig="${id}"><i class="fa-solid ${icon}"></i> ${esc(label)}</button>`;
+    const icons = { offer: "fa-bullhorn", assign: "fa-user-plus", withdraw: "fa-rotate-left", done: "fa-circle-check", failed: "fa-circle-xmark", edit: "fa-pen", remove: "fa-trash" };
+    const rows = gigs.map((g) => {
+      const crew = g.crew.map((id) => game.actors.get(id)?.name).filter(Boolean);
+      const takers = mine.filter((a) => canTake(g, a.id));
+      const facts = [g.client, g.reward ? `${g.reward.toLocaleString()} eb${g.perHead ? ` ${L(`${LANG}.Gigs.PerHead`)}` : ""}` : "", g.fixerName].filter(Boolean).map(esc).join(" · ");
+      const take = !isGM && takers.length
+        ? `${takers.length > 1 ? `<select name="gigActor-${g.id}">${takers.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join("")}</select>` : ""}${b("gigTake", "fa-handshake", L(`${LANG}.Gigs.Button.${g.state === "taken" ? "Join" : "Take"}`), g.id, "ncm-hub-reveal")}`
+        : "";
+      const gm = isGM ? movesFor(g).map((m) => b(`gig-${m}`, icons[m], L(`${LANG}.Gigs.Move.${m}`), g.id, m === "remove" ? "is-danger" : "")).join("") : "";
+      return `<div class="ncm-hub-gig is-${g.state}"><h5>${esc(g.title || L(`${LANG}.Gigs.Untitled`))} <span class="ncm-hub-chip">${L(`${LANG}.Gigs.State.${g.state}`)}</span></h5>
+        ${facts ? `<p class="ncm-hub-gig-facts">${facts}</p>` : ""}${g.text ? `<p>${esc(g.text).replace(/\n/g, "<br>")}</p>` : ""}
+        ${crew.length ? `<p class="ncm-hub-gig-facts"><i class="fa-solid fa-users"></i> ${esc(crew.join(", "))}</p>` : ""}
+        ${isGM && g.note ? `<p class="ncm-hint">${esc(g.note)}</p>` : ""}
+        ${take || gm ? `<div class="ncm-hub-btns">${take}${gm}</div>` : ""}</div>`;
+    }).join("");
+    const add = isGM ? `<div class="ncm-hub-btns">${b("gig-new", "fa-plus", L(`${LANG}.Gigs.New`), "")}${b("mailPlace", "fa-envelope", L(`${LANG}.Gigs.SendPlace`), "")}</div>` : "";
+    return `<h4 class="ncm-sub">// ${L(`${LANG}.Gigs.Title`)}</h4>${rows}${add}`;
+  }
+
+  /** The gigs on the board, for the home panel. */
+  _gigList() {
+    return Gigs.visible().filter((g) => open(g) || game.user.isGM).map((g) => ({ key: `p:${g.place}`, title: g.title || L(`${LANG}.Gigs.Untitled`), state: L(`${LANG}.Gigs.State.${g.state}`), place: Hub.place(g.place)?.name ?? "" }));
+  }
+
+  /** GM: a gig's form. The fixer is one of Night City Messenger's directory contacts. */
+  async gigDialog(gig = {}) {
+    const contacts = await Mail.contacts();
+    const fixers = contacts.length
+      ? `<select name="fixer"><option value="">—</option>${contacts.map((c) => `<option value="${c.id}"${c.id === gig.fixer ? " selected" : ""}>${esc(c.name)}${c.role ? ` (${esc(c.role)})` : ""}</option>`).join("")}</select>`
+      : `<input type="text" name="fixerName" value="${esc(gig.fixerName ?? "")}">`;
+    const content = `<div class="ncm-grid ncm-hub-form">
+      <label class="ncm-hub-form-wide">${esc(L(`${LANG}.Gigs.Field.Title`))} <input type="text" name="title" value="${esc(gig.title ?? "")}" required autofocus></label>
+      <label>${esc(L(`${LANG}.Gigs.Field.Client`))} <input type="text" name="client" value="${esc(gig.client ?? "")}"></label>
+      <label>${esc(L(`${LANG}.Gigs.Field.Fixer`))} ${fixers}</label>
+      <label>${esc(L(`${LANG}.Gigs.Field.Reward`))} <input type="number" name="reward" min="0" step="50" value="${gig.reward || ""}"></label>
+      <label class="ncm-check"><input type="checkbox" name="perHead"${gig.perHead ? " checked" : ""}> ${esc(L(`${LANG}.Gigs.Field.PerHead`))}</label>
+      <label class="ncm-hub-form-wide">${esc(L(`${LANG}.Gigs.Field.Text`))} <textarea name="text" rows="5">${esc(gig.text ?? "")}</textarea></label>
+      <label class="ncm-hub-form-wide">${esc(L(`${LANG}.Gigs.Field.Note`))} <textarea name="note" rows="2">${esc(gig.note ?? "")}</textarea></label>
+      ${contacts.length ? "" : `<p class="ncm-hint ncm-hub-form-wide">${esc(L(`${LANG}.Gigs.NoContacts`))}</p>`}
+    </div>`;
+    return Compat.DialogV2.prompt({
+      window: { title: L(`${LANG}.Gigs.${gig.id ? "Edit" : "New"}`) },
+      classes: ["neon-combat", "ncm-dialog"],
+      position: { width: 480 },
+      content,
+      ok: {
+        label: L(`${LANG}.Hub.Form.save`),
+        callback: (event, button) => {
+          const f = button.form.elements;
+          const fixer = f.fixer?.value ?? "";
+          const fixerName = fixer ? contacts.find((c) => c.id === fixer)?.name ?? "" : f.fixerName?.value ?? "";
+          return { title: f.title.value, client: f.client.value, fixer, fixerName, reward: f.reward.value, perHead: f.perHead.checked, text: f.text.value, note: f.note.value };
+        }
+      },
+      rejectClose: false
+    });
+  }
+
+  /** GM: tick who gets it. */
+  async pickCrew(title, { not = [] } = {}) {
+    const crew = Gigs.crew().filter((a) => !not.includes(a.id));
+    if (!crew.length) return [];
+    return (await Compat.DialogV2.prompt({
+      window: { title },
+      classes: ["neon-combat", "ncm-dialog"],
+      content: `<div class="ncm-grid ncm-hub-form">${crew.map((a) => `<label class="ncm-check"><input type="checkbox" name="who" value="${a.id}" checked> ${esc(a.name)}</label>`).join("")}</div>`,
+      ok: { label: L(`${LANG}.Hub.Form.save`), callback: (event, button) => [...button.form.querySelectorAll("input[name=who]:checked")].map((i) => i.value) },
+      rejectClose: false
+    })) ?? [];
+  }
+
+  /** GM: a contact sends this place to the crew. */
+  async mailPlaceDialog(placeKey) {
+    const contacts = await Mail.contacts();
+    const crew = Gigs.crew();
+    const got = await Compat.DialogV2.prompt({
+      window: { title: L(`${LANG}.Gigs.SendPlace`) },
+      classes: ["neon-combat", "ncm-dialog"],
+      position: { width: 440 },
+      content: `<div class="ncm-grid ncm-hub-form">
+        <p class="ncm-hint ncm-hub-form-wide">${esc(L(`${LANG}.Gigs.SendPlaceHint`))}</p>
+        <label class="ncm-hub-form-wide">${esc(L(`${LANG}.Gigs.Field.From`))} ${contacts.length ? `<select name="from">${contacts.map((c) => `<option value="${c.id}">${esc(c.name)}${c.role ? ` (${esc(c.role)})` : ""}</option>`).join("")}</select>` : `<input type="text" name="fromName">`}</label>
+        <label class="ncm-hub-form-wide">${esc(L(`${LANG}.Gigs.Field.Words`))} <textarea name="note" rows="3"></textarea></label>
+        ${crew.map((a) => `<label class="ncm-check"><input type="checkbox" name="who" value="${a.id}" checked> ${esc(a.name)}</label>`).join("")}
+      </div>`,
+      ok: {
+        label: L(`${LANG}.Gigs.Send`),
+        callback: (event, button) => {
+          const f = button.form.elements;
+          const contactId = f.from?.value ?? "";
+          return { contactId, contactName: contactId ? contacts.find((c) => c.id === contactId)?.name ?? "" : f.fromName?.value ?? "", note: f.note.value, actorIds: [...button.form.querySelectorAll("input[name=who]:checked")].map((i) => i.value) };
+        }
+      },
+      rejectClose: false
+    });
+    if (!got) return null;
+    const n = await Gigs.sendPlace(placeKey, got);
+    ui.notifications.info(L(`${LANG}.Gigs.SentPlace`, { count: n }));
+    return n;
+  }
+
+  async _gigAction(action, d) {
+    const placeKey = this.sel?.startsWith("p:") ? this.sel.slice(2) : null;
+    const gig = d.gig ? Gigs.get(d.gig) : null;
+    switch (action) {
+      case "gigTake": {
+        const mine = Gigs.mine().filter((a) => canTake(gig, a.id));
+        const actorId = this.el.querySelector(`[name="gigActor-${d.gig}"]`)?.value ?? mine[0]?.id;
+        const res = actorId ? await Gigs.take(d.gig, actorId) : null;
+        if (!res?.ok) ui.notifications.warn(L(`${LANG}.Gigs.TakeFailed`));
+        return null;
+      }
+      case "mailPlace":
+        return placeKey ? this.mailPlaceDialog(placeKey) : null;
+      case "gig-new":
+      case "gig-edit": {
+        if (action === "gig-new" && !placeKey) return null;
+        const data = await this.gigDialog(gig ?? {});
+        return data ? Gigs.save({ ...(gig ?? { place: placeKey }), ...data }) : null;
+      }
+      case "gig-offer":
+        return Gigs.offer(d.gig);
+      case "gig-withdraw":
+        return Gigs.withdraw(d.gig);
+      case "gig-assign": {
+        const who = gig ? await this.pickCrew(L(`${LANG}.Gigs.Move.assign`), { not: gig.crew }) : [];
+        return who.length ? Gigs.assign(d.gig, who) : null;
+      }
+      case "gig-done":
+        return Gigs.finish(d.gig, true);
+      case "gig-failed":
+        return Gigs.finish(d.gig, false);
+      case "gig-remove": {
+        const sure = await Compat.DialogV2.confirm({ window: { title: L(`${LANG}.Gigs.Move.remove`) }, content: `<p>${esc(L(`${LANG}.Gigs.RemoveSure`, { title: gig?.title ?? "" }))}</p>`, rejectClose: false });
+        return sure ? Gigs.remove(d.gig) : null;
+      }
+      default:
+        return null;
+    }
+  }
+
   async placeDialog(p, { isNew = false } = {}) {
     const cats = Object.entries(Hub.cats).map(([id, c]) => `<option value="${id}"${id === (p.cat ?? "campaign") ? " selected" : ""}>${esc(c.label)}</option>`).join("");
     const content = `<div class="ncm-grid ncm-hub-form">

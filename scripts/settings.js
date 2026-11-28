@@ -11,7 +11,7 @@ export const MENUS = {
   fx: ["neonTheme", "fxEnabled", "fxConditions", "fxChrome", "fxPause", "bloodFx", "bloodTrails", "bloodMax", "chromeCards", "interruptTurn", "chromeTokenHud", "fxTactile", "hackFx", "hackGhostFx", "fxMacros"],
   arsenal: ["arsenalAnimations", "arsenalAutoInstall", "arsenalSounds", "sightRange", "sightBase", "farLinks", "levels", "levelsView", "levelsFalls", "stairs", "stairsAsk", "stairsMarks", "climbing", "climbContests", "security", "securityLadder", "securityVoices", "securityTokens", "holds", "scopeVision", "scopeSniper", "scopeAngle", "visionModes", "visionOutlines", "visionHeat", "cloakCheck", "torchAction", "torchAngle", "arsenalAreas", "arsenalAreaClear", "arsenalBlowBack", "arsenalRebuilds", "arsenalRebuildConditions", "arsenalShotFx", "arsenalXray", "arsenalThinDoors", "arsenalSmartPrompt", "arsenalRicochetDodge", "arsenalHitCheck", "arsenalHideDiwakoHit", "arsenalDefense", "arsenalDefenseMelee", "arsenalDefenseTies", "arsenalDefenseVisibility", "arsenalDvDisplay", "arsenalPlayerFlashes", "coverOn", "coverDoors", "coverLabels", "coverPieceWalls"],
   rules: ["rollerHooks", "rideEdge", "chainReactions", "tarotCriticals", "flashOfLuck", "awarenessLadder", "combatRaisesAlert", "awarenessTokens", "alertTimer", "alertClears", "hackFlow"],
-  hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes"],
+  hub: ["hubPlayers", "hubDiscovery", "hubRevealDossier", "hubTravel", "hubSignal", "hubDeadZones", "hubSignalScenes", "hubGigs"],
   environment: [
     "weatherSource", "weatherFx", "weatherEveryone", "sceneWeatherDefault", "shelterKeywords", "weatherOnByDefault", "weatherHazardCards", "visibilityEnabled",
     "lowLightAt", "darkAt", "sightKeys", "visibilityFrom", "envOutsideCombat",
@@ -65,6 +65,10 @@ const DEFS = [
   ["hubSignal", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.signalChanged`) }],
   ["hubDeadZones", "world", String, "", { onChange: () => Hooks.callAll(`${MODULE_ID}.signalChanged`) }],
   ["hubSignalScenes", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.signalChanged`) }],
+  ["hubGigs", "world", Boolean, true, { onChange: () => Hooks.callAll(`${MODULE_ID}.gigsChanged`) }],
+  ["hubGigData", "world", Object, {}, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.gigsChanged`) }],
+  // What the buttons under our Night City Messenger letters do: { [messageId]: { kind, to, ... } }
+  ["ncmMail", "world", Object, {}, { config: false, onChange: () => Hooks.callAll(`${MODULE_ID}.mailChanged`) }],
   ["cityHub", "world", Object, {}, { config: false, onChange: (v) => Hooks.callAll(`${MODULE_ID}.hubChanged`, v) }],
 
   // Combat & time

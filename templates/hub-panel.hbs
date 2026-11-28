@@ -29,6 +29,7 @@
   <ul class="ncm-hub-list">{{#each this.stations}}<li><button type="button" data-hub="select" data-key="s:{{this.id}}"><i class="fa-solid fa-train-subway"></i> {{this.name}} <small>{{localize "NEONCOMBAT.Hub.WalkFor" time=walk}}</small> {{#each this.lines}}<span class="ncm-hub-dot" style="--c:{{this.color}}" data-tooltip="{{this.name}}"></span>{{/each}}</button></li>{{/each}}</ul>
   {{/if}}
   {{{this.actions}}}
+  {{{this.gigs}}}
   {{#if this.gm}}
   <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Hub.GMPlace"}}</h4>
   <div class="ncm-hub-btns">
@@ -139,6 +140,10 @@
   {{#if this.crew}}<p class="ncm-hub-crewline"><button type="button" data-hub="select" data-key="crew"><i class="fa-solid fa-diamond"></i> {{localize "NEONCOMBAT.Hub.WeAreHere"}}: {{#if crew.label}}{{crew.label}}, {{/if}}{{crew.district}}</button></p>{{/if}}
   {{#if mine.length}}
   <ul class="ncm-hub-list ncm-hub-mine">{{#each this.mine}}<li>{{#if this.pinned}}<button type="button" data-hub="select" data-key="pin:{{this.id}}">{{else}}<span>{{/if}}<img src="{{this.img}}" alt=""> {{this.name}} <small>{{this.where}}</small>{{#if this.pinned}}</button>{{else}}</span>{{/if}}</li>{{/each}}</ul>
+  {{/if}}
+  {{#if gigList.length}}
+  <h4 class="ncm-sub">// {{localize "NEONCOMBAT.Gigs.Title"}}</h4>
+  <ul class="ncm-hub-list">{{#each this.gigList}}<li><button type="button" data-hub="select" data-key="{{this.key}}"><i class="fa-solid fa-briefcase"></i> {{this.title}} <small>{{this.place}} · {{this.state}}</small></button></li>{{/each}}</ul>
   {{/if}}
   {{#each this.groups}}
   <div class="ncm-hub-rating" style="--c:{{this.color}}">

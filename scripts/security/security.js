@@ -11,6 +11,8 @@ import { Hack } from "../hack/hack.js";
 import { Ladder } from "../roller/ladder.js";
 import { Stairs } from "../senses/stairs.js";
 import { Climb } from "../senses/climb.js";
+import { Mail } from "../comms/mail.js";
+import { NCM_ID } from "../comms/phone.js";
 import { L, esc, debounce } from "../util.js";
 import { SECURITY_FLAG, KINDS, KIND_IDS, WEAPONS, COMBAT_NUMBER, cleanDevice, working, friendly, hasAccess, inCone, conePoints, centreOf, notices, beats, effectOf, weaponOf, label, bearing, swing, signed } from "./security-data.js";
 
@@ -21,6 +23,8 @@ const SLOW_FLAG = "securitySlow";
 const SEAT_FLAG = "securitySeat";
 /** On a device's token: its Tile's id. On the actor every such token is made from: true. */
 const DEVICE_FLAG = "securityDevice";
+/** On an item: the pass tag it carries. */
+export const PASS_FLAG = "securityPass";
 /** How near a character has to be to work on a device by hand, and to reach its node with a deck, in m/yds. */
 const REACH = 3;
 const NET_REACH = 20;
@@ -68,8 +72,9 @@ export const Security = {
     Hooks.on("getSceneControlButtons", (controls) => Compat.addSceneTools(controls, [
       { name: "ncm-security", title: `${LANG}.Security.Tool`, icon: "fa-solid fa-video", order: 125, visible: !!game.user?.isGM, onClick: () => this.open() }
     ], "tiles"));
-    for (const [action, fn] of Object.entries({ secStep: "_step", secSearch: "_search", secCounter: "_counter", secControl: "_control", secToggle: "_toggle" })) Socket.on(action, (data, userId) => this[fn](data, userId));
+    for (const [action, fn] of Object.entries({ secStep: "_step", secSearch: "_search", secCounter: "_counter", secControl: "_control", secToggle: "_toggle", secPass: "_pass", secClaim: "_claim" })) Socket.on(action, (data, userId) => this[fn](data, userId));
     Socket.on("event:secFx", (data) => this.fxLocal(data));
+    Mail.register("pass", (entry, message, context) => this.passButtons(entry, message, context));
     for (const h of ["canvasReady", "createTile", "updateTile", "deleteTile", "updateToken", "deleteToken", "controlToken", "sightRefresh", `${MODULE_ID}.fxChanged`]) Hooks.on(h, () => soon());
     for (const h of ["createWall", "updateWall", "deleteWall", "canvasReady"]) Hooks.on(h, () => this.polys.clear());
     Hooks.on("canvasTearDown", () => {
@@ -191,7 +196,7 @@ export const Security = {
 
   /** Is this someone a device goes for: a living character with no pass and no hold on its node? */
   fair(d, doc) {
-    return !!doc?.actor && !doc.actor.flags?.[MODULE_ID]?.cover && !this.isDevice(doc) && !friendly(d, doc.actor.id) && CPR.hp(doc.actor).value > 0;
+    return !!doc?.actor && !doc.actor.flags?.[MODULE_ID]?.cover && !this.isDevice(doc) && !this.cleared(d, doc.actor) && CPR.hp(doc.actor).value > 0;
   },
 
   /** Would a device have this token in view if it pointed along a rotation? */
@@ -379,7 +384,7 @@ export const Security = {
       turned = (await this.track(dev).catch((err) => (console.warn(`${MODULE_ID} | security: tracking`, err), false))) || turned;
       const key = `${dev.id}:${doc.id}`;
       const was = this.inside.has(key);
-      const now = working(dev.d) && !friendly(dev.d, doc.actor.id) && this.noticed(dev, doc);
+      const now = working(dev.d) && !this.cleared(dev.d, doc.actor) && this.noticed(dev, doc);
       if (!now) {
         if (was) {
           this.inside.delete(key);
@@ -435,6 +440,7 @@ export const Security = {
   /** Who hears about a device: the GMs, and the players of whoever has a pass to it or runs its node. */
   watchers(dev) {
     const actors = [...dev.d.passes, ...dev.d.controllers].map((id) => game.actors?.get?.(id)).filter(Boolean);
+    if (dev.d.key) actors.push(...(game.actors ?? []).filter((a) => a.hasPlayerOwner && this.keysOf(a).includes(dev.d.key)));
     return [...new Set([...Cards.gms(), ...actors.flatMap((a) => Cards.owners(a))])];
   },
 
@@ -738,13 +744,14 @@ export const Security = {
     for (const dev of this.devices(doc.parent)) {
       if (dev.tile.hidden && !game.user?.isGM) continue;
       const dist = this.distance(dev, doc);
-      const access = hasAccess(dev.d, doc.actor.id);
+      const access = this.cleared(dev.d, doc.actor);
       const alive = !(dev.d.hpMax > 0 && dev.d.hp <= 0);
       const can = [];
       if (access && dev.d.kind === "camera" && working(dev.d)) can.push("view");
       if (access && alive) can.push("toggle");
       if (!access && alive && dist <= REACH) can.push("counter");
       if (!access && alive && rig.deck && dist <= NET_REACH) can.push("control");
+      if (alive && dev.d.controllers.includes(doc.actor.id)) can.push("pass");
       if (can.length) out.push({ dev, dist, can });
     }
     return out.sort((a, b) => a.dist - b.dist);
@@ -754,7 +761,7 @@ export const Security = {
   entries(actor, token) {
     const tok = token?.object ?? token ?? actor?.getActiveTokens?.()[0] ?? null;
     if (!this.on || !tok) return [];
-    const icons = { view: "fa-solid fa-eye", toggle: "fa-solid fa-power-off", counter: "fa-solid fa-screwdriver-wrench", control: "fa-solid fa-network-wired" };
+    const icons = { view: "fa-solid fa-eye", toggle: "fa-solid fa-power-off", counter: "fa-solid fa-screwdriver-wrench", control: "fa-solid fa-network-wired", pass: "fa-solid fa-id-card-clip" };
     const unit = this.unit(tok.document?.parent);
     const out = [{ key: "sec:search", label: L(`${LANG}.Security.Hud.Search`), sub: L(`${LANG}.Security.Hud.SearchSub`), icon: "fa-solid fa-magnifying-glass" }];
     for (const o of this.options(tok).slice(0, 6)) {
@@ -778,6 +785,7 @@ export const Security = {
     }
     if (what === "view") return this.view(id);
     if (what === "toggle") return Socket.request("secToggle", ids);
+    if (what === "pass") return this.cutPass(doc, id);
     if (what === "counter") {
       const r = await CPR.skillCheck(doc.actor, "Electronics/Security Tech", { event, stat: "tech" });
       return r ? Socket.request("secCounter", { ...ids, total: r.total }) : null;
@@ -838,10 +846,156 @@ export const Security = {
     return { ok };
   },
 
+  /* ---------------------------------------- */
+  /*  Pass shards                             */
+  /* ---------------------------------------- */
+
+  /** The pass tags a character carries: our pass shards, and Night City Messenger's key items. */
+  keysOf(actor) {
+    const out = new Set();
+    for (const item of actor?.items ?? []) {
+      const ours = item.flags?.[MODULE_ID]?.[PASS_FLAG];
+      const theirs = item.flags?.[NCM_ID]?.keyTag;
+      if (ours) out.add(String(ours));
+      if (theirs) out.add(String(theirs));
+    }
+    return [...out];
+  },
+
+  /** Is this character let be by a device: on its Pass list, running its node, or carrying its pass? */
+  cleared(d, actor) {
+    return friendly(d, actor?.id, d?.key ? this.keysOf(actor) : []);
+  },
+
+  /** The tag a device's passes carry. Without one of its own: one for the whole scene. */
+  keyFor(dev) {
+    return dev.d.key || `site:${dev.doc.parent?.id ?? "x"}`;
+  },
+
+  /** The devices a pass tag opens, on a scene. */
+  opens(scene, key) {
+    return key && scene ? this.devices(scene).filter((dev) => dev.d.key === key) : [];
+  },
+
+  /**
+   * GM: make a pass shard, in a character's gear or (with no one) the Items sidebar. With Night
+   * City Messenger on, it is one of its key items too, and a data shard with the pass written on it.
+   */
+  async makePass(key, { actor = null, scene = null, by = "" } = {}) {
+    if (!game.user?.isGM || !key) return null;
+    const site = scene?.name ?? "";
+    const names = this.opens(scene, key).map((dev) => dev.name);
+    const text = `<p>${L(`${LANG}.Security.Pass.About`, { site: esc(site) })}</p>${names.length ? `<p>${names.map(esc).join(", ")}</p>` : ""}`;
+    const data = {
+      name: L(`${LANG}.Security.Pass.Name`, { site }).trim(), type: "gear", img: `${ART}/pass.svg`,
+      system: { description: { value: text } },
+      flags: { [MODULE_ID]: { [PASS_FLAG]: key } }
+    };
+    const Cls = globalThis.Item ?? CONFIG?.Item?.documentClass;
+    const item = actor ? (await actor.createEmbeddedDocuments("Item", [data]))?.[0] : await Cls?.create?.(data);
+    if (!item) return null;
+    const ncm = Mail.api;
+    try {
+      if (typeof ncm?.items?.setKeyTag === "function") await ncm.items.setKeyTag(item.uuid, key);
+      const convert = game.nightcity?.messenger?.convertToDataShard;
+      if (typeof convert === "function" && typeof ncm?.shards?.addEntry === "function") {
+        const made = await convert(item, {});
+        if (made?.success !== false) await ncm.shards.addEntry(item.uuid, { from: by || site, subject: data.name, body: text });
+      }
+    } catch (err) {
+      console.warn(`${MODULE_ID} | security: the pass is made, but Night City Messenger didn't take it as a shard`, err);
+    }
+    return item;
+  },
+
+  /** The crew a pass can be sent to: the player characters, but for the one cutting it. */
+  crew(not = null) {
+    return (game.actors ?? []).filter((a) => a.type === "character" && a.hasPlayerOwner && a.id !== not?.id);
+  },
+
+  /** A netrunner on a device's node: ask who gets a pass, then have the GM's client make them. */
+  async cutPass(doc, tileId) {
+    const dev = this.device(doc.parent, tileId);
+    if (!dev) return null;
+    const crew = this.crew(doc.actor);
+    const content = `<div class="ncm-levels ncm-security-form">
+      <p class="hint">${L(`${LANG}.Security.Pass.CutHint`, { device: esc(dev.name) })}</p>
+      <p><label class="checkbox"><input type="checkbox" name="self" checked> ${L(`${LANG}.Security.Pass.Self`)}</label></p>
+      ${Mail.on && crew.length ? `<fieldset><legend>${L(`${LANG}.Security.Pass.Send`)}</legend><p class="hint">${L(`${LANG}.Security.Pass.SendHint`)}</p>
+        ${crew.map((a) => `<label class="checkbox"><input type="checkbox" name="to" value="${a.id}"> ${esc(a.name)}</label>`).join(" ")}</fieldset>` : `<p class="hint">${L(`${LANG}.Security.Pass.NoMail`)}</p>`}
+    </div>`;
+    const got = await Compat.DialogV2.prompt({
+      window: { title: L(`${LANG}.Security.Pass.CutTitle`) },
+      content,
+      ok: { label: L(`${LANG}.Security.Pass.Cut`), callback: (event, button) => ({ self: !!button.form.elements.self?.checked, to: [...button.form.querySelectorAll("input[name=to]:checked")].map((i) => i.value) }) },
+      rejectClose: false
+    });
+    if (!got || (!got.self && !got.to.length)) return null;
+    return Socket.request("secPass", { scene: doc.parent.id, token: doc.id, tile: tileId, ...got });
+  },
+
+  /** GM's client: whoever runs a device's node cuts passes to it. One for themself, and letters to the crew. */
+  async _pass(data, userId) {
+    const { sc, doc, dev } = this.who(data, userId);
+    if (!doc || !dev || !dev.d.controllers.includes(doc.actor.id)) return null;
+    const key = this.keyFor(dev);
+    if (dev.d.key !== key) await this.save(dev.doc, { ...dev.d, key });
+    const name = esc(doc.name ?? "");
+    const made = data.self ? await this.makePass(key, { actor: doc.actor, scene: sc, by: doc.actor.name }) : null;
+    const sent = [];
+    const failed = [];
+    const crew = new Map(this.crew(doc.actor).map((a) => [a.id, a]));
+    for (const id of new Set(data.to ?? [])) {
+      const to = crew.get(id);
+      if (!to) continue;
+      const res = await Mail.send({
+        from: { actorId: doc.actor.id }, to: to.id,
+        subject: L(`${LANG}.Security.Pass.MailSubject`, { site: sc?.name ?? "" }),
+        body: `<p>${L(`${LANG}.Security.Pass.MailBody`, { name, site: esc(sc?.name ?? ""), device: esc(dev.name) })}</p>${Mail.buttons ? "" : `<p>${L(`${LANG}.Security.Pass.MailNoButtons`)}</p>`}`,
+        action: { kind: "pass", key, scene: sc?.id ?? "", by: doc.actor.name }
+      });
+      (res.ok ? sent : failed).push(to.name);
+      // No buttons to press on an older Messenger: the pass is theirs as the letter lands.
+      if (res.ok && !(Mail.buttons && res.messageId)) await this.makePass(key, { actor: to, scene: sc, by: doc.actor.name });
+    }
+    const lines = [
+      made ? L(`${LANG}.Security.Pass.CardSelf`) : "",
+      sent.length ? L(`${LANG}.Security.Pass.CardSent`, { names: esc(sent.join(", ")) }) : "",
+      failed.length ? L(`${LANG}.Security.Pass.CardFailed`, { names: esc(failed.join(", ")) }) : ""
+    ].filter(Boolean);
+    await Cards.post({ actor: doc.actor, title: L(`${LANG}.Security.Pass.CardTitle`, { name, device: esc(dev.name) }), kicker: L(`${LANG}.Security.Title`), img: `${ART}/pass.svg`, tone: "cyan", body: lines.map((l) => `<p>${l}</p>`).join(""), whisper: this.watchers(dev) });
+    return { made: !!made, sent, failed };
+  },
+
+  /** Under a pass letter: load it onto a shard, once. */
+  passButtons(entry, message, context) {
+    if (entry.claimed) return { note: L(`${LANG}.Security.Pass.Loaded`), actions: [] };
+    return [{
+      label: L(`${LANG}.Security.Pass.Load`), icon: "fa-solid fa-id-card-clip", primary: true,
+      run: async () => {
+        const res = await Socket.request("secClaim", { message: message.id });
+        if (!res?.ok) ui.notifications.warn(L(`${LANG}.Security.Pass.LoadFailed`));
+      }
+    }];
+  },
+
+  /** GM's client: the pass in a letter goes onto a shard in its reader's gear, once. */
+  async _claim(data, userId) {
+    const entry = Mail.entry(data?.message);
+    const actor = game.actors?.get?.(entry?.to);
+    const user = game.users?.get?.(userId) ?? null;
+    if (!entry || entry.kind !== "pass" || entry.claimed || !actor) return { ok: false };
+    if (!user || !(user.isGM || actor.testUserPermission?.(user, "OWNER"))) return { ok: false };
+    await Mail.note(data.message, { claimed: true });
+    const item = await this.makePass(entry.key, { actor, scene: game.scenes?.get?.(entry.scene) ?? null, by: entry.by });
+    Hooks.callAll(`${MODULE_ID}.fxChanged`);
+    return { ok: !!item };
+  },
+
   /** GM's client: whoever holds a pass or the node switches a device on or off. */
   async _toggle(data, userId) {
     const { doc, dev } = this.who(data, userId);
-    if (!doc || !dev || !hasAccess(dev.d, doc.actor.id)) return null;
+    if (!doc || !dev || !this.cleared(dev.d, doc.actor)) return null;
     await this.save(dev.doc, { ...dev.d, on: !dev.d.on });
     this.fx({ kind: "off", tile: dev.id, sound: dev.d.on ? "secOff" : "secOn" });
     return { on: !dev.d.on };
@@ -853,8 +1007,8 @@ export const Security = {
 
   /** The cameras this player may look through: the GM all of them, a player the ones a character of theirs has a pass to or runs. */
   cameras(scene = canvas?.scene) {
-    const mine = (game.actors ?? []).filter((a) => a.isOwner).map((a) => a.id);
-    return this.devices(scene).filter((dev) => dev.d.kind === "camera" && working(dev.d) && (game.user?.isGM || mine.some((id) => hasAccess(dev.d, id))));
+    const mine = (game.actors ?? []).filter((a) => a.isOwner);
+    return this.devices(scene).filter((dev) => dev.d.kind === "camera" && working(dev.d) && (game.user?.isGM || mine.some((a) => this.cleared(dev.d, a))));
   },
 
   /** Look through a camera: its field of view lit up as this player's own, the view moved to it, a frame over the screen. */
@@ -1026,7 +1180,7 @@ export const Security = {
     this.clear();
     if (!this.on || !canvas?.ready || typeof PIXI === "undefined") return 0;
     const gm = !!game.user?.isGM;
-    const mine = (game.actors ?? []).filter((a) => a.isOwner).map((a) => a.id);
+    const mine = (game.actors ?? []).filter((a) => a.isOwner);
     const layer = new PIXI.Container();
     layer.eventMode = "none";
     let n = 0;
@@ -1036,9 +1190,9 @@ export const Security = {
       const k = KINDS[dev.d.kind];
       const at = centreOf(dev.tile);
       const live = working(dev.d);
-      const own = mine.some((id) => hasAccess(dev.d, id));
+      const own = mine.some((a) => this.cleared(dev.d, a));
       if (k.watch === "cone" && live) {
-        const seen = (canvas.tokens?.placeables ?? []).some((t) => t.actor && t.visible !== false && !this.isDevice(t) && !friendly(dev.d, t.actor.id) && this.noticed(dev, t.document));
+        const seen = (canvas.tokens?.placeables ?? []).some((t) => t.actor && t.visible !== false && !this.isDevice(t) && !this.cleared(dev.d, t.actor) && this.noticed(dev, t.document));
         const color = seen ? COLORS.seen : own ? COLORS.mine : COLORS[dev.d.kind] ?? COLORS.camera;
         const poly = this.poly(dev);
         const pts = poly?.points?.length ? poly.points : conePoints(at, dev.tile.rotation, dev.d.angle, (dev.d.range / g.distance) * g.size);
@@ -1107,7 +1261,8 @@ export const Security = {
     const unit = this.unit();
     const sel = (name, options, value) => `<select name="${name}">${options.map(([v, text]) => `<option value="${v}"${v === value ? " selected" : ""}>${esc(text)}</option>`).join("")}</select>`;
     const row = (key, input, hint = "") => `<div class="form-group"><label>${L(`${LANG}.Security.Form.${key}`, { unit })}</label><div class="form-fields">${input}</div>${hint ? `<p class="hint">${hint}</p>` : ""}</div>`;
-    const actors = (game.actors ?? []).filter((a) => a.hasPlayerOwner && (a.type === "character" || a.type === "mook"));
+    // Every character (a crew's sheets aren't always handed to a player yet), and the players' mooks.
+    const actors = (game.actors ?? []).filter((a) => a.type === "character" || (a.type === "mook" && a.hasPlayerOwner)).sort((a, b) => Number(!!b.hasPlayerOwner) - Number(!!a.hasPlayerOwner) || String(a.name).localeCompare(String(b.name)));
     const content = `<div class="ncm-levels ncm-security-form">
       <p class="hint">${L(`${LANG}.Security.Form.${now ? "IntroEdit" : picked ? "IntroTile" : "IntroNew"}`)}</p>
       ${row("Kind", sel("kind", KIND_IDS.map((k) => [k, `${L(`${LANG}.Security.Kind.${k}`)} (${L(`${LANG}.Security.Group.${KINDS[k].group}`)})`]), d.kind))}
@@ -1120,6 +1275,7 @@ export const Security = {
       ${row("Node", `<input type="number" name="node" value="${now ? d.node : ""}" min="1" step="1" placeholder="${L(`${LANG}.Security.Form.ByKind`)}">`, L(`${LANG}.Security.Form.NodeHint`))}
       ${row("Weapon", sel("weapon", Object.keys(WEAPONS).map((w) => [w, L(`${LANG}.Security.Weapon.${w}`)]), d.weapon || "assaultRifle"), L(`${LANG}.Security.Form.WeaponHint`))}
       ${row("Depth", `<input type="number" name="depth" value="${now ? d.depth : ""}" min="0" step="1" placeholder="6"> <label class="checkbox"><input type="checkbox" name="spikes"${d.spikes ? " checked" : ""}> ${L(`${LANG}.Security.Form.Spikes`)}</label>`, L(`${LANG}.Security.Form.DepthHint`))}
+      ${row("Key", `<input type="text" name="key" value="${esc(d.key)}" maxlength="80" placeholder="arasaka:lobby"> <label class="checkbox"><input type="checkbox" name="keyAll"> ${L(`${LANG}.Security.Form.KeyAll`)}</label> <label class="checkbox"><input type="checkbox" name="keyShard"> ${L(`${LANG}.Security.Form.KeyShard`)}</label>`, L(`${LANG}.Security.Form.KeyHint`))}
       <fieldset><legend>${L(`${LANG}.Security.Form.Passes`)}</legend><p class="hint">${L(`${LANG}.Security.Form.PassesHint`)}</p>
         ${actors.map((a) => `<label class="checkbox"><input type="checkbox" name="pass" value="${a.id}"${d.passes.includes(a.id) ? " checked" : ""}> ${esc(a.name)}</label>`).join(" ") || `<em>${L(`${LANG}.Security.Form.NoActors`)}</em>`}
       </fieldset>
@@ -1135,7 +1291,7 @@ export const Security = {
           const f = button.form.elements;
           const opt = (name) => (f[name].value === "" ? undefined : Number(f[name].value));
           const passes = [...button.form.querySelectorAll("input[name=pass]:checked")].map((i) => i.value);
-          return { kind: f.kind.value, name: f.name.value, on: f.on.checked, hp: opt("hp"), range: opt("range"), angle: opt("angle"), traverse: opt("traverse"), node: opt("node"), weapon: f.weapon.value, depth: opt("depth"), spikes: f.spikes.checked, passes, rearm: !!f.rearm?.checked, remove: !!f.remove?.checked };
+          return { kind: f.kind.value, name: f.name.value, on: f.on.checked, hp: opt("hp"), range: opt("range"), angle: opt("angle"), traverse: opt("traverse"), node: opt("node"), weapon: f.weapon.value, depth: opt("depth"), spikes: f.spikes.checked, passes, key: f.key.value.trim(), keyAll: f.keyAll.checked, keyShard: f.keyShard.checked, rearm: !!f.rearm?.checked, remove: !!f.remove?.checked };
         }
       },
       rejectClose: false
@@ -1147,16 +1303,21 @@ export const Security = {
       return null;
     }
     const sameKind = now && now.kind === got.kind;
-    const given = Object.fromEntries(Object.entries(got).filter(([k, v]) => v !== undefined && k !== "rearm" && k !== "remove"));
+    const given = Object.fromEntries(Object.entries(got).filter(([k, v]) => v !== undefined && !["rearm", "remove", "keyAll", "keyShard"].includes(k)));
     // HP typed above what it had: that's its new full HP. Rearmed: full again, nobody on its node, ready to fire.
     const full = Math.max(sameKind ? now.hpMax : KINDS[got.kind].hp, got.hp ?? 0);
     const next = cleanDevice({ ...(sameKind ? now : {}), ...given, hpMax: full, lock: "", ...(got.rearm ? { hp: got.hp ?? full, controllers: [], spent: false } : {}) });
-    if (picked) {
-      await this.save(picked, next);
-      return picked;
+    const doc = picked ?? (await this.place(got.kind));
+    if (!doc) return null;
+    await this.save(doc, next);
+    // One tag for the whole site, and a shard of it to hand out.
+    if (got.keyAll && next.key) for (const dev of this.devices(doc.parent)) if (dev.id !== doc.id && dev.d.key !== next.key) await this.save(dev.doc, { ...dev.d, key: next.key });
+    if (got.keyShard) {
+      const key = next.key || this.keyFor({ d: next, doc });
+      if (!next.key) await this.save(doc, { ...next, key });
+      const item = await this.makePass(key, { scene: doc.parent });
+      if (item) ui.notifications.info(L(`${LANG}.Security.Pass.Made`, { name: item.name }));
     }
-    const doc = await this.place(got.kind);
-    if (doc) await this.save(doc, next);
     return doc;
   }
 };
