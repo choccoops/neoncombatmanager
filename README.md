@@ -336,6 +336,10 @@ Two features write to the crew through Night City Messenger and put buttons unde
   map**, **Collect** (the pay, into the character's wealth). The GM can also send any place by
   letter from its panel.
 
+A device can also hang off a NET Architecture: a netrunner who takes a Control Node there in
+Neon At Home's Deep Dive holds it until they Jack Out and can cut passes from the chair. With
+Neon Hub 1.27+, map gigs are filed under Gigs in the Neon Journal and the two follow each other.
+
 On an older Night City Messenger the letters go out without buttons (a pass lands in the
 reader's gear, pay goes straight in). Without it, gigs use chat cards.
 

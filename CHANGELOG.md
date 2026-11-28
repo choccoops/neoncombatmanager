@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.57.0
+
+- **Map gigs are filed in Neon Hub's Journal.** With Neon Hub 1.27.0 or later, every gig on the
+  city map gets an entry under Gigs in the Neon Journal, and the two follow each other.
+  - From the map: the entry is made with the gig and takes its name, status, client, place, crew,
+    briefing and pay. It is shown to the players once the gig is on the board or handed out.
+  - From the Journal: take, complete, fail or reopen it there, change its crew, client, briefing
+    or pay, or rename it, and the map follows. Completing or failing it there sends the fixer's
+    letters and the pay, as from the map.
+  - The pay is one reward row on the Journal's gig, marked paid once the map has paid it, and pay
+    settled in the Journal isn't paid again from the map. The Journal's objectives and other
+    rewards stay its own.
+  - Each gig on the map has an **Open in the Journal** button. New setting: Map gigs are filed
+    in Neon Hub's Journal (on).
+- **Security answers to a NET Architecture.** A device can be hung off one of the world's NET
+  Architectures (Security systems window; name a floor if only that Control Node runs it). A
+  netrunner who takes a Control Node there in Neon At Home's Deep Dive holds the device until
+  they Jack Out, wherever they sit. A card tells them what they hold, with **Cut a pass shard**:
+  one for themself and letters to the crew, without a token on the scene. Shards cut during the
+  dive keep working after it. Devices without a Pass tag take the architecture's.
+- **The Pass list is gone from the Security systems window**: passes are shards. A device that
+  had a list keeps honoring it, and the window offers to clear it.
+
 ## 1.56.0
 
 Night City Messenger 2.5.0 (its API 2.3.0) lets other modules put buttons under a letter. This
