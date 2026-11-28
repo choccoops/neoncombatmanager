@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.58.0
+
+- **Look through a camera from anywhere.** A netrunner who holds a camera from a Deep Dive (or
+  anyone carrying its pass) no longer needs a token on its scene. Neon At Home 1.16.0 lists the
+  cameras they hold under **Security feeds** on the Deep Dive screen, and the card posted when
+  a Control Node is taken has a **Look through** button for each camera. A click takes that
+  player to the camera's scene and opens the feed; **Leave the feed** brings them back to where
+  they were. The GM's client brings the player over, so a GM has to be online, and only to a
+  camera a character of theirs may look through.
+- For macros and other modules: `api.security.feeds(actor)` and `api.security.watch(sceneId, tileId)`.
+
 ## 1.57.0
 
 - **Map gigs are filed in Neon Hub's Journal.** With Neon Hub 1.27.0 or later, every gig on the
