@@ -285,16 +285,23 @@ test("security at the table: a camera, a turret, a live floor, a tip-floor, a se
     game.combat = combat;
     Security.fired.clear();
     hurt.length = 0;
-    assert.deepEqual(await Security.sweep(hal, { moved: true }), []);
+    // It hasn't attacked this Round: its Action is held for the first to come into its view.
+    assert.deepEqual(await Security.sweep(hal, { moved: true }), ["sen"]);
+    assert.deepEqual(hurt.splice(0), [["Hal", 15, true, 1]], "held, and spent on him");
     assert.deepEqual(await Security.sweep(ivy, { moved: true }), []);
-    assert.equal(hurt.length, 0, "walking into its view draws no shot");
+    assert.equal(hurt.length, 0, "nothing left for the next one in");
+    combat.round = 2;
     const seats = [...combat.combatants].filter((c) => Security.isSeat(c));
     assert.deepEqual([seats.length, seats[0].initiative, combat.combatant === seats[0]], [1, 21, true], "one place for the whole site, above everyone");
     assert.deepEqual(await Security.volley(combat), ["sen"]);
     assert.deepEqual(hurt.splice(0), [["Hal", 15, true, 1]], "the nearest, once");
     assert.equal(scene.tiles.get("sen").flags[M].security.lock, "Hal");
     assert.deepEqual(await Security.volley(combat), [], "once a Round");
-    combat.round = 2;
+    Object.assign(ivy, { x: 8000, y: 4000 });
+    await Security.sweep(ivy, { moved: true });
+    Object.assign(ivy, { x: 8200, y: 8700 });
+    assert.deepEqual(await Security.sweep(ivy, { moved: true }), [], "it attacked on its Turn: nothing held");
+    combat.round = 3;
     assert.deepEqual(await Security.volley(combat), ["sen"]);
     assert.deepEqual(hurt.splice(0).map((h) => h[0]), ["Hal"], "it keeps the one it follows");
     // Someone rolls above it: it still goes first.
@@ -304,10 +311,13 @@ test("security at the table: a camera, a turret, a live floor, a tip-floor, a se
     // Nobody left in view: its Turn is passed.
     Object.assign(hal, { x: 8000, y: 4000 });
     Object.assign(ivy, { x: 8000, y: 4000 });
-    combat.round = 3;
+    combat.round = 4;
     combat.nextTurn = async () => { passed += 1; };
     assert.deepEqual(await Security.volley(combat), []);
     assert.equal(passed, 1);
+    Object.assign(ivy, { x: 8200, y: 8700 });
+    assert.deepEqual(await Security.sweep(ivy, { moved: true }), ["sen"], "nobody on its Turn: held for whoever walks in");
+    assert.deepEqual(hurt.splice(0).map((h) => h[0]), ["Ivy"]);
     game.combat = null;
   } finally {
     game.combat = null;

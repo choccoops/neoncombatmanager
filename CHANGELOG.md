@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.54.1
+
+- **A turret with nobody to attack holds its Action.** In an encounter, a turret or an
+  automated blade that hasn't attacked this Round attacks the first character without a pass
+  to come into its view, straight away, on whoever's Turn that is. That is its one attack for
+  the Round; one that attacked on the Security systems Turn has nothing held.
+
 ## 1.54.0
 
 - **Turrets and blades take one Turn, first.** In an encounter, the first time a turret or an
