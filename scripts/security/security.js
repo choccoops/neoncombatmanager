@@ -1,4 +1,4 @@
-import { MODULE_ID, LANG, HOOKS } from "../constants.js";
+import { MODULE_ID, LANG, HOOKS, NEON_HOME_ID } from "../constants.js";
 import { Compat } from "../compat.js";
 import { Settings } from "../settings.js";
 import { Socket } from "../socket.js";
@@ -14,7 +14,7 @@ import { Climb } from "../senses/climb.js";
 import { Mail } from "../comms/mail.js";
 import { NCM_ID } from "../comms/phone.js";
 import { L, esc, debounce } from "../util.js";
-import { SECURITY_FLAG, KINDS, KIND_IDS, WEAPONS, COMBAT_NUMBER, cleanDevice, working, friendly, hasAccess, inCone, conePoints, centreOf, notices, beats, effectOf, weaponOf, label, bearing, swing, signed } from "./security-data.js";
+import { SECURITY_FLAG, KINDS, KIND_IDS, WEAPONS, COMBAT_NUMBER, cleanDevice, working, friendly, hasAccess, inCone, conePoints, centreOf, notices, beats, effectOf, weaponOf, label, bearing, swing, signed, runBy, heldFloors } from "./security-data.js";
 
 const ART = `modules/${MODULE_ID}/assets/security`;
 const SOURCE_ID = `${MODULE_ID}.camera`;
@@ -101,6 +101,11 @@ export const Security = {
     });
     Hooks.on("deleteTile", (doc) => {
       if (Compat.isActiveGM) this.queue(() => this.disembody(doc.parent, doc.id));
+    });
+    // A Deep Dive (Neon At Home) moved: a Control Node taken, or the runner Jacked Out.
+    Hooks.on("updateActor", (actor, changed) => {
+      const f = changed?.flags?.[NEON_HOME_ID];
+      if (Compat.isActiveGM && f && ("dive" in f || "-=dive" in f)) this.queue(() => this.dived(actor));
     });
     Hooks.on("updateActor", (actor, changed, options) => {
       if (!Compat.isActiveGM || options?.[MODULE_ID]?.body || changed?.system?.derivedStats?.hp?.value === undefined) return;
@@ -658,6 +663,7 @@ export const Security = {
     if (!actor?.isOwner) return ui.notifications?.warn(L(`${LANG}.Error.NotOwner`));
     const d = { ...btn.dataset };
     const dev = this.device(game.scenes?.get?.(d.scene) ?? canvas?.scene, d.tile);
+    if (d.ncmAction === "sec-pass") return dev ? this.cutPass(actor, d.tile, dev.doc.parent) : null;
     let skill = null;
     if (d.ncmAction === "sec-evade") skill = "Evasion";
     else if (d.ncmAction === "sec-poison") skill = "Resist Torture/Drugs";
@@ -869,7 +875,51 @@ export const Security = {
 
   /** The tag a device's passes carry. Without one of its own: one for the whole scene. */
   keyFor(dev) {
-    return dev.d.key || `site:${dev.doc.parent?.id ?? "x"}`;
+    return dev.d.key || (dev.d.arch ? `arch:${dev.d.arch.split(".").pop()}` : `site:${dev.doc.parent?.id ?? "x"}`);
+  },
+
+  /* ---------------------------------------- */
+  /*  NET Architectures (a Deep Dive)         */
+  /* ---------------------------------------- */
+
+  /** The NET Architectures a device can hang off: the world's netarch items. */
+  archs() {
+    return (game.items ?? []).filter((i) => i.type === "netarch").sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  },
+
+  /** Every device, on every scene. */
+  everywhere() {
+    return [...(game.scenes ?? [])].flatMap((scene) => this.devices(scene));
+  },
+
+  /**
+   * GM's client: a character's Deep Dive changed. The devices run by a Control Node they hold are
+   * theirs (and, without a Pass tag of their own, take the architecture's); the ones they held
+   * from a dive they've left are let go. A card tells them, with a button to cut a pass.
+   */
+  async dived(actor) {
+    const dive = actor?.flags?.[NEON_HOME_ID]?.dive ?? null;
+    const held = heldFloors(dive);
+    const taken = [];
+    for (const dev of this.everywhere()) {
+      const theirs = !!dive && held.some((key) => runBy(dev.d, dive.arch, key));
+      const has = dev.d.divers.includes(actor.id);
+      if (theirs && !has) {
+        await this.save(dev.doc, { ...dev.d, key: this.keyFor(dev), controllers: [...new Set([...dev.d.controllers, actor.id])], divers: [...dev.d.divers, actor.id] });
+        taken.push(this.device(dev.doc.parent, dev.id) ?? dev);
+      } else if (!theirs && has) {
+        await this.save(dev.doc, { ...dev.d, controllers: dev.d.controllers.filter((id) => id !== actor.id), divers: dev.d.divers.filter((id) => id !== actor.id) });
+      }
+    }
+    if (!taken.length) return taken;
+    const first = taken[0];
+    await Cards.post({
+      actor, title: L(`${LANG}.Security.Card.Dived`, { name: esc(actor.name), arch: esc(dive.name || "") }), kicker: L(`${LANG}.Security.Title`), img: `${ART}/pass.svg`, tone: "cyan",
+      body: `<p>${L(`${LANG}.Security.Card.DivedText`)}</p><p>${taken.map((dev) => `<b>${esc(dev.name)}</b> (${L(`${LANG}.Security.Kind.${dev.d.kind}`)}${dev.doc.parent?.name ? `, ${esc(dev.doc.parent.name)}` : ""})`).join(", ")}</p>`,
+      buttons: [{ action: "sec-pass", label: L(`${LANG}.Security.Hud.pass`), icon: "fa-solid fa-id-card-clip", data: { scene: first.doc.parent?.id ?? "", tile: first.id, owner: true } }],
+      whisper: Cards.owners(actor)
+    });
+    return taken;
   },
 
   /** The devices a pass tag opens, on a scene. */
@@ -914,10 +964,14 @@ export const Security = {
   },
 
   /** A netrunner on a device's node: ask who gets a pass, then have the GM's client make them. */
-  async cutPass(doc, tileId) {
-    const dev = this.device(doc.parent, tileId);
-    if (!dev) return null;
-    const crew = this.crew(doc.actor);
+  async cutPass(who, tileId, scene = null) {
+    // A token on the scene, or (from a Deep Dive, wherever the runner sits) a character.
+    const doc = who?.actor ? who : null;
+    const actor = doc?.actor ?? who;
+    const sc = scene ?? doc?.parent;
+    const dev = this.device(sc, tileId);
+    if (!dev || !actor) return null;
+    const crew = this.crew(actor);
     const content = `<div class="ncm-levels ncm-security-form">
       <p class="hint">${L(`${LANG}.Security.Pass.CutHint`, { device: esc(dev.name) })}</p>
       <p><label class="checkbox"><input type="checkbox" name="self" checked> ${L(`${LANG}.Security.Pass.Self`)}</label></p>
@@ -931,12 +985,18 @@ export const Security = {
       rejectClose: false
     });
     if (!got || (!got.self && !got.to.length)) return null;
-    return Socket.request("secPass", { scene: doc.parent.id, token: doc.id, tile: tileId, ...got });
+    return Socket.request("secPass", { scene: sc.id, token: doc?.id ?? null, actor: actor.id, tile: tileId, ...got });
   },
 
   /** GM's client: whoever runs a device's node cuts passes to it. One for themself, and letters to the crew. */
   async _pass(data, userId) {
-    const { sc, doc, dev } = this.who(data, userId);
+    let { sc, doc, dev } = this.who(data, userId);
+    if (!doc && !data.token && data.actor) {
+      // No token there: a runner in a Deep Dive, asking as their character.
+      const actor = game.actors?.get?.(data.actor);
+      const user = game.users?.get?.(userId) ?? null;
+      if (actor && user && (user.isGM || actor.testUserPermission?.(user, "OWNER"))) doc = { actor, name: actor.name };
+    }
     if (!doc || !dev || !dev.d.controllers.includes(doc.actor.id)) return null;
     const key = this.keyFor(dev);
     if (dev.d.key !== key) await this.save(dev.doc, { ...dev.d, key });
@@ -1261,8 +1321,6 @@ export const Security = {
     const unit = this.unit();
     const sel = (name, options, value) => `<select name="${name}">${options.map(([v, text]) => `<option value="${v}"${v === value ? " selected" : ""}>${esc(text)}</option>`).join("")}</select>`;
     const row = (key, input, hint = "") => `<div class="form-group"><label>${L(`${LANG}.Security.Form.${key}`, { unit })}</label><div class="form-fields">${input}</div>${hint ? `<p class="hint">${hint}</p>` : ""}</div>`;
-    // Every character (a crew's sheets aren't always handed to a player yet), and the players' mooks.
-    const actors = (game.actors ?? []).filter((a) => a.type === "character" || (a.type === "mook" && a.hasPlayerOwner)).sort((a, b) => Number(!!b.hasPlayerOwner) - Number(!!a.hasPlayerOwner) || String(a.name).localeCompare(String(b.name)));
     const content = `<div class="ncm-levels ncm-security-form">
       <p class="hint">${L(`${LANG}.Security.Form.${now ? "IntroEdit" : picked ? "IntroTile" : "IntroNew"}`)}</p>
       ${row("Kind", sel("kind", KIND_IDS.map((k) => [k, `${L(`${LANG}.Security.Kind.${k}`)} (${L(`${LANG}.Security.Group.${KINDS[k].group}`)})`]), d.kind))}
@@ -1276,9 +1334,8 @@ export const Security = {
       ${row("Weapon", sel("weapon", Object.keys(WEAPONS).map((w) => [w, L(`${LANG}.Security.Weapon.${w}`)]), d.weapon || "assaultRifle"), L(`${LANG}.Security.Form.WeaponHint`))}
       ${row("Depth", `<input type="number" name="depth" value="${now ? d.depth : ""}" min="0" step="1" placeholder="6"> <label class="checkbox"><input type="checkbox" name="spikes"${d.spikes ? " checked" : ""}> ${L(`${LANG}.Security.Form.Spikes`)}</label>`, L(`${LANG}.Security.Form.DepthHint`))}
       ${row("Key", `<input type="text" name="key" value="${esc(d.key)}" maxlength="80" placeholder="arasaka:lobby"> <label class="checkbox"><input type="checkbox" name="keyAll"> ${L(`${LANG}.Security.Form.KeyAll`)}</label> <label class="checkbox"><input type="checkbox" name="keyShard"> ${L(`${LANG}.Security.Form.KeyShard`)}</label>`, L(`${LANG}.Security.Form.KeyHint`))}
-      <fieldset><legend>${L(`${LANG}.Security.Form.Passes`)}</legend><p class="hint">${L(`${LANG}.Security.Form.PassesHint`)}</p>
-        ${actors.map((a) => `<label class="checkbox"><input type="checkbox" name="pass" value="${a.id}"${d.passes.includes(a.id) ? " checked" : ""}> ${esc(a.name)}</label>`).join(" ") || `<em>${L(`${LANG}.Security.Form.NoActors`)}</em>`}
-      </fieldset>
+${row("Arch", sel("arch", [["", "—"], ...this.archs().map((i) => [i.uuid, i.name])], d.arch) + ` <input type="text" name="archFloor" value="${esc(d.archFloor)}" maxlength="8" placeholder="${L(`${LANG}.Security.Form.ArchFloor`)}" style="max-width: 9em">`, L(`${LANG}.Security.Form.ArchHint`))}
+      ${d.passes.length ? `<p><label class="checkbox"><input type="checkbox" name="clearPasses"> ${L(`${LANG}.Security.Form.ClearPasses`, { names: esc(d.passes.map((id) => game.actors?.get?.(id)?.name).filter(Boolean).join(", ")) })}</label></p>` : ""}
       ${now ? `<p><label class="checkbox"><input type="checkbox" name="rearm"> ${L(`${LANG}.Security.Form.Rearm`)}</label> <label class="checkbox"><input type="checkbox" name="remove"> ${L(`${LANG}.Security.Form.Remove`)}</label></p>` : ""}
     </div>`;
     const got = await Compat.DialogV2.prompt({
@@ -1290,8 +1347,7 @@ export const Security = {
         callback: (event, button) => {
           const f = button.form.elements;
           const opt = (name) => (f[name].value === "" ? undefined : Number(f[name].value));
-          const passes = [...button.form.querySelectorAll("input[name=pass]:checked")].map((i) => i.value);
-          return { kind: f.kind.value, name: f.name.value, on: f.on.checked, hp: opt("hp"), range: opt("range"), angle: opt("angle"), traverse: opt("traverse"), node: opt("node"), weapon: f.weapon.value, depth: opt("depth"), spikes: f.spikes.checked, passes, key: f.key.value.trim(), keyAll: f.keyAll.checked, keyShard: f.keyShard.checked, rearm: !!f.rearm?.checked, remove: !!f.remove?.checked };
+          return { kind: f.kind.value, name: f.name.value, on: f.on.checked, hp: opt("hp"), range: opt("range"), angle: opt("angle"), traverse: opt("traverse"), node: opt("node"), weapon: f.weapon.value, depth: opt("depth"), spikes: f.spikes.checked, ...(f.clearPasses?.checked ? { passes: [] } : {}), arch: f.arch.value, archFloor: f.archFloor.value, key: f.key.value.trim(), keyAll: f.keyAll.checked, keyShard: f.keyShard.checked, rearm: !!f.rearm?.checked, remove: !!f.remove?.checked };
         }
       },
       rejectClose: false

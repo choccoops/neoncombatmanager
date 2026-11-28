@@ -80,6 +80,11 @@ export function cleanDevice(raw) {
     // The pass tag: whoever carries an item with this tag (a pass shard, an NCM key item) is let be.
     key: String(raw.key ?? "").trim().slice(0, 80),
     controllers: ids(raw.controllers),
+    // The NET Architecture it hangs off (a netarch item's uuid) and, if only one of its Control Nodes runs it, that floor ("a5").
+    arch: String(raw.arch ?? "").trim().slice(0, 120),
+    archFloor: String(raw.archFloor ?? "").trim().toLowerCase().slice(0, 8),
+    // Who holds it from inside that architecture (a Deep Dive): theirs until they Jack Out.
+    divers: ids(raw.divers).filter((id) => ids(raw.controllers).includes(id)),
     spent: !!raw.spent
   };
 }
@@ -217,3 +222,9 @@ export function label(d, index = 0) {
   const short = { camera: "CAM", turret: "TUR", melee: "BLADE" }[d.kind];
   return short ? `${short} ${String(index + 1).padStart(2, "0")}` : "";
 }
+
+/** Does a Control Node floor of an architecture run this device? */
+export const runBy = (d, archUuid, floorKey) => !!d?.arch && d.arch === archUuid && (!d.archFloor || d.archFloor === String(floorKey ?? "").toLowerCase());
+
+/** The floors a dive holds: the keys of its Control Nodes taken. */
+export const heldFloors = (dive) => Object.entries(dive?.floors ?? {}).filter(([, st]) => st?.controlled).map(([key]) => String(key).toLowerCase());

@@ -1,10 +1,11 @@
-import { MODULE_ID, LANG } from "../constants.js";
+import { MODULE_ID, LANG, NEON_HUB_ID } from "../constants.js";
 import { Settings } from "../settings.js";
+import { Compat } from "../compat.js";
 import { Socket } from "../socket.js";
 import { Cards } from "../combat/cards.js";
 import { Mail } from "../comms/mail.js";
 import { Hub } from "./hub.js";
-import { cleanGig, movesFor, open, canTake, seenBy, shares } from "./gigs-data.js";
+import { cleanGig, movesFor, open, canTake, seenBy, shares, toJournal, fromJournal } from "./gigs-data.js";
 import { L, esc } from "../util.js";
 
 const { randomID } = foundry.utils;
@@ -66,9 +67,11 @@ export const Gigs = {
     await Settings.set("hubGigData", all);
   },
 
-  /** GM: add or change a gig. */
-  async save(data) {
-    const gig = cleanGig({ ...(data.id ? this.get(data.id) ?? {} : {}), ...data, id: data.id || randomID(8) });
+  /** GM: add or change a gig (and, unless told not to, its entry in Neon Hub's Journal). */
+  async save(data, { journal = true } = {}) {
+    const before = data.id ? this.get(data.id) : null;
+    let gig = cleanGig({ ...(before ?? {}), ...data, id: data.id || randomID(8) });
+    if (journal && GigJournal.on) gig = await GigJournal.push(gig, before);
     await this._write((all) => {
       all[gig.id] = gig;
     });
@@ -282,6 +285,7 @@ export const Gigs = {
   },
 
   init() {
+    GigJournal.init();
     Socket.on("gigTake", (data, userId) => this._take(data, userId));
     Socket.on("gigClaim", (data, userId) => this._claim(data, userId));
     Mail.register("gig", (e, m, c) => this.gigButtons(e, m, c));
@@ -290,6 +294,91 @@ export const Gigs = {
     Hooks.on(`${MODULE_ID}.gigsChanged`, () => {
       Hub.app?.refresh?.();
       Mail.refresh();
+    });
+  }
+};
+
+/**
+ * A map gig's entry under Gigs in Neon Hub's Journal, kept in step both ways (through Neon Hub's
+ * api.journal, 1.27.0+). Ours -> the Journal: made with the gig, and its status, client, place,
+ * crew, briefing and pay follow every change; shown to the players once it's off the drawing
+ * board. The Journal -> ours: take, complete, fail or reopen it there, change its crew, client,
+ * briefing or pay, rename it, and the map follows; completing or failing it there sends the
+ * letters and pays as here. The Journal's objectives and other rewards are its own.
+ */
+export const GigJournal = {
+  /** How many of our own writes to the Journal are under way (its hooks are ours then). */
+  busy: 0,
+
+  get api() {
+    const m = game.modules.get(NEON_HUB_ID);
+    return m?.active ? m.api?.journal ?? null : null;
+  },
+
+  get on() {
+    return Settings.get("hubGigJournal") !== false && typeof this.api?.createGig === "function" && typeof this.api?.saveGig === "function";
+  },
+
+  entry(gig) {
+    return gig?.journal ? game.journal?.get?.(gig.journal) ?? null : null;
+  },
+
+  /** Can this user open a gig's entry? */
+  canOpen(gig, user = game.user) {
+    const e = this.on ? this.entry(gig) : null;
+    return !!e && (user.isGM || !!e.testUserPermission?.(user, "LIMITED"));
+  },
+
+  open(gig) {
+    const e = this.entry(gig);
+    return e ? this.api.open(e) : null;
+  },
+
+  /** GM: write a gig into the Journal (making its entry the first time). Returns the gig, with its entry. */
+  async push(gig, before = null) {
+    if (!game.user?.isGM) return gig;
+    this.busy += 1;
+    try {
+      let entry = this.entry(gig);
+      if (!entry) {
+        entry = await this.api.createGig(gig.title || L(`${LANG}.Gigs.Untitled`));
+        if (!entry) return gig;
+        gig = { ...gig, journal: entry.id };
+      } else if (gig.title && entry.name !== gig.title) await entry.update({ name: gig.title });
+      await this.api.saveGig(entry, toJournal(gig, { place: Hub.place(gig.place)?.name ?? "", hub: this.api.gig(entry), before }));
+      const show = gig.state !== "draft";
+      if (typeof this.api.showToPlayers === "function" && ((entry.ownership?.default ?? 0) > 0) !== show) await this.api.showToPlayers(entry, show);
+    } catch (err) {
+      console.warn(`${MODULE_ID} | the gig "${gig.title}" didn't reach Neon Hub's Journal`, err);
+    } finally {
+      this.busy -= 1;
+    }
+    return gig;
+  },
+
+  /** GM's client: an entry changed in the Journal. Bring its gig on the map in line. */
+  async pull(entry) {
+    if (this.busy || !Compat.isActiveGM || !this.on || !entry) return null;
+    const gig = Gigs.all.find((g) => g.journal === entry.id);
+    const hub = gig ? this.api.gig(entry) : null;
+    if (!hub) return null;
+    const diff = fromJournal(hub, gig, { name: entry.name });
+    if (!Object.keys(diff).length) return null;
+    const { state, ...rest } = diff;
+    let now = Object.keys(rest).length ? await Gigs.save({ ...gig, ...rest }, { journal: false }) : gig;
+    if (state === "done" || state === "failed") {
+      // Ended in the Journal: the letters go out and the pay with them, as from the map.
+      if (open(now)) return Gigs.finish(now.id, state === "done");
+      now = await Gigs.save({ ...now, state }, { journal: false });
+    } else if (state) now = await Gigs.save({ ...now, state }, { journal: false });
+    return now;
+  },
+
+  init() {
+    const later = (entry) => this.pull(entry).catch((err) => console.warn(`${MODULE_ID} | gigs: the Journal's change didn't reach the map`, err));
+    Hooks.on("updateJournalEntryPage", (page) => later(page?.parent));
+    Hooks.on("updateJournalEntry", (entry, changed) => {
+      if ("name" in (changed ?? {})) later(entry);
     });
   }
 };

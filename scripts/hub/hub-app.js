@@ -5,7 +5,7 @@ import { Hub } from "./hub.js";
 import { Doorway } from "./doorway.js";
 import { Phone } from "../comms/phone.js";
 import { Mail } from "../comms/mail.js";
-import { Gigs } from "./gigs.js";
+import { Gigs, GigJournal } from "./gigs.js";
 import { movesFor, open, canTake } from "./gigs-data.js";
 import { NC2070 } from "./data.js";
 import { districtAt, districtByCode, deadAt, nearestStations, plan, rushHour, formatMinutes, km, DANGER } from "./geo.js";
@@ -896,11 +896,12 @@ export class HubApp {
         ? `${takers.length > 1 ? `<select name="gigActor-${g.id}">${takers.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join("")}</select>` : ""}${b("gigTake", "fa-handshake", L(`${LANG}.Gigs.Button.${g.state === "taken" ? "Join" : "Take"}`), g.id, "ncm-hub-reveal")}`
         : "";
       const gm = isGM ? movesFor(g).map((m) => b(`gig-${m}`, icons[m], L(`${LANG}.Gigs.Move.${m}`), g.id, m === "remove" ? "is-danger" : "")).join("") : "";
+      const book = GigJournal.canOpen(g) ? b("gigJournal", "fa-book-open", L(`${LANG}.Gigs.Button.Journal`), g.id) : "";
       return `<div class="ncm-hub-gig is-${g.state}"><h5>${esc(g.title || L(`${LANG}.Gigs.Untitled`))} <span class="ncm-hub-chip">${L(`${LANG}.Gigs.State.${g.state}`)}</span></h5>
         ${facts ? `<p class="ncm-hub-gig-facts">${facts}</p>` : ""}${g.text ? `<p>${esc(g.text).replace(/\n/g, "<br>")}</p>` : ""}
         ${crew.length ? `<p class="ncm-hub-gig-facts"><i class="fa-solid fa-users"></i> ${esc(crew.join(", "))}</p>` : ""}
         ${isGM && g.note ? `<p class="ncm-hint">${esc(g.note)}</p>` : ""}
-        ${take || gm ? `<div class="ncm-hub-btns">${take}${gm}</div>` : ""}</div>`;
+        ${take || gm || book ? `<div class="ncm-hub-btns">${take}${book}${gm}</div>` : ""}</div>`;
     }).join("");
     const add = isGM ? `<div class="ncm-hub-btns">${b("gig-new", "fa-plus", L(`${LANG}.Gigs.New`), "")}${b("mailPlace", "fa-envelope", L(`${LANG}.Gigs.SendPlace`), "")}</div>` : "";
     return `<h4 class="ncm-sub">// ${L(`${LANG}.Gigs.Title`)}</h4>${rows}${add}`;
@@ -999,6 +1000,8 @@ export class HubApp {
         if (!res?.ok) ui.notifications.warn(L(`${LANG}.Gigs.TakeFailed`));
         return null;
       }
+      case "gigJournal":
+        return gig ? GigJournal.open(gig) : null;
       case "mailPlace":
         return placeKey ? this.mailPlaceDialog(placeKey) : null;
       case "gig-new":

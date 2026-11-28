@@ -1514,6 +1514,10 @@
       "hubGigs": {
         "name": "Gigs on the city map",
         "hint": "The GM puts gigs on places; players take them from the map or from the letter. With Night City Messenger on, the gig's fixer (a directory contact) writes to the crew: the offer, the confirmation, and how it ended, with the pay to collect. Without it, the same goes out as chat cards."
+      },
+      "hubGigJournal": {
+        "name": "Map gigs are filed in Neon Hub's Journal",
+        "hint": "With Neon Hub 1.27.0 or later: every gig on the city map gets an entry under Gigs in the Neon Journal, and the two follow each other. Take, complete or fail it in either place; the Journal's objectives and other rewards stay its own. Completing or failing it in the Journal sends the fixer's letters and the pay, as from the map."
       }
     },
     "SceneWeather": {
@@ -3461,7 +3465,9 @@
         "CounterText": "Electronics/Security Tech <b>{total}</b> against DV{dv}. The work takes {min} min.",
         "Controlled": "{name} takes {device}",
         "ControlFail": "{name} is shut out of {device}",
-        "ControlText": "Interface <b>{total}</b> against the Control Node's DV{dv}."
+        "ControlText": "Interface <b>{total}</b> against the Control Node's DV{dv}.",
+        "Dived": "{name} holds security through {arch}",
+        "DivedText": "A Control Node taken in the Deep Dive runs these. They're theirs until they Jack Out; a pass shard cut now keeps working after."
       },
       "Hud": {
         "Search": "Search for security",
@@ -3504,22 +3510,23 @@
         "Depth": "Pit depth ({unit})",
         "Spikes": "spikes or nanowire (6d6)",
         "DepthHint": "Tip-floors only. 10 or more is also a fall.",
-        "Passes": "Passes",
-        "PassesHint": "These characters don't set it off, can switch it, and can look through it if it's a camera, with nothing to carry. For a pass that changes hands, use the Pass tag.",
-        "NoActors": "No characters yet.",
         "Rearm": "Rearm: full HP, ready again, nobody on its node",
         "Remove": "Make this a plain Tile again",
         "Key": "Pass tag",
-        "KeyHint": "Whoever carries an item with this tag is let be, can switch the device, and can look through it if it's a camera: a pass shard, or one of Night City Messenger's key items with the same tag. Give a site's devices one tag and a single shard covers them all.",
+        "KeyHint": "Whoever carries an item with this tag is let be, can switch the device, and can look through it if it's a camera: a pass shard, or one of Night City Messenger's key items with the same tag. Give a site's devices one tag and a single shard covers them all. Left empty, the tag is made when the first pass is cut.",
         "KeyAll": "every device on this scene",
-        "KeyShard": "make a pass shard"
+        "KeyShard": "make a pass shard",
+        "Arch": "NET Architecture",
+        "ArchFloor": "floor (a5)",
+        "ArchHint": "The architecture this device hangs off (Neon At Home's Deep Dive). A netrunner who takes a Control Node in it holds the device until they Jack Out, and can cut pass shards to it from wherever they sit. Name a floor if only that Control Node runs it; empty means any of them.",
+        "ClearPasses": "Clear the old Pass list ({names})"
       },
       "Pass": {
         "Name": "Security pass: {site}",
         "About": "A pass to the security at {site}. Whoever carries it is let be by the devices it's keyed to, can switch them, and can look through their cameras.",
         "Made": "{name} is in the Items sidebar: drag it onto a character.",
         "CutTitle": "Cut a pass shard",
-        "CutHint": "You run the Control Node of {device}. Write its pass onto a shard, and send copies to the crew.",
+        "CutHint": "You run {device}. Write its pass onto a shard, and send copies to the crew.",
         "Self": "A shard for me",
         "Send": "Send by Night City Messenger",
         "SendHint": "Each gets a letter with the pass in it, to load onto a shard of their own. A letter doesn't reach a dead zone.",
@@ -3587,7 +3594,8 @@
         "Take": "Take the gig",
         "Join": "Join the crew on it",
         "Map": "Show on the map",
-        "Collect": "Collect {amount} eb"
+        "Collect": "Collect {amount} eb",
+        "Journal": "Open in the Journal"
       },
       "Mail": {
         "Offer": {
